@@ -64,7 +64,6 @@ int main() {
     fhir_intr_t *curl_search = fhir_search("https://r4.smarthealthit.org/", "Patient", curl_fn);
     json_t *result = search_minpg(curl_search, 200, 250);
     int s = json_array_size(result);
-    printf("%d\n", s);
 
     int rc = fhir_search_free(curl_search);
     json_decref(result);

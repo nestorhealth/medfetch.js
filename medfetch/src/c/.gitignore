@@ -1,0 +1,5 @@
+# ignore build artifacts
+*.o
+*.so
+*.dylib
+results

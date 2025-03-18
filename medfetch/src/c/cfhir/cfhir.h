@@ -10,7 +10,6 @@
 #include <cfhir/search.h>
 
 #pragma GCC visibility push(hidden)
-
 /// Parse a `string` representation of an `int` using strtol.
 int parse_int(const char *str, int *out) __attribute__((visibility("default")));
 
@@ -27,6 +26,9 @@ int parse_int(const char *str, int *out) __attribute__((visibility("default")));
  */
 int search_pgmax(const char *base_url, const char *resource_type) __attribute__((visibility("default")));
 
+fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_fn f);
+int fhir_search_free(fhir_intr_t *search);
+
 /**
  * Run a min page search to get n resources
  * 
@@ -39,7 +41,7 @@ int search_pgmax(const char *base_url, const char *resource_type) __attribute__(
  * @param pagemax the max number of MATCHES per page (if you use a valid _include you WILL get more)
  * @returns NULL on error, pointer to json resources array otherwise
  */
-json_t *search_minpg(const char *base_url, const char *resource_type, int n, size_t pagemax) __attribute__((visibility("default")));
+json_t *search_minpg(fhir_intr_t *search, int n, size_t pagemax) __attribute__((visibility("default")));
 
 #pragma GCC visibility pop
 

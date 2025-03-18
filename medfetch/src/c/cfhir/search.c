@@ -6,6 +6,7 @@
 
 #define MAX_COUNT 99999
 
+__attribute__((visibility("default")))
 fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_fn f) {
     fhir_intr_t *intr = malloc(sizeof(fhir_intr_t));
     if (!intr || !f || !base_url) {
@@ -44,6 +45,7 @@ fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_
     return intr;
 }
 
+__attribute__((visibility("default")))
 int fhir_search_free(fhir_intr_t *search) {
     int count = 0;
     if (!search) {
@@ -199,7 +201,6 @@ int search_pgmax(const char *base_url, const char *resource_type) {
 /// runs [base]/[type]?_count={pagemax}
 /// returns NULL on error, or the json array with len min(n, sumcount()) 
 __attribute__((visibility("default")))
-
 json_t *search_minpg(fhir_intr_t *search, int n, size_t pagemax) {
     if (!search)
         return NULL;
