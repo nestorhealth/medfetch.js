@@ -392,6 +392,11 @@ int fhir_intr_step(fhir_intr_t *intr) {
     if (!intr || !intr->next) {
         return 1;
     }
+    if (intr->response) {
+        if (intr->response->buf) {
+            intr->response->size = 0;
+        }
+    }
 
     int rc = intr->fetch(intr);
     if (rc) {
@@ -423,9 +428,6 @@ int fhir_intr_json(fhir_intr_t *intr) {
 
     json_error_t error;
     json_t *json = json_loads(intr->response->buf, 0, &error);
-    if (!json) {
-        return -1;
-    }
     
     // if user owns the json pointer, then copy over data
     // from the loaded json memory onto their address
