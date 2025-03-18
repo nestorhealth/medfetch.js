@@ -97,6 +97,6 @@ int search_pgmax(const char *base_url, const char *resource_type);
  * @param pagemax the max number of MATCHES per page (if you use a valid _include you WILL get more)
  * @returns NULL on error, pointer to json resources array otherwise
  */
-json_t *search_minpg(const char *base_url, const char *resource_type, int n, size_t pagemax);
+json_t *search_minpg(fhir_intr_t *search, int n, size_t pagemax);
 
 #endif

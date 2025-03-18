@@ -406,6 +406,7 @@ int fhir_intr_step(fhir_intr_t *intr) {
 
     intr->page++;
     free(intr->next); // next link ALWAYS gets cleaned up
+    intr->next = NULL;
 
     return 0;
 }

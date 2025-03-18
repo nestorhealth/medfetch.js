@@ -19,40 +19,28 @@ fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_
     intr->search_params = NULL;
     intr->json = NULL;
     intr->page = -1;
+    intr->next = NULL; // user has to explicitly call begin()
 
     size_t size = strlen(base_url) + strlen(resource_type) + 1;
     if (size > MAX_URL_SIZE) {
         free(intr);
         return NULL;
     }
-    char *next = malloc(strlen(base_url) + strlen(resource_type) + 1);
-    if (!next) {
-        free(intr);
-        return NULL;
-    }
-    int bytes = snprintf(next, size, "%s%s", base_url, resource_type);
-    if (bytes > MAX_URL_SIZE) {
-        free(next);
-        free(intr);
-        return NULL;
-    }
 
     response_t *response = malloc(sizeof(response_t));
     if (!response) {
-        free(next);
         free(intr);
         return NULL;
     }
     response->buf = malloc(1);
     if (!response->buf) {
         free(response);
-        free(next);
         free(intr);
+        return NULL;
     }
     response->size = 0;
-
-    intr->next = next;
     intr->response = response;
+
     return intr;
 }
 
@@ -79,6 +67,7 @@ int fhir_search_free(fhir_intr_t *search) {
         count++;
     }
     free(search);
+    count++;
 
     return count;
 }
@@ -95,12 +84,15 @@ int search_set_params(fhir_intr_t *search, gen_params_t *gen_params, search_para
 }
 
 // 0 on ok, -1 otherwise
+// this initializes the next field, signaling when
+// the user is responsible for freeing it
 int fhir_search_begin(fhir_intr_t *search) {
     if (!search)
         return -1;
     buffer_t *url = fhir_intr_url(search);
     if (!url)
         return -1;
+
     search->next = url->data;
     search->page = 0;
     // now caller is in charge of freeing
@@ -208,8 +200,8 @@ int search_pgmax(const char *base_url, const char *resource_type) {
 /// returns NULL on error, or the json array with len min(n, sumcount()) 
 __attribute__((visibility("default")))
 
-json_t *search_minpg(const char *base_url, const char *resource_type, int n, size_t pagemax) {
-    if (!base_url || !resource_type)
+json_t *search_minpg(fhir_intr_t *search, int n, size_t pagemax) {
+    if (!search)
         return NULL;
     int count = 0;
     json_t *acc = json_array();
@@ -220,20 +212,18 @@ json_t *search_minpg(const char *base_url, const char *resource_type, int n, siz
     gen_params_t gparams = GEN_PARAMS(false, _SUMMARY_FALSE, NULL, NULL);
     search_params_t sparams = SEARCH_PARAMS(pagemax, _CONTAINED_FALSE, _CONTAINED_TYPE_CONTAINER, 
                                             NULL, NULL, NULL);
-    fhir_intr_t search = fhir_intr_make(INTR_SEARCH, base_url, resource_type, NULL,
-                                        &gparams, &sparams, NULL, NULL, NULL, 0);
-
-    for (int i = fhir_search_begin(&search); i < fhir_search_end(&search); i++) {
-        if(fhir_intr_step(&search)) {
+    search_set_params(search, &gparams, &sparams);
+    for (int i = fhir_search_begin(search); i < fhir_search_end(search); i++) {
+        if(fhir_intr_step(search)) {
             json_decref(acc);
             return NULL;
         }
-        if (fhir_intr_json(&search)) {
+        if (fhir_intr_json(search)) {
             json_decref(acc);
             return NULL;
         }
 
-        json_t *entries = json_object_get(search.json, "entry");
+        json_t *entries = json_object_get(search->json, "entry");
         if (!entries || !json_is_array(entries)) {
             json_decref(acc);
             return NULL;
@@ -247,30 +237,10 @@ json_t *search_minpg(const char *base_url, const char *resource_type, int n, siz
                 return NULL;
             }
             if (count++ == n) {
-                if (search.json) {
-                    json_decref(search.json);
-                }
-                if (search.response) {
-                    if (search.response->buf)
-                        free(search.response->buf);
-                    free(search.response);
-                }
-                if (search.next)
-                    free(search.next);
                 return acc;
             }
             json_array_append(acc, resource);
         }
     }
-    if (search.json) {
-        json_decref(search.json);
-    }
-    if (search.response) {
-        if (search.response->buf)
-            free(search.response->buf);
-        free(search.response);
-    }
-    if (search.next)
-        free(search.next);
     return acc;
 }

@@ -62,23 +62,12 @@ int main() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     fhir_intr_t *curl_search = fhir_search("https://r4.smarthealthit.org/", "Patient", curl_fn);
-    if (!curl_search) {
-        return 1;
-    }
-    if (fhir_intr_step(curl_search)) {
-        printf("network error \n");
-        fhir_search_free(curl_search);
-        return 1;
-    }
-    if(fhir_intr_json(curl_search)) {
-        printf("parse errror\n");
-        fhir_search_free(curl_search);
-        return 1;
-    }
-    const char *dumped = json_string_value(json_object_get(curl_search->json, "resourceType"));
-    printf("OK%s\n", dumped);
+    json_t *result = search_minpg(curl_search, 200, 250);
+    int s = json_array_size(result);
+    printf("%d\n", s);
 
-    fhir_search_free(curl_search);
+    int rc = fhir_search_free(curl_search);
+    json_decref(result);
     curl_global_cleanup();
 
     return 0;
