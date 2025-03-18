@@ -17,7 +17,7 @@
 #include "intr.h"
 
 fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_fn f);
-
+int fhir_search_free(fhir_intr_t *search);
 /**
  * Initialize the 'next' url for the given search interaction
  * to begin iterating over the pages.

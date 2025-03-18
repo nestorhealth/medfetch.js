@@ -38,25 +38,15 @@ static int curl_fn(fhir_intr_t *intr) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_response);
 
+    // caller should expect intr->response to exist if called from
+    // the ctor function fhir_search()
     if (!intr->response) {
-        intr->response = malloc(1);
-        if (!intr->response) {
-            curl_slist_free_all(headers);
-            curl_easy_cleanup(curl);
-            return 1;
-        }
-        intr->response->buf = malloc(1);
-        if (!intr->response->buf) {
-            free(intr->response);
-            curl_slist_free_all(headers);
-            curl_easy_cleanup(curl);
-            return 1;
-        }
-        intr->response->size = 0;
+        return 1;
     }
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) intr->response);
 
     CURLcode res = curl_easy_perform(curl);
+    // doesn't need to worry about freeing intr fields 
     if (res != CURLE_OK) {
         printf("%s\n", curl_easy_strerror(res));
         curl_slist_free_all(headers);
@@ -71,17 +61,25 @@ static int curl_fn(fhir_intr_t *intr) {
 int main() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
-    curl_global_cleanup();
     fhir_intr_t *curl_search = fhir_search("https://r4.smarthealthit.org/", "Patient", curl_fn);
+    if (!curl_search) {
+        return 1;
+    }
     if (fhir_intr_step(curl_search)) {
-        printf("here?\n");
+        printf("network error \n");
+        fhir_search_free(curl_search);
+        return 1;
     }
-    if (fhir_intr_json(curl_search)) {
-        printf("here json?\n");
+    if(fhir_intr_json(curl_search)) {
+        printf("parse errror\n");
+        fhir_search_free(curl_search);
+        return 1;
     }
-
     const char *dumped = json_string_value(json_object_get(curl_search->json, "resourceType"));
-    printf("Here! %s\n", dumped);
+    printf("OK%s\n", dumped);
+
+    fhir_search_free(curl_search);
+    curl_global_cleanup();
 
     return 0;
 }

@@ -8,9 +8,17 @@
 
 fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_fn f) {
     fhir_intr_t *intr = malloc(sizeof(fhir_intr_t));
-    if (!intr) {
+    if (!intr || !f || !base_url) {
         return NULL;
     }
+    intr->mode = INTR_SEARCH;
+    intr->base_url = base_url;
+    intr->resource_type = resource_type;
+    intr->fetch = f;
+    intr->gen_params = NULL;
+    intr->search_params = NULL;
+    intr->json = NULL;
+    intr->page = -1;
 
     size_t size = strlen(base_url) + strlen(resource_type) + 1;
     if (size > MAX_URL_SIZE) {
@@ -29,27 +37,33 @@ fhir_intr_t *fhir_search(const char *base_url, const char *resource_type, fetch_
         return NULL;
     }
 
-    *intr = (fhir_intr_t) {
-        .mode = INTR_SEARCH,
-        .base_url = base_url,
-        .resource_type = resource_type,
-        .id = NULL,
+    response_t *response = malloc(sizeof(response_t));
+    if (!response) {
+        free(next);
+        free(intr);
+        return NULL;
+    }
+    response->buf = malloc(1);
+    if (!response->buf) {
+        free(response);
+        free(next);
+        free(intr);
+    }
+    response->size = 0;
 
-        .fetch = f,
-
-        .gen_params = NULL,
-        .search_params = NULL,
-        .json = NULL,
-        .response = NULL,
-        .next = next,
-    };
+    intr->next = next;
+    intr->response = response;
     return intr;
 }
 
 int fhir_search_free(fhir_intr_t *search) {
     int count = 0;
     if (!search) {
-        return 0;
+        return 1;
+    }
+    if (search->next) {
+        free(search->next);
+        count++;
     }
     if (search->json) {
         json_decref(search->json);
@@ -64,6 +78,7 @@ int fhir_search_free(fhir_intr_t *search) {
         free(search->response);
         count++;
     }
+    free(search);
 
     return count;
 }

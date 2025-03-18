@@ -387,17 +387,13 @@ struct buffer_s *fhir_intr_url(struct fhir_intr_s *intr) {
     }
 }
 
+// intr->next IS NOT OWNED BY THE USER
 int fhir_intr_step(fhir_intr_t *intr) {
-    if (!intr || !intr->next)
+    if (!intr || !intr->next) {
         return 1;
-
-    if (intr->response) {
-        free(intr->response);
-        intr->response = NULL;
     }
 
     int rc = intr->fetch(intr);
-    printf("got rc %d\n", rc);
     if (rc) {
         if (intr->response) {
             if (intr->response->buf) {
@@ -414,6 +410,7 @@ int fhir_intr_step(fhir_intr_t *intr) {
     return 0;
 }
 
+// intr->next IS NOW OWNED BY USER
 int fhir_intr_json(fhir_intr_t *intr) {
     // ensure that the response buffer is NOT NULL
     if (!intr->response) {
