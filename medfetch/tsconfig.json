@@ -1,0 +1,23 @@
+{
+    "extends": "@nestorhealth/tsconfig/tsconfig.json",
+    "compilerOptions": {
+        "types": ["node"],
+        "lib": ["esnext"],
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "exactOptionalPropertyTypes": true,
+        "strictNullChecks": true
+    },
+    "exclude": [
+        "./dist/**/*",
+        "/**/*.test.ts",
+        "src/c/*",
+        "vitest.config.ts",
+        "src/better-sqlite3.test.ts",
+        "src/schema/view.test.ts"
+    ],
+    "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,17 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite WASM + Vite</title>
+</head>
+<body>
+    <h2>SQLite WASM REPL</h2>
+    <textarea id="query" rows="5" cols="50">SELECT sqlite_version();</textarea><br>
+    <button onclick="runQuery()">Run Query</button>
+    <pre id="output"></pre>
+
+    <script type="module" src="/main.js"></script>
+</body>
+</html>

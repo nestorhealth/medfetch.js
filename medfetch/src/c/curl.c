@@ -55,7 +55,7 @@ static int curl_fn(fhir_intr_t *intr) {
     int rc = 0;
     // doesn't need to worry about freeing intr fields 
     if (res != CURLE_OK) {
-        printf("%s\n", curl_easy_strerror(res));
+        fprintf(stderr, "bad response from server\n");
         rc = 1;
     }
     curl_slist_free_all(headers);
