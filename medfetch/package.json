@@ -5,6 +5,7 @@
     "description": "nestorhealth's extended implementation of sql-on-fhir using drizzle as the proxy",
     "scripts": {
         "test": "vitest",
+        "dev": "vite dev",
         "build": "rm -rf dist && tsc",
         "sqlite:mac-x86": "mkdir -p bin/sqlite/mac-x86 && cd src/c/sqlite && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/sqlite/mac-x86",
         "unit": "vitest src",

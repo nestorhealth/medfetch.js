@@ -1,4 +1,6 @@
-export * from "./sof";
-export * from "./schema";
+import wasm from "./build/darwin-x86_64/sqlite3.mjs";
 
-export { resourcePages } from "./data";
+const sqlite = await wasm();
+const db = new sqlite.oo1.DB();
+
+db.exec("CREATE VIRTUAL TABLE Patient USING MEDFETCH();");

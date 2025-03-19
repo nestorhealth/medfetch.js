@@ -5,6 +5,7 @@
         "lib": ["esnext"],
         "skipLibCheck": true,
         "resolveJsonModule": true,
+        "allowJs": true,
         "esModuleInterop": true,
         "outDir": "./dist",
         "rootDir": "./src",
@@ -15,9 +16,7 @@
         "./dist/**/*",
         "/**/*.test.ts",
         "src/c/*",
-        "vitest.config.ts",
-        "src/better-sqlite3.test.ts",
-        "src/schema/view.test.ts"
+        "vitest.config.ts"
     ],
     "include": ["src/**/*.ts"]
 }

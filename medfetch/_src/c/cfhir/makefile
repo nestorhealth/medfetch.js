@@ -12,63 +12,60 @@ ifeq ($(user_os),Darwin)
     cc = clang
     ldflags = -dynamiclib -Wl,-install_name,/usr/local/lib/libcfhir.dylib
     cfhir_shared = build/libcfhir.dylib
+    cfhir_static = build/libcfhir.a
 else
     default_target = linux_x86_64
     cc = gcc
     ldflags = -shared
     cfhir_shared = build/libcfhir.so
+    cfhir_static = build/libcfhir.a
 endif
 
 # Compiler flags
-cflags = -g -fpic -Wall -I. -fvisibility=hidden
-libflags = -lcurl -ljansson  # Dynamically link libcurl and jansson
+cflags = -g -fpic -Wall -I. -fvisibility=hidden -I../jansson/build/include
+libflags = -L/usr/local/lib -ljansson
 
 # Default target: build for the user's system
-all: $(cfhir_shared)
+all: $(cfhir_shared) $(cfhir_static)
 
 # Ensure build directory exists
 build/:
 	mkdir -p build/
 
-# Build rules
+# Build object files
 build/%.o: %.c | build/
 	$(cc) $(cflags) -c $< -o $@
 
+# Build shared library (.so/.dylib)
 $(cfhir_shared): $(obj) | build/
 	$(cc) $(ldflags) -o $@ $^ $(libflags)
 
-# Cross-compilation targets
-linux_x86_64:
-	$(MAKE) cc=gcc ldflags="-shared" cfhir_shared=build/libcfhir.so all
-
-mac_x86_64:
-	$(MAKE) cc=clang ldflags="-dynamiclib -Wl,-install_name,/usr/local/lib/libcfhir.dylib" cfhir_shared=build/libcfhir.dylib all
-
-# Installation paths
-prefix ?= /usr/local
-includedir = $(prefix)/include/cfhir
-libdir = $(prefix)/lib
+# Build static library (.a)
+$(cfhir_static): $(obj) | build/
+	ar rcs $@ $^
 
 # Install headers and libraries
+prefix ?= /usr/local
+includedir = $(prefix)/include
+libdir = $(prefix)/lib
+
 install: all
 	mkdir -p $(includedir)
 	mkdir -p $(libdir)
 	# Copy headers
 	cp cfhir.h buffer.h intr.h search.h $(includedir)/
-	# Create a symlink for cfhir.h
-	ln -sf $(includedir)/cfhir.h $(prefix)/include/cfhir.h
 	# Install shared library
 	cp $(cfhir_shared) $(libdir)/
+	# Install static library
+	cp $(cfhir_static) $(libdir)/
 
 # Uninstall headers and libraries
 uninstall:
 	rm -f $(includedir)/cfhir.h $(includedir)/buffer.h $(includedir)/intr.h $(includedir)/search.h
-	rm -f $(prefix)/include/cfhir.h  # Remove symlink
-	rm -f $(libdir)/libcfhir.so $(libdir)/libcfhir.dylib
+	rm -f $(libdir)/libcfhir.so $(libdir)/libcfhir.dylib $(libdir)/libcfhir.a
 
 # Clean build files
 clean:
 	rm -rf build/
 
-.PHONY: all clean install uninstall linux_x86_64 mac_x86_64
-
+.PHONY: all clean install uninstall

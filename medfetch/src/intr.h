@@ -2,7 +2,6 @@
 #define FHIR_INTR_H
 
 #define CURL_STATICLIB
-#include <curl/curl.h>
 
 #include "buffer.h"
 
@@ -290,7 +289,6 @@ struct fhir_intr_s {
     char *next;
     unsigned int page;
 };
-typedef struct fhir_intr_s fhir_intr_t;
 
 #define fhir_intr_make(MODE, BASE_URL, RESOURCE_TYPE, ID, GEN_PARAMS, SEARCH_PARAMS, RESPONSE, JSON, NEXT, PAGE) \
     ((struct fhir_intr_s){ \
