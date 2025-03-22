@@ -55,17 +55,19 @@ const get = (url: string) =>
  * @returns - async iterator over Bundle
  */
 const pageIterator = (baseUrl: string, resourceType: string) =>
-    async function* (n : number) {
+    async function* (n: number, maxPageSize : number) {
+        const upperLimit = n < 0 ? Infinity : n;
         let count = 0;
 
         const firstPage = await Effect.runPromise(
-            get(`${baseUrl}/${resourceType}`),
+            get(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
         );
         yield firstPage;
+        count += firstPage.entry.length;
 
-        count++;
+
         let linkOption = nextLink(firstPage);
-        while (Option.isSome(linkOption) && count < n) {
+        while (Option.isSome(linkOption) && count < upperLimit) {
             const link = Option.getOrThrow(linkOption);
             const page = await Effect.runPromise(get(link));
             yield page;
@@ -82,18 +84,23 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
  * - STEP: Bundle.link.where(relation = 'next').url
  * - END: 'next' not in Bundle.link.relation
  *
- * @param baseUrl - server url
- * @param resourceType - resource to fetch
- * @param n - (max) number of pages to fetch. If n > total pages, then it just returns total pages.
+ * @param baseUrl server url
+ * @param resourceType resource to fetch
+ * @param n (max) number of resources to fetch
+ * @param maxPageSize the maximum number of resources
+ *        per bundle entry for this endpoint, defaults to 250
+ *        which is the maxPageSize of the R4 smarthealthit
+ *        sandbox server.
  * @returns a Stream of Bundles
  */
 export const pages = (
     baseUrl: string, 
     resourceType: string,
-    n = 100
+    n = 100,
+    maxPageSize = 250
 ) =>
     Stream.fromAsyncIterable(
-        pageIterator(baseUrl, resourceType)(n),
+        pageIterator(baseUrl, resourceType)(n, maxPageSize),
         (e) => new DataError({ message: String(e) }),
     );
 
@@ -135,12 +142,22 @@ export const flatResources = (stream: ReturnType<typeof pages>) =>
 /**
  * Promised version of `flatResources(pages(...))`;
  * @param params - the pages params
- * @returns a flat array of n paged resources from the server
+ * @returns a flat array of n resources from the server
  */
-export async function resourcePages(...params: Parameters<typeof pages>) {
+export async function nresources(...params: Parameters<typeof pages>) {
     return pipe(
         pages(...params),
         flatResources,
         Effect.runPromise
     );
+}
+
+export function unionKeys(resources: any[]) {
+    return resources.reduce((acc: Set<string>, resource) => {
+        const keys = Object.keys(resource);
+        if (keys.length > 0) {
+            return acc.union(new Set(keys));
+        }
+        return acc;
+    }, new Set<string>());
 }

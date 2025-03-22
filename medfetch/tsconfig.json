@@ -2,7 +2,7 @@
     "extends": "@nestorhealth/tsconfig/tsconfig.json",
     "compilerOptions": {
         "types": ["node"],
-        "lib": ["esnext"],
+        "lib": ["esnext", "webworker", "dom"],
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "allowJs": true,

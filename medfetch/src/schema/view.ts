@@ -617,3 +617,9 @@ export function mapColumns<TViewDefinition extends ViewDefinition>(
         };
     });
 }
+
+export type Select = ReturnType<typeof Select>;
+export type Column = ReturnType<typeof Column>;
+export type ForEach = ReturnType<typeof ForEach>;
+export type ForEachOrNull = ReturnType<typeof ForEachOrNull>;
+export type UnionAll = ReturnType<typeof UnionAll>;
