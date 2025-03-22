@@ -1,6 +1,20 @@
 import { Data, Effect, Match } from "effect";
 import { SqliteIn, SqliteOutError, SqliteOutReady, SqliteOutResult } from "./workers/sqlite";
 import { spawn } from "./worker";
+import { sqlite3Worker1Promiser } from "@sqlite.org/sqlite-wasm";
+
+const worker = Effect.runSync(spawn("./workers/sqlite"));
+const promiser = sqlite3Worker1Promiser(worker);
+console.log("here", promiser);
+console.log("but", await promiser("config-get", {}));
+
+const result = await promiser("exec",
+    `
+    CREATE TABLE test(id INTEGER PRIMARY KEY, msg TEXT);
+    INSERT INTO test(msg) VALUES ('Hello from worker!');
+    SELECT * FROM test;
+    `
+);
 
 class MedfetchUnknownError extends Data.TaggedError("MedfetchUnknownError") {};
 class MedfetchLoadError extends Data.TaggedError("MedfetchLoadError")<{ message: string }> {};
@@ -72,13 +86,13 @@ export function medfetch(baseUrl: string) {
 export const medfetchAsync = async (baseUrl: string) => Effect.runPromise(medfetch(baseUrl));
 
 // can load the extension into a wasm sqlite instance using await
-const { sql } = await medfetchAsync("https://r4.smarthealthit.org");
+// const { sql } = await medfetchAsync("https://r4.smarthealthit.org");
 
 // example of using the sql query API in the browser
-window.runQuery = async () => {
-    const query = document.getElementById("query") as HTMLTextAreaElement;
-    if (query) {
-        const result = await sql(query.value);
-        console.log("here!", result);
-    }
-}
+// window.runQuery = async () => {
+//     const query = document.getElementById("query") as HTMLTextAreaElement;
+//     if (query) {
+//         const result = await sql(query.value);
+//         console.log("here!", result);
+//     }
+// }

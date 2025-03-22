@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
-import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
 
 export default defineConfig({
-    plugins: [
-        tailwindcss()
-    ],
+    resolve: {
+        alias: {
+            "@sqlite-worker": path.resolve(import.meta.dirname, "node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3-worker1.js"),
+        }
+    },
     server: {
         headers: {
             'Cross-Origin-Opener-Policy': 'same-origin',
