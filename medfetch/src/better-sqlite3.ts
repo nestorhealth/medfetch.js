@@ -4,7 +4,7 @@ import { Array as Arrayh, pipe, Record } from "effect";
 import {
     tableMigration,
 } from "./sqlite";
-import { rows } from "./sof";
+import { sof } from "./sof";
 import type { Database as BetterSqlite3Database } from "better-sqlite3";
 import Database from "better-sqlite3";
 import { getFetchPath } from "./sqlite";
@@ -62,7 +62,7 @@ export async function _medfetch(
             { headers: { Connection: "close" } },
         ).then((res) => res.json())) as fhirR4.Bundle;
         const entries = bundle.entry!.map((entry) => entry.resource!);
-        const rowified = rows(viewDefinitions[resourceType], entries);
+        const rowified = sof(viewDefinitions[resourceType], entries);
         if (rowified.length === 0) continue;
 
         const tableName = defined[resourceType].name;

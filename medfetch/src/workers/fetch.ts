@@ -1,6 +1,7 @@
-import { nresources } from "./data";
+/// <reference lib="webworker" />
+import { nresources } from "../data.js";
 
-self.onmessage = async (e: MessageEvent) => {
+onmessage = async (e: MessageEvent) => {
     const sqlitePort = e.ports[0];
     sqlitePort.onmessage = async (e: MessageEvent) => {
         const { signalBuffer, resourceType } = e.data;

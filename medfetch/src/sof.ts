@@ -3,7 +3,6 @@ import { evaluate, UserInvocationTable } from "fhirpath";
 import fhir_r4_model from "fhirpath/fhir-context/r4";
 import { fhirR4 } from "@smile-cdr/fhirts";
 import { Data, Upstream, View } from "./schema";
-import { FhirType } from "./schema/literal";
 
 function codeSystemAlias(codeSystem: string | undefined) {
     return Match.value(codeSystem).pipe(
@@ -168,7 +167,7 @@ export function project(
  * @param data - the resources to project
  * @returns the 'rowified' json resources
  */
-export function rows(
+export function sof(
     viewDefinition: View.ViewDefinition,
     data: any[],
 ): any[] {
@@ -201,39 +200,4 @@ export function rows(
     }
 
     return project(viewDefinition, filtered, doEvaluate);
-}
-
-/**
- * Convenience wrapper over
- * decoding a view definition from `Data` land
- * and then calling `rows()`
- * 
- * Equivalent to:
- * ```ts
- * import { Data } from "medfetch-sof/schema";
- * 
- * const fhirData = [...];
- * const asUnknown = await fetch(some_view_definition_url).then(res => res.json());
- * if (Data.ok(asUnknown)) {
- *    const decodedOnce = Data.decodeSync(asUnknown);  
- *    const decodedTwice = View.decodeSync(decodedOnce);
- *    return rows(decodedTwice, fhirData);
- * }
- * ```
- * 
- * @param viewDefinition - some FHIR ViewDefinition
- * @param data - flat resource array
- * @returns - the projected rows, or `rows(viewDefinition, data)`
- */
-export function runViewSync(
-    viewDefinition: Upstream<typeof Data.ViewDefinition>,
-    data: any[],
-) {
-    return pipe(
-        viewDefinition,
-        Data.decodeSync,
-        View.decodeSync, 
-        (viewDefinition) =>
-        rows(viewDefinition, data),
-    );
 }
