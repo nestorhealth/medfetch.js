@@ -1,9 +1,7 @@
 import { Data, Effect, Match } from "effect";
 import { SqliteIn, SqliteOutError, SqliteOutReady, SqliteOutResult } from "./workers/sqlite";
 import { spawn } from "./worker";
-import { sqlite3Worker1Promiser } from "@sqlite.org/sqlite-wasm";
 
-const worker = Effect.runSync(spawn("./workers/sqlite"));
 class MedfetchUnknownError extends Data.TaggedError("MedfetchUnknownError") {};
 class MedfetchLoadError extends Data.TaggedError("MedfetchLoadError")<{ message: string }> {};
 
