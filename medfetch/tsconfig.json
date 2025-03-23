@@ -5,7 +5,7 @@
         "lib": ["esnext", "webworker", "dom"],
         "skipLibCheck": true,
         "resolveJsonModule": true,
-        "moduleResolution": "nodenext",
+        "moduleResolution": "bundler",
         "allowJs": true,
         "esModuleInterop": true,
         "outDir": "./dist",

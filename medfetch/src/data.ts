@@ -1,5 +1,5 @@
 import { Array, Data as D, Effect, Option, pipe, Stream } from "effect";
-import { Bundle, Data } from "./schema";
+import { Bundle, Data } from "./schema/index.js";
 
 /**
  * Labeled `Data` layer Error
