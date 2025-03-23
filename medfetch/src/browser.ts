@@ -4,18 +4,6 @@ import { spawn } from "./worker";
 import { sqlite3Worker1Promiser } from "@sqlite.org/sqlite-wasm";
 
 const worker = Effect.runSync(spawn("./workers/sqlite"));
-const promiser = sqlite3Worker1Promiser(worker);
-console.log("here", promiser);
-console.log("but", await promiser("config-get", {}));
-
-const result = await promiser("exec",
-    `
-    CREATE TABLE test(id INTEGER PRIMARY KEY, msg TEXT);
-    INSERT INTO test(msg) VALUES ('Hello from worker!');
-    SELECT * FROM test;
-    `
-);
-
 class MedfetchUnknownError extends Data.TaggedError("MedfetchUnknownError") {};
 class MedfetchLoadError extends Data.TaggedError("MedfetchLoadError")<{ message: string }> {};
 

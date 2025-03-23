@@ -1,4 +1,4 @@
-import { Data, Effect, pipe } from "effect";
+import { Data, Effect } from "effect";
 
 /* Error handling */
 export class WorkerUnexpectedError extends Data.TaggedError("WorkerUnexpectedError")<{ 
