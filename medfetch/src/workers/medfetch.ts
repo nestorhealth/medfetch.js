@@ -111,8 +111,7 @@ const Medfetch = Effect.gen(function* () {
                 return 0;
             },
             xClose: (pCursor) => {
-                const c = vtab.xCursor.unget(pCursor);
-                c.dispose();
+                vtab.xCursor.unget(pCursor);
                 return 0;
             },
             xNext: (pCursor) => {
