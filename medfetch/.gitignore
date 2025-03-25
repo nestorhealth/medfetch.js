@@ -1,7 +1,0 @@
-/definitions/
-/generated/
-/synthea-data/
-/_defs/
-/dist/
-**/build
-sqlite/
