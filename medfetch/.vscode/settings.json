@@ -1,0 +1,14 @@
+{
+  "files.associations": {
+    "aux.h": "c",
+    "http.h": "c",
+    "json.h": "c",
+    "buffer.h": "c",
+    "khash.h": "c",
+    "fhir.h": "c",
+    "curl.h": "c",
+    "math.h": "c",
+    "intr.h": "c"
+  },
+  "C_Cpp.errorSquiggles": "disabled"
+}

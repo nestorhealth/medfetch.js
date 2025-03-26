@@ -1,0 +1,63 @@
+{
+    "name": "medfetch",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "sql + fhir REST call wrappers",
+    "scripts": {
+        "test": "vitest",
+        "build": "rm -rf dist && tsc",
+        "sqlite:mac-x86": "mkdir -p bin/sqlite/mac-x86 && cd src/c/sqlite && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/sqlite/mac-x86",
+        "unit": "vitest src",
+        "integration": "vitest tests/integration",
+        "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./sql": {
+            "types": "./dist/sql.d.ts",
+            "default": "./dist/sql.js"
+        },
+        "./schema": {
+            "types": "./dist/schema.d.ts",
+            "default": "./dist/schema/index.js"
+        },
+        "./sqlite": {
+            "types": "./dist/sqlite.d.ts",
+            "default": "./dist/sqlite.js"
+        },
+        "./better-sqlite3": {
+            "types": "./dist/better-sqlite3.d.ts",
+            "default": "./dist/better-sqlite3.js"
+        }
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@smile-cdr/fhirts": "^2.2.8",
+        "@sqlite.org/sqlite-wasm": "3.49.1-build2",
+        "dotenv": "^16.4.7",
+        "fhirpath": "^3.17.0"
+    },
+    "peerDependencies": {
+        "better-sqlite3": "^11.8.1",
+        "effect": "^3.12.1"
+    },
+    "devDependencies": {
+        "@nestorhealth/tsconfig": "workspace:^",
+        "@types/better-sqlite3": "^7.6.12",
+        "@types/node": "^22.13.1",
+        "@types/pg": "^8.11.11",
+        "prettier": "^3.4.2",
+        "sqliteow": "workspace:^",
+        "ts-morph": "^25.0.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.3",
+        "vite": "^6.2.2",
+        "vitest": "^2.1.8"
+    },
+    "packageManager": "pnpm@9.12.2+sha512.22721b3a11f81661ae1ec68ce1a7b879425a1ca5b991c975b074ac220b187ce56c708fe5db69f4c962c989452eee76c82877f4ee80f474cebd61ee13461b6228"
+}
