@@ -86,8 +86,7 @@ static const char *json_id_string(const json_t *curr) {
 
 static int xconnect(
     sqlite3 *pdb, void *paux, int argc, const char *const *argv,
-    sqlite3_vtab **pp_vtab, char **pz_err)
-{
+    sqlite3_vtab **pp_vtab, char **pz_err) {
     int rc = SQLITE_OK;
     rc += sqlite3_declare_vtab(pdb, "CREATE TABLE resource(id TEXT, json TEXT, type HIDDEN)");
     if (rc == SQLITE_OK) {
@@ -146,7 +145,8 @@ static int xcolumn(sqlite3_vtab_cursor *pcursor, sqlite3_context *pctx, int icol
             break;
         }
         case(1): {
-            sqlite3_result_text(pctx, json_dumps(row, NULL), -1, SQLITE_TRANSIENT);
+            const char *strified = json_dumps(row, NULL);
+            sqlite3_result_text(pctx, strified, -1, SQLITE_TRANSIENT);
             break;
         }
     }
@@ -183,16 +183,19 @@ static int xfilter(
         fhir_search_free(search);
         return SQLITE_ERROR;
     }
+    fhir_search_free(search);
     cursor->rows = result;
     return SQLITE_OK;
 }
 
 static int xclose(sqlite3_vtab_cursor *cur) {
     medfetch_cursor *cursor = (medfetch_cursor *) cur;
-    if (!cursor) {
-        return SQLITE_OK;
+    if (cursor) {
+        if (cursor->rows) {
+            json_decref(cursor->rows);
+        }
+        sqlite3_free(cursor);
     }
-    sqlite3_free(cur);
     return SQLITE_OK;
 }
 
