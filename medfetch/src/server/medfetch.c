@@ -143,9 +143,11 @@ static int xcolumn(sqlite3_vtab_cursor *pcursor, sqlite3_context *pctx, int icol
         case(0): {
             const char *id = json_id_string(row);
             sqlite3_result_text(pctx, id, -1, SQLITE_TRANSIENT);
+            break;
         }
         case(1): {
             sqlite3_result_text(pctx, json_dumps(row, NULL), -1, SQLITE_TRANSIENT);
+            break;
         }
     }
     return SQLITE_OK;
