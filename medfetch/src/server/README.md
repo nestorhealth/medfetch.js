@@ -1,6 +1,7 @@
 # SQLite-On-FHIR C extension!
 A virtual table implementation in C that uses FHIR APIs
-as the data source for the virtual table.
+as the data source for the virtual table. Built for running
+sqlite3 on the server.
 
 ## Usage
 The `fetch` function has a signature that looks something like this:

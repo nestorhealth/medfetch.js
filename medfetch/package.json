@@ -40,7 +40,8 @@
         "@smile-cdr/fhirts": "^2.2.8",
         "@sqlite.org/sqlite-wasm": "3.49.1-build2",
         "dotenv": "^16.4.7",
-        "fhirpath": "^3.17.0"
+        "fhirpath": "^3.17.0",
+        "openai": "^4.90.0"
     },
     "peerDependencies": {
         "better-sqlite3": "^11.8.1",
