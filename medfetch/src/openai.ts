@@ -1,5 +1,10 @@
 import { OpenAI } from "openai";
 import fs from "fs";
+import { FunctionDefinition } from "openai/resources.mjs";
+
+
+// PULL DATA ON ALL PATIENTS WHO UNDERWENT SURGICAL TREATMENT FOR
+//
 
 const openai = new OpenAI();
 const TVF_SCHEMA = "CREATE TABLE x(id TEXT NOT NULL, json TEXT NOT NULL)";
@@ -12,7 +17,6 @@ let sqlAssistant = await openai.beta.assistants.retrieve(SQL_ASSISTANT_ID);
 const vectorStore = await openai.vectorStores.retrieve(SCHEMA_VECTOR_STORE_ID);
 
 await openai.vectorStores.fileBatches.uploadAndPoll(vectorStore.id, fileStreams as any);
-console.log('rout');
 // sqlAssistant = await openai.beta.assistants.update(sqlAssistant.id, {
 //   tool_resources: { file_search: { vector_store_ids: [vectorStore.id] } },
 // });

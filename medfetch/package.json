@@ -6,7 +6,8 @@
     "scripts": {
         "test": "vitest",
         "build": "rm -rf dist && tsc",
-        "sqlite:mac-x86": "mkdir -p bin/sqlite/mac-x86 && cd src/c/sqlite && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/sqlite/mac-x86",
+        "make:linux-x86": "mkdir -p bin/linux-x86 && cd src/server && make && cp build/linux/x86_64/medfetch.so ../../bin/linux-x86",
+        "make:mac-x86": "mkdir -p bin/mac-x86 && cd src/server && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/mac-x86",
         "unit": "vitest src",
         "integration": "vitest tests/integration",
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
