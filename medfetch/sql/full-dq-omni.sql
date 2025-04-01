@@ -1,2 +1,0 @@
--- this is the SQL that could be produced
--- if you know all the dependencies ahead of time
