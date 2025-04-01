@@ -242,6 +242,7 @@ type Conversational<T> = {
 const parse = (text: string) => JSON.parse(text) as Conversational<{ resources: string[] }>;
 
 const { resources, conversation } = parse(response.output_text);
+
 const jsonSchemas = Object.fromEntries(resources.map((resource) => {
     const schema = fhirJSONSchema["definitions"][resource];
     const properties = Object.fromEntries(Object.entries(schema["properties"]).filter(([key]) => !key.startsWith("_")));
@@ -249,18 +250,30 @@ const jsonSchemas = Object.fromEntries(resources.map((resource) => {
     return [resource, newSchema] as const;
 }));
 
-console.log(conversation);
+console.log("response1", conversation);
+console.log();
+
+const EXISTING_TABLES: string[] = [];
 
 const systemMessage1 = { role: "system", content: `Here is the corresponding schema for each of these resource types that the app is expecting to receive from the FHIR server, given as a JavaScript object text ${JSON.stringify(jsonSchemas)}` };
-const systemMessage2 = { role: "system", content: `Based on the user's response, infer which properties they would need to pull. In the "aux_sql" field, output the json_extracts from a generic TEXT column named 'json', which you will assume has the JSON data for the pulled data in plaintext. Ensure you specifically do NOT include the "resourceType" field, as you can assume each table that will have this extraction performed will contain only the corresponding resource of that type for that table. The one other stipulation I will add is instead of making the FROM clause a plain table, assume there is a table-valued-function called medfetch, which can effectively be substituted for the table name by simply calling medfetch(), and passing into arg0 a text literal with the corresponding resource.` };
-const systemMessage3 = { role: "system", content: `Then in another response, in the 'conversation' field, you will respond directly to the user, asking if the following tables generated, which the application will derive the view for from the sql you outputted, suits their needs. Continue asking until the user indicates they are OK with the tables. Once they indicate so, you will ask which of these variables they want to keep in their final result set. Based on their response, you will now finally write the final SQL needed to carry out their original query in the "final_sql" field. On the edge case they indicate they want to keep all of them, you will write out the column selects in the SELECT clause for every single column, aliasing each with the name of the table but lowercased, followed by an underscore, then appended with the column name. `};
+const systemMessage2 = { 
+    role: "system",
+    content: `Based on the user's response, infer which properties they would need to pull. In the "aux_sql" field, output the json_extracts from a generic TEXT column named 'json', which you will assume has the JSON data for the pulled data in plaintext. Ensure you specifically do NOT include the "resourceType" field, as you can assume each table that will have this extraction performed will contain only the corresponding resource of that type for that table. Ensure that any foreign-key like properties to a Patient are included, even if the user doesn't explicitly ask for it. One other stipulation I will add is instead of making the FROM clause a plain table, assume there is a table-valued-function called medfetch, which can effectively be substituted for the table name by simply calling medfetch(), and passing into arg0 a text literal with the corresponding resource. Format this query as a CREATE TABLE AS statement, and here is the list of existing table names so that you can pick any name that doesn't conflict. ${EXISTING_TABLES}.`
+};
+const systemMessage3 = { 
+    role: "system", 
+    content: "Once the user responds, just run a SELECT * FROM _ query from the auxillary tables you've just generated based on the user response, that gives the user the result-set that their original nl query asks for."
+};
 
-const userReponse1 = { role: "user", content: "For Patient: birth date and gender. For Procedure: date and outcome" };
+const userReponse1 = {
+    role: "user",
+    content: "For Patient: birth date and gender. For Procedure: date and outcome"
+};
 
 const response2 = await client.responses.create({
     model: "gpt-4o-2024-08-06",
     previous_response_id: response.id,
-    input: [systemMessage1, systemMessage2, systemMessage3],
+    input: [systemMessage1, systemMessage2, systemMessage3, userReponse1],
     store: true,
     text: {
         format: {
@@ -292,4 +305,5 @@ const response2Parsed = parse2(response2.output_text);
 
 console.log("AUX", response2Parsed.aux_sql);
 console.log("CONVERSATION", response2Parsed.conversation);
+console.log("FINAL", response2Parsed.final_sql);
 
