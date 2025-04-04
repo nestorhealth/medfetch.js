@@ -11,13 +11,13 @@ export function getFetchPath() {
     const arch = os.arch();
 
     if (platform === "linux") {
-        if (arch == "x86_64") {
-            return path.resolve(__dirname, "..", "bin", "sqlite", "linux-x86", "fetch.so");
+        if (arch === "x64") {
+            return path.resolve(__dirname, "..", "bin", "linux-x86", "medfetch");
         }
         throw new Error(`${arch} on linux not supported right now`);
     } else if (platform === "darwin") {
         if (arch === "x64") {
-            return path.resolve(__dirname, "..", "bin", "sqlite", "mac-x86", "fetch.dylib");
+            return path.resolve(__dirname, "..", "bin", "mac-x86", "medfetch");
         }
         throw new Error(`${arch} on mac not supported right now`);
     }

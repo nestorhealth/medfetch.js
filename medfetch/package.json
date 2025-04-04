@@ -17,6 +17,10 @@
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
+        "./browser": {
+            "types": "./dist/browser/medfetch.d.ts",
+            "default": "./dist/browser/medfetch.js"
+        },
         "./sql": {
             "types": "./dist/sql.d.ts",
             "default": "./dist/sql.js"
