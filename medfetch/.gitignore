@@ -2,7 +2,6 @@
 /generated/
 /synthea-data/
 /_defs/
-/dist/
 **/build
 sqlite/
 .env
