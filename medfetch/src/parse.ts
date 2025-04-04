@@ -252,7 +252,7 @@ export function queryToViewDefinition(vtabName: string, query: string) {
 
     return View.make({
         status: "active",
-        resource: tables[0].path as ResourceType,
+        resource: tables[0].path as RESOURCE_TYPE,
         name: vtabName,
         select,
         constant: [],

@@ -151,4 +151,4 @@ export const RESOURCE_TYPE = Schema.Literal(
     "VisionPrescription",
 );
 
-export type ResourceType = typeof RESOURCE_TYPE.Type;
+export type RESOURCE_TYPE = typeof RESOURCE_TYPE.Type;

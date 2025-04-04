@@ -1,10 +1,9 @@
 import { Schema } from "effect";
-import { ResourceType } from "./literal";
 export * from "./literal";
 export * as Data from "./data";
 export * as Primitive from "./primitive";
 export * as View from "./view";
-export declare const isResourceType: (u: unknown) => u is ResourceType;
+export declare const isResourceType: (u: unknown) => u is string;
 /**
  * Simple utility type to get the 'upstream'
  * type of any given Type.
