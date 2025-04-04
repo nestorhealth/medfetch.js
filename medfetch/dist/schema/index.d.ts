@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-export * from "./literal";
+export { RESOURCE_TYPE, } from "./literal";
 export * as Data from "./data";
 export * as Primitive from "./primitive";
 export * as View from "./view";
