@@ -1,12 +1,12 @@
 import { Schema } from "effect";
-import { ResourceType } from "./literal";
+import { RESOURCE_TYPE } from "./literal";
 
 export * from "./literal";
 export * as Data from "./data";
 export * as Primitive from "./primitive";
 export * as View from "./view";
 
-export const isResourceType = (u: unknown): u is ResourceType => typeof u === "string" && ResourceType.literals.includes(u as any);
+export const isResourceType = (u: unknown): u is string => typeof u === "string" && RESOURCE_TYPE.literals.includes(u as any);
 
 /**
  * Simple utility type to get the 'upstream'

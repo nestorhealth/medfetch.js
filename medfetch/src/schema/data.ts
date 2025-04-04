@@ -117,7 +117,7 @@ const _Constant = Schema.Struct({
 export interface Constant extends Schema.Schema.Type<typeof _Constant> {};
 export const Constant: Schema.Schema<Constant> = _Constant;
 
-import { ResourceType, FhirVersion } from "./literal";
+import { RESOURCE_TYPE, FhirVersion } from "./literal";
 
 const _ViewDefinition = Schema.Struct({
     status: Schema.Literal("draft", "active", "retired", "unknown"),
@@ -132,7 +132,7 @@ const _ViewDefinition = Schema.Struct({
     description: ow(Schema.String, { exact: true }),
     useContext: ow(UsageContext, { exact: true }),
     copyright: ow(Schema.String, { exact: true }),
-    resource: ResourceType,
+    resource: RESOURCE_TYPE,
     fhirVersion: ow(FhirVersion, { exact: true }),
     constant: ow(Schema.Array(_Constant), {
         exact: true,

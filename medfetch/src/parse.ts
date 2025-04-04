@@ -1,4 +1,4 @@
-import { ResourceType, View } from "./schema";
+import { RESOURCE_TYPE, View } from "./schema";
 import { Array as Arrayh } from "effect";
 
 const reconstruct = (lines: string[]) => {

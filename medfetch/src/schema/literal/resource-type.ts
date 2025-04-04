@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-export const ResourceType = Schema.Literal(
+export const RESOURCE_TYPE = Schema.Literal(
     "Account",
     "ActivityDefinition",
     "AdverseEvent",
@@ -151,4 +151,4 @@ export const ResourceType = Schema.Literal(
     "VisionPrescription",
 );
 
-export type ResourceType = typeof ResourceType.Type;
+export type ResourceType = typeof RESOURCE_TYPE.Type;
