@@ -1,5 +1,5 @@
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
-export default function Medfetch(sqlite3: Sqlite3Static): Promise<{
+export default function Medfetch(sqlite3: Sqlite3Static, loaderAux: string[]): Promise<{
     methods: {
         xCreate: number;
         xConnect(pDb: number, pAux: number, argc: number, argv: number, ppVtab: number, pzErr: number): number;

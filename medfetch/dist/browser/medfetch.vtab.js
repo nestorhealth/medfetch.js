@@ -17,9 +17,9 @@ function getBaseUrl({ wasm }, pAux) {
  *
  * @returns port2
  */
-async function getFetchPort() {
+async function getFetchPort(url) {
     const { port1, port2 } = new MessageChannel();
-    const fetchWorker = new Worker(new URL(import.meta.env.DEV ? "fetch.worker.js" : "fetch.worker.mjs"), { type: "module" });
+    const fetchWorker = new Worker(url, { type: "module" });
     fetchWorker.postMessage({ type: "init" }, [port2]);
     // block initalization
     return await new Promise((resolve, reject) => {
@@ -40,9 +40,9 @@ const Requester = (port) => function request(message) {
     // sleep until signal != 0
     Atomics.wait(signal, 0, 0);
 };
-export default async function Medfetch(sqlite3) {
+export default async function Medfetch(sqlite3, loaderAux) {
     const { wasm, capi, vtab } = sqlite3;
-    const request = await getFetchPort().then(Requester);
+    const request = await getFetchPort(loaderAux[0]).then(Requester);
     const getCursor = (pcursor) => vtab.xCursor.get(pcursor);
     const getVirtualTable = (pvtab) => vtab.xVtab.get(pvtab);
     return {
@@ -124,15 +124,20 @@ export default async function Medfetch(sqlite3) {
                 const cursor = getCursor(pCursor);
                 const { baseUrl } = getVirtualTable(cursor.pVtab);
                 // to allow for (1) trailing slash
-                const url = baseUrl[baseUrl.length - 1] === '/' ? `${baseUrl}${resourceType}`
+                let url = baseUrl[baseUrl.length - 1] === '/' ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
+                let resources = [];
                 const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
-                // 'synchronous' fetch!
-                request({ sharedSignal, url });
-                const size = new DataView(sharedSignal, 4, 4).getUint32(0, true);
-                const dataBytes = new Uint8Array(sharedSignal, 8, size);
-                const bundle = new TextDecoder().decode(dataBytes.slice()); // can't read from shared buffer directly, need to slice() to copy
-                const resources = JSON.parse(bundle).entry.map(({ resource }) => resource);
+                while (url !== null && url !== undefined) {
+                    request({ sharedSignal, url });
+                    const size = new DataView(sharedSignal, 4, 4).getUint32(0, true);
+                    const dataBytes = new Uint8Array(sharedSignal, 8, size);
+                    const payloadSerialized = new TextDecoder().decode(dataBytes.slice()); // can't read from shared buffer directly, need to slice() to copy
+                    const bundle = JSON.parse(payloadSerialized);
+                    const extractedResources = bundle.entry.map(({ resource }) => resource);
+                    resources.push(...extractedResources);
+                    url = bundle.link?.find((link) => link.relation === "next")?.url;
+                }
                 cursor.rows = resources;
                 return 0;
             }

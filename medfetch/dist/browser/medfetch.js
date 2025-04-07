@@ -18,6 +18,7 @@ export default function medfetch(baseUrl) {
     return {
         moduleUrl,
         moduleName: "medfetch",
+        loaderAux: [new URL("fetch.worker.js", import.meta.url).toString()],
         aux: new TextEncoder().encode(baseUrl)
     };
 }

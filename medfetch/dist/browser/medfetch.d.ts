@@ -16,5 +16,6 @@
 export default function medfetch(baseUrl: string): {
     moduleUrl: string;
     moduleName: string;
+    loaderAux: string[];
     aux: Uint8Array<ArrayBufferLike>;
 };

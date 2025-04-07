@@ -20,6 +20,7 @@ export default function medfetch(baseUrl: string) {
     return {
         moduleUrl,
         moduleName: "medfetch",
+        loaderAux: [new URL("fetch.worker.js", import.meta.url).toString()],
         aux: new TextEncoder().encode(baseUrl)
     } satisfies Extract<SqliteOwWorkerMessage, { type: "ow-load-module" }>["args"]
 }
