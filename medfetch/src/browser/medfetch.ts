@@ -1,4 +1,4 @@
-import type { SqliteOwWorkerMessage } from "sqliteow";
+import type { SqliteowRequest } from "sqliteow";
 
 /**
  * Module loader convenience function
@@ -22,5 +22,5 @@ export default function medfetch(baseUrl: string) {
         moduleName: "medfetch",
         loaderAux: [new URL("fetch.worker.js", import.meta.url).toString()],
         aux: new TextEncoder().encode(baseUrl)
-    } satisfies Extract<SqliteOwWorkerMessage, { type: "ow-load-module" }>["args"]
+    } satisfies Extract<SqliteowRequest, { type: "ow-load-module" }>["args"]
 }
