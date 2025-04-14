@@ -81,7 +81,14 @@ function getColumnName(path: string | [string, any]) {
 }
 
 function top(path: string) {
-    return path.split(".")[0];
+    const split = path.split(".");
+    // check if we have a top level resource pathstring
+    // such as "Patient.foo". If so, return foo.
+    if (split[0][0].toUpperCase() === split[0][0]) {
+        return split[1];
+    } else {
+        return split[0];
+    }
 }
 function size(path: string) {
     return path.split(".").length;
@@ -96,10 +103,12 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
         return null;
 
     const paths: (string | [string, any])[] = JSON.parse(fp); // todo: allow for forEach's and more complex path mappings
+    if (!Array.isArray(paths)) // no arg1 then we just return null
+        return null;
     const inferredSet = new Set();
     const column: View.ColumnPath[] = [];
     for (let i = 0; i < rows.length; i++) {
-        if (inferredSet.size === paths.length) // early exit!
+        if (inferredSet.size === paths.length) // early exit! ideally we hit this on rows[0]
             break;
         const rowLike = rows[i];
         for (const path of paths) {
