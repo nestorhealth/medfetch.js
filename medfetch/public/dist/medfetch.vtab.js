@@ -46,101 +46,99 @@ export default async function Medfetch(sqlite3, loaderAux) {
     const getCursor = (pcursor) => vtab.xCursor.get(pcursor);
     const getVirtualTable = (pvtab) => vtab.xVtab.get(pvtab);
     return {
-        methods: {
-            xCreate: 0,
-            xConnect(pDb, pAux, argc, argv, ppVtab, pzErr) {
-                let rc = capi.SQLITE_OK;
-                rc += capi.sqlite3_declare_vtab(pDb, `CREATE TABLE resource(
-                        id TEXT,
-                        json TEXT,
-                        type HIDDEN
-                    )`);
-                if (!rc) {
-                    const virtualTable = vtab.xVtab.create(ppVtab);
-                    virtualTable.baseUrl = getBaseUrl(sqlite3, pAux);
-                }
-                return rc;
-            },
-            xBestIndex(pVtab, pIdxInfo) {
-                const index = vtab.xIndexInfo(pIdxInfo);
-                for (let i = 0; i < index.$nConstraint; i++) {
-                    let u = index.nthConstraintUsage(i);
-                    u.$argvIndex = 1;
-                    u.$omit = 1;
-                }
-                return capi.SQLITE_OK;
-            },
-            xDestroy: true,
-            xDisconnect(pVtab) {
-                vtab.xVtab.unget(pVtab);
-                return capi.SQLITE_OK;
-            },
-            xOpen: (pVtab, ppCursor) => {
-                const cursor = vtab.xCursor.create(ppCursor);
-                cursor.pVtab = pVtab;
-                cursor.index = 0;
-                cursor.rows = [];
-                return capi.SQLITE_OK;
-            },
-            xClose: (pCursor) => {
-                vtab.xCursor.unget(pCursor);
-                return capi.SQLITE_OK;
-            },
-            xNext: (pCursor) => {
-                const cursor = getCursor(pCursor);
-                cursor.index++;
-                return capi.SQLITE_OK;
-            },
-            xColumn(pCursor, pCtx, iCol) {
-                const cursor = getCursor(pCursor);
-                const row = cursor.rows[cursor.index];
-                switch (iCol) {
-                    case (0): {
-                        capi.sqlite3_result_text(pCtx, row.id, -1, capi.SQLITE_TRANSIENT);
-                        break;
-                    }
-                    case (1): {
-                        const encoded = JSON.stringify(row);
-                        capi.sqlite3_result_text(pCtx, encoded, -1, capi.SQLITE_TRANSIENT);
-                        break;
-                    }
-                }
-                return capi.SQLITE_OK;
-            },
-            xRowid: (pCursor, ppRowid64) => {
-                const cursor = getCursor(pCursor);
-                vtab.xRowid(ppRowid64, cursor.index);
-                return capi.SQLITE_OK;
-            },
-            xEof: (pCursor) => {
-                const cursor = getCursor(pCursor);
-                const atEnd = cursor.index >= cursor.rows.length;
-                return Number(atEnd);
-            },
-            xFilter: (pCursor, idxNum, idxCStr, argc, argv) => {
-                const [resourceType] = capi.sqlite3_values_to_js(argc, argv);
-                if (typeof resourceType !== "string")
-                    return capi.SQLITE_ERROR;
-                const cursor = getCursor(pCursor);
-                const { baseUrl } = getVirtualTable(cursor.pVtab);
-                // to allow for (1) trailing slash
-                let url = baseUrl[baseUrl.length - 1] === '/' ? `${baseUrl}${resourceType}`
-                    : `${baseUrl}/${resourceType}`;
-                let resources = [];
-                const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
-                while (url !== null && url !== undefined) {
-                    request({ sharedSignal, url });
-                    const size = new DataView(sharedSignal, 4, 4).getUint32(0, true);
-                    const dataBytes = new Uint8Array(sharedSignal, 8, size);
-                    const payloadSerialized = new TextDecoder().decode(dataBytes.slice()); // can't read from shared buffer directly, need to slice() to copy
-                    const bundle = JSON.parse(payloadSerialized);
-                    const extractedResources = bundle.entry.map(({ resource }) => resource);
-                    resources.push(...extractedResources);
-                    url = bundle.link?.find((link) => link.relation === "next")?.url;
-                }
-                cursor.rows = resources;
-                return 0;
+        xCreate: 0,
+        xConnect(pDb, pAux, argc, argv, ppVtab, pzErr) {
+            let rc = capi.SQLITE_OK;
+            rc += capi.sqlite3_declare_vtab(pDb, `CREATE TABLE resource(
+                    id TEXT,
+                    json TEXT,
+                    type HIDDEN
+                )`);
+            if (!rc) {
+                const virtualTable = vtab.xVtab.create(ppVtab);
+                virtualTable.baseUrl = getBaseUrl(sqlite3, pAux);
             }
+            return rc;
         },
+        xBestIndex(pVtab, pIdxInfo) {
+            const index = vtab.xIndexInfo(pIdxInfo);
+            for (let i = 0; i < index.$nConstraint; i++) {
+                let u = index.nthConstraintUsage(i);
+                u.$argvIndex = 1;
+                u.$omit = 1;
+            }
+            return capi.SQLITE_OK;
+        },
+        xDestroy: true,
+        xDisconnect(pVtab) {
+            vtab.xVtab.unget(pVtab);
+            return capi.SQLITE_OK;
+        },
+        xOpen: (pVtab, ppCursor) => {
+            const cursor = vtab.xCursor.create(ppCursor);
+            cursor.pVtab = pVtab;
+            cursor.index = 0;
+            cursor.rows = [];
+            return capi.SQLITE_OK;
+        },
+        xClose: (pCursor) => {
+            vtab.xCursor.unget(pCursor);
+            return capi.SQLITE_OK;
+        },
+        xNext: (pCursor) => {
+            const cursor = getCursor(pCursor);
+            cursor.index++;
+            return capi.SQLITE_OK;
+        },
+        xColumn(pCursor, pCtx, iCol) {
+            const cursor = getCursor(pCursor);
+            const row = cursor.rows[cursor.index];
+            switch (iCol) {
+                case (0): {
+                    capi.sqlite3_result_text(pCtx, row.id, -1, capi.SQLITE_TRANSIENT);
+                    break;
+                }
+                case (1): {
+                    const encoded = JSON.stringify(row);
+                    capi.sqlite3_result_text(pCtx, encoded, -1, capi.SQLITE_TRANSIENT);
+                    break;
+                }
+            }
+            return capi.SQLITE_OK;
+        },
+        xRowid: (pCursor, ppRowid64) => {
+            const cursor = getCursor(pCursor);
+            vtab.xRowid(ppRowid64, cursor.index);
+            return capi.SQLITE_OK;
+        },
+        xEof: (pCursor) => {
+            const cursor = getCursor(pCursor);
+            const atEnd = cursor.index >= cursor.rows.length;
+            return Number(atEnd);
+        },
+        xFilter: (pCursor, idxNum, idxCStr, argc, argv) => {
+            const [resourceType] = capi.sqlite3_values_to_js(argc, argv);
+            if (typeof resourceType !== "string")
+                return capi.SQLITE_ERROR;
+            const cursor = getCursor(pCursor);
+            const { baseUrl } = getVirtualTable(cursor.pVtab);
+            // to allow for (1) trailing slash
+            let url = baseUrl[baseUrl.length - 1] === '/' ? `${baseUrl}${resourceType}`
+                : `${baseUrl}/${resourceType}`;
+            let resources = [];
+            const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
+            while (url !== null && url !== undefined) {
+                request({ sharedSignal, url });
+                const size = new DataView(sharedSignal, 4, 4).getUint32(0, true);
+                const dataBytes = new Uint8Array(sharedSignal, 8, size);
+                const payloadSerialized = new TextDecoder().decode(dataBytes.slice()); // can't read from shared buffer directly, need to slice() to copy
+                const bundle = JSON.parse(payloadSerialized);
+                const extractedResources = bundle.entry.map(({ resource }) => resource);
+                resources.push(...extractedResources);
+                url = bundle.link?.find((link) => link.relation === "next")?.url;
+            }
+            cursor.rows = resources;
+            return 0;
+        }
     };
 }

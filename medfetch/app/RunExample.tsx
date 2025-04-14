@@ -9,12 +9,10 @@ import { Table } from "nextra/components";
 const SQL = sql<{
   id: string;
   name: string;
-}>`CREATE TABLE clean_patients AS SELECT 
+}>`SELECT 
     json ->> 'id' AS id,
     (json -> 'name' -> 0 -> 'given' ->> 0) || ' ' || (json -> 'name' -> 0 ->> 'family') AS name
-   FROM medfetch('Patient');
-   SELECT * FROM clean_patients LIMIT 5;
-   DROP TABLE clean_patients;`;
+   FROM medfetch('Patient')`;
 
 export function RunExample() {
   const handle = ow();
@@ -29,7 +27,8 @@ export function RunExample() {
         aux: new TextEncoder().encode("https://r4.smarthealthit.org/")
       });
       return await handle.session(SQL).then((rows) => rows.toArray())
-    }
+    },
+    onError: (e) => console.error(e)
   });
 
   return (
