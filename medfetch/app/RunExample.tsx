@@ -11,7 +11,7 @@ const SQL = sql<{
   name: string;
 }>`CREATE TABLE clean_patients AS SELECT 
     json ->> 'id' AS id,
-    json -> 'name' -> 0 -> 'given' ->> 0 as name
+    (json -> 'name' -> 0 -> 'given' ->> 0) || ' ' || (json -> 'name' -> 0 ->> 'family') AS name
    FROM medfetch('Patient');
    SELECT * FROM clean_patients LIMIT 5;
    DROP TABLE clean_patients;`;
