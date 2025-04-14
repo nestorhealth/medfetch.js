@@ -10,9 +10,14 @@ const SQL = sql<{
   id: string;
   name: string;
 }>`SELECT 
-    json ->> 'id' AS id,
-    (json -> 'name' -> 0 -> 'given' ->> 0) || ' ' || (json -> 'name' -> 0 ->> 'family') AS name
-   FROM medfetch('Patient')
+   json ->> 'id' AS id,
+   json ->> 'name' AS name,
+   json ->> 'birthDate' AS birthDate
+   FROM medfetch('Patient', json_array(
+     'id',
+     'name',
+     'birthDate'
+   ))
    LIMIT 5;`;
 
 export function RunExample() {
@@ -44,6 +49,7 @@ export function RunExample() {
             <Table.Tr>
               <Table.Th>id</Table.Th>
               <Table.Th>name</Table.Th>
+              <Table.Th>birthDate</Table.Th>
             </Table.Tr>
           </thead>
           <tbody>

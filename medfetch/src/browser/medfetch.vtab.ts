@@ -1,13 +1,15 @@
-// @ts-nocheck 
+// @ts-nocheck
 import type {
-    sqlite3_index_constraint,
     sqlite3_module,
     sqlite3_vtab,
     sqlite3_vtab_cursor,
     Sqlite3Static,
+    SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
 import type { FetchMessageRequest } from "./fetch.worker.js";
+import { View } from "~/schema";
+import { sof } from "~/sof";
 
 /**
  * service wrapper so we dont need to keep passing it
@@ -63,6 +65,72 @@ const Requester = (port: MessagePort) =>
         Atomics.wait(signal, 0, 0);
     };
 
+
+function getColumnName(path: string | [string, any]) {
+    if (typeof path !== "string")
+        return path[0]; // default to the 'key' element in the 2-tuple
+
+    let cleaned = path;
+    while (cleaned.match(/\.\w+\([^)]*\)$/)) {
+        cleaned = cleaned.replace(/\.\w+\([^)]*\)$/, '');
+    }
+
+    // split on '.' and return tail
+    const parts = cleaned.split('.');
+    return parts[parts.length - 1];
+}
+
+function top(path: string) {
+    return path.split(".")[0];
+}
+
+function generateViewDefinition(args: SqlValue[], rows: any[]) {
+    const [resourceType, fp] = args;
+    if (!resourceType)
+        throw new Error(`medfetch: unexpected falsy resourceType in args[0]`)
+
+    if (!fp) // no fhirpath map, then just return null and default to the whole object
+        return null;
+
+    const paths: (string | [string, any])[] = JSON.parse(fp); // todo: allow for forEach's and more complex path mappings
+    const inferredSet = new Set();
+    const column: View.ColumnPath[] = [];
+    for (let i = 0; i < rows.length; i++) {
+        if (inferredSet.size === paths.length) // early exit!
+            break;
+        const rowLike = rows[i];
+        for (const path of paths) {
+            if (top(path) in rowLike) {
+                const value = rowLike[path];
+                const name = getColumnName(path);
+                const collection = Array.isArray(value);
+                inferredSet.add(path);
+                column.push(
+                    View.columnPath({
+                        path,
+                        name,
+                        collection,
+                        type: "string",
+                        tags: []
+                    })
+                );
+            } 
+        }
+    }
+    return View.make({
+        status: "active",
+        name: resourceType,
+        resource: resourceType,
+        constant: [],
+        select: [
+            View.Column({
+                column
+            })
+        ],
+        where: []
+    });
+}
+
 export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string[]) {
     const { wasm, capi, vtab } = sqlite3;
     const request = await getFetchPort(loaderAux[0]).then(Requester);
@@ -79,7 +147,8 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
                 `CREATE TABLE resource(
                     id TEXT,
                     json TEXT,
-                    type HIDDEN
+                    type HIDDEN,
+                    fp   HIDDEN
                 )`);
             if (!rc) {
                 const virtualTable = vtab.xVtab.create(ppVtab) as medfetch_vtab;
@@ -163,28 +232,37 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
             return Number(atEnd);
         },
         xFilter: (pCursor, idxNum, idxCStr, argc, argv) => {
-            const [resourceType] = capi.sqlite3_values_to_js(argc, argv);
-            if (typeof resourceType !== "string")
+            const args = capi.sqlite3_values_to_js(argc, argv);
+            const [resourceType] = args;
+            if (typeof resourceType !== "string") // basic check, may add enum inclusion check later
                 return capi.SQLITE_ERROR;
+
             const cursor = getCursor(pCursor);
             const { baseUrl } = getVirtualTable(cursor.pVtab);
             // to allow for (1) trailing slash
             let url = baseUrl[baseUrl.length - 1] === '/' ? `${baseUrl}${resourceType}`
                 : `${baseUrl}/${resourceType}`;
-            let resources: Resource[] = [];
+            let resources: any[] = [];
             const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
             while (url !== null && url !== undefined) {
                 request({ sharedSignal, url });
                 const size = new DataView(sharedSignal, 4, 4).getUint32(0, true);
                 const dataBytes = new Uint8Array(sharedSignal, 8, size);
                 const payloadSerialized = new TextDecoder().decode(dataBytes.slice()); // can't read from shared buffer directly, need to slice() to copy
-                const bundle: Bundle = JSON.parse(payloadSerialized);
+                const bundle: any = JSON.parse(payloadSerialized);
                 const extractedResources = bundle.entry.map(({ resource }) => resource);
                 resources.push(...extractedResources);
-                url = bundle.link?.find((link) => link.relation === "next")?.url;
+                url = bundle.link?.find((link: any) => link.relation === "next")?.url;
             }
 
-            cursor.rows = resources;
+            // handle inline fhirpath transformations
+            const viewDefinition = generateViewDefinition(args, resources);
+            if (viewDefinition) {
+                const rows = sof(viewDefinition, resources);
+                cursor.rows = rows;
+            } else {
+                cursor.rows = resources;
+            }
             return 0;
         }
     } satisfies sqlite3_module;

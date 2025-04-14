@@ -7,7 +7,7 @@
         "test": "vitest",
         "dev": "next",
         "build": "rm -rf dist && tsc",
-        "build:browser": "rm -rf public/dist && tsc -p tsconfig.browser.json",
+        "build:browser": "rm -rf public/dist && npx webpack --config webpack.vtab.config.cjs && tsc -p tsconfig.browser.json",
         "postbuild": "pagefind --site .next/server/app --output-path out/_pagefind",
         "make:linux-x86": "mkdir -p bin/linux-x86 && cd src/server && make && cp build/linux/x86_64/medfetch.so ../../bin/linux-x86",
         "make:mac-x86": "mkdir -p bin/mac-x86 && cd src/server && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/mac-x86",
@@ -76,11 +76,14 @@
         "pagefind": "^1.3.0",
         "prettier": "^3.4.2",
         "sqliteow": "workspace:^",
+        "ts-loader": "^9.5.2",
         "ts-morph": "^25.0.0",
         "tsx": "^4.19.2",
         "typescript": "^5.7.3",
         "vite": "^6.2.2",
-        "vitest": "^2.1.8"
+        "vitest": "^2.1.8",
+        "webpack": "^5.99.5",
+        "webpack-cli": "^6.0.1"
     },
     "packageManager": "pnpm@9.12.2+sha512.22721b3a11f81661ae1ec68ce1a7b879425a1ca5b991c975b074ac220b187ce56c708fe5db69f4c962c989452eee76c82877f4ee80f474cebd61ee13461b6228"
 }

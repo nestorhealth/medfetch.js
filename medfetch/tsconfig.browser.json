@@ -19,5 +19,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/browser/**/*.ts"]
+  "include": ["src/browser/fetch.worker.ts"]
 }

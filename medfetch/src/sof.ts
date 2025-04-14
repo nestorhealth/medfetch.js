@@ -2,7 +2,7 @@ import { Array, Match, pipe, Record } from "effect";
 import { evaluate, UserInvocationTable } from "fhirpath";
 import fhir_r4_model from "fhirpath/fhir-context/r4";
 import { fhirR4 } from "@smile-cdr/fhirts";
-import { Data, Upstream, View } from "./schema";
+import { View } from "./schema";
 
 function codeSystemAlias(codeSystem: string | undefined) {
     return Match.value(codeSystem).pipe(
