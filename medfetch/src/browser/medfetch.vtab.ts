@@ -1,5 +1,6 @@
 // @ts-nocheck 
 import type {
+    sqlite3_index_constraint,
     sqlite3_module,
     sqlite3_vtab,
     sqlite3_vtab_cursor,
@@ -89,11 +90,27 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
         xBestIndex(pVtab, pIdxInfo) {
             const index = vtab.xIndexInfo(pIdxInfo);
             for (let i = 0; i < index.$nConstraint; i++) {
-                let u = index.nthConstraintUsage(i);
-                u.$argvIndex = 1;
-                u.$omit = 1;
+                const constraint = index.nthConstraint(i);
+                const usage = index.nthConstraintUsage(i);
+                switch (constraint.$op) {
+                    case (capi.SQLITE_INDEX_CONSTRAINT_LIMIT): {
+                        usage.$argvIndex = i + 1;
+                        usage.$omit = 1;
+                        break;
+                    }
+                    case (capi.SQLITE_INDEX_CONSTRAINT_OFFSET): {
+                        usage.$argvIndex = i + 1;
+                        usage.$omit = 1;
+                        break;
+                    }
+                    default: {
+                        usage.$argvIndex = i + 1;
+                        usage.$omit = 1;
+                    }
+                }
             }
 
+            index.dispose();
             return capi.SQLITE_OK;
         },
         xDestroy: true,

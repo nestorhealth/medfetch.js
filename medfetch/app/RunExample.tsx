@@ -12,7 +12,8 @@ const SQL = sql<{
 }>`SELECT 
     json ->> 'id' AS id,
     (json -> 'name' -> 0 -> 'given' ->> 0) || ' ' || (json -> 'name' -> 0 ->> 'family') AS name
-   FROM medfetch('Patient')`;
+   FROM medfetch('Patient')
+   LIMIT 5;`;
 
 export function RunExample() {
   const handle = ow();
