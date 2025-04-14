@@ -5,7 +5,10 @@
     "description": "sql + fhir REST call wrappers",
     "scripts": {
         "test": "vitest",
+        "dev": "next",
         "build": "rm -rf dist && tsc",
+        "build:browser": "rm -rf public/dist && tsc -p tsconfig.browser.json",
+        "postbuild": "pagefind --site .next/server/app --output-path out/_pagefind",
         "make:linux-x86": "mkdir -p bin/linux-x86 && cd src/server && make && cp build/linux/x86_64/medfetch.so ../../bin/linux-x86",
         "make:mac-x86": "mkdir -p bin/mac-x86 && cd src/server && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/mac-x86",
         "unit": "vitest src",
@@ -38,21 +41,39 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@radix-ui/react-slot": "^1.1.2",
         "@smile-cdr/fhirts": "^2.2.8",
         "@sqlite.org/sqlite-wasm": "3.49.1-build2",
+        "@tailwindcss/postcss": "^4",
+        "@tanstack/react-query": "^5.67.2",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
         "dotenv": "^16.4.7",
         "fhirpath": "^3.17.0",
-        "openai": "^4.90.0"
+        "lucide-react": "^0.411.0",
+        "next": "^15.3.0",
+        "nextra": "^4.2.17",
+        "nextra-theme-docs": "^4.2.17",
+        "openai": "^4.90.0",
+        "postcss": "^8.5.3",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
+        "sqliteow": "workspace:^",
+        "tailwind-merge": "^2.6.0",
+        "tailwindcss": "^4.1.3",
+        "tw-animate-css": "^1.2.5"
     },
     "peerDependencies": {
         "better-sqlite3": "^11.8.1",
-        "effect": "^3.12.1"
+        "effect": "^3.14.1"
     },
     "devDependencies": {
         "@nestorhealth/tsconfig": "workspace:^",
         "@types/better-sqlite3": "^7.6.12",
         "@types/node": "^22.13.1",
         "@types/pg": "^8.11.11",
+        "@types/react": "^19.1.1",
+        "pagefind": "^1.3.0",
         "prettier": "^3.4.2",
         "sqliteow": "workspace:^",
         "ts-morph": "^25.0.0",

@@ -1,5 +1,3 @@
-import type { SqliteowRequest } from "sqliteow";
-
 /**
  * Module loader convenience function
  *
@@ -15,12 +13,12 @@ import type { SqliteowRequest } from "sqliteow";
  * @param baseUrl the fhir server base url
  * @returns the worker message args for the medfetch virtual table module
  */
-export default function medfetch(baseUrl: string) {
+export default function medfetch(baseUrl) {
     const moduleURL = new URL("medfetch.vtab.js", import.meta.url).toString();
     return {
         moduleURL,
         moduleName: "medfetch",
         loaderAux: [new URL("fetch.worker.js", import.meta.url).toString()],
         aux: new TextEncoder().encode(baseUrl)
-    } satisfies Extract<SqliteowRequest, { type: "ow-load-module" }>["args"]
+    };
 }

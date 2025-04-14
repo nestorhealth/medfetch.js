@@ -1,23 +1,50 @@
 {
-    "extends": "@nestorhealth/tsconfig/tsconfig.json",
-    "compilerOptions": {
-        "types": ["node"],
-        "lib": ["esnext", "webworker", "dom"],
-        "skipLibCheck": true,
-        "resolveJsonModule": true,
-        "moduleResolution": "bundler",
-        "allowJs": true,
-        "esModuleInterop": true,
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "exactOptionalPropertyTypes": true,
-        "strictNullChecks": true
-    },
-    "exclude": [
-        "./dist/**/*",
-        "/**/*.test.ts",
-        "src/c/*",
-        "vitest.config.ts"
+  "compilerOptions": {
+    "types": [
+      "node",
+      "react"
     ],
-    "include": ["src/**/*.ts"]
+    "lib": [
+      "esnext",
+      "webworker",
+      "dom"
+    ],
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "exactOptionalPropertyTypes": true,
+    "strictNullChecks": true,
+    "jsx": "preserve",
+    "strict": false,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "isolatedModules": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["app/*"],
+      "~/*": ["src/*"]
+    },
+  },
+  "exclude": [
+    "./dist/**/*",
+    "/**/*.test.ts",
+    "src/server/*",
+    "vitest.config.ts",
+    "node_modules"
+  ],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ]
 }
