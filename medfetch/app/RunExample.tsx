@@ -9,13 +9,14 @@ import { Table } from "nextra/components";
 const SQL = sql<{
   id: string;
   name: string;
+  birthDate: string;
 }>`SELECT 
    json ->> 'id' AS id,
-   json ->> 'name' AS name,
+   json -> 'given' ->> 0 AS name,
    json ->> 'birthDate' AS birthDate
    FROM medfetch('Patient', json_array(
      'id',
-     'name',
+     'name.given.first()',
      'birthDate'
    ))
    LIMIT 5;`;
@@ -57,6 +58,7 @@ export function RunExample() {
               <Table.Tr key={idx}>
                 <Table.Td className="px-2 py-1 border-b">{row.id}</Table.Td>
                 <Table.Td className="px-2 py-1 border-b">{row.name}</Table.Td>
+                <Table.Td className="px-2 py-1 border-b">{row.birthDate}</Table.Td>
               </Table.Tr>
             ))}
           </tbody>

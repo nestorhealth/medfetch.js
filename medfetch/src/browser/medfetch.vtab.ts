@@ -83,6 +83,9 @@ function getColumnName(path: string | [string, any]) {
 function top(path: string) {
     return path.split(".")[0];
 }
+function size(path: string) {
+    return path.split(".").length;
+}
 
 function generateViewDefinition(args: SqlValue[], rows: any[]) {
     const [resourceType, fp] = args;
@@ -103,7 +106,8 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
             if (top(path) in rowLike) {
                 const value = rowLike[path];
                 const name = getColumnName(path);
-                const collection = Array.isArray(value);
+                // if it's not a top level extraction, then make it an array
+                const collection = Array.isArray(value) || size(path) > 1;
                 inferredSet.add(path);
                 column.push(
                     View.columnPath({

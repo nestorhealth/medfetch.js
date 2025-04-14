@@ -16,14 +16,16 @@ written entirely in JavaScript<sup>2</sup>.
 
 Click the run button to see it in action!
 ```sql
-SELECT
-    json ->> 'id' AS id,
-    json ->> 'name' AS name
-    json ->> 'birthDate' AS birthDate
+SELECT 
+   json ->> 'id' AS id,
+   json -> 'given' AS name,
+   json ->> 'birthDate' AS birthDate
 FROM medfetch('Patient', json_array(
-    'id', 'name', 'birthDate',
+    'id',
+    'name.given.first()',
+    'birthDate'
 ))
-LIMIT 5;
+LIMIT 5;;
 ```
 
 <RunExample />
