@@ -1,5 +1,5 @@
-import { sof as O } from "../sof.mjs";
-import { c as D, d as $, C as v } from "../view-DiXEnqXw.mjs";
+import { sof as L } from "../sof.mjs";
+import { cq as O, co as v, cr as $ } from "../view-BCMoZj0M.mjs";
 function A({ wasm: s }, n) {
   const i = new DataView(s.heap8().buffer, n, 4).getUint32(0, !0), e = new DataView(s.heap8().buffer, n + 4, i);
   return new TextDecoder().decode(e);
@@ -17,8 +17,7 @@ const R = (s) => function(i) {
   e[0] = 0, s.postMessage({ ...i, type: "request" }), Atomics.wait(e, 0, 0);
 };
 function V(s) {
-  if (typeof s != "string")
-    return s[0];
+  if (typeof s != "string") return s[0];
   let n = s;
   for (; n.match(/\.\w+\([^)]*\)$/); )
     n = n.replace(/\.\w+\([^)]*\)$/, "");
@@ -29,10 +28,10 @@ function k(s) {
   const n = s.split(".");
   return n[0][0].toUpperCase() === n[0][0] ? n[1] : n[0];
 }
-function K(s) {
+function q(s) {
   return s.split(".").length;
 }
-function U(s, n) {
+function K(s, n) {
   const [i, e] = s;
   if (!i || typeof i != "string")
     throw new Error("medfetch: unexpected invalid resourceType in args[0]");
@@ -46,9 +45,9 @@ function U(s, n) {
     const t = n[x];
     for (const r of c)
       if (typeof r == "string" && k(r) in t) {
-        const o = t[r], a = V(r), f = Array.isArray(o) || K(r) > 1;
+        const o = t[r], a = V(r), f = Array.isArray(o) || q(r) > 1;
         p.add(r), l.push(
-          D({
+          O({
             path: r,
             name: a,
             collection: f
@@ -56,13 +55,13 @@ function U(s, n) {
         );
       }
   }
-  return $({
+  return v({
     status: "active",
     name: i,
     resource: i,
     constant: [],
     select: [
-      v({
+      $({
         column: l
       })
     ],
@@ -84,8 +83,8 @@ async function B(s, n) {
                     fp   HIDDEN
                 )`
       ), !d) {
-        const g = c.xVtab.create(f);
-        g.baseUrl = A(s, r);
+        const w = c.xVtab.create(f);
+        w.baseUrl = A(s, r);
       }
       return d;
     },
@@ -127,12 +126,22 @@ async function B(s, n) {
       const a = l(t), f = a.rows[a.index];
       switch (o) {
         case 0: {
-          e.sqlite3_result_text(r, f.id, -1, e.SQLITE_TRANSIENT);
+          e.sqlite3_result_text(
+            r,
+            f.id,
+            -1,
+            e.SQLITE_TRANSIENT
+          );
           break;
         }
         case 1: {
           const u = JSON.stringify(f);
-          e.sqlite3_result_text(r, u, -1, e.SQLITE_TRANSIENT);
+          e.sqlite3_result_text(
+            r,
+            u,
+            -1,
+            e.SQLITE_TRANSIENT
+          );
           break;
         }
       }
@@ -151,20 +160,29 @@ async function B(s, n) {
       const u = e.sqlite3_values_to_js(a, f), [d] = u;
       if (typeof d != "string")
         return e.SQLITE_ERROR;
-      const g = l(t), { baseUrl: w } = x(g.pVtab);
-      let T = w[w.length - 1] === "/" ? `${w}${d}` : `${w}/${d}`, h = [];
+      const w = l(t), { baseUrl: g } = x(w.pVtab);
+      let T = g[g.length - 1] === "/" ? `${g}${d}` : `${g}/${d}`, h = [];
       const E = new SharedArrayBuffer(8 + 3 * 1024 * 1024);
       for (; T != null; ) {
         p({ sharedSignal: E, url: T });
-        const I = new DataView(E, 4, 4).getUint32(0, !0), C = new Uint8Array(E, 8, I), N = new TextDecoder().decode(C.slice()), b = JSON.parse(N), L = b.entry.map(({ resource: S }) => S);
-        h.push(...L), T = (m = (_ = b.link) == null ? void 0 : _.find((S) => S.relation === "next")) == null ? void 0 : m.url;
+        const I = new DataView(E, 4, 4).getUint32(
+          0,
+          !0
+        ), N = new Uint8Array(E, 8, I), C = new TextDecoder().decode(
+          N.slice()
+        ), b = JSON.parse(C), D = b.entry.map(
+          ({ resource: S }) => S
+        );
+        h.push(...D), T = (m = (_ = b.link) == null ? void 0 : _.find(
+          (S) => S.relation === "next"
+        )) == null ? void 0 : m.url;
       }
-      const y = U(u, h);
+      const y = K(u, h);
       if (y) {
-        const I = O(y, h);
-        g.rows = I;
+        const I = L(y, h);
+        w.rows = I;
       } else
-        g.rows = h;
+        w.rows = h;
       return 0;
     }
   };

@@ -143,7 +143,7 @@ export const flatResources = (stream: ReturnType<typeof pages>) =>
  * @param params - the pages params
  * @returns a flat array of n resources from the server
  */
-export async function nresources(...params: Parameters<typeof pages>) {
+export async function pagen(...params: Parameters<typeof pages>) {
     return pipe(pages(...params), flatResources, Effect.runPromise);
 }
 

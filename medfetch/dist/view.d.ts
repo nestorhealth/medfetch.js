@@ -537,7 +537,7 @@ declare const _ViewDefinition: Schema.TaggedStruct<"Select", {
 export interface ViewDefinition<ResourceType extends string = string> extends Schema.Schema.Type<typeof _ViewDefinition> {
     resource: ResourceType;
 }
-export declare const definition: Data.Case.Constructor<ViewDefinition<string>, "_tag">;
+export declare const viewDefinition: Data.Case.Constructor<ViewDefinition<string>, "_tag">;
 export declare function getColumns(vd: ViewDefinition, f?: (columnPath: ColumnPath) => boolean): ColumnPath<string>[];
 export type Select = ReturnType<typeof Select>;
 export type Column = ReturnType<typeof Column>;

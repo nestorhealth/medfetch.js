@@ -7,20 +7,32 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
 
 export interface Row1 {
-    id: string;
-    name: string;
-    birth_date: string;
+  id: string;
+  gender: "male" | "female" | "unknown";
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  city: string;
 }
-const SQL = sql<Row1>`SELECT 
-   json ->> 'id' AS id,
-   json -> 'given' ->> 0 AS name,
-   json ->> 'birthDate' AS birth_date
-   FROM medfetch('Patient', json_array(
-     'id',
-     'name.given.first()',
-     'birthDate'
-   ))
-   LIMIT 5;`;
+
+const SQL = sql<Row1>`
+  SELECT 
+    json ->> 'id' AS id,
+    json ->> 'gender' AS gender,
+    json -> 'given' ->> 0 AS first_name,
+    json -> 'family' ->> 0 AS last_name,
+    json ->> 'birthDate' AS birth_date,
+    json -> 'city' ->> 0 AS city
+  FROM medfetch('Patient', json_array(
+    'id',
+    'gender',
+    'name.given.first()',
+    'name.family.first()',
+    'birthDate',
+    'address.city.first()'
+  ))
+  LIMIT 5;
+`
 
 export function RunExampleWrapper({ children }: { children: React.ReactNode }) {
     const handle = ow();
@@ -51,8 +63,8 @@ export function RunExampleWrapper({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex flex-col gap-4 items-start">
-                <div className="w-full">{children}</div>
-                <div className="w-full">
+                <div className="flex-1 w-full">{children}</div>
+                <div className="flex-1 w-full overflow-x-auto min-h[200px] basis-full">
                     <DataTable data={data} isPending={isPending} />
                 </div>
             </div>

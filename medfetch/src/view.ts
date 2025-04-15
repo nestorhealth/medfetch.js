@@ -401,7 +401,7 @@ export interface ViewDefinition<ResourceType extends string = string>
 }
 
 const ViewDefinition: Schema.Schema<ViewDefinition> = _ViewDefinition;
-export const definition = Data.tagged<ViewDefinition>("Select");
+export const viewDefinition = Data.tagged<ViewDefinition>("Select");
 
 export function getColumns(
     vd: ViewDefinition,

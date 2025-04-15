@@ -9,7 +9,7 @@ import type {
 } from "@sqlite.org/sqlite-wasm";
 import type { FetchMessageRequest } from "./fetch.worker.js";
 import { sof } from "~/sof";
-import * as View from "~/view";
+import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view";
 
 /**
  * service wrapper so we dont need to keep passing it
@@ -106,7 +106,7 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
         // no arg1 then we just return null
         return null;
     const inferredSet = new Set();
-    const column: View.ColumnPath[] = [];
+    const column: ColumnPath[] = [];
     for (let i = 0; i < rows.length; i++) {
         if (inferredSet.size === paths.length)
             // early exit! ideally we hit this on rows[0]
@@ -121,7 +121,7 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
                     const collection = Array.isArray(value) || size(path) > 1;
                     inferredSet.add(path);
                     column.push(
-                        View.columnPath({
+                        columnPath({
                             path,
                             name,
                             collection,
@@ -131,13 +131,13 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
             }
         }
     }
-    return View.definition({
+    return viewDefinition({
         status: "active",
         name: resourceType,
         resource: resourceType,
         constant: [],
         select: [
-            View.Column({
+            Column({
                 column,
             }),
         ],
