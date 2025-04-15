@@ -1,10 +1,9 @@
-import React from "react";
-
-import "../globals.css"
 import { Footer, Layout, Navbar } from 'nextra-theme-docs'
-import { Banner, Head } from "nextra/components";
-import { getPageMap } from "nextra/page-map";
-import { Providers } from "./Providers";
+import { Banner, Head } from 'nextra/components'
+import { getPageMap } from 'nextra/page-map'
+import { ReactNode } from 'react'
+import "./globals.css";
+import { Providers } from './Providers';
  
 export const metadata = {}
  
@@ -17,7 +16,7 @@ const navbar = (
 )
 const footer = <Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>
  
-export default async function RootLayout({ children }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       // Not required, but good for SEO

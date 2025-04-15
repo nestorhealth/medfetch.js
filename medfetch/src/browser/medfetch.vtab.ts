@@ -8,8 +8,8 @@ import type {
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
 import type { FetchMessageRequest } from "./fetch.worker.js";
-import { View } from "~/schema";
 import { sof } from "~/sof";
+import * as View from "~/view";
 
 /**
  * service wrapper so we dont need to keep passing it
@@ -96,8 +96,8 @@ function size(path: string) {
 
 function generateViewDefinition(args: SqlValue[], rows: any[]) {
     const [resourceType, fp] = args;
-    if (!resourceType)
-        throw new Error(`medfetch: unexpected falsy resourceType in args[0]`)
+    if (!resourceType || typeof resourceType !== "string")
+        throw new Error(`medfetch: unexpected invalid resourceType in args[0]`)
 
     if (!fp) // no fhirpath map, then just return null and default to the whole object
         return null;
@@ -112,25 +112,25 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
             break;
         const rowLike = rows[i];
         for (const path of paths) {
-            if (top(path) in rowLike) {
-                const value = rowLike[path];
-                const name = getColumnName(path);
-                // if it's not a top level extraction, then make it an array
-                const collection = Array.isArray(value) || size(path) > 1;
-                inferredSet.add(path);
-                column.push(
-                    View.columnPath({
-                        path,
-                        name,
-                        collection,
-                        type: "string",
-                        tags: []
-                    })
-                );
-            } 
+            if (typeof path === "string") {
+                if (top(path) in rowLike) {
+                    const value = rowLike[path];
+                    const name = getColumnName(path);
+                    // if it's not a top level extraction, then make it an array
+                    const collection = Array.isArray(value) || size(path) > 1;
+                    inferredSet.add(path);
+                    column.push(
+                        View.columnPath({
+                            path,
+                            name,
+                            collection,
+                        })
+                    );
+                } 
+            }
         }
     }
-    return View.make({
+    return View.definition({
         status: "active",
         name: resourceType,
         resource: resourceType,

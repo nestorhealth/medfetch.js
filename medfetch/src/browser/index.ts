@@ -16,11 +16,12 @@ import type { SqliteowRequest } from "sqliteow";
  * @returns the worker message args for the medfetch virtual table module
  */
 export default function medfetch(baseUrl: string) {
-    const moduleURL = new URL("medfetch.vtab.js", import.meta.url).toString();
     return {
-        moduleURL,
+        moduleURL: new URL("/sqliteow/vtab/medfetch.vtab.mjs", self.location.origin).toString(),
         moduleName: "medfetch",
-        loaderAux: [new URL("fetch.worker.js", import.meta.url).toString()],
+        loaderAux: [
+            new URL("/sqliteow/vtab/fetch.worker.mjs", self.location.origin).toString()
+        ],
         aux: new TextEncoder().encode(baseUrl)
     } satisfies Extract<SqliteowRequest, { type: "ow-load-module" }>["args"]
 }

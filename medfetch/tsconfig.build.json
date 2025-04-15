@@ -11,13 +11,24 @@
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
-    "outDir": "./public/dist",
+    "allowImportingTsExtensions": true,
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* custom */
+    "baseUrl": ".",
+    "paths": {
+        "~/*": ["src/*"]
+    }
   },
-  "include": ["src/browser/fetch.worker.ts"]
+  "include": ["src/browser/**/*.ts", "src/sof.ts", "src/view.ts"],
+  "exclude": ["/**/*.test.ts"]
 }

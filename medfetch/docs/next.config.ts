@@ -1,15 +1,21 @@
 import nextra from "nextra";
 
-const withNextra = nextra({
+const nextConfig = nextra({
+
 });
 
-export default withNextra({
+export default nextConfig({
   webpack: (config, { webpack }) => {
     config.plugins.push(
       new webpack.DefinePlugin({
         "import.meta.dirname": "__dirname"
       }),
     );
+    config.module.rules.push({
+      test: /\.mjs$/,
+      include: /node_modules/,
+      type: 'javascript/esm',
+    });
     return config;
   },
   async headers() {

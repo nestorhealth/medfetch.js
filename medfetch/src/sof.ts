@@ -1,8 +1,16 @@
 import { Array, Match, pipe, Record } from "effect";
 import { evaluate, UserInvocationTable } from "fhirpath";
-import fhir_r4_model from "fhirpath/fhir-context/r4";
-import { fhirR4 } from "@smile-cdr/fhirts";
-import { View } from "./schema";
+import { type ViewDefinition, type Node, $match, Select } from "./view";
+
+interface Reference {
+    reference: string;
+}
+interface CodeableConcept {
+    coding: {
+        code: string;
+        system: string;
+    }[]
+}
 
 function codeSystemAlias(codeSystem: string | undefined) {
     return Match.value(codeSystem).pipe(
@@ -29,7 +37,7 @@ function codeSystemAlias(codeSystem: string | undefined) {
     );
 }
 
-function getReferenceKey({ reference }: fhirR4.Reference) {
+function getReferenceKey({ reference }: { reference: string; }) {
     // idk
     if (reference === undefined) {
         return null;
@@ -58,12 +66,12 @@ const userInvocationTable: UserInvocationTable = {
         arity: { 0: [] },
     },
     getReferenceKey: {
-        fn: (inputs: any[], type?: string) =>
-            inputs.map((input: fhirR4.Reference) => getReferenceKey(input)),
+        fn: (inputs: any[], _type?: string) =>
+            inputs.map((input: Reference) => getReferenceKey(input)),
         arity: { 0: [], 1: ["String"] },
     },
     code: {
-        fn: (inputs: fhirR4.CodeableConcept[]) =>
+        fn: (inputs: CodeableConcept[]) =>
             inputs.flatMap((input) => {
                 return input.coding?.map(
                     (coding) =>
@@ -75,7 +83,7 @@ const userInvocationTable: UserInvocationTable = {
 };
 
 export const evaluateSync = (data: any, path: string): any[] =>
-    evaluate(data, path, undefined, fhir_r4_model, {
+    evaluate(data, path, undefined, undefined, {
         userInvocationTable,
         async: false,
     });
@@ -90,17 +98,17 @@ export const evaluateSync = (data: any, path: string): any[] =>
  * @returns a flattened row view of the given resources
  */
 export function project(
-    nd: View.Node,
+    nd: Node,
     data: any | any[],
     evaluate: (data: any[], expr: string) => any[],
 ): any[] {
-    const aux = (nd: View.Node, data: any[]): any[] => {
-        return View.$match(nd, {
+    const aux = (nd: Node, data: any[]): any[] => {
+        return $match(nd, {
             ForEach: ({ forEach, select }) =>
                 data.flatMap((resource) => {
                     const items = evaluate(resource, forEach);
                     return items.flatMap((item) =>
-                        aux(View.Select({ select }), [item]),
+                        aux(Select({ select }), [item]),
                     );
                 }),
 
@@ -108,10 +116,10 @@ export function project(
                 data.flatMap((resource) => {
                     const items = evaluate(resource, forEachOrNull);
                     if (items.length === 0) {
-                        return aux(View.Select({ select }), [{}]);
+                        return aux(Select({ select }), [{}]);
                     }
                     return items.flatMap((item) =>
-                        aux(View.Select({ select }), [item]),
+                        aux(Select({ select }), [item]),
                     );
                 }),
 
@@ -168,7 +176,7 @@ export function project(
  * @returns the 'rowified' json resources
  */
 export function sof(
-    viewDefinition: View.ViewDefinition,
+    viewDefinition: ViewDefinition,
     data: any[],
 ): any[] {
     let filtered = data.filter(
@@ -178,22 +186,14 @@ export function sof(
         return [];
     }
 
-    const constantsMap = Array.reduce(
-        viewDefinition.constant,
-        {} as Record<string, string | number | boolean>,
-        (acc, constant) => {
-            return Record.set(acc, constant.name, View.getConstantValue(constant));
-        },
-    );
-
     const doEvaluate = (data: any | any[], expr: string) => {
-        return evaluate(data, expr, constantsMap, fhir_r4_model, {
+        return evaluate(data, expr, {}, undefined, {
             async: false,
             userInvocationTable,
         });
     };
 
-    for (const { path } of viewDefinition.where) {
+    for (const { path } of viewDefinition.where ?? []) {
         filtered = Array.filter(filtered, (resource) => {
             return doEvaluate(resource, `where(${path})`).length > 0;
         });
