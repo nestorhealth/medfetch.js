@@ -13,9 +13,17 @@ export default defineConfig({
             '~': path.resolve(__dirname, 'src'),
         },
     },
+    optimizeDeps: {
+        exclude: ["@sqlite.org/sqlite-wasm", "fhirpath"],
+    },
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
+            external: [
+                "@sqlite.org/sqlite-wasm",
+                "effect",
+                "fhirpath"
+            ],
             output: {
                 entryFileNames: `[name].mjs`,
                 chunkFileNames: `[name]-[hash].mjs`,
@@ -47,9 +55,9 @@ export default defineConfig({
                 index: "src/index.ts",
                 view: "src/view.ts",
                 sof: "src/sof.ts",
-                "browser/index": "src/browser/index.ts",
-                "browser/medfetch.vtab": "src/browser/medfetch.vtab.ts",
-                "browser/fetch.worker": "src/browser/fetch.worker.ts"
+                "sqlite/index": "src/sqlite/index.ts",
+                "sqlite/medfetch.vtab": "src/sqlite/medfetch.vtab.ts",
+                "sqlite/fetch.worker": "src/sqlite/fetch.worker.ts"
             },
             name: "medfetch",
             formats: ["es"],

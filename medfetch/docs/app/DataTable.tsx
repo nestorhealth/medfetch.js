@@ -1,7 +1,7 @@
 "use client";
 
 import { Callout, Table } from "nextra/components";
-import { Row1 } from "./RunExampleWrapper";
+import { Row1 } from "./RunInDatabase";
 
 export function DataTable({
   data,

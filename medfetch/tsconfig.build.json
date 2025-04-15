@@ -29,6 +29,6 @@
         "~/*": ["src/*"]
     }
   },
-  "include": ["src/browser/**/*.ts", "src/sof.ts", "src/view.ts"],
+  "include": ["src/sqlite/**/*.ts", "src/sof.ts", "src/view.ts"],
   "exclude": ["/**/*.test.ts"]
 }

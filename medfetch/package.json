@@ -19,6 +19,11 @@
             "import": "./dist/index.mjs",
             "default": "./dist/index.mjs"
         },
+        "./sqlite": {
+            "types": "./dist/sqlite/index.d.ts",
+            "import": "./dist/sqlite/index.mjs",
+            "default": "./dist/sqlite/index.mjs"
+        },
         "./view": {
             "types": "./dist/view.d.ts",
             "import": "./dist/view.mjs",

@@ -9,13 +9,11 @@ export default nextConfig({
                 "import.meta.dirname": "__dirname",
             }),
         );
-        config.module.rules.push({
-            test: /\.mjs$/,
-            include: /node_modules/,
-            type: "javascript/esm",
-        });
         return config;
     },
+    transpilePackages: [
+        "medfetch"
+    ],
     async headers() {
         return [
             {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import medfetch from "medfetch/browser";
+import { medfetch } from "medfetch/sqlite";
 import { ow, sql } from "sqliteow";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "./DataTable";
@@ -37,7 +37,7 @@ const SQL = sql<Row1>`
   LIMIT 5;
 `
 
-export function RunExampleWrapper({ children }: { children: React.ReactNode }) {
+export function RunInDatabase({ children }: { children: React.ReactNode }) {
     const handle = ow();
 
     const { data, mutate, isPending } = useMutation({

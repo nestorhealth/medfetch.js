@@ -10,6 +10,7 @@
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
   },
   "dependencies": {
+    "@chevrotain/regexp-to-ast": "^11.0.3",
     "@radix-ui/react-slot": "^1.1.2",
     "@sqlite.org/sqlite-wasm": "3.49.1-build2",
     "@tanstack/react-query": "^5.67.2",

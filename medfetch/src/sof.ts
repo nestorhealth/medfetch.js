@@ -169,13 +169,13 @@ export function project(
  * The public api that filters the data based on the WHERE query in a ViewDefinition
  * before calling the column projector [[ columns ]].
  *
- * ...meaning [[ rows viewDefinition data ]] is a flat array of rows derived from the columns vd.select
+ * ...meaning [[ flat viewDefinition data ]] is a flat array of rows derived from the columns vd.select
  *
  * @param viewDefinition - the normalized and tagged ViewDefinition
  * @param data - the resources to project
  * @returns the 'rowified' json resources
  */
-export function sof(viewDefinition: ViewDefinition, data: any[]): any[] {
+export function flat(data: any[], viewDefinition: ViewDefinition): any[] {
     let filtered = data.filter(
         (data) => data.resourceType === viewDefinition.resource,
     );

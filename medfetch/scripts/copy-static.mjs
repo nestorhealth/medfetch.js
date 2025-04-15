@@ -5,7 +5,7 @@ import path from "node:path";
 const USER_ROOT = process.env.INIT_CWD;
 
 const MEDFETCH_DIST = path.join(USER_ROOT, "node_modules/medfetch/dist");
-const BROWSER_DIST = path.join(MEDFETCH_DIST, "browser");
+const BROWSER_DIST = path.join(MEDFETCH_DIST, "sqlite");
 
 const SQLITEOW_PUBLIC_DIR = path.join(USER_ROOT, "public/sqliteow");
 const VTAB_DIR = path.join(USER_ROOT, "public/sqliteow/vtab");
