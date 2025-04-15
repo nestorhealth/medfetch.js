@@ -5,13 +5,6 @@ import { pages } from "./data";
 import { flat } from "./sof";
 export { flat };
 
-import { viewDefinition } from "./view";
-export { viewDefinition };
-
-import { columnPath, Column as column } from "./view";
-export { columnPath, column };
-
-
 export { 
     normalize,
     Select as select,
@@ -31,6 +24,12 @@ export type {
     UnionAll,
     Constant
 } from "./view";
+
+import { viewDefinition } from "./view";
+export { viewDefinition };
+
+import { columnPath, Column as column } from "./view";
+export { columnPath, column };
 
 import { Chunk, Effect, pipe, Stream } from "effect";
 
@@ -65,7 +64,17 @@ function keysToViewDefinition<Keys extends readonly string[]>(resourceType: stri
     })
 }
 
-export default function medfetch(baseURL: string) {
+export type SOF = <ResourceType extends string, Keys extends readonly string[]>(
+    resourceType: ResourceType,
+    keys: readonly [...Keys]
+) => Promise<Flattened<Keys>[]>;
+/**
+ * Get an in-memory sql-on-fhir runner (aka View Runner)
+ *
+ * @param baseURL The FHIR server base
+ * @returns sof The sql-on-fhir runner, which is just a function
+ */
+export default function medfetch(baseURL: string): SOF {
     return async function sof<
         ResourceType extends string,
         Keys extends readonly string[],
@@ -90,13 +99,3 @@ export default function medfetch(baseURL: string) {
         );
     }
 }
-
-const sof = medfetch("https://r4.smarthealthit.org");
-const results = await sof("Patient", [
-    "id",
-    "name",
-    "birthDate"
-]);
-
-console.log("got", results);
-
