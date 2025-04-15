@@ -20,13 +20,14 @@ export function DataTable({
           <Table.Th>last_name</Table.Th>
           <Table.Th>birth_date</Table.Th>
           <Table.Th>city</Table.Th>
+          <Table.Th>state</Table.Th>
         </Table.Tr>
       </thead>
       <tbody>
         {isPending ? (
           <Table.Tr>
             <Table.Td
-              colSpan={6}
+              colSpan={7}
               className="text-center py-4 text-muted-foreground"
             >
               Loading...
@@ -35,7 +36,7 @@ export function DataTable({
         ) : !data || data.length === 0 ? (
             <Table.Tr>
               <Table.Td
-                colSpan={6}
+                colSpan={7}
                 className="text-center py-4 text-muted-foreground"
               >
                 <Callout type="info">
@@ -63,6 +64,9 @@ export function DataTable({
                   </Table.Td>
                   <Table.Td className="px-2 py-1 border-b">
                     {row.city}
+                  </Table.Td>
+                  <Table.Td className="px-2 py-1 border-b">
+                    {row.state}
                   </Table.Td>
                 </Table.Tr>
               ))

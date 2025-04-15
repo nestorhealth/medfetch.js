@@ -13,6 +13,7 @@ export interface Row1 {
   last_name: string;
   birth_date: string;
   city: string;
+  state: string;
 }
 
 const SQL = sql<Row1>`
@@ -22,14 +23,16 @@ const SQL = sql<Row1>`
     json -> 'given' ->> 0 AS first_name,
     json -> 'family' ->> 0 AS last_name,
     json ->> 'birthDate' AS birth_date,
-    json -> 'city' ->> 0 AS city
+    json -> 'city' ->> 0 AS city,
+    json -> 'state' ->> 0 AS state
   FROM medfetch('Patient', json_array(
     'id',
     'gender',
     'name.given.first()',
     'name.family.first()',
     'birthDate',
-    'address.city.first()'
+    'address.city.first()',
+    'address.state.last()'
   ))
   LIMIT 5;
 `

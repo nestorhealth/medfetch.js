@@ -87,7 +87,8 @@ FROM medfetch('Patient', json_array(
     'name.given.first()',
     'name.family.first()',
     'birthDate',
-    'address.city.last()'
+    'address.city.last()',
+    'address.state.last()'
 ))
 LIMIT 5;
 ```
@@ -107,27 +108,139 @@ flowchart LR
     B --> C[Database]
 ```
 This involves less abstractions, since the transformations are done completely in JavaScript.
-Here's an example that performs the exact same query as above, but on a JS script:
+Here's an example that performs the exact same query as above, but in JS alone. Every
+in-memory mapping relies on the [ViewDefinition]() struct, so we would first need to make one:
 
 ```ts
-import { sof, pagen } from "medfetch";
+// view-definitions.ts
+import { viewDefinition, column, columnPath } from "medfetch";
 
-const response = await pagen()
+// to make a View Definition, use the viewDefinition() helper
+export const patientsBasicView = viewDefinition({
+    resource: "Patient",
+    status: "active",
+    name: "patients_basic",
+    select: [
+        column({
+            column: [
+                columnPath({
+                    name: "id",
+                    path: "getResourceKey()",
+                    collection: false
+                }),
+                columnPath({
+                    name: "gender",
+                    path: "gender",
+                    collection: false
+                }),
+                columnPath({
+                    name: "first_name",
+                    path: "name.given.first()",
+                    collection: false
+                }),
+                columnPath({
+                    name: "last_name",
+                    path: "name.family.first()",
+                    collection: false
+                }),
+                columnPath({
+                    name: "city",
+                    path: "address.city.last()",
+                    collection: false
+                }),
+                columnPath({
+                    name: "state",
+                    path: "address.state.last()",
+                    collection: false
+                }),
+            ]
+        })
+    ]
+});
 ```
 
-Which type is best depends, again, on your use case (I'm sorry!), the following table
-should hopefully give you a better idea.
+Then you invoke the flattener like so:
+```ts
+// main.ts
+import { patientsBasicView } from "./view-definitions.js";
+import { sof, pagen } from "medfetch";
+import { ow } from "sqliteow";
+
+// Fetch and flatten
+const patients = await pagen("https://r4.smarthealthit.org", "Patient");
+const rows = sof(patientsBasicView, patients);
+
+/* Persistence steps. Optional, but this has the
+ * same effect as a CREATE TABLE AS preprended to the
+ * in-database example above */
+
+// 1. Get Database handler
+const handle = ow();
+
+// 2. Create table using column names
+const columnNames = patientsBasicView.select[0].column.map(col => col.name);
+const createTableSQL = `
+  CREATE TABLE IF NOT EXISTS patients (
+    ${columnNames.map(name => `${name} TEXT`).join(", ")}
+  );
+`;
+await handle("exec", {
+    sql: createTableSQL
+});
+
+// 3. Prepare insert statement
+const placeholders = columnNames.map(() => "?").join(", ");
+const insertSQL = `INSERT INTO patients (${columnNames.join(", ")}) VALUES (${placeholders})`;
+const insert = handle()
+
+// 4. Insert each row
+const insertMany = db.transaction((rows) => {
+  for (const row of rows) {
+    insert.run(columnNames.map(col => row[col] ?? null));
+  }
+});
+
+insertMany(rows);
+
+console.log(`Inserted ${rows.length} patient rows into patients.db`);
+```
+
+### Choosing
+As you can see, the In Memory approach is much more involved in terms of usage, a classic case of
+a double-edged sword. Since you have greater control over the JSON transformations before inserting,
+you can `fhirpath` away at the data to your heart's content. At the same time, because you have greater control,
+you are responsible for formatting the data to be inserted into any downstream database.
+
+Which type is best depends, again, on your use case (I'm sorry!). Still, the following table
+should hopefully give you a better idea on which option you would want to use.
 
 | Feature / Concern           | In-Database Runner                          | In-Memory Runner                              |
 |----------------------------|---------------------------------------------|-----------------------------------------------|
-| **Performance**            | ✅ Typically faster due to reduced I/O overhead, as you write the JSON data directly within the database | ⚠️ Usually slower due to I/O penalty from having to write from the application to the database — but has the edge of V8’s JSON performance. |
-| **Ease of Setup**          | ❌ More involved setup (e.g. compiling SQLite with WASM + extension) | ✅ Simple to get started — just import and call from JS |
-| **Ease of Use**            | ✅ Pure SQL — you don’t need to know FHIRPath or View Definitions | ❌ Requires familiarity with [FHIRPath]() and [ViewDefinition]() |
-| **Transformation Control** |⚠️  SQL for data transformations + a limited [sof]() port on the database. | ✅ Best control over transformations since you're directly calling the projector [sof]() function. This beats the in-database runner solely because of this: Any numerically intensive transformations would probably be better off done outside of JavaScript anyway. |
-| **Integration Complexity** | ✅ Removes / offloads the data fetching routine from another process, connecting the database directly with the FHIR API | ⚠️ You are in charge of setting up both the data fetches and the insertion of that data into the Database |
+| **Performance**            | ✅ Typically faster due to reduced I/O, as you write the JSON data directly within the database. | ⚠️ Usually slower  *overall* due to additional I/O... but you get V8’s aggressive optimizations for the tree/object manipulation itself. |
+| **Ease of Setup**          | ❌ More involved setup (e.g. compiling SQLite with WASM + extension). | ✅ Simple to get started — just import and call from JS. |
+| **Ease of Use**            | ✅ Pure SQL — No FHIRPath knowledge required. | ❌ Requires familiarity with [FHIRPath]() and [ViewDefinition](), **along** with familiarity of SQL. |
+| **Transformation Control** |⚠️  SQL for data transformations + a limited [`sof`]() port on the database. | ✅ Best control over transformations since you're directly calling the projector [`sof`]() function. This beats the in-database runner solely because of this. |
+| **Integration Complexity** | ✅ Offloads data fetching to database: you inherently get one less process to worry about (in terms of data fetching) | ⚠️ You are in charge of setting up both the data fetches and the insertion of that data into the Database |
 
-More often than not, the In Database Runner is likely the better option since you would most likely be integrating your View Runner into a larger
-ETL-like pipeline, implying the Database on which you run Medfetch.js on is *not* the data's final destination. Even if you do decide you need to
+It's worth noting that while I can't definitively say the in-memory runner is slower than the in-database one, my best guess is 
+that any performance gain from V8's aggressive JSON traversal optimizations is likely outweighed by the I/O overhead involved in 
+inserting that data into a separate database — especially when that database lives on a different machine (as is common with PostgreSQL or hosted solutions).
+
+For most real-world pipelines, the simpler option is often to run Medfetch.js directly inside the database. Since the library supports the 
+full ViewDefinition transformation set in SQL, what the in-memory runner provides in practice is more control over the transformation process <sup>3</sup>.
+
+<Callout type="info"> 
+    <sup>3</sup> 
+    Even if your pipeline involves heavy CPU-bound computations, that doesn't mean you need to use the in-memory runner. It’s often simpler (and faster) 
+    to run Medfetch in-database, export the results, and hand off to Python (e.g. NumPy, pandas) for numeric processing (you could then write back to 
+    the database, or write to a new one). V8 is fast at traversing JSON — you’ll absolutely benefit from that in the tree traversals.
+    But if you're doing serious number crunching, the cost of using JS for computations will likely cancel that out. 
+    Libraries like [NumPy]() are built for this kind of work, with raw CPU-level optimizations that JavaScript can’t match.
+</Callout>
+
+At the end of the day, the best way to know which runner is right for you is to try it out.
+While Medfetch.js was designed to be as generic and portable as possible, certain pipeline setups — particularly SQL engines — 
+may feel awkward to integrate with. You can explore the list of currently supported SQL environments to see where Medfetch fits best [here]().
 
 ## Why SQL On FHIR?
 JSONs are great. You can compact rich data into (relatively) small data payloads
