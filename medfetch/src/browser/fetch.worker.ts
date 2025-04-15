@@ -14,7 +14,7 @@ onmessage = (e: MessageEvent<FetchMessageInit>) => {
         const { sharedSignal, url, init } = e.data;
         const signal = new Int32Array(sharedSignal, 0, 1); // 32bits = 4 bytes for the signal
         const sizeView = new DataView(sharedSignal, 4, 4); // declare as DataView so we can write size as little-endian
-        const dataBytes = new Uint8Array(sharedSignal, 8);  // byte array
+        const dataBytes = new Uint8Array(sharedSignal, 8); // byte array
 
         const response = await fetch(url, init);
         const payload = await response.json();

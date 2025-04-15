@@ -1,9 +1,11 @@
 # SQLite-On-FHIR C extension!
+
 A virtual table implementation in C that uses FHIR APIs
 as the data source for the virtual table. Built for running
 sqlite3 on the server.
 
 ## Usage
+
 The `fetch` function has a signature that looks something like this:
 
 ```c
@@ -13,12 +15,12 @@ struct VirtualTable *fetch(const char *base_url, const char *resource_type, int 
 Except that you invoke it directly in SQLite exactly at the `CREATE VIRTUAL TABLE` statement.
 
 - `base_url` is the address of the server
-(need trailing slash since the string concat for the final url just uses the `%s%s` flag without any slashes)
+  (need trailing slash since the string concat for the final url just uses the `%s%s` flag without any slashes)
 - `resource_type` is the name of the resource you want to fetch
 - `n` is the total number of resources you want, so the fetcher
-will traverse the bundle links until it hits n or it reaches the
-end of the bundle, whichever comes first. Pass in -1 to traverse
-to the end.
+  will traverse the bundle links until it hits n or it reaches the
+  end of the bundle, whichever comes first. Pass in -1 to traverse
+  to the end.
 
 ```sql
 .load ./path-to-fetch.so;
@@ -29,8 +31,8 @@ INSERT INTO fhir ("id", "base_url") VALUES ('myserver', 'https://some-fhir-serve
 -- Then create a virtual table using the custom `fetch` module function
 CREATE VIRTUAL TABLE Patient USING FETCH('myserver', 'Patient');
 
-/* 
- * Each virtual table has 1 column name "row", 
+/*
+ * Each virtual table has 1 column name "row",
  * as if it were created using:
  *
  * CREATE TABLE Patient (row TEXT NOT NULL);
@@ -43,7 +45,7 @@ SELECT
     row ->> 'name' AS name,
     row ->> 'birthDate' AS birth_date
 FROM Patient;
-    
+
 -- create table as query:
 CREATE TABLE myserver_patients AS
 SELECT
@@ -54,7 +56,9 @@ FROM Patient;
 ```
 
 ## Building
+
 First you need to build + install the `cfhir` library at `../cfhir`:
+
 ```bash
 make install
 ```
@@ -73,6 +77,7 @@ apt install libcurl4-openssl-dev libjansson-dev libsqlite3-dev
 ```
 
 And on mac homebrew:
+
 ```bash
 brew install curl jansson sqlite3
 ```
@@ -80,12 +85,12 @@ brew install curl jansson sqlite3
 You will also need sqlite3 on your computer (duh)
 
 ## Scripts:
+
 1. Building:
-`make`
+   `make`
 
 2. Clean:
-`make clean`
+   `make clean`
 
 3. Initialize test sqlite connection:
-`sqlite3 -init bootup.sql`
-
+   `sqlite3 -init bootup.sql`

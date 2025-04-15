@@ -1,11 +1,18 @@
-import { RunExample } from "./RunExample";
+---
+title: Introduction
+breadcrumb: false
+---
 
-# medfetch.js
+import { RunExampleWrapper } from "./RunExampleWrapper";
+
+# Introduction
+
 Welcome to the medfetch.js docs!
 
 ## What is it?
-Medfetch.js is [Nestor Health](#)'s implementation of 
-the [sql on fhir](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/) 
+
+Medfetch.js is [Nestor Health](#)'s implementation of
+the [sql on fhir](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/)
 specifications that directs FHIR JSON data into SQL tables. It does so
 by extending SQLite with a minimal [virtual table module](https://www.sqlite.org/vtab.html).
 
@@ -14,18 +21,19 @@ Built to run completely on modern web browsers, medfetch injects the
 binary with its extension code, meaning the Virtual Table module is
 written entirely in JavaScript.
 
-Click the run button to see it in action!
-```sql
-SELECT 
-   json ->> 'id' AS id,
-   json -> 'given' ->> 0 AS name,
-   json ->> 'birthDate' AS birthDate
-FROM medfetch('Patient', json_array(
-    'id',
-    'name.given.first()',
-    'birthDate'
-))
-LIMIT 5;
-```
+<RunExampleWrapper>
+    ```sql SELECT json ->> 'id' AS id, json -> 'given' ->> 0 AS name, json ->>
+    'birthDate' AS birthDate FROM medfetch('Patient', json_array( 'id',
+    'name.given.first()', 'birthDate' )) LIMIT 5; ```
+</RunExampleWrapper>
 
-<RunExample />
+If you need to send FHIR JSONs into an SQL database at some point in your
+ETL pipeline, then Medfetch.js might be the perfect tool for you!
+
+## Motivation
+
+JSONs are great. They let you compact rich data into (relatively) small data payloads
+without needing to worry about a schema. So it makes sense to use something like JSONs as the primary data format
+for data transfer for [clinical data exchange](https://build.fhir.org/exchange-module.html).
+Combine JSON payloads with a tree-based navigation language like [FHIRPath](https://build.fhir.org/fhirpath.html)
+and you have an incredibly powerful way to extract and manipulate FHIR JSONs.

@@ -6,20 +6,28 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.1.2",
     "@sqlite.org/sqlite-wasm": "3.49.1-build2",
     "@tanstack/react-query": "^5.67.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "effect": "^3.13.8",
     "fhirpath": "^4.0.0",
+    "lucide-react": "^0.411.0",
     "medfetch": "workspace:^",
     "next": "15.3.0",
     "nextra": "^4.2.17",
     "nextra-theme-docs": "^4.2.17",
+    "postcss-import": "^16.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sqliteow": "workspace:^"
+    "sqliteow": "workspace:^",
+    "tailwind-merge": "^2.6.0",
+    "tw-animate-css": "^1.2.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -29,6 +37,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

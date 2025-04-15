@@ -4,30 +4,30 @@ import { Resource } from "./data";
 
 const _Link = Schema.Struct({
     relation: Schema.String,
-    url: Schema.String
+    url: Schema.String,
 });
 
 /**
  * Schema for `Bundle.link`
  */
-export interface Link extends Schema.Schema.Type<typeof _Link> {};
+export interface Link extends Schema.Schema.Type<typeof _Link> {}
 export const Link: Schema.Schema<Link> = _Link;
 
 const _Entry = Schema.Struct({
     fullUrl: ow(Schema.String, { exact: true }),
     link: ow(Schema.Array(Link), { exact: true }),
-    resource: ow(Resource, { exact: true })
+    resource: ow(Resource, { exact: true }),
 });
 
 /**
  * Schema for `Bundle.entry`
  */
-export interface Entry extends Schema.Schema.Type<typeof _Entry> {};
+export interface Entry extends Schema.Schema.Type<typeof _Entry> {}
 export const Entry: Schema.Schema<Entry> = _Entry;
 
 /**
- * Schema for `Bundle.type` 
- * 
+ * Schema for `Bundle.type`
+ *
  * Pulled straight from
  * [Bundle Type](https://build.fhir.org/valueset-bundle-type.html)
  * value set.
@@ -42,7 +42,7 @@ export const Type = Schema.Literal(
     "history",
     "searchset",
     "collection",
-    "subscription-notification"
+    "subscription-notification",
 );
 export type Type = typeof Type.Type;
 
@@ -52,8 +52,8 @@ const _Bundle = Schema.Struct({
     entry: ow(Schema.Array(Entry), { exact: true, default: () => [] }),
 });
 
-export interface FHIRBundle extends Schema.Schema.Encoded<typeof _Bundle> {};
-export interface Bundle extends Schema.Schema.Type<typeof _Bundle> {};
+export interface FHIRBundle extends Schema.Schema.Encoded<typeof _Bundle> {}
+export interface Bundle extends Schema.Schema.Type<typeof _Bundle> {}
 /**
  * Schema for `Bundle` Resource.
  */
@@ -65,7 +65,8 @@ export const Bundle: Schema.Schema<Bundle, FHIRBundle> = _Bundle;
  * @param makeOptions effect's `MakeOptions`
  * @returns a Bundle
  */
-export const make : (...args: Parameters<typeof _Bundle.make>) => Bundle = _Bundle.make;
+export const make: (...args: Parameters<typeof _Bundle.make>) => Bundle =
+    _Bundle.make;
 
 /**
  * Effectful `Bundle` decoder
@@ -78,7 +79,7 @@ export const decodeUnknown = Schema.decodeUnknown(Bundle);
 /**
  * predicate fn that checks if the given
  * value matches our `Bundle` schema.
- * 
+ *
  * @param u the unknown data to check
  * @param parseOptions optional `ParseOptions` from Effect
  * @returns true if `u` is a `Bundle`. false otherwise

@@ -1,9 +1,4 @@
-import {
-    Array,
-    Data,
-    Match,
-    Schema,
-} from "effect";
+import { Array, Data, Match, Schema } from "effect";
 
 /// ALIAS
 const ow = Schema.optionalWith;
@@ -35,12 +30,12 @@ const _Constant = Schema.Struct({
     valueUrl: ow(Schema.String, { exact: true }),
     valueUuid: ow(Schema.String, { exact: true }),
 });
-export interface Constant extends Schema.Schema.Type<typeof _Constant> {};
+export interface Constant extends Schema.Schema.Type<typeof _Constant> {}
 export const Constant: Schema.Schema<Constant> = _Constant;
 
 const _Tag = Schema.Struct({
     name: Schema.String,
-    value: Schema.String
+    value: Schema.String,
 });
 
 export interface Tag extends Schema.Schema.Type<typeof _Tag> {}
@@ -53,7 +48,7 @@ const _ColumnPath = Schema.Struct({
     description: ow(Schema.String, { exact: true }),
     collection: ow(Schema.Boolean, { exact: true }),
     type: ow(Schema.String, { exact: true }),
-    tags: ow(Schema.Array(Tag), { exact: true })
+    tags: ow(Schema.Array(Tag), { exact: true }),
 });
 /**
  * The ColumnPath schema that the View
@@ -62,23 +57,24 @@ const _ColumnPath = Schema.Struct({
  * *Optionally* takes in a `TName` string
  * literal to denote the name of the column
  */
-export interface ColumnPath<
-    TName extends string = string,
-> extends Schema.Schema.Type<typeof _ColumnPath> {
+export interface ColumnPath<TName extends string = string>
+    extends Schema.Schema.Type<typeof _ColumnPath> {
     name: TName;
     type?: string;
 }
 
 export const ColumnPath: Schema.Schema<ColumnPath> = _ColumnPath;
-export const columnPath: (...args: Parameters<typeof _ColumnPath.make>) => ColumnPath = _ColumnPath.make;
+export const columnPath: (
+    ...args: Parameters<typeof _ColumnPath.make>
+) => ColumnPath = _ColumnPath.make;
 
 /**
  * "Typesafe" `ColumnPath` constructor function that binds
  * `ColumnPath.name` and `ColumnPath.type` to the string literals
  * you type in. So really it's just a Generic wrapper over the identity function.
- * 
+ *
  * JS runtime type is just a plain `ColumnPath` object, so `name` and `type`
- * are just strings in the end. This function just saves you from manually 
+ * are just strings in the end. This function just saves you from manually
  * having to write the type for any assignment of type `ColumnPath`
  * @param input - the column path
  * @returns input args
@@ -90,25 +86,24 @@ type BaseSelect = {
     readonly forEach?: string;
     readonly forEachOrNull?: string;
     readonly unionAll?: readonly BaseSelect[];
-}
+};
 
 const SelectJSON = Schema.Struct({
-    column: ow(
-        Schema.Array(
-            ColumnPath
-        ), 
-        {
-            exact: true,
-        }
-    ),
+    column: ow(Schema.Array(ColumnPath), {
+        exact: true,
+    }),
     select: ow(
-        Schema.Array(Schema.suspend((): Schema.Schema<BaseSelect> => SelectJSON)),
+        Schema.Array(
+            Schema.suspend((): Schema.Schema<BaseSelect> => SelectJSON),
+        ),
         { exact: true },
     ),
     forEach: ow(Schema.String, { exact: true }),
     forEachOrNull: ow(Schema.String, { exact: true }),
     unionAll: ow(
-        Schema.Array(Schema.suspend((): Schema.Schema<BaseSelect> => SelectJSON)),
+        Schema.Array(
+            Schema.suspend((): Schema.Schema<BaseSelect> => SelectJSON),
+        ),
         { exact: true },
     ),
 });
@@ -383,7 +378,7 @@ const SelectFromData = Schema.transform(SelectJSON, Node, {
 
 export const normalize = Schema.decodeSync(SelectFromData);
 
-const _ViewDefinition = Schema.TaggedStruct("Select", ({
+const _ViewDefinition = Schema.TaggedStruct("Select", {
     status: Schema.Literal("draft", "active", "retired", "unknown"),
     url: ow(Schema.String, { exact: true }),
     name: ow(Schema.String, { exact: true }),
@@ -398,11 +393,12 @@ const _ViewDefinition = Schema.TaggedStruct("Select", ({
     }),
     where: ow(Schema.Array(Where), { exact: true }),
     select: Schema.NonEmptyArray(Node),
-}));
+});
 
-export interface ViewDefinition<ResourceType extends string = string> extends Schema.Schema.Type<typeof _ViewDefinition> {
-    resource: ResourceType
-};
+export interface ViewDefinition<ResourceType extends string = string>
+    extends Schema.Schema.Type<typeof _ViewDefinition> {
+    resource: ResourceType;
+}
 
 const ViewDefinition: Schema.Schema<ViewDefinition> = _ViewDefinition;
 export const definition = Data.tagged<ViewDefinition>("Select");

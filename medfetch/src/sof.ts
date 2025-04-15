@@ -9,7 +9,7 @@ interface CodeableConcept {
     coding: {
         code: string;
         system: string;
-    }[]
+    }[];
 }
 
 function codeSystemAlias(codeSystem: string | undefined) {
@@ -37,7 +37,7 @@ function codeSystemAlias(codeSystem: string | undefined) {
     );
 }
 
-function getReferenceKey({ reference }: { reference: string; }) {
+function getReferenceKey({ reference }: { reference: string }) {
     // idk
     if (reference === undefined) {
         return null;
@@ -47,14 +47,14 @@ function getReferenceKey({ reference }: { reference: string; }) {
     if (reference.startsWith("urn")) {
         return reference.slice(9);
     }
-    
+
     const split = reference.split("/");
     // "<Resource>/id" relative reference case
     if (split.length === 2) {
         return split[1];
     }
-    
-    // Don't handle 
+
+    // Don't handle
     return null;
 }
 
@@ -175,10 +175,7 @@ export function project(
  * @param data - the resources to project
  * @returns the 'rowified' json resources
  */
-export function sof(
-    viewDefinition: ViewDefinition,
-    data: any[],
-): any[] {
+export function sof(viewDefinition: ViewDefinition, data: any[]): any[] {
     let filtered = data.filter(
         (data) => data.resourceType === viewDefinition.resource,
     );

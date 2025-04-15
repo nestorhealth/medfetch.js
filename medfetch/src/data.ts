@@ -5,11 +5,11 @@ import { Bundle, Data } from "./schema/index.js";
  * Labeled `Data` layer Error
  * that indicates some error occurred while working
  * with the Data Buffers from the `Data` Layer
- * 
- * @field message -> the error message 
+ *
+ * @field message -> the error message
  */
-export class DataError extends D.TaggedError("Data")<{ 
-    readonly message: string 
+export class DataError extends D.TaggedError("Data")<{
+    readonly message: string;
 }> {}
 
 /**
@@ -26,12 +26,12 @@ const nextLink = (bundle: Bundle.Bundle) =>
 
 /**
  * `fetch()` wrapper over an HTTP GET call.
- * 
+ *
  * It doesn't need to necessarily be a `search` result,
  * but it decodes a [Bundle](https://build.fhir.org/bundle.html) from a JSON.
  *
  * So make sure whatever url you're calling returns a Bundle JSON.
- * 
+ *
  * @param url - the server url
  * @returns a decoded Bundle
  */
@@ -55,7 +55,7 @@ const get = (url: string) =>
  * @returns - async iterator over Bundle
  */
 const pageIterator = (baseUrl: string, resourceType: string) =>
-    async function* (n: number, maxPageSize : number) {
+    async function* (n: number, maxPageSize: number) {
         const upperLimit = n < 0 ? Infinity : n;
         let count = 0;
 
@@ -64,7 +64,6 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         );
         yield firstPage;
         count += firstPage.entry.length;
-
 
         let linkOption = nextLink(firstPage);
         while (Option.isSome(linkOption) && count < upperLimit) {
@@ -94,10 +93,10 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
  * @returns a Stream of Bundles
  */
 export const pages = (
-    baseUrl: string, 
+    baseUrl: string,
     resourceType: string,
     n = 100,
-    maxPageSize = 250
+    maxPageSize = 250,
 ) =>
     Stream.fromAsyncIterable(
         pageIterator(baseUrl, resourceType)(n, maxPageSize),
@@ -107,49 +106,45 @@ export const pages = (
 /**
  * From a given Bundle `Stream`, fold all of its
  * `entry.resource` elements into an array.
- * 
+ *
  * Example usage:
- * 
+ *
  * ```ts
  * // Call `pages()` to get the Patient Bundle pages `Stream`,
  * const patientBundles = pages(url, "Patient");
- * 
+ *
  * // Then call `flatResources()` on the result;
  * const patients = flatResources(patientBundles);
- * 
+ *
  * // The above can be equivalently rewritten as
  * const patients2 = pages(url, "Patient").pipe(flatResources);
  * ```
- * 
+ *
  * @param stream the bundle stream
  * @returns Effect wrapped resource list
  */
 export const flatResources = (stream: ReturnType<typeof pages>) =>
     stream.pipe(
-        Stream.runFold(
-            [] as Data.Resource[],
-            (acc, bundle) => pipe(
+        Stream.runFold([] as Data.Resource[], (acc, bundle) =>
+            pipe(
                 bundle.entry,
-                Array.filterMap(
-                    (entry) => entry.resource !== undefined ?
-                        Option.some(entry.resource) : Option.none()
+                Array.filterMap((entry) =>
+                    entry.resource !== undefined
+                        ? Option.some(entry.resource)
+                        : Option.none(),
                 ),
-                resources => Array.appendAll(acc, resources)
-            )
-        )
+                (resources) => Array.appendAll(acc, resources),
+            ),
+        ),
     );
-    
+
 /**
  * Promised version of `flatResources(pages(...))`;
  * @param params - the pages params
  * @returns a flat array of n resources from the server
  */
 export async function nresources(...params: Parameters<typeof pages>) {
-    return pipe(
-        pages(...params),
-        flatResources,
-        Effect.runPromise
-    );
+    return pipe(pages(...params), flatResources, Effect.runPromise);
 }
 
 export function unionKeys(resources: any[]) {

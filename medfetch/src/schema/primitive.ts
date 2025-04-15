@@ -23,7 +23,7 @@ export const Key = Schema.Literal(
 export type Key = typeof Key.Type;
 
 const Capitalized = Schema.Literal(
-    ...Key.literals.map((key) => String.capitalize(key))
+    ...Key.literals.map((key) => String.capitalize(key)),
 );
 const ValueKey = Schema.TemplateLiteral(Schema.Literal("value"), Capitalized);
 export type ValueKey<TKey extends Key = Key> = `value${Capitalize<TKey>}`;
@@ -127,5 +127,5 @@ const smap = {
 
 export const get = <TKey extends Key>(key: TKey) => ({
     valueKey: createValueKey(key),
-    schema: smap[key]
+    schema: smap[key],
 });

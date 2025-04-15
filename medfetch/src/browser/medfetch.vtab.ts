@@ -65,18 +65,16 @@ const Requester = (port: MessagePort) =>
         Atomics.wait(signal, 0, 0);
     };
 
-
 function getColumnName(path: string | [string, any]) {
-    if (typeof path !== "string")
-        return path[0]; // default to the 'key' element in the 2-tuple
+    if (typeof path !== "string") return path[0]; // default to the 'key' element in the 2-tuple
 
     let cleaned = path;
     while (cleaned.match(/\.\w+\([^)]*\)$/)) {
-        cleaned = cleaned.replace(/\.\w+\([^)]*\)$/, '');
+        cleaned = cleaned.replace(/\.\w+\([^)]*\)$/, "");
     }
 
     // split on '.' and return tail
-    const parts = cleaned.split('.');
+    const parts = cleaned.split(".");
     return parts[parts.length - 1];
 }
 
@@ -97,18 +95,21 @@ function size(path: string) {
 function generateViewDefinition(args: SqlValue[], rows: any[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
-        throw new Error(`medfetch: unexpected invalid resourceType in args[0]`)
+        throw new Error(`medfetch: unexpected invalid resourceType in args[0]`);
 
-    if (!fp) // no fhirpath map, then just return null and default to the whole object
+    if (!fp)
+        // no fhirpath map, then just return null and default to the whole object
         return null;
 
     const paths: (string | [string, any])[] = JSON.parse(fp); // todo: allow for forEach's and more complex path mappings
-    if (!Array.isArray(paths)) // no arg1 then we just return null
+    if (!Array.isArray(paths))
+        // no arg1 then we just return null
         return null;
     const inferredSet = new Set();
     const column: View.ColumnPath[] = [];
     for (let i = 0; i < rows.length; i++) {
-        if (inferredSet.size === paths.length) // early exit! ideally we hit this on rows[0]
+        if (inferredSet.size === paths.length)
+            // early exit! ideally we hit this on rows[0]
             break;
         const rowLike = rows[i];
         for (const path of paths) {
@@ -124,9 +125,9 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
                             path,
                             name,
                             collection,
-                        })
+                        }),
                     );
-                } 
+                }
             }
         }
     }
@@ -137,14 +138,17 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
         constant: [],
         select: [
             View.Column({
-                column
-            })
+                column,
+            }),
         ],
-        where: []
+        where: [],
     });
 }
 
-export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string[]) {
+export default async function Medfetch(
+    sqlite3: Sqlite3Static,
+    loaderAux: string[],
+) {
     const { wasm, capi, vtab } = sqlite3;
     const request = await getFetchPort(loaderAux[0]).then(Requester);
     const getCursor = (pcursor: WasmPointer) =>
@@ -156,13 +160,15 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
         xCreate: 0,
         xConnect(pDb, pAux, argc, argv, ppVtab, pzErr) {
             let rc = capi.SQLITE_OK;
-            rc += capi.sqlite3_declare_vtab(pDb, 
+            rc += capi.sqlite3_declare_vtab(
+                pDb,
                 `CREATE TABLE resource(
                     id TEXT,
                     json TEXT,
                     type HIDDEN,
                     fp   HIDDEN
-                )`);
+                )`,
+            );
             if (!rc) {
                 const virtualTable = vtab.xVtab.create(ppVtab) as medfetch_vtab;
                 virtualTable.baseUrl = getBaseUrl(sqlite3, pAux);
@@ -175,12 +181,12 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
                 const constraint = index.nthConstraint(i);
                 const usage = index.nthConstraintUsage(i);
                 switch (constraint.$op) {
-                    case (capi.SQLITE_INDEX_CONSTRAINT_LIMIT): {
+                    case capi.SQLITE_INDEX_CONSTRAINT_LIMIT: {
                         usage.$argvIndex = i + 1;
                         usage.$omit = 1;
                         break;
                     }
-                    case (capi.SQLITE_INDEX_CONSTRAINT_OFFSET): {
+                    case capi.SQLITE_INDEX_CONSTRAINT_OFFSET: {
                         usage.$argvIndex = i + 1;
                         usage.$omit = 1;
                         break;
@@ -222,13 +228,23 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
             const cursor = getCursor(pCursor);
             const row = cursor.rows[cursor.index];
             switch (iCol) {
-                case(0): {
-                    capi.sqlite3_result_text(pCtx, row.id, -1, capi.SQLITE_TRANSIENT);
+                case 0: {
+                    capi.sqlite3_result_text(
+                        pCtx,
+                        row.id,
+                        -1,
+                        capi.SQLITE_TRANSIENT,
+                    );
                     break;
                 }
-                case(1): {
+                case 1: {
                     const encoded = JSON.stringify(row);
-                    capi.sqlite3_result_text(pCtx, encoded, -1, capi.SQLITE_TRANSIENT);
+                    capi.sqlite3_result_text(
+                        pCtx,
+                        encoded,
+                        -1,
+                        capi.SQLITE_TRANSIENT,
+                    );
                     break;
                 }
             }
@@ -247,25 +263,37 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
         xFilter: (pCursor, idxNum, idxCStr, argc, argv) => {
             const args = capi.sqlite3_values_to_js(argc, argv);
             const [resourceType] = args;
-            if (typeof resourceType !== "string") // basic check, may add enum inclusion check later
+            if (typeof resourceType !== "string")
+                // basic check, may add enum inclusion check later
                 return capi.SQLITE_ERROR;
 
             const cursor = getCursor(pCursor);
             const { baseUrl } = getVirtualTable(cursor.pVtab);
             // to allow for (1) trailing slash
-            let url = baseUrl[baseUrl.length - 1] === '/' ? `${baseUrl}${resourceType}`
-                : `${baseUrl}/${resourceType}`;
+            let url =
+                baseUrl[baseUrl.length - 1] === "/"
+                    ? `${baseUrl}${resourceType}`
+                    : `${baseUrl}/${resourceType}`;
             let resources: any[] = [];
             const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
             while (url !== null && url !== undefined) {
                 request({ sharedSignal, url });
-                const size = new DataView(sharedSignal, 4, 4).getUint32(0, true);
+                const size = new DataView(sharedSignal, 4, 4).getUint32(
+                    0,
+                    true,
+                );
                 const dataBytes = new Uint8Array(sharedSignal, 8, size);
-                const payloadSerialized = new TextDecoder().decode(dataBytes.slice()); // can't read from shared buffer directly, need to slice() to copy
+                const payloadSerialized = new TextDecoder().decode(
+                    dataBytes.slice(),
+                ); // can't read from shared buffer directly, need to slice() to copy
                 const bundle: any = JSON.parse(payloadSerialized);
-                const extractedResources = bundle.entry.map(({ resource }) => resource);
+                const extractedResources = bundle.entry.map(
+                    ({ resource }) => resource,
+                );
                 resources.push(...extractedResources);
-                url = bundle.link?.find((link: any) => link.relation === "next")?.url;
+                url = bundle.link?.find(
+                    (link: any) => link.relation === "next",
+                )?.url;
             }
 
             // handle inline fhirpath transformations
@@ -277,6 +305,6 @@ export default async function Medfetch(sqlite3: Sqlite3Static, loaderAux: string
                 cursor.rows = resources;
             }
             return 0;
-        }
+        },
     } satisfies sqlite3_module;
 }

@@ -86,14 +86,16 @@ export const ColumnPath: Schema.Schema<ColumnPath, Data.ColumnPath> =
  * "Typesafe" `ColumnPath` constructor function that binds
  * `ColumnPath.name` and `ColumnPath.type` to the string literals
  * you type in. So really it's just a Generic wrapper over the identity function.
- * 
+ *
  * JS runtime type is just a plain `ColumnPath` object, so `name` and `type`
- * are just strings in the end. This function just saves you from manually 
+ * are just strings in the end. This function just saves you from manually
  * having to write the type for any assignment of type `ColumnPath`
  * @param input - the column path
  * @returns input args
  */
-export const columnPath = <TName extends string, TFhirType extends FhirType>(input: ColumnPath<TName, TFhirType>): ColumnPath<TName, TFhirType> => input;
+export const columnPath = <TName extends string, TFhirType extends FhirType>(
+    input: ColumnPath<TName, TFhirType>,
+): ColumnPath<TName, TFhirType> => input;
 
 const decodeColumnPathOption = Schema.decodeOption(ColumnPath);
 

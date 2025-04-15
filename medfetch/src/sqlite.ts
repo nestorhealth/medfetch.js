@@ -10,7 +10,13 @@ export function getFetchPath() {
 
     if (platform === "linux") {
         if (arch === "x64") {
-            return path.resolve(__dirname, "..", "bin", "linux-x86", "medfetch");
+            return path.resolve(
+                __dirname,
+                "..",
+                "bin",
+                "linux-x86",
+                "medfetch",
+            );
         }
         throw new Error(`${arch} on linux not supported right now`);
     } else if (platform === "darwin") {
@@ -21,4 +27,3 @@ export function getFetchPath() {
     }
     throw new Error(`Couldn't resolve the platform ${platform}`);
 }
-
