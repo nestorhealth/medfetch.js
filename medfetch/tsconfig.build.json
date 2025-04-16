@@ -29,6 +29,10 @@
         "~/*": ["src/*"]
     }
   },
-  "include": ["src/sqlite/**/*.ts", "src/sof.ts", "src/view.ts"],
+  "include": [
+        "src/sqlite.ts" ,"src/sqlite.*.ts", 
+        "src/worker.ts", "src/worker.*.ts", 
+        "sof.ts", "view.ts"
+    ],
   "exclude": ["/**/*.test.ts"]
 }

@@ -1,6 +1,7 @@
-import { Column as ct, columnPath as ot, ForEach as ut, ForEachOrNull as st, normalize as lt, Select as dt, UnionAll as mt, viewDefinition as pt } from "./view.mjs";
-import { Schema as e, String as E, pipe as v, Array as o, Data as D, identity as ne, ParseResult as S, Option as x, Match as d, Stream as _, Effect as m } from "effect";
-import { sof as gt } from "./sof.mjs";
+import { Schema as e, String as C, pipe as v, Array as o, Data as R, identity as ae, ParseResult as S, Option as E, Match as d, Stream as x, Effect as m, Chunk as re } from "effect";
+import { flat as ie } from "./sof.mjs";
+import { v as ce, C as oe, c as ue } from "./view-CctbhzTQ.mjs";
+import { F as St, a as gt, n as ft, S as yt, U as ht } from "./view-CctbhzTQ.mjs";
 const B = e.Literal(
   "Resource",
   "BackboneElement",
@@ -71,7 +72,7 @@ const B = e.Literal(
   "System.Decimal",
   "System.Integer",
   "System.Time"
-), re = (r) => typeof r == "string" && B.literals.includes(r), ae = e.Literal(
+), se = (a) => typeof a == "string" && B.literals.includes(a), le = e.Literal(
   "0.01",
   "0.05",
   "0.06",
@@ -280,7 +281,7 @@ e.Literal(
   "VerificationResult",
   "VisionPrescription"
 );
-const F = e.Literal(
+const U = e.Literal(
   "base64Binary",
   "boolean",
   "canonical",
@@ -299,30 +300,30 @@ const F = e.Literal(
   "uri",
   "url",
   "uuid"
-), ie = e.Literal(
-  ...F.literals.map((r) => E.capitalize(r))
+), de = e.Literal(
+  ...U.literals.map((a) => C.capitalize(a))
 );
-e.TemplateLiteral(e.Literal("value"), ie);
-const U = (r) => `value${E.capitalize(r)}`;
-F.literals.map(U);
-function ce(r) {
+e.TemplateLiteral(e.Literal("value"), de);
+const F = (a) => `value${C.capitalize(a)}`;
+U.literals.map(F);
+function me(a) {
   return v(
-    r,
+    a,
     Object.keys,
     o.findFirst((n) => n.startsWith("value"))
   );
 }
-function oe(r) {
+function pe(a) {
   return v(
-    r,
-    E.replace("value", ""),
-    E.uncapitalize
+    a,
+    C.replace("value", ""),
+    C.uncapitalize
   );
 }
-const ue = e.String, se = e.Boolean, le = e.String, de = e.String, me = e.String, pe = e.String, Se = e.Number, ge = e.String, fe = e.String, ye = e.Int, he = e.String, xe = e.String, V = e.Positive.pipe(e.int()), ve = e.String, Ae = e.NonNegativeInt, Ee = e.String, Ce = e.String, Pe = e.String, t = e.optionalWith, $ = e.Struct({
+const Se = e.String, ge = e.Boolean, fe = e.String, ye = e.String, he = e.String, xe = e.String, ve = e.Number, Ae = e.String, Ce = e.String, Ee = e.Int, Pe = e.String, De = e.String, V = e.Positive.pipe(e.int()), Re = e.String, be = e.NonNegativeInt, Me = e.String, we = e.String, Ie = e.String, t = e.optionalWith, $ = e.Struct({
   start: t(e.String, { exact: !0 }),
   end: t(e.String, { exact: !0 })
-}), C = e.Struct({
+}), P = e.Struct({
   system: t(e.String, { exact: !0 }),
   version: t(e.String, { exact: !0 }),
   code: t(e.String, { exact: !0 }),
@@ -330,19 +331,19 @@ const ue = e.String, se = e.Boolean, le = e.String, de = e.String, me = e.String
   userSelected: t(e.Boolean, { exact: !0 })
 }), q = e.Struct({
   text: e.optionalWith(e.String, { exact: !0 }),
-  coding: t(e.Array(C), { exact: !0 })
-}), P = e.Struct({
+  coding: t(e.Array(P), { exact: !0 })
+}), D = e.Struct({
   value: t(e.Number, { exact: !0 }),
   comparator: t(e.Literal(">", "<=", ">=", ">"), { exact: !0 }),
   unit: t(e.String, { exact: !0 }),
   system: t(e.String, { exact: !0 }),
   code: t(e.String, { exact: !0 })
 });
-P.pick("value", "unit");
-const De = e.Struct({
-  low: t(P.pick("value", "unit"), { exact: !0 }),
-  high: t(P.pick("value", "unit"), { exact: !0 })
-}), Re = e.Struct({
+D.pick("value", "unit");
+const Te = e.Struct({
+  low: t(D.pick("value", "unit"), { exact: !0 }),
+  high: t(D.pick("value", "unit"), { exact: !0 })
+}), Oe = e.Struct({
   system: t(
     e.Literal("phone", "fax", "email", "pager", "url", "sms", "other"),
     { exact: !0 }
@@ -353,16 +354,16 @@ const De = e.Struct({
   }),
   rank: t(V, { exact: !0 }),
   period: t($, { exact: !0 })
-}), be = e.Struct({
+}), ke = e.Struct({
   name: t(e.String, { exact: !0 }),
-  telecom: t(e.Array(Re), { exact: !0 })
-}), Me = e.Struct({
+  telecom: t(e.Array(Oe), { exact: !0 })
+}), Ne = e.Struct({
   versionId: t(e.String, { exact: !0 }),
   lastUpdated: t(e.String, { exact: !0 }),
   source: t(e.String, { exact: !0 }),
   profile: t(e.Array(e.String), { exact: !0 }),
-  security: t(e.Array(C), { exact: !0 }),
-  tag: t(e.Array(C), { exact: !0 })
+  security: t(e.Array(P), { exact: !0 }),
+  tag: t(e.Array(P), { exact: !0 })
 }), z = e.Struct({
   use: e.optionalWith(
     e.Literal("usual", "official", "temp", "secondary", "old"),
@@ -376,7 +377,7 @@ const De = e.Struct({
     e.suspend(() => G),
     { exact: !0 }
   )
-}), we = z, G = e.Struct({
+}), Le = z, G = e.Struct({
   reference: t(e.String, { exact: !0 }),
   type: t(e.String, { exact: !0 }),
   identifier: t(
@@ -384,33 +385,33 @@ const De = e.Struct({
     { exact: !0 }
   ),
   display: t(e.String, { exact: !0 })
-}), Ie = e.Struct({
-  code: C,
+}), _e = e.Struct({
+  code: P,
   valueCodeableConcept: t(q, { exact: !0 }),
-  valueQuantity: t(P, { exact: !0 }),
-  valueRange: t(De, { exact: !0 }),
+  valueQuantity: t(D, { exact: !0 }),
+  valueRange: t(Te, { exact: !0 }),
   valueReference: t(G, { exact: !0 })
-}), Te = e.Struct({
+}), Be = e.Struct({
   name: e.String,
   value: e.String
-}), Oe = e.Struct({
+}), Ue = e.Struct({
   path: e.String,
   name: e.String,
   description: t(e.String, { exact: !0 }),
   collection: t(e.Boolean, { exact: !0, default: () => !1 }),
   type: t(e.String, { exact: !0 }),
-  tags: t(e.Array(Te), { exact: !0, default: () => [] })
-}), w = Oe, W = e.Struct({
+  tags: t(e.Array(Be), { exact: !0, default: () => [] })
+}), I = Ue, W = e.Struct({
   path: e.String,
   description: t(e.String, { exact: !0 })
-}), M = e.Struct({
-  column: t(e.Array(w), {
+}), w = e.Struct({
+  column: t(e.Array(I), {
     exact: !0
   }),
   select: t(
     e.Array(
       e.suspend(
-        () => M
+        () => w
       )
     ),
     { exact: !0 }
@@ -420,68 +421,68 @@ const De = e.Struct({
   unionAll: t(
     e.Array(
       e.suspend(
-        () => M
+        () => w
       )
     ),
     { exact: !0 }
   )
-}), K = M, Q = e.Struct({
+}), K = w, Q = e.Struct({
   name: e.String,
-  valueBase64Binary: t(ue, { exact: !0 }),
-  valueBoolean: t(se, { exact: !0 }),
-  valueCanonical: t(le, { exact: !0 }),
-  valueCode: t(de, { exact: !0 }),
-  valueDate: t(me, { exact: !0 }),
-  valueDateTime: t(pe, { exact: !0 }),
-  valueDecimal: t(Se, { exact: !0 }),
-  valueId: t(ge, { exact: !0 }),
-  valueInstant: t(fe, { exact: !0 }),
-  valueInteger: t(ye, { exact: !0 }),
-  valueOid: t(he, { exact: !0 }),
+  valueBase64Binary: t(Se, { exact: !0 }),
+  valueBoolean: t(ge, { exact: !0 }),
+  valueCanonical: t(fe, { exact: !0 }),
+  valueCode: t(ye, { exact: !0 }),
+  valueDate: t(he, { exact: !0 }),
+  valueDateTime: t(xe, { exact: !0 }),
+  valueDecimal: t(ve, { exact: !0 }),
+  valueId: t(Ae, { exact: !0 }),
+  valueInstant: t(Ce, { exact: !0 }),
+  valueInteger: t(Ee, { exact: !0 }),
+  valueOid: t(Pe, { exact: !0 }),
   valuePositiveInt: t(V, { exact: !0 }),
-  valueString: t(xe, { exact: !0 }),
-  valueTime: t(ve, { exact: !0 }),
-  valueUnsignedInt: t(Ae, { exact: !0 }),
-  valueUri: t(Ee, { exact: !0 }),
-  valueUrl: t(Ce, { exact: !0 }),
-  valueUuid: t(Pe, { exact: !0 })
-}), H = Q, ke = e.Struct({
+  valueString: t(De, { exact: !0 }),
+  valueTime: t(Re, { exact: !0 }),
+  valueUnsignedInt: t(be, { exact: !0 }),
+  valueUri: t(Me, { exact: !0 }),
+  valueUrl: t(we, { exact: !0 }),
+  valueUuid: t(Ie, { exact: !0 })
+}), H = Q, Fe = e.Struct({
   status: e.Literal("draft", "active", "retired", "unknown"),
   url: t(e.String, { exact: !0 }),
-  identifier: t(e.Array(we), { exact: !0 }),
+  identifier: t(e.Array(Le), { exact: !0 }),
   name: t(e.String, { exact: !0 }),
   title: t(e.String, { exact: !0 }),
-  meta: t(Me, { exact: !0 }),
+  meta: t(Ne, { exact: !0 }),
   experimental: t(e.Boolean, { exact: !0 }),
   publisher: t(e.String, { exact: !0 }),
-  contact: t(e.Array(be), { exact: !0 }),
+  contact: t(e.Array(ke), { exact: !0 }),
   description: t(e.String, { exact: !0 }),
-  useContext: t(Ie, { exact: !0 }),
+  useContext: t(_e, { exact: !0 }),
   copyright: t(e.String, { exact: !0 }),
   resource: e.String,
-  fhirVersion: t(ae, { exact: !0 }),
+  fhirVersion: t(le, { exact: !0 }),
   constant: t(e.Array(Q), {
     exact: !0
   }),
   where: t(e.Array(W), { exact: !0 }),
   select: e.NonEmptyArray(K)
-}), A = ke;
-D.case();
+}), A = Fe;
+R.case();
 e.decodeUnknownSync(A);
 e.decodeSync(A);
 e.is(e.encodedSchema(A));
-const Ne = e.Struct(
+const Ve = e.Struct(
   {
     resourceType: e.String
   },
   { key: e.String, value: e.Any }
-), Le = Ne, _e = e.Struct({
+), $e = Ve, qe = e.Struct({
   name: e.Literal("sql"),
   value: e.Union(
     e.Literal("NOT NULL"),
     e.TemplateLiteral("REFERENCES ", e.String)
   )
-}), j = _e, Be = e.is(j), Fe = w.pipe(
+}), j = qe, ze = e.is(j), Ge = I.pipe(
   e.typeSchema,
   e.pick("path", "name", "collection"),
   e.required
@@ -492,24 +493,24 @@ const Ne = e.Struct(
       tags: e.Array(j)
     })
   )
-), Ue = Fe, Ve = e.transform(
-  e.typeSchema(w),
-  Ue,
+), We = Ge, Ke = e.transform(
+  e.typeSchema(I),
+  We,
   {
     strict: !0,
-    decode: ({ tags: r, type: n, ...i }) => v(
-      r,
-      o.filter((a) => Be(a)),
-      o.dedupeWith((a, c) => a.value === c.value),
-      (a) => ({
-        ...i,
-        tags: a,
-        type: re(n) ? n : "System.String"
+    decode: ({ tags: a, type: n, ...r }) => v(
+      a,
+      o.filter((i) => ze(i)),
+      o.dedupeWith((i, c) => i.value === c.value),
+      (i) => ({
+        ...r,
+        tags: i,
+        type: se(n) ? n : "System.String"
       })
     ),
-    encode: ne
+    encode: ae
   }
-), J = Ve, g = e.decodeOption(J), { Select: p, Column: f, ForEach: O, ForEachOrNull: k, UnionAll: y, $match: nt } = D.taggedEnum(), h = e.Union(
+), J = Ke, g = e.decodeOption(J), { Select: p, Column: f, ForEach: k, ForEachOrNull: N, UnionAll: y, $match: lt } = R.taggedEnum(), h = e.Union(
   e.TaggedStruct("Column", {
     column: e.Array(e.typeSchema(J))
   }),
@@ -528,8 +529,8 @@ const Ne = e.Struct(
     unionAll: e.Array(e.suspend(() => h))
   })
 );
-function l(r) {
-  return d.value(r).pipe(
+function l(a) {
+  return d.value(a).pipe(
     d.when(
       {
         forEach: d.defined,
@@ -537,7 +538,7 @@ function l(r) {
       },
       () => {
         throw new TypeError(
-          `Invalid SELECT node. Cannot have both a forEach and a forEachOrNull at the same level. Bad node is: ${JSON.stringify(r, null, 2)}`
+          `Invalid SELECT node. Cannot have both a forEach and a forEachOrNull at the same level. Bad node is: ${JSON.stringify(a, null, 2)}`
         );
       }
     ),
@@ -545,13 +546,13 @@ function l(r) {
       {
         forEach: d.defined
       },
-      ({ forEach: n, select: i = [], unionAll: a, column: c }) => O({
+      ({ forEach: n, select: r = [], unionAll: i, column: c }) => k({
         forEach: n,
         select: [
-          ...a ? [
+          ...i ? [
             y({
-              unionAll: a.map(
-                (s) => l(s)
+              unionAll: i.map(
+                (u) => l(u)
               )
             })
           ] : [],
@@ -559,13 +560,13 @@ function l(r) {
             f({
               column: o.filterMap(
                 c,
-                (s) => g(
-                  s
+                (u) => g(
+                  u
                 )
               )
             })
           ] : [],
-          ...i.map(l)
+          ...r.map(l)
         ]
       })
     ),
@@ -573,13 +574,13 @@ function l(r) {
       {
         forEachOrNull: d.defined
       },
-      ({ forEachOrNull: n, select: i = [], unionAll: a, column: c }) => k({
+      ({ forEachOrNull: n, select: r = [], unionAll: i, column: c }) => N({
         forEachOrNull: n,
         select: [
-          ...a ? [
+          ...i ? [
             y({
-              unionAll: a.map(
-                (s) => l(s)
+              unionAll: i.map(
+                (u) => l(u)
               )
             })
           ] : [],
@@ -587,13 +588,13 @@ function l(r) {
             f({
               column: o.filterMap(
                 c,
-                (s) => g(
-                  s
+                (u) => g(
+                  u
                 )
               )
             })
           ] : [],
-          ...i.map(l)
+          ...r.map(l)
         ]
       })
     ),
@@ -603,10 +604,10 @@ function l(r) {
         select: o.isArray,
         unionAll: o.isArray
       },
-      ({ column: n = [], select: i = [], unionAll: a = [] }) => p({
+      ({ column: n = [], select: r = [], unionAll: i = [] }) => p({
         select: [
           y({
-            unionAll: a.map(l)
+            unionAll: i.map(l)
           }),
           f({
             column: o.filterMap(
@@ -614,7 +615,7 @@ function l(r) {
               (c) => g(c)
             )
           }),
-          ...i.map(l)
+          ...r.map(l)
         ]
       })
     ),
@@ -623,12 +624,12 @@ function l(r) {
         unionAll: o.isArray,
         select: o.isArray
       },
-      ({ unionAll: n = [], select: i = [] }) => p({
+      ({ unionAll: n = [], select: r = [] }) => p({
         select: [
           y({
             unionAll: n.map(l)
           }),
-          ...i.map(l)
+          ...r.map(l)
         ]
       })
     ),
@@ -637,12 +638,12 @@ function l(r) {
         select: o.isArray,
         column: o.isArray
       },
-      ({ select: n = [], column: i = [] }) => p({
+      ({ select: n = [], column: r = [] }) => p({
         select: [
           f({
             column: o.filterMap(
-              i,
-              (a) => g(a)
+              r,
+              (i) => g(i)
             )
           }),
           ...n.map(l)
@@ -654,7 +655,7 @@ function l(r) {
         column: o.isArray,
         unionAll: o.isArray
       },
-      ({ column: n = [], unionAll: i = [], select: a = [] }) => p({
+      ({ column: n = [], unionAll: r = [], select: i = [] }) => p({
         select: [
           f({
             column: o.filterMap(
@@ -663,9 +664,9 @@ function l(r) {
             )
           }),
           y({
-            unionAll: i.map(l)
+            unionAll: r.map(l)
           }),
-          ...a.map(l)
+          ...i.map(l)
         ]
       })
     ),
@@ -678,7 +679,7 @@ function l(r) {
       })
     ),
     d.orElse((n) => {
-      var i, a;
+      var r, i;
       return n.unionAll ? y({
         unionAll: n.unionAll.map(l)
       }) : n.column ? f({
@@ -686,12 +687,12 @@ function l(r) {
           n.column,
           (c) => g(c)
         )
-      }) : n.forEach ? O({
+      }) : n.forEach ? k({
         forEach: n.forEach,
-        select: ((i = n.select) == null ? void 0 : i.map(l)) ?? []
-      }) : n.forEachOrNull ? k({
+        select: ((r = n.select) == null ? void 0 : r.map(l)) ?? []
+      }) : n.forEachOrNull ? N({
         forEachOrNull: n.forEachOrNull,
-        select: ((a = n.select) == null ? void 0 : a.map(l)) ?? []
+        select: ((i = n.select) == null ? void 0 : i.map(l)) ?? []
       }) : n.select ? p({
         select: n.select.map(l)
       }) : p({
@@ -700,46 +701,46 @@ function l(r) {
     })
   );
 }
-const $e = e.transform(K, h, {
+const Qe = e.transform(K, h, {
   strict: !0,
-  encode: ({ _tag: r, ...n }) => n,
-  decode: (r) => l(r)
-}), qe = e.decodeSync($e), u = (r) => H.pipe(
-  e.pick(U(r), "name"),
+  encode: ({ _tag: a, ...n }) => n,
+  decode: (a) => l(a)
+}), He = e.decodeSync(Qe), s = (a) => H.pipe(
+  e.pick(F(a), "name"),
   e.required,
-  e.attachPropertySignature("_tag", r)
-), ze = e.Union(
-  u("boolean"),
-  u("base64Binary"),
-  u("canonical"),
-  u("code"),
-  u("date"),
-  u("dateTime"),
-  u("decimal"),
-  u("id"),
-  u("instant"),
-  u("integer"),
-  u("oid"),
-  u("string"),
-  u("positiveInt"),
-  u("time"),
-  u("unsignedInt"),
-  u("uri"),
-  u("url"),
-  u("uuid")
-), I = H.pipe(
-  (r) => e.transformOrFail(
-    e.typeSchema(r),
-    e.typeSchema(ze),
+  e.attachPropertySignature("_tag", a)
+), je = e.Union(
+  s("boolean"),
+  s("base64Binary"),
+  s("canonical"),
+  s("code"),
+  s("date"),
+  s("dateTime"),
+  s("decimal"),
+  s("id"),
+  s("instant"),
+  s("integer"),
+  s("oid"),
+  s("string"),
+  s("positiveInt"),
+  s("time"),
+  s("unsignedInt"),
+  s("uri"),
+  s("url"),
+  s("uuid")
+), T = H.pipe(
+  (a) => e.transformOrFail(
+    e.typeSchema(a),
+    e.typeSchema(je),
     {
       strict: !0,
-      decode: (n, i, a) => v(
+      decode: (n, r, i) => v(
         n,
-        ce,
-        x.match({
+        me,
+        E.match({
           onNone: () => S.fail(
             new S.Type(
-              a,
+              i,
               n,
               "Failed to extract at least 1 value[x] key"
             )
@@ -748,26 +749,26 @@ const $e = e.transform(K, h, {
             if (n[c] === void 0)
               return S.fail(
                 new S.Type(
-                  a,
+                  i,
                   n,
                   "data[value[x]] present with undefined value"
                 )
               );
-            const s = {
-              _tag: oe(c),
+            const u = {
+              _tag: pe(c),
               name: n.name,
               [c]: n[c]
             };
-            return S.succeed(s);
+            return S.succeed(u);
           }
         })
       ),
-      encode: ({ _tag: n, ...i }) => S.succeed(i)
+      encode: ({ _tag: n, ...r }) => S.succeed(r)
     }
   )
-), Ge = e.decodeOption(I);
-e.decode(I);
-const We = A.pipe(
+), Je = e.decodeOption(T);
+e.decode(T);
+const Xe = A.pipe(
   // strip the fields we are transforming from the Data type
   e.omit("constant", "select", "where", "name"),
   // A ViewDefinition is every a Node is and more.
@@ -777,41 +778,41 @@ const We = A.pipe(
     e.Struct({
       _tag: e.tag("Select"),
       select: e.NonEmptyArray(h),
-      constant: e.Array(I),
+      constant: e.Array(T),
       where: e.Array(W),
       name: e.String
     })
   )
-), Ke = e.transform(
+), Ye = e.transform(
   e.typeSchema(A),
-  e.typeSchema(We),
+  e.typeSchema(Xe),
   {
     strict: !0,
-    decode: ({ name: r, where: n, constant: i, select: a, ...c }) => ({
+    decode: ({ name: a, where: n, constant: r, select: i, ...c }) => ({
       ...c,
       _tag: "Select",
-      name: r ?? c.resource,
-      select: o.map(a, (s) => qe(s)),
+      name: a ?? c.resource,
+      select: o.map(i, (u) => He(u)),
       constant: o.filterMap(
-        i ?? [],
-        (s) => Ge(s)
+        r ?? [],
+        (u) => Je(u)
       ),
       where: n ?? []
     }),
-    encode: ({ _tag: r, ...n }) => n
+    encode: ({ _tag: a, ...n }) => n
   }
-), X = Ke;
+), X = Ye;
 e.decode(X);
 e.decodeSync(X);
-D.tagged("Select");
-const Qe = e.Struct({
+R.tagged("Select");
+const Ze = e.Struct({
   relation: e.String,
   url: e.String
-}), Y = Qe, He = e.Struct({
+}), Y = Ze, et = e.Struct({
   fullUrl: t(e.String, { exact: !0 }),
   link: t(e.Array(Y), { exact: !0 }),
-  resource: t(Le, { exact: !0 })
-}), je = He;
+  resource: t($e, { exact: !0 })
+}), tt = et;
 e.Literal(
   "document",
   "message",
@@ -827,61 +828,95 @@ e.Literal(
 const Z = e.Struct({
   resourceType: e.tag("Bundle"),
   link: t(e.Array(Y), { exact: !0, default: () => [] }),
-  entry: t(e.Array(je), { exact: !0, default: () => [] })
+  entry: t(e.Array(tt), { exact: !0, default: () => [] })
 }), ee = Z;
 Z.make;
-const Je = e.decodeUnknown(ee);
+const nt = e.decodeUnknown(ee);
 e.is(ee);
-class Xe extends D.TaggedError("Data") {
+class te extends R.TaggedError("Data") {
 }
-const N = (r) => o.findFirst(r.link, (n) => n.relation === "next").pipe(
-  x.map((n) => n.url)
-), L = (r) => m.tryPromise(() => fetch(r)).pipe(
-  m.flatMap(
-    (n) => n.ok ? m.tryPromise(() => n.json()) : m.fail(
-      new Error(`Response not ok! Status: ${n.status}`)
+const L = (a) => o.findFirst(a.link, (n) => n.relation === "next").pipe(
+  E.map((n) => n.url)
+), _ = (a) => m.tryPromise(() => fetch(a)).pipe(
+  m.andThen(
+    (n) => m.liftPredicate(
+      n,
+      (r) => r.ok,
+      (r) => new te({
+        message: `Response not ok! Status: ${r.status} `
+      })
     )
   ),
-  m.flatMap(Je)
-), Ye = (r, n) => async function* (i, a) {
-  const c = i < 0 ? 1 / 0 : i;
-  let s = 0;
-  const R = await m.runPromise(
-    L(`${r}/${n}?_count=${a}`)
+  m.andThen((n) => m.tryPromise(() => n.json())),
+  m.flatMap(nt)
+), at = (a, n) => async function* (r, i) {
+  const c = r < 0 ? 1 / 0 : r;
+  let u = 0;
+  const b = await m.runPromise(
+    _(`${a}/${n}?_count=${i}`)
   );
-  yield R, s += R.entry.length;
-  let b = N(R);
-  for (; x.isSome(b) && s < c; ) {
-    const te = x.getOrThrow(b), T = await m.runPromise(L(te));
-    yield T, s++, b = N(T);
+  yield b, u += b.entry.length;
+  let M = L(b);
+  for (; E.isSome(M) && u < c; ) {
+    const ne = E.getOrThrow(M), O = await m.runPromise(_(ne));
+    yield O, u++, M = L(O);
   }
-}, Ze = (r, n, i = 100, a = 250) => _.fromAsyncIterable(
-  Ye(r, n)(i, a),
-  (c) => new Xe({ message: String(c) })
-), et = (r) => r.pipe(
-  _.runFold(
-    [],
-    (n, i) => v(
-      i.entry,
-      o.filterMap(
-        (a) => a.resource !== void 0 ? x.some(a.resource) : x.none()
-      ),
-      (a) => o.appendAll(n, a)
-    )
-  )
+}, rt = (a, n, r = 100, i = 250) => x.fromAsyncIterable(
+  at(a, n)(r, i),
+  (c) => new te({ message: String(c) })
 );
-async function rt(...r) {
-  return v(Ze(...r), et, m.runPromise);
+function it(a) {
+  return v(
+    a.split("."),
+    (n) => n[n.length - 1]
+  );
+}
+function ct(a, n) {
+  return ce({
+    resource: a,
+    status: "active",
+    select: [
+      oe({
+        column: n.map(
+          (r) => ue({
+            path: r,
+            name: it(r)
+          })
+        )
+      })
+    ]
+  });
+}
+function dt(a) {
+  return async function(r, i) {
+    return rt(a, r).pipe(
+      // Bundle.entry.resource
+      x.map((c) => c.entry.map((u) => u.resource)),
+      x.flattenIterables,
+      x.filter((c) => !!c),
+      x.runCollect,
+      m.andThen(re.toArray),
+      // Flatten it
+      m.andThen(
+        (c) => ie(
+          c,
+          ct(r, i)
+        )
+      ),
+      // Run through Promise
+      m.runPromise
+    );
+  };
 }
 export {
-  ct as column,
-  ot as columnPath,
-  ut as forEach,
-  st as forEachOrNull,
-  lt as normalize,
-  rt as pagen,
-  dt as select,
-  gt as sof,
-  mt as unionAll,
-  pt as viewDefinition
+  oe as column,
+  ue as columnPath,
+  dt as default,
+  ie as flat,
+  St as forEach,
+  gt as forEachOrNull,
+  ft as normalize,
+  yt as select,
+  ht as unionAll,
+  ce as viewDefinition
 };

@@ -71,7 +71,7 @@ In either case, you can now use your databases's native JSON capabilities to fur
 Here's an example of how Medfetch.js can be used from a Web Assembly SQLite database
 (this one will run on the actual [binary]()!).
 
-<RunExampleWrapper>
+<RunInDatabase>
 ```sql
 SELECT 
     json ->> 'id' AS id,
@@ -92,7 +92,7 @@ FROM medfetch('Patient', json_array(
 ))
 LIMIT 5;
 ```
-</RunExampleWrapper>
+</RunInDatabase>
 
 
 ### Memory Runner

@@ -11,67 +11,35 @@ export interface FetchMessageRequest {
     init?: RequestInit;
 }
 
-// const onMessage = (e: MessageEvent<FetchMessageInit>) => {
-//     e.ports[0].onmessage = async (e: MessageEvent<FetchMessageRequest>) => {
-//         const { sharedSignal, url, init } = e.data;
-//         const signal = new Int32Array(sharedSignal, 0, 1); // 32bits = 4 bytes for the signal
-//         const sizeView = new DataView(sharedSignal, 4, 4); // declare as DataView so we can write size as little-endian
-//         const dataBytes = new Uint8Array(sharedSignal, 8); // byte array
-//
-//         const response = await fetch(url, init);
-//         const payload = await response.json();
-//         const jsonStr = JSON.stringify(payload);
-//         const encoded = new TextEncoder().encode(jsonStr);
-//
-//         if (encoded.length > dataBytes.length) {
-//             throw new Error(
-//                 `Response too large for SharedArrayBuffer. In bytes, the stringified resources are ${encoded.length + 1} bytes but the sqlite worker thread only allocated ${dataBytes.length} for it...`,
-//             );
-//         }
-//         sizeView.setUint32(0, encoded.length, true);
-//         dataBytes.set(encoded);
-//
-//         // release lock
-//         Atomics.store(signal, 0, 1);
-//         Atomics.notify(signal, 0);
-//     };
-//     e.ports[0].postMessage("ready");
-// };
-//
-
-/**
- */
 export class Fetch extends Data.TaggedClass("medfetch.worker.fetch")<{
     readonly port: MessagePort;
 }> {
-  constructor(port: MessagePort) {
-    super({ port });
+    constructor(port: MessagePort) {
+        super({ port });
+        this.port.onmessage = async (e: MessageEvent<FetchMessageRequest>) => {
+            const { sharedSignal, url, init } = e.data;
 
-    this.port.onmessage = async (e: MessageEvent<FetchMessageRequest>) => {
-      const { sharedSignal, url, init } = e.data;
+            const signal = new Int32Array(sharedSignal, 0, 1);
+            const sizeView = new DataView(sharedSignal, 4, 4);
+            const dataBytes = new Uint8Array(sharedSignal, 8);
 
-      const signal = new Int32Array(sharedSignal, 0, 1);
-      const sizeView = new DataView(sharedSignal, 4, 4);
-      const dataBytes = new Uint8Array(sharedSignal, 8);
+            const response = await fetch(url, init);
+            const payload = await response.json();
+            const jsonStr = JSON.stringify(payload);
+            const encoded = new TextEncoder().encode(jsonStr);
 
-      const response = await fetch(url, init);
-      const payload = await response.json();
-      const jsonStr = JSON.stringify(payload);
-      const encoded = new TextEncoder().encode(jsonStr);
+            if (encoded.length > dataBytes.length) {
+                throw new Error(
+                    `Response too large for SharedArrayBuffer. Needed ${encoded.length + 1}, got ${dataBytes.length}`,
+                );
+            }
 
-      if (encoded.length > dataBytes.length) {
-        throw new Error(
-          `Response too large for SharedArrayBuffer. Needed ${encoded.length + 1}, got ${dataBytes.length}`
-        );
-      }
+            sizeView.setUint32(0, encoded.length, true);
+            dataBytes.set(encoded);
 
-      sizeView.setUint32(0, encoded.length, true);
-      dataBytes.set(encoded);
-
-      Atomics.store(signal, 0, 1);
-      Atomics.notify(signal, 0);
-    };
-
-    this.port.postMessage("ready");
-  }
+            Atomics.store(signal, 0, 1);
+            Atomics.notify(signal, 0);
+        };
+        this.port.postMessage("ready");
+    }
 }

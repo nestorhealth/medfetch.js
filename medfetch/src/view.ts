@@ -1,4 +1,9 @@
-import { Array, Data, Match, Schema } from "effect";
+import { Schema } from "effect";
+
+import { appendAll, filterMap } from "effect/Array";
+import { when, value, orElse, defined } from "effect/Match";
+import type { TaggedEnum } from "effect/Data";
+import { tagged, taggedEnum } from "effect/Data";
 
 /// ALIAS
 const ow = Schema.optionalWith;
@@ -109,7 +114,7 @@ const SelectJSON = Schema.Struct({
 });
 type SelectJSON = typeof SelectJSON.Type;
 
-export type Node = Data.TaggedEnum<{
+export type Node = TaggedEnum<{
     Column: {
         column: ReadonlyArray<ColumnPath>;
     };
@@ -130,7 +135,7 @@ export type Node = Data.TaggedEnum<{
 }>;
 
 export const { Select, Column, ForEach, ForEachOrNull, UnionAll, $match } =
-    Data.taggedEnum<Node>();
+    taggedEnum<Node>();
 
 const Node = Schema.Union(
     Schema.TaggedStruct("Column", {
@@ -161,11 +166,11 @@ const Node = Schema.Union(
  * @returns the normalized SelectNode
  */
 export function decodeSelect(nd: SelectJSON): Node {
-    return Match.value(nd).pipe(
-        Match.when(
+    return value(nd).pipe(
+        when(
             {
-                forEach: Match.defined,
-                forEachOrNull: Match.defined,
+                forEach: defined,
+                forEachOrNull: defined,
             },
             () => {
                 throw new TypeError(
@@ -174,9 +179,9 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
-                forEach: Match.defined,
+                forEach: defined,
             },
             ({ forEach, select = [], unionAll, column }) => {
                 return ForEach({
@@ -194,12 +199,8 @@ export function decodeSelect(nd: SelectJSON): Node {
                         ...(column
                             ? [
                                   Column({
-                                      column: Array.filterMap(
-                                          column,
-                                          (columnPath) =>
-                                              decodeColumnPathOption(
-                                                  columnPath,
-                                              ),
+                                      column: filterMap(column, (columnPath) =>
+                                          decodeColumnPathOption(columnPath),
                                       ),
                                   }),
                               ]
@@ -210,9 +211,9 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
-                forEachOrNull: Match.defined,
+                forEachOrNull: defined,
             },
             ({ forEachOrNull, select = [], unionAll, column }) => {
                 return ForEachOrNull({
@@ -230,12 +231,8 @@ export function decodeSelect(nd: SelectJSON): Node {
                         ...(column
                             ? [
                                   Column({
-                                      column: Array.filterMap(
-                                          column,
-                                          (columnPath) =>
-                                              decodeColumnPathOption(
-                                                  columnPath,
-                                              ),
+                                      column: filterMap(column, (columnPath) =>
+                                          decodeColumnPathOption(columnPath),
                                       ),
                                   }),
                               ]
@@ -246,7 +243,7 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
                 column: Array.isArray,
                 select: Array.isArray,
@@ -259,7 +256,7 @@ export function decodeSelect(nd: SelectJSON): Node {
                             unionAll: unionAll.map(decodeSelect),
                         }),
                         Column({
-                            column: Array.filterMap(column, (columnPath) =>
+                            column: filterMap(column, (columnPath) =>
                                 decodeColumnPathOption(columnPath),
                             ),
                         }),
@@ -269,7 +266,7 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
                 unionAll: Array.isArray,
                 select: Array.isArray,
@@ -286,7 +283,7 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
                 select: Array.isArray,
                 column: Array.isArray,
@@ -295,7 +292,7 @@ export function decodeSelect(nd: SelectJSON): Node {
                 return Select({
                     select: [
                         Column({
-                            column: Array.filterMap(column, (columnPath) =>
+                            column: filterMap(column, (columnPath) =>
                                 decodeColumnPathOption(columnPath),
                             ),
                         }),
@@ -305,7 +302,7 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
                 column: Array.isArray,
                 unionAll: Array.isArray,
@@ -314,7 +311,7 @@ export function decodeSelect(nd: SelectJSON): Node {
                 return Select({
                     select: [
                         Column({
-                            column: Array.filterMap(column, (columnPath) =>
+                            column: filterMap(column, (columnPath) =>
                                 decodeColumnPathOption(columnPath),
                             ),
                         }),
@@ -327,7 +324,7 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.when(
+        when(
             {
                 select: Array.isArray,
             },
@@ -338,14 +335,14 @@ export function decodeSelect(nd: SelectJSON): Node {
             },
         ),
 
-        Match.orElse((nd) => {
+        orElse((nd) => {
             if (nd.unionAll) {
                 return UnionAll({
                     unionAll: nd.unionAll.map(decodeSelect),
                 });
             } else if (nd.column) {
                 return Column({
-                    column: Array.filterMap(nd.column, (column) =>
+                    column: filterMap(nd.column, (column) =>
                         decodeColumnPathOption(column),
                     ),
                 });
@@ -401,7 +398,7 @@ export interface ViewDefinition<ResourceType extends string = string>
 }
 
 const ViewDefinition: Schema.Schema<ViewDefinition> = _ViewDefinition;
-export const viewDefinition = Data.tagged<ViewDefinition>("Select");
+export const viewDefinition = tagged<ViewDefinition>("Select");
 
 export function getColumns(
     vd: ViewDefinition,
@@ -422,7 +419,7 @@ export function getColumns(
                 return unionAll.flatMap((selectNode) => aux(acc, selectNode));
             },
             Column: ({ column }) => {
-                return Array.appendAll(acc, column);
+                return appendAll(acc, column);
             },
         });
     };

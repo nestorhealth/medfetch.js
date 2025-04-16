@@ -37,12 +37,17 @@ const nextLink = (bundle: Bundle.Bundle) =>
  */
 const get = (url: string) =>
     Effect.tryPromise(() => fetch(url)).pipe(
-        Effect.andThen(
-            response => Effect.liftPredicate(response, res => res.ok, (res) => new DataError({ message: `Response not ok! Status: ${res.status} `}))
+        Effect.andThen((response) =>
+            Effect.liftPredicate(
+                response,
+                (res) => res.ok,
+                (res) =>
+                    new DataError({
+                        message: `Response not ok! Status: ${res.status} `,
+                    }),
+            ),
         ),
-        Effect.andThen(
-            response => Effect.tryPromise(() => response.json())
-        ),
+        Effect.andThen((response) => Effect.tryPromise(() => response.json())),
         Effect.flatMap(Bundle.decodeUnknown),
     );
 

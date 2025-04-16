@@ -1,4 +1,5 @@
-import { Data, Schema } from "effect";
+import { Schema } from "effect";
+import type { TaggedEnum } from "effect/Data";
 export declare const Where: Schema.Struct<{
     path: typeof Schema.String;
     description: Schema.optionalWith<typeof Schema.String, {
@@ -128,7 +129,7 @@ declare const SelectJSON: Schema.Struct<{
     }>;
 }>;
 type SelectJSON = typeof SelectJSON.Type;
-export type Node = Data.TaggedEnum<{
+export type Node = TaggedEnum<{
     Column: {
         column: ReadonlyArray<ColumnPath>;
     };
@@ -147,21 +148,21 @@ export type Node = Data.TaggedEnum<{
         unionAll: ReadonlyArray<Node>;
     };
 }>;
-export declare const Select: Data.Case.Constructor<{
+export declare const Select: import("effect/Data").Case.Constructor<{
     readonly _tag: "Select";
     readonly select: ReadonlyArray<Node>;
-}, "_tag">, Column: Data.Case.Constructor<{
+}, "_tag">, Column: import("effect/Data").Case.Constructor<{
     readonly _tag: "Column";
     readonly column: ReadonlyArray<ColumnPath>;
-}, "_tag">, ForEach: Data.Case.Constructor<{
+}, "_tag">, ForEach: import("effect/Data").Case.Constructor<{
     readonly _tag: "ForEach";
     readonly forEach: string;
     readonly select: ReadonlyArray<Node>;
-}, "_tag">, ForEachOrNull: Data.Case.Constructor<{
+}, "_tag">, ForEachOrNull: import("effect/Data").Case.Constructor<{
     readonly _tag: "ForEachOrNull";
     readonly forEachOrNull: string;
     readonly select: ReadonlyArray<Node>;
-}, "_tag">, UnionAll: Data.Case.Constructor<{
+}, "_tag">, UnionAll: import("effect/Data").Case.Constructor<{
     readonly _tag: "UnionAll";
     readonly unionAll: ReadonlyArray<Node>;
 }, "_tag">, $match: {
@@ -264,9 +265,10 @@ export declare const normalize: (i: {
     readonly forEachOrNull?: string | undefined;
     readonly unionAll?: readonly BaseSelect[] | undefined;
 }, overrideOptions?: import("effect/SchemaAST").ParseOptions) => {
-    readonly column: readonly ColumnPath<string>[];
     readonly _tag: "Column";
+    readonly column: readonly ColumnPath<string>[];
 } | {
+    readonly _tag: "Select";
     readonly select: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -285,9 +287,9 @@ export declare const normalize: (i: {
         readonly _tag: "UnionAll";
         readonly unionAll: ReadonlyArray<Node>;
     })[];
-    readonly _tag: "Select";
 } | {
     readonly forEach: string;
+    readonly _tag: "ForEach";
     readonly select: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -306,8 +308,8 @@ export declare const normalize: (i: {
         readonly _tag: "UnionAll";
         readonly unionAll: ReadonlyArray<Node>;
     })[];
-    readonly _tag: "ForEach";
 } | {
+    readonly _tag: "ForEachOrNull";
     readonly select: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -327,8 +329,8 @@ export declare const normalize: (i: {
         readonly unionAll: ReadonlyArray<Node>;
     })[];
     readonly forEachOrNull: string;
-    readonly _tag: "ForEachOrNull";
 } | {
+    readonly _tag: "UnionAll";
     readonly unionAll: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -347,7 +349,6 @@ export declare const normalize: (i: {
         readonly _tag: "UnionAll";
         readonly unionAll: ReadonlyArray<Node>;
     })[];
-    readonly _tag: "UnionAll";
 };
 declare const _ViewDefinition: Schema.TaggedStruct<"Select", {
     status: Schema.Literal<["draft", "active", "retired", "unknown"]>;
@@ -537,7 +538,7 @@ declare const _ViewDefinition: Schema.TaggedStruct<"Select", {
 export interface ViewDefinition<ResourceType extends string = string> extends Schema.Schema.Type<typeof _ViewDefinition> {
     resource: ResourceType;
 }
-export declare const viewDefinition: Data.Case.Constructor<ViewDefinition<string>, "_tag">;
+export declare const viewDefinition: import("effect/Data").Case.Constructor<ViewDefinition<string>, "_tag">;
 export declare function getColumns(vd: ViewDefinition, f?: (columnPath: ColumnPath) => boolean): ColumnPath<string>[];
 export type Select = ReturnType<typeof Select>;
 export type Column = ReturnType<typeof Column>;

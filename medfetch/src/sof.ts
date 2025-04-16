@@ -1,6 +1,9 @@
-import { Array, Match, pipe, Record } from "effect";
+import { pipe } from "effect";
 import { evaluate, UserInvocationTable } from "fhirpath";
 import { type ViewDefinition, type Node, $match, Select } from "./view";
+import { flatMap, reduce, map, filter } from "effect/Array";
+import { value, when, orElse } from "effect/Match";
+import { set } from "effect/Record";
 
 interface Reference {
     reference: string;
@@ -13,24 +16,21 @@ interface CodeableConcept {
 }
 
 function codeSystemAlias(codeSystem: string | undefined) {
-    return Match.value(codeSystem).pipe(
-        Match.when(undefined, () => "UNKNOWN"),
-        Match.when("http://loinc.org", () => "LOINC"),
-        Match.when("http://snomed.info/sct", () => "SCT"),
-        Match.when("http://www.ama-assn.org/go/cpt", () => "CPT"),
-        Match.when("http://hl7.org/fhir/sid/icd-10", () => "ICD10"),
-        Match.when("http://hl7.org/fhir/sid/icd-9", () => "ICD9"),
-        Match.when(
-            "http://www.nlm.nih.gov/research/umls/rxnorm",
-            () => "RXNORM",
-        ),
+    return value(codeSystem).pipe(
+        when(undefined, () => "UNKNOWN"),
+        when("http://loinc.org", () => "LOINC"),
+        when("http://snomed.info/sct", () => "SCT"),
+        when("http://www.ama-assn.org/go/cpt", () => "CPT"),
+        when("http://hl7.org/fhir/sid/icd-10", () => "ICD10"),
+        when("http://hl7.org/fhir/sid/icd-9", () => "ICD9"),
+        when("http://www.nlm.nih.gov/research/umls/rxnorm", () => "RXNORM"),
 
         // Match.when((cs) => cs.startsWith("http://hl7.org/fhir/sid/icd"), () => "ICD"),
-        Match.when(
+        when(
             (codeSystem) => codeSystem.startsWith("http://terminology.hl7.org"),
             () => "FHIR",
         ),
-        Match.orElse((codeSystem) => {
+        orElse((codeSystem) => {
             console.error(`I don't know this code system ${codeSystem}`);
             return "UNKNOWN";
         }),
@@ -124,35 +124,31 @@ export function project(
                 }),
 
             Select: ({ select }) =>
-                Array.flatMap(data, (resource) => {
-                    return Array.reduce(
-                        select,
-                        [] as any[],
-                        (acc, selectNode) => {
-                            const results = aux(selectNode, [resource]);
-                            if (acc.length === 0) {
-                                return results;
-                            }
-                            return Array.flatMap(acc, (row) => {
-                                return Array.map(results, (newRow) => {
-                                    return {
-                                        ...row,
-                                        ...newRow,
-                                    };
-                                });
+                flatMap(data, (resource) => {
+                    return reduce(select, [] as any[], (acc, selectNode) => {
+                        const results = aux(selectNode, [resource]);
+                        if (acc.length === 0) {
+                            return results;
+                        }
+                        return flatMap(acc, (row) => {
+                            return map(results, (newRow) => {
+                                return {
+                                    ...row,
+                                    ...newRow,
+                                };
                             });
-                        },
-                    );
+                        });
+                    });
                 }),
 
             UnionAll: ({ unionAll }) =>
                 unionAll.flatMap((subQuery) => aux(subQuery, data)),
 
             Column: ({ column }) =>
-                Array.map(data, (resource) =>
-                    Array.reduce(column, {} as any, (acc, col) => {
+                map(data, (resource) =>
+                    reduce(column, {} as any, (acc, col) => {
                         return pipe(evaluate(resource, col.path), (value) =>
-                            Record.set(
+                            set(
                                 acc,
                                 col.name,
                                 col.collection ? value : (value[0] ?? null),
@@ -191,7 +187,7 @@ export function flat(data: any[], viewDefinition: ViewDefinition): any[] {
     };
 
     for (const { path } of viewDefinition.where ?? []) {
-        filtered = Array.filter(filtered, (resource) => {
+        filtered = filter(filtered, (resource) => {
             return doEvaluate(resource, `where(${path})`).length > 0;
         });
     }

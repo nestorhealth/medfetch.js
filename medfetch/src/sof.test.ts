@@ -20,11 +20,7 @@ describe("sof", () => {
             ];
             const expected = constants.reduce(
                 (acc, constant) => {
-                    return Record.set(
-                        acc,
-                        constant.name,
-                        () => acc
-                    );
+                    return Record.set(acc, constant.name, () => acc);
                 },
                 {} as Record<any, any>,
             );

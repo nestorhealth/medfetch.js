@@ -5,7 +5,7 @@ import { pages } from "./data";
 import { flat } from "./sof";
 export { flat };
 
-export { 
+export {
     normalize,
     Select as select,
     ForEach as forEach,
@@ -13,16 +13,16 @@ export {
     UnionAll as unionAll,
 } from "./view";
 
-export type { 
-    ViewDefinition, 
-    ColumnPath, 
+export type {
+    ViewDefinition,
+    ColumnPath,
     Node,
     Column,
     Select,
     ForEach,
     ForEachOrNull,
     UnionAll,
-    Constant
+    Constant,
 } from "./view";
 
 import { viewDefinition } from "./view";
@@ -33,8 +33,7 @@ export { columnPath, column };
 
 import { Chunk, Effect, pipe, Stream } from "effect";
 
-type Last<Path extends string> = 
-    Path extends `${infer _}.${infer Rest}`
+type Last<Path extends string> = Path extends `${infer _}.${infer Rest}`
     ? Last<Rest>
     : Path;
 
@@ -45,28 +44,33 @@ type Flattened<Fields extends readonly string[]> = {
 function last<Path extends string>(path: string): Last<Path> {
     return pipe(
         path.split("."),
-        split => split[split.length - 1]
+        (split) => split[split.length - 1],
     ) as Last<Path>;
 }
 
-function keysToViewDefinition<Keys extends readonly string[]>(resourceType: string, keys: readonly [...Keys]) {
+function keysToViewDefinition<Keys extends readonly string[]>(
+    resourceType: string,
+    keys: readonly [...Keys],
+) {
     return viewDefinition({
         resource: resourceType,
         status: "active",
         select: [
             column({
-                column: keys.map((key) => columnPath({
-                    path: key,
-                    name: last(key)
-                }))
-            })
-        ]
-    })
+                column: keys.map((key) =>
+                    columnPath({
+                        path: key,
+                        name: last(key),
+                    }),
+                ),
+            }),
+        ],
+    });
 }
 
 export type SOF = <ResourceType extends string, Keys extends readonly string[]>(
     resourceType: ResourceType,
-    keys: readonly [...Keys]
+    keys: readonly [...Keys],
 ) => Promise<Flattened<Keys>[]>;
 /**
  * Get an in-memory sql-on-fhir runner (aka View Runner)
@@ -78,24 +82,27 @@ export default function medfetch(baseURL: string): SOF {
     return async function sof<
         ResourceType extends string,
         Keys extends readonly string[],
-    >(resourceType: ResourceType, keys: readonly [...Keys]): Promise<Flattened<Keys>[]> {
+    >(
+        resourceType: ResourceType,
+        keys: readonly [...Keys],
+    ): Promise<Flattened<Keys>[]> {
         return pages(baseURL, resourceType).pipe(
             // Bundle.entry.resource
-            Stream.map(
-                (bundle) => bundle.entry.map((entry) => entry.resource)
-            ),
+            Stream.map((bundle) => bundle.entry.map((entry) => entry.resource)),
             Stream.flattenIterables,
-            Stream.filter(
-                (resource) => !!resource
-            ),
+            Stream.filter((resource) => !!resource),
             Stream.runCollect,
-            Effect.andThen(
-                Chunk.toArray
-            ),
+            Effect.andThen(Chunk.toArray),
             // Flatten it
-            Effect.andThen((data) => flat(data, keysToViewDefinition(resourceType, keys)) as Flattened<Keys>[]),
+            Effect.andThen(
+                (data) =>
+                    flat(
+                        data,
+                        keysToViewDefinition(resourceType, keys),
+                    ) as Flattened<Keys>[],
+            ),
             // Run through Promise
-            Effect.runPromise
+            Effect.runPromise,
         );
-    }
+    };
 }

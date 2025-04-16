@@ -4,7 +4,6 @@
     "type": "module",
     "description": "sql + fhir REST call wrappers",
     "scripts": {
-        "postinstall": "node scripts/copy-static.mjs",
         "test": "vitest",
         "build": "rm -rf dist && npx vite build && npx tsc -p tsconfig.build.json",
         "make:linux-x86": "mkdir -p bin/linux-x86 && cd src/server && make && cp build/linux/x86_64/medfetch.so ../../bin/linux-x86",
@@ -19,20 +18,20 @@
             "import": "./dist/index.mjs",
             "default": "./dist/index.mjs"
         },
+        "./worker": {
+            "types": "./dist/worker.d.ts",
+            "import": "./dist/worker.mjs",
+            "default": "./dist/worker.mjs"
+        },
         "./sqlite": {
-            "types": "./dist/sqlite/index.d.ts",
-            "import": "./dist/sqlite/index.mjs",
-            "default": "./dist/sqlite/index.mjs"
+            "types": "./dist/sqlite.d.ts",
+            "import": "./dist/sqlite.mjs",
+            "default": "./dist/sqlite.mjs"
         },
         "./view": {
             "types": "./dist/view.d.ts",
             "import": "./dist/view.mjs",
             "default": "./dist/view.mjs"
-        },
-        "./browser": {
-            "types": "./dist/browser/index.d.ts",
-            "import": "./dist/browser/index.mjs",
-            "default": "./dist/browser/index.mjs"
         },
         "./sql": {
             "types": "./dist/sql.d.ts",
@@ -41,38 +40,35 @@
         "./schema": {
             "types": "./dist/schema.d.ts",
             "default": "./dist/schema/index.js"
-        },
-        "./better-sqlite3": {
-            "types": "./dist/better-sqlite3.d.ts",
-            "default": "./dist/better-sqlite3.js"
         }
+    },
+    "bin": {
+        "medfetch": "./bin/cli.mjs"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
         "@smile-cdr/fhirts": "^2.2.8",
-        "@sqlite.org/sqlite-wasm": "3.49.1-build2",
         "@tanstack/react-query": "^5.67.2",
         "clsx": "^2.1.1",
+        "comlink": "^4.4.2",
         "dotenv": "^16.4.7",
-        "lucide-react": "^0.411.0",
-        "sqliteow": "workspace:^"
+        "lucide-react": "^0.411.0"
     },
     "peerDependencies": {
-        "better-sqlite3": "^11.8.1",
+        "@sqlite.org/sqlite-wasm": "3.49.1-build2",
         "effect": "^3.14.1",
-        "fhirpath": "^3.17.0"
+        "fhirpath": "^3.17.0",
+        "sqliteow": "workspace:^"
     },
     "devDependencies": {
-        "@nestorhealth/tsconfig": "workspace:^",
-        "@types/better-sqlite3": "^7.6.12",
         "@types/node": "^22.13.1",
-        "@types/pg": "^8.11.11",
         "pagefind": "^1.3.0",
         "prettier": "^3.4.2",
         "sqliteow": "workspace:^",
         "ts-morph": "^25.0.0",
+        "tsup": "^8.4.0",
         "tsx": "^4.19.2",
         "typescript": "^5.7.3",
         "vite": "^6.2.2",
