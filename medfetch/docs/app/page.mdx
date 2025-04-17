@@ -52,8 +52,8 @@ such a mapping is provided.
 In either case, once the data is written to the database, you can use your databases's native JSON capabilities
 to further transform the data.
 
-Here's an example of how Medfetch.js can be used from a Web Assembly build of SQLite
-(this one will run on the actual [binary]()!). Hit run to run the query against the [HealthIT R4 Sandbox Server]().
+Here's an example of how Medfetch.js can be used from a Web Assembly build of SQLite.
+Hit run to pull and transfer some Patient data from the [SmartHealth R4 Sandbox Server]()!
 
 <RunInDatabase>
 ```sql
@@ -76,7 +76,7 @@ FROM medfetch('Patient', json_array(
 ))
 LIMIT 5;
 ```
-</RunInDatabase>
+</ RunInDatabase>
 
 ### Memory Runner
 An In Memory runner means your flattening process occurs on a process *separate* from your database.

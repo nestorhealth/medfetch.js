@@ -39,6 +39,33 @@ type SQLFn<
     Templated = any,
 > = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
 
+
+function getFetchWorkerPort(){
+    return Effect.promise(() => new Promise<MessagePort>((resolve, reject) => {
+        const { port1, port2 } = new MessageChannel();
+        const fetchWorker = new Worker(
+            new URL(import.meta.env.DEV ?
+            "fetch-worker"
+            : "fetch-worker.mjs", import.meta.url),
+            { type: "module" }
+        );
+        const onMessage = (e: MessageEvent) => {
+            if (e.data === "fetch-ready" || e.data?.type === "fetch-ready") {
+                port1.removeEventListener("message", onMessage);
+                resolve(port1);
+            } else {
+                port1.removeEventListener("message", onMessage);
+                reject(new Error(`Unexpected message: ${JSON.stringify(e.data)}`));
+            }
+        };
+        port1.addEventListener("message", onMessage);
+        port1.start();
+        fetchWorker.postMessage({ 
+            type: "init"
+        }, [port2]);
+    }));
+}
+
 /**
  * Loads in sqlite3 Web Assembly binary via the [sqliteow]()
  * wrapper handle, loads in the virtual table module,
@@ -60,32 +87,7 @@ export function medfetch(
         return ( (_: any, ...__: any[]) => void 0 ) as any;
     }
 
-    const { port1, port2 } = new MessageChannel();
-    const fetchWorker = new Worker(
-        new URL(import.meta.env.DEV ?
-        "fetch-worker"
-        : "fetch-worker.mjs", import.meta.url),
-        { type: "module" }
-    );
-    fetchWorker.postMessage({ 
-        type: "init"
-    }, [port2]);
-    const ready = new Promise<void>((resolve, reject) => {
-        const onMessage = (e: MessageEvent) => {
-            if (e.data === "fetch-ready" || e.data?.type === "fetch-ready") {
-                port1.removeEventListener("message", onMessage);
-                resolve();
-            } else {
-                port1.removeEventListener("message", onMessage);
-                reject(new Error(`Unexpected message: ${JSON.stringify(e.data)}`));
-            }
-        };
-        port1.addEventListener("message", onMessage);
-        port1.start();
-    });
-
     const loadMedfetch = Effect.gen(function*() {
-        yield* Effect.promise(() => ready);
         const promiser = worker1();
         let dbId: string | undefined = undefined;
         if (filename) {
@@ -98,6 +100,9 @@ export function medfetch(
             const { dbId: tmp } = yield *promiser.lazy("open");
             dbId = tmp;
         }
+        const memoized = yield* Effect.cachedFunction(getFetchWorkerPort);
+        const port1 = yield* memoized(dbId);
+
         const { result: { rc } }= yield *promiser.lazy({
             dbId,
             type: "load-module",

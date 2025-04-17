@@ -1,79 +1,79 @@
-import { Data as h, Effect as c } from "effect";
-import { isBrowser as w, worker1 as l } from "better-worker1";
-function f(s) {
-  return s || new URL(
+import { Data as p, Effect as c } from "effect";
+import { isBrowser as y, worker1 as m } from "better-worker1";
+function f(o) {
+  return o || new URL(
     // namespace for extension in static folder
     "sqlite-ext/medfetch.vtab.mjs",
     // relative to source  : relative to static root
     self.location.origin
   );
 }
-class v extends h.TaggedError("medfetch.sqlite") {
+class g extends p.TaggedError("medfetch.sqlite") {
 }
-function x(s, { trace: m = !1, filename: a } = {}) {
-  if (!w())
-    return m && console.warn(
+function h() {
+  return c.promise(() => new Promise((o, l) => {
+    const { port1: t, port2: a } = new MessageChannel(), r = new Worker(
+      new URL("fetch-worker.mjs", import.meta.url),
+      { type: "module" }
+    ), e = (s) => {
+      var d;
+      s.data === "fetch-ready" || ((d = s.data) == null ? void 0 : d.type) === "fetch-ready" ? (t.removeEventListener("message", e), o(t)) : (t.removeEventListener("message", e), l(new Error(`Unexpected message: ${JSON.stringify(s.data)}`)));
+    };
+    t.addEventListener("message", e), t.start(), r.postMessage({
+      type: "init"
+    }, [a]);
+  }));
+}
+function b(o, { trace: l = !1, filename: t } = {}) {
+  if (!y())
+    return l && console.warn(
       "medfetch: non-browser environment detected, returning stub function..."
     ), (r, ...e) => {
     };
-  const { port1: d, port2: u } = new MessageChannel();
-  new Worker(
-    new URL("fetch-worker.mjs", import.meta.url),
-    { type: "module" }
-  ).postMessage({
-    type: "init"
-  }, [u]);
-  const y = new Promise((r, e) => {
-    const o = (t) => {
-      var n;
-      t.data === "fetch-ready" || ((n = t.data) == null ? void 0 : n.type) === "fetch-ready" ? (d.removeEventListener("message", o), r()) : (d.removeEventListener("message", o), e(new Error(`Unexpected message: ${JSON.stringify(t.data)}`)));
-    };
-    d.addEventListener("message", o), d.start();
-  }), p = c.gen(function* () {
-    yield* c.promise(() => y);
-    const r = l();
+  const a = c.gen(function* () {
+    const r = m();
     let e;
-    if (a) {
-      const { dbId: t } = yield* r.lazy("open", {
+    if (t) {
+      const { dbId: n } = yield* r.lazy("open", {
         vfs: "opfs",
-        filename: a
+        filename: t
       });
-      e = t;
+      e = n;
     } else {
-      const { dbId: t } = yield* r.lazy("open");
-      e = t;
+      const { dbId: n } = yield* r.lazy("open");
+      e = n;
     }
-    const { result: { rc: o } } = yield* r.lazy({
+    const d = yield* (yield* c.cachedFunction(h))(e), { result: { rc: i } } = yield* r.lazy({
       dbId: e,
       type: "load-module",
       args: {
         moduleURL: f().toString(),
         moduleName: "medfetch",
-        aux: new TextEncoder().encode(s)
+        aux: new TextEncoder().encode(o)
       }
     }, [d]);
-    return o !== 0 ? yield* new v({
+    return i !== 0 ? yield* new g({
       message: `medfetch.sqlite: couldn't load in the module at ${f().toString()}`,
       type: "load-module"
     }) : e;
   });
-  return function(e, ...o) {
-    const t = e.reduce((n, i, g) => n + i + (o[g] ?? ""), "");
+  return function(e, ...s) {
+    const d = e.reduce((i, n, u) => i + n + (s[u] ?? ""), "");
     return c.gen(function* () {
-      const n = yield* p, { result: i } = yield* l().lazy({
+      const i = yield* a, { result: n } = yield* m().lazy({
         type: "exec",
-        dbId: n,
+        dbId: i,
         args: {
-          sql: t,
+          sql: d,
           rowMode: "object"
         }
       });
-      return i.resultRows;
+      return n.resultRows;
     });
   };
 }
 export {
-  v as MedfetchSqliteError,
+  g as MedfetchSqliteError,
   f as ModuleURL,
-  x as medfetch
+  b as medfetch
 };
