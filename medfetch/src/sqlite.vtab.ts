@@ -126,7 +126,6 @@ const medfetch_module: UserVirtualTableExport = async (
     sqlite3,
     { preload, transfer },
 ) => {
-    console.log("got here!");
     const { wasm, capi, vtab } = sqlite3;
     const fetchPort = transfer[0];
     if (!fetchPort)
@@ -283,7 +282,7 @@ const medfetch_module: UserVirtualTableExport = async (
             // handle inline fhirpath transformations
             const viewDefinition = generateViewDefinition(args, resources);
             if (viewDefinition) {
-                const rows = flat(viewDefinition, resources);
+                const rows = flat(resources, viewDefinition);
                 cursor.rows = rows;
             } else {
                 cursor.rows = resources;

@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { medfetch } from "medfetch/sqlite";
+import { Effect } from "effect";
 
 export interface Row1 {
   id: string;
@@ -15,34 +16,31 @@ export interface Row1 {
   state: string;
 }
 
-// const SQL = sql<Row1>`
-// SELECT 
-//   json ->> 'id' AS id,
-//   json ->> 'gender' AS gender,
-//   json -> 'given' ->> 0 AS first_name,
-//   json -> 'family' ->> 0 AS last_name,
-//   json ->> 'birthDate' AS birth_date,
-//   json -> 'city' ->> 0 AS city,
-//   json -> 'state' ->> 0 AS state
-// FROM medfetch('Patient', json_array(
-//   'id',
-//   'gender',
-//   'name.given.first()',
-//   'name.family.first()',
-//   'birthDate',
-//   'address.city.first()',
-//   'address.state.last()'
-// ))
-// LIMIT 5;
-// `
+const sql = medfetch("https://r4.smarthealthit.org/");
+const SQL = sql<Row1>`
+SELECT 
+  json ->> 'id' AS id,
+  json ->> 'gender' AS gender,
+  json -> 'given' ->> 0 AS first_name,
+  json -> 'family' ->> 0 AS last_name,
+  json ->> 'birthDate' AS birth_date,
+  json -> 'city' ->> 0 AS city,
+  json -> 'state' ->> 0 AS state
+FROM medfetch('Patient', json_array(
+  'id',
+  'gender',
+  'name.given.first()',
+  'name.family.first()',
+  'birthDate',
+  'address.city.first()',
+  'address.state.last()'
+))
+LIMIT 5;`
 export function RunInDatabase({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function start() {
-      const sof = await medfetch("https://r4.smarthealthit.org/");
-      const result = await sof("exec", {
-        sql: "select * from medfetch('Patient');",
-        rowMode: "object"
-      });
+      const o = console.log(await SQL.pipe(Effect.runPromise));
+      console.log("here", o);
     }
     start();
   })

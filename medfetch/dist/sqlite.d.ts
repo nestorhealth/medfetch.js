@@ -1,4 +1,4 @@
-import { BetterWorker1Promiser } from "better-worker1";
+import { Effect } from "effect";
 export declare function ModuleURL(url?: URL): URL;
 interface MedfetchOptions {
     /**
@@ -16,6 +16,7 @@ export declare class MedfetchSqliteError extends MedfetchSqliteError_base<{
     message?: string;
 }> {
 }
+type SQLFn<E, R, Templated = any> = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
 /**
  * Loads in sqlite3 Web Assembly binary via the [sqliteow]()
  * wrapper handle, loads in the virtual table module,
@@ -24,5 +25,5 @@ export declare class MedfetchSqliteError extends MedfetchSqliteError_base<{
  * @param baseURL The fhir server base url
  * @param options
  */
-export declare function medfetch(baseURL: string, { trace, filename }?: MedfetchOptions): Promise<BetterWorker1Promiser>;
+export declare function medfetch(baseURL: string, { trace, filename }?: MedfetchOptions): SQLFn<never, never>;
 export {};

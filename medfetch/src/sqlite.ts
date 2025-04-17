@@ -1,5 +1,5 @@
-import { Data } from "effect";
-import { BetterWorker1Promiser, isBrowser, worker1 } from "better-worker1";
+import { Data, Effect } from "effect";
+import { isBrowser, worker1 } from "better-worker1";
 
 const DEV = import.meta.env.DEV;
 
@@ -31,6 +31,11 @@ export class MedfetchSqliteError extends Data.TaggedError("medfetch.sqlite")<{
     message?: string;
 }> {};
 
+type SQLFn<
+    E,
+    R,
+    Templated = any,
+> = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
 
 /**
  * Loads in sqlite3 Web Assembly binary via the [sqliteow]()
@@ -40,10 +45,10 @@ export class MedfetchSqliteError extends Data.TaggedError("medfetch.sqlite")<{
  * @param baseURL The fhir server base url
  * @param options
  */
-export async function medfetch(
+export function medfetch(
     baseURL: string,
     { trace = false, filename }: MedfetchOptions = {},
-): Promise<BetterWorker1Promiser> {
+): SQLFn<never, never> {
     if (!isBrowser()) {
         if (trace) {
             console.warn(
@@ -76,32 +81,47 @@ export async function medfetch(
         port1.addEventListener("message", onMessage);
         port1.start();
     });
-    await ready;
 
-    const promiser = worker1();
-
-    let dbId: string | undefined = undefined;
-    if (filename) {
-        const { dbId: tmp } = await promiser("open", {
-            vfs: "opfs",
-            filename
-        });
-        dbId = tmp;
-    } else {
-        const { dbId: tmp } = await promiser("open");
-        dbId = tmp;
-    }
-
-    await promiser({
-        dbId,
-        type: "load-module",
-        args: {
-            moduleURL: ModuleURL().toString(),
-            moduleName: "medfetch",
-            aux: new TextEncoder().encode(baseURL)
+    const loadMedfetch = Effect.gen(function*() {
+        yield* Effect.promise(() => ready);
+        const promiser = worker1();
+        let dbId: string | undefined = undefined;
+        if (filename) {
+            const { dbId: tmp } = yield *Effect.promise(() => promiser("open", {
+                vfs: "opfs",
+                filename
+            }));
+            dbId = tmp;
+        } else {
+            const { dbId: tmp } = yield *Effect.promise(() => promiser("open"));
+            dbId = tmp;
         }
-    }, [port1]);
+        yield *Effect.promise(() => promiser({
+            dbId,
+            type: "load-module",
+            args: {
+                moduleURL: ModuleURL().toString(),
+                moduleName: "medfetch",
+                aux: new TextEncoder().encode(baseURL)
+            }
+        }, [port1]));
+        return dbId;
+    });
 
-    console.log("ok!");
-    return promiser;
+    return function sql<T = unknown>(strings: TemplateStringsArray, ...rest: any[]) {
+        const querystring = strings.reduce((acc, str, i) => acc + str + (rest[i] ?? ""), "");
+        return Effect.gen(function* () {
+            const dbId = yield *loadMedfetch;
+            const promiser = worker1();
+            const { result } = yield *Effect.promise(() => promiser({
+                type: "exec",
+                dbId,
+                args: {
+                    sql: querystring,
+                    rowMode: "object"
+                }
+            }));
+            return result.resultRows as T[];
+        });
+    } as SQLFn<never, never>;
 }

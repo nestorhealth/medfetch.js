@@ -1,7 +1,6 @@
-import { pipe } from "effect";
+import { pipe, Array } from "effect";
 import { evaluate, UserInvocationTable } from "fhirpath";
 import { type ViewDefinition, type Node, $match, Select } from "./view";
-import { flatMap, reduce, map, filter } from "effect/Array";
 import { value, when, orElse } from "effect/Match";
 import { set } from "effect/Record";
 
@@ -124,14 +123,14 @@ export function project(
                 }),
 
             Select: ({ select }) =>
-                flatMap(data, (resource) => {
-                    return reduce(select, [] as any[], (acc, selectNode) => {
+                Array.flatMap(data, (resource) => {
+                    return Array.reduce(select, [] as any[], (acc, selectNode) => {
                         const results = aux(selectNode, [resource]);
                         if (acc.length === 0) {
                             return results;
                         }
-                        return flatMap(acc, (row) => {
-                            return map(results, (newRow) => {
+                        return Array.flatMap(acc, (row) => {
+                            return Array.map(results, (newRow) => {
                                 return {
                                     ...row,
                                     ...newRow,
@@ -145,8 +144,8 @@ export function project(
                 unionAll.flatMap((subQuery) => aux(subQuery, data)),
 
             Column: ({ column }) =>
-                map(data, (resource) =>
-                    reduce(column, {} as any, (acc, col) => {
+                Array.map(data, (resource) =>
+                    Array.reduce(column, {} as any, (acc, col) => {
                         return pipe(evaluate(resource, col.path), (value) =>
                             set(
                                 acc,
@@ -187,7 +186,7 @@ export function flat(data: any[], viewDefinition: ViewDefinition): any[] {
     };
 
     for (const { path } of viewDefinition.where ?? []) {
-        filtered = filter(filtered, (resource) => {
+        filtered = Array.filter(filtered, (resource) => {
             return doEvaluate(resource, `where(${path})`).length > 0;
         });
     }

@@ -1,12 +1,12 @@
-import { pipe as M } from "effect";
-import { evaluate as g } from "fhirpath";
-import { d as C, f as O, $ as S, m as h, b as m, r as d, S as f, e as v, w as c, o as I } from "./view-CctbhzTQ.mjs";
-const R = /* @__PURE__ */ C(3, (r, t, e) => ({
+import { Array as f, pipe as N } from "effect";
+import { evaluate as m } from "fhirpath";
+import { d as w, $ as M, S as h, b as C, w as c, o as O } from "./view-wKnUKvlF.mjs";
+const S = /* @__PURE__ */ w(3, (r, t, e) => ({
   ...r,
   [t]: e
 }));
-function $(r) {
-  return v(r).pipe(
+function v(r) {
+  return C(r).pipe(
     c(void 0, () => "UNKNOWN"),
     c("http://loinc.org", () => "LOINC"),
     c("http://snomed.info/sct", () => "SCT"),
@@ -19,10 +19,10 @@ function $(r) {
       (t) => t.startsWith("http://terminology.hl7.org"),
       () => "FHIR"
     ),
-    I((t) => (console.error(`I don't know this code system ${t}`), "UNKNOWN"))
+    O((t) => (console.error(`I don't know this code system ${t}`), "UNKNOWN"))
   );
 }
-function E({ reference: r }) {
+function I({ reference: r }) {
   if (r === void 0)
     return null;
   if (r.startsWith("urn"))
@@ -30,52 +30,52 @@ function E({ reference: r }) {
   const t = r.split("/");
   return t.length === 2 ? t[1] : null;
 }
-const y = {
+const d = {
   getResourceKey: {
     fn: (r) => r.map((t) => t.id),
     arity: { 0: [] }
   },
   getReferenceKey: {
-    fn: (r, t) => r.map((e) => E(e)),
+    fn: (r, t) => r.map((e) => I(e)),
     arity: { 0: [], 1: ["String"] }
   },
   code: {
     fn: (r) => r.flatMap((t) => {
       var e;
       return (e = t.coding) == null ? void 0 : e.map(
-        (n) => `${$(n.system)}#${n.code ?? "NOCODE"}`
+        (n) => `${v(n.system)}#${n.code ?? "NOCODE"}`
       );
     }),
     arity: { 0: [] }
   }
-}, F = (r, t) => g(r, t, void 0, void 0, {
-  userInvocationTable: y,
+}, T = (r, t) => m(r, t, void 0, void 0, {
+  userInvocationTable: d,
   async: !1
 });
-function K(r, t, e) {
-  const n = (p, s) => S(p, {
+function R(r, t, e) {
+  const n = (p, s) => M(p, {
     ForEach: ({ forEach: l, select: o }) => s.flatMap((i) => e(i, l).flatMap(
-      (u) => n(f({ select: o }), [u])
+      (u) => n(h({ select: o }), [u])
     )),
     ForEachOrNull: ({ forEachOrNull: l, select: o }) => s.flatMap((i) => {
       const a = e(i, l);
-      return a.length === 0 ? n(f({ select: o }), [{}]) : a.flatMap(
-        (u) => n(f({ select: o }), [u])
+      return a.length === 0 ? n(h({ select: o }), [{}]) : a.flatMap(
+        (u) => n(h({ select: o }), [u])
       );
     }),
-    Select: ({ select: l }) => m(s, (o) => d(l, [], (i, a) => {
+    Select: ({ select: l }) => f.flatMap(s, (o) => f.reduce(l, [], (i, a) => {
       const u = n(a, [o]);
-      return i.length === 0 ? u : m(i, (N) => h(u, (w) => ({
-        ...N,
-        ...w
+      return i.length === 0 ? u : f.flatMap(i, (g) => f.map(u, (y) => ({
+        ...g,
+        ...y
       })));
     })),
     UnionAll: ({ unionAll: l }) => l.flatMap((o) => n(o, s)),
-    Column: ({ column: l }) => h(
+    Column: ({ column: l }) => f.map(
       s,
-      (o) => d(l, {}, (i, a) => M(
+      (o) => f.reduce(l, {}, (i, a) => N(
         e(o, a.path),
-        (u) => R(
+        (u) => S(
           i,
           a.name,
           a.collection ? u : u[0] ?? null
@@ -85,22 +85,22 @@ function K(r, t, e) {
   });
   return n(r, t);
 }
-function U(r, t) {
+function W(r, t) {
   let e = r.filter(
     (p) => p.resourceType === t.resource
   );
   if (e.length === 0)
     return [];
-  const n = (p, s) => g(p, s, {}, void 0, {
+  const n = (p, s) => m(p, s, {}, void 0, {
     async: !1,
-    userInvocationTable: y
+    userInvocationTable: d
   });
   for (const { path: p } of t.where ?? [])
-    e = O(e, (s) => n(s, `where(${p})`).length > 0);
-  return K(t, e, n);
+    e = f.filter(e, (s) => n(s, `where(${p})`).length > 0);
+  return R(t, e, n);
 }
 export {
-  F as evaluateSync,
-  U as flat,
-  K as project
+  T as evaluateSync,
+  W as flat,
+  R as project
 };
