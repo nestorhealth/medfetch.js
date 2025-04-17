@@ -50,15 +50,15 @@
     "license": "ISC",
     "dependencies": {
         "@smile-cdr/fhirts": "^2.2.8",
-        "@sqlite.org/sqlite-wasm": "3.49.1-build2",
         "@tanstack/react-query": "^5.67.2",
-        "better-worker1": "workspace:^",
         "clsx": "^2.1.1",
         "comlink": "^4.4.2",
         "dotenv": "^16.4.7",
         "lucide-react": "^0.411.0"
     },
     "peerDependencies": {
+        "@sqlite.org/sqlite-wasm": "3.49.1-build2",
+        "better-worker1": "workspace:^",
         "effect": "^3.14.1",
         "fhirpath": "^3.17.0"
     },

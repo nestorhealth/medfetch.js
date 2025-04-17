@@ -100,7 +100,7 @@ if (cmd === "bundle") {
     console.error(
 `medfetch: unknown command "${cmd}"
 Usage:
-    medfetch bundle  -- Bundle medfetch virtual table into /public/sqlite-ext`
+    medfetch bundle -- Bundle medfetch virtual table into /public/sqlite-ext`
 );
 }
 

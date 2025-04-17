@@ -1,1 +1,23 @@
-# Getting Started
+import { Cards } from "nextra/components";
+import { DiJsBadge, DiSqllite } from "react-icons/di";
+
+# Quick Start with Medfetch.js
+
+`JS/TS`
+
+<Cards.Card
+    icon={<DiJsBadge />}
+    href="/quick-start/javascript"
+    title="Javacript"
+    className="my-4"
+/>
+
+`SQLite`
+
+<Cards>
+    <Cards.Card
+        href="/quick-start/sqlite-wasm"
+        title="sqlite-wasm"
+        icon={<DiSqllite />}
+    />
+</Cards>

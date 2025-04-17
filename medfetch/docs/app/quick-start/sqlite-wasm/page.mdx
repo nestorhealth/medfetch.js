@@ -1,0 +1,37 @@
+import { Tabs } from 'nextra/components'
+import { Steps } from 'nextra/components'
+ 
+# Medfetch.js on sqlite-wasm
+
+## Quick Start
+
+### 
+
+<Steps>
+
+### Install dependencies
+
+```bash
+pnpm add medfetch fhirpath effect @sqlite.org/sqlite-wasm
+```
+ 
+### Bundle extension into public folder
+
+```bash
+npx medfetch bundle
+```
+
+### Create client
+```ts
+import { medfetch } from "medfetch/sqlite";
+
+export const sql = medfetch(/* your FHIR base URL here */);
+```
+
+### Run queries
+```ts
+import { Effect } from "effect";
+
+const result = await sql<Patient>`select * from medfetch('Patient');`.pipe(Effect.runPromise);
+```
+</Steps>

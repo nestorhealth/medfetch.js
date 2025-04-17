@@ -14,6 +14,7 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@sqlite.org/sqlite-wasm": "3.49.1-build2",
     "@tanstack/react-query": "^5.67.2",
+    "better-worker1": "workspace:^",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "effect": "^3.14.1",
@@ -26,7 +27,7 @@
     "postcss-import": "^16.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sqliteow": "workspace:^",
+    "react-icons": "^5.5.0",
     "tailwind-merge": "^2.6.0",
     "tw-animate-css": "^1.2.5"
   },
