@@ -44,10 +44,10 @@ flowchart LR
     end
     Z[FHIR API] --> A
 ```
-Medfetch.js will hook into your database of choice to provide an HTTP fetch
+In order to do so, Medfetch.js hooks directly into your database of choice to provide an HTTP fetch
 mechanism to it. After pulling, it inserts the data into a table, optionally using
 any user provided FHIRPath transformations to run the projection prior to inserting, if 
-such a mapping was provided.
+such a mapping is provided.
 
 In either case, once the data is written to the database, you can use your databases's native JSON capabilities
 to further transform the data.
