@@ -1,70 +1,70 @@
-import { Data as y, Effect as o } from "effect";
-import { isBrowser as w, worker1 as f } from "better-worker1";
-function h(s) {
-  return s || new URL(
+import { Data as g, Effect as c } from "effect";
+import { isBrowser as w, worker1 as l } from "better-worker1";
+function h(o) {
+  return o || new URL(
     // namespace for extension in static folder
     "sqlite-ext/medfetch.vtab.mjs",
     // relative to source  : relative to static root
     self.location.origin
   );
 }
-class x extends y.TaggedError("medfetch.sqlite") {
+class x extends g.TaggedError("medfetch.sqlite") {
 }
-function L(s, { trace: l = !1, filename: a } = {}) {
+function L(o, { trace: f = !1, filename: a } = {}) {
   if (!w())
-    return l && console.warn(
+    return f && console.warn(
       "medfetch: non-browser environment detected, returning stub function..."
     ), (r, ...e) => {
     };
-  const { port1: d, port2: p } = new MessageChannel();
+  const { port1: s, port2: m } = new MessageChannel();
   new Worker(
     new URL("fetch-worker.mjs", import.meta.url),
     { type: "module" }
   ).postMessage({
     type: "init"
-  }, [p]);
+  }, [m]);
   const u = new Promise((r, e) => {
-    const t = (i) => {
+    const t = (d) => {
       var n;
-      i.data === "fetch-ready" || ((n = i.data) == null ? void 0 : n.type) === "fetch-ready" ? (d.removeEventListener("message", t), r()) : (d.removeEventListener("message", t), e(new Error(`Unexpected message: ${JSON.stringify(i.data)}`)));
+      d.data === "fetch-ready" || ((n = d.data) == null ? void 0 : n.type) === "fetch-ready" ? (s.removeEventListener("message", t), r()) : (s.removeEventListener("message", t), e(new Error(`Unexpected message: ${JSON.stringify(d.data)}`)));
     };
-    d.addEventListener("message", t), d.start();
-  }), g = o.gen(function* () {
-    yield* o.promise(() => u);
-    const r = f();
+    s.addEventListener("message", t), s.start();
+  }), p = c.gen(function* () {
+    yield* c.promise(() => u);
+    const r = l();
     let e;
     if (a) {
-      const { dbId: t } = yield* o.promise(() => r("open", {
+      const { dbId: t } = yield* r.lazy("open", {
         vfs: "opfs",
         filename: a
-      }));
+      });
       e = t;
     } else {
-      const { dbId: t } = yield* o.promise(() => r("open"));
+      const { dbId: t } = yield* r.lazy("open");
       e = t;
     }
-    return yield* o.promise(() => r({
+    return yield* r.lazy({
       dbId: e,
       type: "load-module",
       args: {
         moduleURL: h().toString(),
         moduleName: "medfetch",
-        aux: new TextEncoder().encode(s)
+        aux: new TextEncoder().encode(o)
       }
-    }, [d])), e;
+    }, [s]), e;
   });
   return function(e, ...t) {
-    const i = e.reduce((n, c, m) => n + c + (t[m] ?? ""), "");
-    return o.gen(function* () {
-      const n = yield* g, c = f(), { result: m } = yield* o.promise(() => c({
+    const d = e.reduce((n, i, y) => n + i + (t[y] ?? ""), "");
+    return c.gen(function* () {
+      const n = yield* p, { result: i } = yield* l().lazy({
         type: "exec",
         dbId: n,
         args: {
-          sql: i,
+          sql: d,
           rowMode: "object"
         }
-      }));
-      return m.resultRows;
+      });
+      return i.resultRows;
     });
   };
 }

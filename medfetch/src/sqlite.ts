@@ -87,16 +87,16 @@ export function medfetch(
         const promiser = worker1();
         let dbId: string | undefined = undefined;
         if (filename) {
-            const { dbId: tmp } = yield *Effect.promise(() => promiser("open", {
+            const { dbId: tmp } = yield *promiser.lazy("open", {
                 vfs: "opfs",
                 filename
-            }));
+            });
             dbId = tmp;
         } else {
-            const { dbId: tmp } = yield *Effect.promise(() => promiser("open"));
+            const { dbId: tmp } = yield *promiser.lazy("open");
             dbId = tmp;
         }
-        yield *Effect.promise(() => promiser({
+        yield *promiser.lazy({
             dbId,
             type: "load-module",
             args: {
@@ -104,7 +104,7 @@ export function medfetch(
                 moduleName: "medfetch",
                 aux: new TextEncoder().encode(baseURL)
             }
-        }, [port1]));
+        }, [port1]);
         return dbId;
     });
 
@@ -112,15 +112,14 @@ export function medfetch(
         const querystring = strings.reduce((acc, str, i) => acc + str + (rest[i] ?? ""), "");
         return Effect.gen(function* () {
             const dbId = yield *loadMedfetch;
-            const promiser = worker1();
-            const { result } = yield *Effect.promise(() => promiser({
+            const { result } = yield *worker1().lazy({
                 type: "exec",
                 dbId,
                 args: {
                     sql: querystring,
                     rowMode: "object"
                 }
-            }));
+            });
             return result.resultRows as T[];
         });
     } as SQLFn<never, never>;
