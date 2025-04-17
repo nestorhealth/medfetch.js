@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { BetterWorker1MessageType } from "better-worker1/types";
 export declare function ModuleURL(url?: URL): URL;
 interface MedfetchOptions {
     /**
@@ -14,6 +15,7 @@ declare const MedfetchSqliteError_base: new <A extends Record<string, any> = {}>
 } & Readonly<A>;
 export declare class MedfetchSqliteError extends MedfetchSqliteError_base<{
     message?: string;
+    type: BetterWorker1MessageType;
 }> {
 }
 type SQLFn<E, R, Templated = any> = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
@@ -25,5 +27,5 @@ type SQLFn<E, R, Templated = any> = <T = unknown>(strings: TemplateStringsArray,
  * @param baseURL The fhir server base url
  * @param options
  */
-export declare function medfetch(baseURL: string, { trace, filename }?: MedfetchOptions): SQLFn<never, never>;
+export declare function medfetch(baseURL: string, { trace, filename }?: MedfetchOptions): SQLFn<MedfetchSqliteError, never>;
 export {};

@@ -2,9 +2,9 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 import { medfetch } from "medfetch/sqlite";
 import { Effect } from "effect";
+import { DataTable } from "./DataTable";
 
 export interface Row1 {
   id: string;
@@ -36,22 +36,16 @@ FROM medfetch('Patient', json_array(
   'address.state.last()'
 ))
 LIMIT 5;`
+
 export function RunInDatabase({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    async function start() {
-      const o = console.log(await SQL.pipe(Effect.runPromise));
-      console.log("here", o);
-    }
-    start();
-  })
   const { data, mutate, isPending } = useMutation({
+    mutationFn: async () => SQL.pipe(Effect.runPromise),
     onError: (e) => console.error(e),
   });
 
   return (
     <>
       <div className="mb-4 flex items-center gap-2 text-sm">
-        <span>Click the run button to see it in action!</span>
         <Button
           onClick={() => mutate()}
           disabled={isPending}
@@ -64,6 +58,7 @@ export function RunInDatabase({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col gap-4 items-start">
         <div className="flex-1 w-full">{children}</div>
         <div className="flex-1 w-full overflow-x-auto min-h[200px] basis-full">
+          <DataTable data={data} isPending={isPending} />
         </div>
       </div>
     </>

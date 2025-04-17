@@ -1,5 +1,6 @@
 import { Data, Effect } from "effect";
 import { isBrowser, worker1 } from "better-worker1";
+import { BetterWorker1MessageType } from "better-worker1/types";
 
 const DEV = import.meta.env.DEV;
 
@@ -29,6 +30,7 @@ interface MedfetchOptions {
 
 export class MedfetchSqliteError extends Data.TaggedError("medfetch.sqlite")<{
     message?: string;
+    type: BetterWorker1MessageType;
 }> {};
 
 type SQLFn<
@@ -48,7 +50,7 @@ type SQLFn<
 export function medfetch(
     baseURL: string,
     { trace = false, filename }: MedfetchOptions = {},
-): SQLFn<never, never> {
+): SQLFn<MedfetchSqliteError, never> {
     if (!isBrowser()) {
         if (trace) {
             console.warn(
@@ -96,7 +98,7 @@ export function medfetch(
             const { dbId: tmp } = yield *promiser.lazy("open");
             dbId = tmp;
         }
-        yield *promiser.lazy({
+        const { result: { rc } }= yield *promiser.lazy({
             dbId,
             type: "load-module",
             args: {
@@ -105,6 +107,12 @@ export function medfetch(
                 aux: new TextEncoder().encode(baseURL)
             }
         }, [port1]);
+        if (rc !== 0) {
+            return yield* new MedfetchSqliteError({
+                message: `medfetch.sqlite: couldn't load in the module at ${ModuleURL().toString()}`,
+                type: "load-module"
+            });
+        }
         return dbId;
     });
 
@@ -122,5 +130,5 @@ export function medfetch(
             });
             return result.resultRows as T[];
         });
-    } as SQLFn<never, never>;
+    } as any;
 }
