@@ -134,7 +134,7 @@ const insertMany = db.transaction((rows) => {
   }
 });
 
-insertMany(rows);
+insertMany(MyPatients);
 
 const MyPatientsFromDatabase = db.prepare("select * from patients;");
 console.log(`Patient rows: ${JSON.stringify(MyPatientsFromDatabase, null, 2)}`);
