@@ -84,7 +84,7 @@ if (cmd === "bundle") {
         },
         noExternal: ["effect", "fhirpath"],
         format: ["esm"],
-        outDir: "public/ow-ext",
+        outDir: "public/sqlite-ext",
         target: "es2020",
         splitting: false,
         clean: false,
@@ -95,13 +95,12 @@ if (cmd === "bundle") {
         }
     });
 
-    console.log("medfetch: ✅ bundled extension to public/ow-ext/medfetch.vtab.mjs");
+    console.log("medfetch: ✅ bundled extension to public/sqlite-ext/medfetch.vtab.mjs");
 } else {
     console.error(
-        `medfetch: unknown command "${cmd}"
-
+`medfetch: unknown command "${cmd}"
 Usage:
-medfetch bundle    -- Bundle medfetch virtual table into /public/ow-ext`
-    );
+    medfetch bundle  -- Bundle medfetch virtual table into /public/sqlite-ext`
+);
 }
 

@@ -1,11 +1,9 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { medfetch } from "medfetch/sqlite";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "./DataTable";
-import { Effect } from "effect";
-import { isBrowser } from "sqliteow";
+import { useEffect } from "react";
+import { medfetch } from "medfetch/sqlite";
 
 export interface Row1 {
   id: string;
@@ -17,40 +15,38 @@ export interface Row1 {
   state: string;
 }
 
-let sql: ReturnType<typeof medfetch>;
-if (isBrowser()) {
-  sql = medfetch("https://r4.smarthealthit.org", {
-    fetcher: new Worker(new URL("fetch", import.meta.url), { type: "module"}),
-    trace: true
-  });
-} else {
-  sql = () => void 0 as any;
-}
-
-const SQL = sql<Row1>`
-SELECT 
-  json ->> 'id' AS id,
-  json ->> 'gender' AS gender,
-  json -> 'given' ->> 0 AS first_name,
-  json -> 'family' ->> 0 AS last_name,
-  json ->> 'birthDate' AS birth_date,
-  json -> 'city' ->> 0 AS city,
-  json -> 'state' ->> 0 AS state
-FROM medfetch('Patient', json_array(
-  'id',
-  'gender',
-  'name.given.first()',
-  'name.family.first()',
-  'birthDate',
-  'address.city.first()',
-  'address.state.last()'
-))
-LIMIT 5;
-`
+// const SQL = sql<Row1>`
+// SELECT 
+//   json ->> 'id' AS id,
+//   json ->> 'gender' AS gender,
+//   json -> 'given' ->> 0 AS first_name,
+//   json -> 'family' ->> 0 AS last_name,
+//   json ->> 'birthDate' AS birth_date,
+//   json -> 'city' ->> 0 AS city,
+//   json -> 'state' ->> 0 AS state
+// FROM medfetch('Patient', json_array(
+//   'id',
+//   'gender',
+//   'name.given.first()',
+//   'name.family.first()',
+//   'birthDate',
+//   'address.city.first()',
+//   'address.state.last()'
+// ))
+// LIMIT 5;
+// `
 export function RunInDatabase({ children }: { children: React.ReactNode }) {
-
+  useEffect(() => {
+    async function start() {
+      const sof = await medfetch("https://r4.smarthealthit.org/");
+      const result = await sof("exec", {
+        sql: "select * from medfetch('Patient');",
+        rowMode: "object"
+      });
+    }
+    start();
+  })
   const { data, mutate, isPending } = useMutation({
-    mutationFn: async () => Effect.runPromise(SQL),
     onError: (e) => console.error(e),
   });
 
@@ -70,7 +66,6 @@ export function RunInDatabase({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col gap-4 items-start">
         <div className="flex-1 w-full">{children}</div>
         <div className="flex-1 w-full overflow-x-auto min-h[200px] basis-full">
-          <DataTable data={data} isPending={isPending} />
         </div>
       </div>
     </>

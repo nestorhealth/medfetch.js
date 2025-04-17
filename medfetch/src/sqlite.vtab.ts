@@ -7,7 +7,7 @@ import type {
     SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
-import type { FetchMessageRequest } from "./worker.fetch.js";
+import type { FetchCallRequest } from "./worker.js";
 import { flat } from "~/sof";
 import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view";
 import type { UserVirtualTableExport } from "sqliteow/services";
@@ -31,7 +31,7 @@ interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
 }
 
 const Requester = (port: MessagePort) =>
-    function request(message: Omit<FetchMessageRequest, "type">) {
+    function request(message: Omit<FetchCallRequest, "type">) {
         const signal = new Int32Array(message.sharedSignal, 0, 1);
         signal[0] = 0;
         port.postMessage({ ...message, type: "request" });
@@ -124,10 +124,11 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
  */
 const medfetch_module: UserVirtualTableExport = async (
     sqlite3,
-    { preload, ports },
+    { preload, transfer },
 ) => {
+    console.log("got here!");
     const { wasm, capi, vtab } = sqlite3;
-    const fetchPort = ports[0];
+    const fetchPort = transfer[0];
     if (!fetchPort)
         throw new Error(
             "medfetch: expected Fetch Worker port at ports[0] but got nothing",

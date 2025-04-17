@@ -14,17 +14,12 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm", "fhirpath", "./sqlite.vtab.mjs"],
+        exclude: ["@sqlite.org/sqlite-wasm", "effect", "fhirpath", "better-worker1"]
     },
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: [
-                "@sqlite.org/sqlite-wasm",
-                "sqliteow",
-                "effect",
-                "fhirpath"
-            ],
+            external: ["effect", "fhirpath", "@sqlite.org/sqlite-wasm", "better-worker1"],
             output: {
                 entryFileNames: `[name].mjs`,
                 chunkFileNames: `[name]-[hash].mjs`,
@@ -56,10 +51,8 @@ export default defineConfig({
                 index: "src/index.ts",
                 view: "src/view.ts",
                 sof: "src/sof.ts",
-                worker: "src/worker.ts",
-                "worker.fetch": "src/worker.fetch.ts",
                 "sqlite": "src/sqlite.ts",
-                "sqlite.vtab": "src/sqlite.vtab.ts"
+                "fetch-worker": "src/fetch-worker.ts"
             },
             name: "medfetch",
             formats: ["es"],
