@@ -1,0 +1,109 @@
+import { Steps, Tabs } from 'nextra/components'
+ 
+# sqlite-wasm
+Spin up a sql-on-fhir View Runner directly on the browser with Medfetch.js
+and [sqlite-wasm]()!
+
+## Installation
+[effect](), [@sqlite.org/sqlite-wasm](), and [better-worker1]() are required as peer dependencies.
+
+>On top of effect and the database driver, using sqlite-wasm with medfetch requires
+the SQLite wasm glue code library [better-worker1]() to load the virtual table dynamically.
+I will eventually get [better-worker1]() integrated alongside medfetch sqlite-wasm!!
+
+<Tabs items={["pnpm", "npm"]}>
+<Tabs.Tab>
+```bash copy
+pnpm add effect @sqlite.org/sqlite-wasm better-worker1 medfetch
+```
+</Tabs.Tab>
+
+<Tabs.Tab>
+```bash copy
+npm install effect @sqlite.org/sqlite-wasm better-worker1 medfetch
+```
+</Tabs.Tab>
+</Tabs>
+
+Then transpile the virtual table extension into your `/public` folder as `/public/sqlite-ext/medfetch.vtab.mjs`.
+
+```bash
+npx medfetch bundle
+```
+
+> This is a very involved setup but I will be actively working on making this process smoother especially
+once I get closer to version 1!
+
+## Usage
+If using as a new database:
+
+```ts
+// sof.ts
+import { medfetch } from "medfetch/sqlite";
+import { Effect } from "effect";
+
+// Can name this whatever of course
+export const sql = medfetch("https://your-fhir-server.here");
+
+// Opens a new file in the OPFS VFS.
+const sql2 = medfetch("...", {
+    filename: "my-db"
+});
+```
+
+If you want to attach Medfetch onto an existing database:
+
+```ts
+import { medfetch } from "medfetch/sqlite";
+import { worker1 } from "better-worker1";
+
+// Create a worker1 thread, or get an existing one
+const thread = w1Thread();
+const { dbId } = await thread("open", {
+    vfs: "opfs",
+    filename: "my-db"
+});
+
+// Can name this whatever of course
+export const sql = medfetch("https://your-fhir-server.here", { dbId });
+```
+
+`sql` here is a lazily executed template strings function.
+Meaning it won't take effect until you call the `Effect.runPromise` function on it.
+
+For example:
+
+```ts
+// queries.ts
+import { Effect } from "effect";
+
+const patients_clean = sql<{
+  id: string;
+  name: HumanName[];
+}>`create table patients as 
+   select json ->> 'id' as id,
+   select json -> 'name' as name
+   from medfetch('Patient');`;
+
+// This will execute your query async when called
+export const getPatients = async () => patients_clean.pipe(Effect.runPromise);
+```
+
+Then when a user does some action, say from React code,
+you can wrap the query like you would with any stateful
+async query e.g. react-query.
+
+```ts
+// some-component.ts
+import { getPatients } from "./queries.js";
+import { useMutation } from "@tanstack/react-query";
+
+export function ExecuteOnClick() {
+  // Just use react query for the love of god!!!
+  const { mutate, isPending, data } = useMutation({
+    mutationFn: getPatients
+  });
+  return <Button onClick={() => mutate()}></Button>;
+}
+
+```

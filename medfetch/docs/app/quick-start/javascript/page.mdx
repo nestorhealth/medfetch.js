@@ -1,0 +1,27 @@
+import { Steps, Tabs } from 'nextra/components'
+ 
+# Javascript
+Pull and flatten FHIR data directly from your own Javascript code with Medfetch.js in-memory runner!
+
+## Installation
+[effect]() and [fhirpath]() are required as peer dependencies.
+
+<Tabs items={["pnpm", "npm"]}>
+<Tabs.Tab>
+```bash copy
+pnpm add effect fhirpath medfetch
+```
+</Tabs.Tab>
+
+<Tabs.Tab>
+```bash copy
+npm install effect fhirpath medfetch
+```
+</Tabs.Tab>
+</Tabs>
+
+## Usage
+You will need a FHIR base URL (duh). If you just want to test Medfetch out on some
+live dummy data, I recommend using a public sandbox like the [smarthealth it]() r4 server.
+Many more can be found on the [Confluence](https://confluence.hl7.org/spaces/FHIR/pages/35718859/Public+Test+Servers) 
+sandbox listings page.

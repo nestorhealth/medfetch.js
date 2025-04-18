@@ -9,6 +9,7 @@ interface MedfetchOptions {
     moduleURL?: URL;
     trace?: boolean;
     filename?: string;
+    dbId?: string;
 }
 declare const MedfetchSqliteError_base: new <A extends Record<string, any> = {}>(args: import("effect/Types").Equals<A, {}> extends true ? void : { readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }) => import("effect/Cause").YieldableError & {
     readonly _tag: "medfetch.sqlite";
@@ -27,5 +28,5 @@ type SQLFn<E, R, Templated = any> = <T = unknown>(strings: TemplateStringsArray,
  * @param baseURL The fhir server base url
  * @param options
  */
-export declare function medfetch(baseURL: string, { trace, filename }?: MedfetchOptions): SQLFn<MedfetchSqliteError, never>;
+export declare function medfetch(baseURL: string, { trace, filename, dbId }?: MedfetchOptions): SQLFn<MedfetchSqliteError, never>;
 export {};

@@ -51,7 +51,7 @@ export default defineConfig({
                 index: "src/index.ts",
                 view: "src/view.ts",
                 sof: "src/sof.ts",
-                "sqlite": "src/sqlite.ts",
+                "sqlite-wasm": "src/sqlite-wasm.ts",
                 "fetch-worker": "src/fetch-worker.ts"
             },
             name: "medfetch",

@@ -10,7 +10,7 @@ export function ModuleURL(url?: URL) {
     else
         return new URL(
             // namespace for extension in static folder
-            DEV ? "sqlite.vtab.js" : "sqlite-ext/medfetch.vtab.mjs", 
+            DEV ? "sqlite-wasm.vtab.js" : "sqlite-ext/medfetch.vtab.mjs", 
             // relative to source  : relative to static root
             DEV ? import.meta.url : self.location.origin
         );
@@ -26,6 +26,7 @@ interface MedfetchOptions {
     trace?: boolean;
 
     filename?: string;
+    dbId?: string;
 }
 
 export class MedfetchSqliteError extends Data.TaggedError("medfetch.sqlite")<{
@@ -39,6 +40,7 @@ type SQLFn<
     Templated = any,
 > = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
 
+let __DB_ID__: string | undefined;
 
 function getFetchWorkerPort(){
     return Effect.promise(() => new Promise<MessagePort>((resolve, reject) => {
@@ -76,7 +78,7 @@ function getFetchWorkerPort(){
  */
 export function medfetch(
     baseURL: string,
-    { trace = false, filename }: MedfetchOptions = {},
+    { trace = false, filename, dbId }: MedfetchOptions = {},
 ): SQLFn<MedfetchSqliteError, never> {
     if (!isBrowser()) {
         if (trace) {
@@ -88,37 +90,36 @@ export function medfetch(
     }
 
     const loadMedfetch = Effect.gen(function*() {
-        const promiser = worker1();
-        let dbId: string | undefined = undefined;
-        if (filename) {
-            const { dbId: tmp } = yield *promiser.lazy("open", {
-                vfs: "opfs",
-                filename
-            });
-            dbId = tmp;
+        if (__DB_ID__) {
+            return __DB_ID__;
         } else {
-            const { dbId: tmp } = yield *promiser.lazy("open");
-            dbId = tmp;
-        }
-        const memoized = yield* Effect.cachedFunction(getFetchWorkerPort);
-        const port1 = yield* memoized(dbId);
-
-        const { result: { rc } }= yield *promiser.lazy({
-            dbId,
-            type: "load-module",
-            args: {
-                moduleURL: ModuleURL().toString(),
-                moduleName: "medfetch",
-                aux: new TextEncoder().encode(baseURL)
+            const promiser = worker1();
+            if (!dbId) {
+                const { dbId: newDbId } = yield *promiser.lazy("open", {
+                    vfs: "opfs",
+                    filename
+                });
+                dbId = yield *Effect.fromNullable(newDbId);
             }
-        }, [port1]);
-        if (rc !== 0) {
-            return yield* new MedfetchSqliteError({
-                message: `medfetch.sqlite: couldn't load in the module at ${ModuleURL().toString()}`,
-                type: "load-module"
-            });
+            const port1 = yield *getFetchWorkerPort();
+            const { result } = yield *promiser.lazy({
+                dbId,
+                type: "load-module",
+                args: {
+                    moduleURL: ModuleURL().toString(),
+                    moduleName: "medfetch",
+                    aux: new TextEncoder().encode(baseURL)
+                }
+            }, [port1]);
+            if (result.rc !== 0) {
+                return yield* new MedfetchSqliteError({
+                    message: `medfetch.sqlite: couldn't load in the module at ${ModuleURL().toString()}`,
+                    type: "load-module"
+                });
+            }
+            __DB_ID__ = dbId;
+            return __DB_ID__;
         }
-        return dbId;
     });
 
     return function sql<T = unknown>(strings: TemplateStringsArray, ...rest: any[]) {

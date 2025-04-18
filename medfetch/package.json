@@ -23,19 +23,15 @@
             "import": "./dist/worker.mjs",
             "default": "./dist/worker.mjs"
         },
-        "./sqlite": {
-            "types": "./dist/sqlite.d.ts",
-            "import": "./dist/sqlite.mjs",
-            "default": "./dist/sqlite.mjs"
+        "./sqlite-wasm": {
+            "types": "./dist/sqlite-wasm.d.ts",
+            "import": "./dist/sqlite-wasm.mjs",
+            "default": "./dist/sqlite-wasm.mjs"
         },
         "./view": {
             "types": "./dist/view.d.ts",
             "import": "./dist/view.mjs",
             "default": "./dist/view.mjs"
-        },
-        "./sql": {
-            "types": "./dist/sql.d.ts",
-            "default": "./dist/sql.js"
         },
         "./schema": {
             "types": "./dist/schema.d.ts",
