@@ -3,7 +3,6 @@
 /synthea-data/
 /_defs/
 **/build
-sqlite/
 .env
 *.db
 .next
