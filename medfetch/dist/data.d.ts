@@ -1,4 +1,4 @@
-import { Effect, Stream } from "effect";
+import { Stream } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 declare const DataError_base: new <A extends Record<string, any> = {}>(args: import("effect/Types").Equals<A, {}> extends true ? void : { readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }) => import("effect/Cause").YieldableError & {
     readonly _tag: "Data";
@@ -35,34 +35,9 @@ export declare const pages: (baseUrl: string, resourceType: string, n?: number, 
     readonly resourceType: "Bundle";
 } & {
     readonly link: readonly Link[];
-    readonly entry: readonly Entry<Resource<string, {}, []>>[];
+    readonly entry: readonly Entry<Resource<string, {
+        readonly id: string;
+        readonly resourceType: string;
+    }>>[];
 }, DataError, never>;
-/**
- * From a given Bundle `Stream`, fold all of its
- * `entry.resource` elements into an array.
- *
- * Example usage:
- *
- * ```ts
- * // Call `pages()` to get the Patient Bundle pages `Stream`,
- * const patientBundles = pages(url, "Patient");
- *
- * // Then call `flatResources()` on the result;
- * const patients = flatResources(patientBundles);
- *
- * // The above can be equivalently rewritten as
- * const patients2 = pages(url, "Patient").pipe(flatResources);
- * ```
- *
- * @param stream the bundle stream
- * @returns Effect wrapped resource list
- */
-export declare const flatResources: (stream: ReturnType<typeof pages>) => Effect.Effect<Resource[], DataError, never>;
-/**
- * Promised version of `flatResources(pages(...))`;
- * @param params - the pages params
- * @returns a flat array of n resources from the server
- */
-export declare function pagen(...params: Parameters<typeof pages>): Promise<Resource[]>;
-export declare function unionKeys(resources: any[]): Set<string>;
 export {};

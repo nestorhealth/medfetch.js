@@ -1,4 +1,4 @@
-import { Array, Data, Effect, Option, pipe, Schema, Stream } from "effect";
+import { Array, Data, Effect, Option, Schema, Stream } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 
 const Bundle = Resource("Bundle", {
