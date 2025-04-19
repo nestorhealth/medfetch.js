@@ -1,31 +1,5 @@
 import { ParseResult, Schema } from "effect";
 
-/**
- * You could be in the olympics with this level of gymnastics!!
- */
-export type Resource<
-  ResourceType extends string = string,
-  Shape extends Record<string, any> = {},
-  Required extends readonly (keyof Shape)[] = []
-> =
-  {
-    id: string;
-    resourceType: ResourceType;
-  } & (
-    {
-      [K in keyof Shape as K extends string ? K : never]:
-        K extends Required[number]
-          ? Schema.Schema.Type<Schema.Schema<NonNullable<Shape[K]>>>
-          : Schema.Schema.Type<Schema.Schema<Shape[K]>>
-    } extends infer Fields
-      ? {
-          [K in keyof Fields as K extends Required[number] ? K : never]-?: Fields[K];
-        } & {
-          [K in keyof Fields as K extends Required[number] ? never : K]+?: Fields[K];
-        }
-      : never
-  );
-
 const Base = Schema.Struct(
     {
         id: Schema.String,
@@ -34,6 +8,16 @@ const Base = Schema.Struct(
     { key: Schema.String, value: Schema.Any },
 );
 type Base = typeof Base.Type;
+
+export type Resource<
+  ResourceType extends string = string,
+  Shape extends Record<string, any> = {}
+> = {
+  id: string;
+  resourceType: ResourceType;
+} & {
+  [K in keyof Shape]: Shape[K];
+}
 
 export function Resource(): Schema.Schema<{
     readonly id: string;
