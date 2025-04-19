@@ -1,6 +1,6 @@
 {
     "name": "medfetch",
-    "version": "1.0.0",
+    "version": "0.0.1",
     "type": "module",
     "description": "sql + fhir REST call wrappers",
     "scripts": {
@@ -27,10 +27,6 @@
             "types": "./dist/view.d.ts",
             "import": "./dist/view.mjs",
             "default": "./dist/view.mjs"
-        },
-        "./schema": {
-            "types": "./dist/schema.d.ts",
-            "default": "./dist/schema/index.js"
         }
     },
     "bin": {

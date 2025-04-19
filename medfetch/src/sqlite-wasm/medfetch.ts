@@ -1,18 +1,17 @@
 import { Data, Effect } from "effect";
-import { isBrowser, worker1 } from "./main.js"
+import { isBrowser, worker1 } from "./main.js";
 import { BetterWorker1MessageType } from "./types.js";
 
 const DEV = import.meta.env.DEV;
 
 function ModuleURL(url?: URL) {
-    if (url)
-        return url;
+    if (url) return url;
     else
         return new URL(
             // namespace for extension in static folder
-            DEV ? "medfetch.vtab.js" : "sqlite-ext/medfetch.vtab.mjs", 
+            DEV ? "medfetch.vtab.js" : "sqlite-ext/medfetch.vtab.mjs",
             // relative to source  : relative to static root
-            DEV ? import.meta.url : self.location.origin
+            DEV ? import.meta.url : self.location.origin,
         );
 }
 
@@ -32,40 +31,55 @@ interface MedfetchOptions {
 export class MedfetchSqliteError extends Data.TaggedError("medfetch.sqlite")<{
     message?: string;
     type: BetterWorker1MessageType;
-}> {};
+}> {}
 
-type SQLFn<
-    E,
-    R,
-    Templated = any,
-> = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
+type SQLFn<E, R, Templated = any> = <T = unknown>(
+    strings: TemplateStringsArray,
+    ...rest: Templated[]
+) => Effect.Effect<T[], E, R>;
 
 let __DB_ID__: string | undefined;
 
-function getFetchWorkerPort(){
-    return Effect.promise(() => new Promise<MessagePort>((resolve, reject) => {
-        const { port1, port2 } = new MessageChannel();
-        const fetchWorker = new Worker(
-            new URL(import.meta.env.DEV ?
-            "../fetch-worker"
-            : "../fetch-worker.mjs", import.meta.url),
-            { type: "module" }
-        );
-        const onMessage = (e: MessageEvent) => {
-            if (e.data === "fetch-ready" || e.data?.type === "fetch-ready") {
-                port1.removeEventListener("message", onMessage);
-                resolve(port1);
-            } else {
-                port1.removeEventListener("message", onMessage);
-                reject(new Error(`Unexpected message: ${JSON.stringify(e.data)}`));
-            }
-        };
-        port1.addEventListener("message", onMessage);
-        port1.start();
-        fetchWorker.postMessage({ 
-            type: "init"
-        }, [port2]);
-    }));
+function getFetchWorkerPort() {
+    return Effect.promise(
+        () =>
+            new Promise<MessagePort>((resolve, reject) => {
+                const { port1, port2 } = new MessageChannel();
+                const fetchWorker = new Worker(
+                    new URL(
+                        import.meta.env.DEV
+                            ? "../fetch-worker"
+                            : "../fetch-worker.mjs",
+                        import.meta.url,
+                    ),
+                    { type: "module" },
+                );
+                const onMessage = (e: MessageEvent) => {
+                    if (
+                        e.data === "fetch-ready" ||
+                        e.data?.type === "fetch-ready"
+                    ) {
+                        port1.removeEventListener("message", onMessage);
+                        resolve(port1);
+                    } else {
+                        port1.removeEventListener("message", onMessage);
+                        reject(
+                            new Error(
+                                `Unexpected message: ${JSON.stringify(e.data)}`,
+                            ),
+                        );
+                    }
+                };
+                port1.addEventListener("message", onMessage);
+                port1.start();
+                fetchWorker.postMessage(
+                    {
+                        type: "init",
+                    },
+                    [port2],
+                );
+            }),
+    );
 }
 
 /**
@@ -86,40 +100,43 @@ export function medfetch(
                 `medfetch: non-browser environment detected, returning stub function...`,
             );
         }
-        return ( (_: any, ...__: any[]) => void 0 ) as any;
+        return ((_: any, ...__: any[]) => void 0) as any;
     }
 
-    const loadMedfetch = Effect.gen(function*() {
+    const loadMedfetch = Effect.gen(function* () {
         if (__DB_ID__) {
             return __DB_ID__;
         } else {
             const promiser = worker1();
             if (!dbId) {
                 if (filename) {
-                    const { dbId: newDbId } = yield *promiser.lazy("open", {
+                    const { dbId: newDbId } = yield* promiser.lazy("open", {
                         vfs: "opfs",
-                        filename
+                        filename,
                     });
-                    dbId = yield *Effect.fromNullable(newDbId);
+                    dbId = yield* Effect.fromNullable(newDbId);
                 } else {
-                    const { dbId: newDbId } = yield *promiser.lazy("open");
-                    dbId = yield *Effect.fromNullable(newDbId);
+                    const { dbId: newDbId } = yield* promiser.lazy("open");
+                    dbId = yield* Effect.fromNullable(newDbId);
                 }
             }
-            const port1 = yield *getFetchWorkerPort();
-            const { result } = yield *promiser.lazy({
-                dbId,
-                type: "load-module",
-                args: {
-                    moduleURL: ModuleURL().toString(),
-                    moduleName: "medfetch",
-                    aux: new TextEncoder().encode(baseURL)
-                }
-            }, [port1]);
+            const port1 = yield* getFetchWorkerPort();
+            const { result } = yield* promiser.lazy(
+                {
+                    dbId,
+                    type: "load-module",
+                    args: {
+                        moduleURL: ModuleURL().toString(),
+                        moduleName: "medfetch",
+                        aux: new TextEncoder().encode(baseURL),
+                    },
+                },
+                [port1],
+            );
             if (result.rc !== 0) {
                 return yield* new MedfetchSqliteError({
                     message: `medfetch.sqlite: couldn't load in the module at ${ModuleURL().toString()}`,
-                    type: "load-module"
+                    type: "load-module",
                 });
             }
             __DB_ID__ = dbId;
@@ -127,17 +144,23 @@ export function medfetch(
         }
     });
 
-    return function sql<T = unknown>(strings: TemplateStringsArray, ...rest: any[]) {
-        const querystring = strings.reduce((acc, str, i) => acc + str + (rest[i] ?? ""), "");
+    return function sql<T = unknown>(
+        strings: TemplateStringsArray,
+        ...rest: any[]
+    ) {
+        const querystring = strings.reduce(
+            (acc, str, i) => acc + str + (rest[i] ?? ""),
+            "",
+        );
         return Effect.gen(function* () {
-            const dbId = yield *loadMedfetch;
-            const { result } = yield *worker1().lazy({
+            const dbId = yield* loadMedfetch;
+            const { result } = yield* worker1().lazy({
                 type: "exec",
                 dbId,
                 args: {
                     sql: querystring,
-                    rowMode: "object"
-                }
+                    rowMode: "object",
+                },
             });
             return result.resultRows as T[];
         });

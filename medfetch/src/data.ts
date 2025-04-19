@@ -1,5 +1,12 @@
-import { Array, Data as D, Effect, Option, pipe, Stream } from "effect";
-import { Bundle, Data } from "./schema/index.js";
+import { Array, Data, Effect, Option, pipe, Schema, Stream } from "effect";
+import { Resource, Link, Entry } from "./data.schema.js";
+
+const Bundle = Resource("Bundle", {
+    link: Link.pipe(Schema.Array),
+    entry: Entry(Resource()).pipe(Schema.Array)
+})
+interface Bundle extends Schema.Schema.Type<typeof Bundle> {};
+const decodeBundle = Schema.decodeUnknown(Bundle);
 
 /**
  * Labeled `Data` layer Error
@@ -8,7 +15,7 @@ import { Bundle, Data } from "./schema/index.js";
  *
  * @field message -> the error message
  */
-export class DataError extends D.TaggedError("Data")<{
+class DataError extends Data.TaggedError("Data")<{
     readonly message: string;
 }> {}
 
@@ -19,7 +26,7 @@ export class DataError extends D.TaggedError("Data")<{
  * @returns `Option.some` with the url if `'next' in Bundle.link.relation` exists. `Option.none` otherwise.
  *
  */
-const nextLink = (bundle: Bundle.Bundle) =>
+const nextLink = (bundle: Bundle) =>
     Array.findFirst(bundle.link, (link) => link.relation === "next").pipe(
         Option.map((link) => link.url),
     );
@@ -48,7 +55,7 @@ const get = (url: string) =>
             ),
         ),
         Effect.andThen((response) => Effect.tryPromise(() => response.json())),
-        Effect.flatMap(Bundle.decodeUnknown),
+        Effect.flatMap(decodeBundle)
     );
 
 /**
@@ -67,7 +74,7 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
             get(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
         );
         yield firstPage;
-        count += firstPage.entry.length;
+        count += firstPage.entry!.length;
 
         let linkOption = nextLink(firstPage);
         while (Option.isSome(linkOption) && count < upperLimit) {
@@ -129,7 +136,7 @@ export const pages = (
  */
 export const flatResources = (stream: ReturnType<typeof pages>) =>
     stream.pipe(
-        Stream.runFold([] as Data.Resource[], (acc, bundle) =>
+        Stream.runFold([] as Resource[], (acc, bundle) =>
             pipe(
                 bundle.entry,
                 Array.filterMap((entry) =>

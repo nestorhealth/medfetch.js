@@ -8,9 +8,7 @@ const f = async (n) => {
   c.setUint32(0, t.length, !0), s.set(t), Atomics.store(a, 0, 1), Atomics.notify(a, 0);
 };
 self.onmessage = (n) => o.fromNullable(n.ports[0]).pipe(
-  o.tap(
-    (e) => {
-      e.onmessage = f, e.postMessage("fetch-ready");
-    }
-  )
+  o.tap((e) => {
+    e.onmessage = f, e.postMessage("fetch-ready");
+  })
 ).pipe(o.runSync);

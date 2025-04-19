@@ -19,6 +19,7 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true,
+        "exactOptionalPropertyTypes": true,
 
         /* custom */
         "baseUrl": ".",

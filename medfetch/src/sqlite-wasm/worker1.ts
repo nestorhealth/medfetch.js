@@ -36,7 +36,11 @@ function matchMessage<O>(
  * @param response the response data
  * @returns void, this just sends it, if we get an error, it's unexpected
  */
-function response(response: BetterWorker1Response | BetterWorker1Request<BetterWorker1MessageType>) {
+function response(
+    response:
+        | BetterWorker1Response
+        | BetterWorker1Request<BetterWorker1MessageType>,
+) {
     return Effect.succeed(postMessage(response));
 }
 
@@ -58,8 +62,7 @@ function checkRc(
         try: (): Database | number | WasmPointer =>
             sqlite3.oo1.DB.checkRc(db, rc),
         catch: (e) => {
-            if (e instanceof sqlite3.SQLite3Error)
-                return e;
+            if (e instanceof sqlite3.SQLite3Error) return e;
             return new LoadModuleError({
                 code: "UNKNOWN",
                 path,
@@ -123,14 +126,14 @@ const run = Effect.gen(function* () {
             onLoadModule: async ({ dbId, args, messageId }) =>
                 await Effect.gen(function* () {
                     if (!dbId) {
-                        return yield *new LoadModuleError({
+                        return yield* new LoadModuleError({
                             message: `better-worker1.worker1: you have no database opened lol`,
                             path: "",
                             code: "BAD_CALL",
                         });
                     }
                     if (args === undefined) {
-                        return yield *new LoadModuleError({
+                        return yield* new LoadModuleError({
                             message: `better-worker1.worker1: "message.args" can't be undefined when invoking load-module`,
                             path: "",
                             code: "BAD_CALL",
@@ -139,10 +142,14 @@ const run = Effect.gen(function* () {
 
                     const pdb = idToPointer(dbId);
                     sqlite3.wasm.allocPtr(1); // malloc() for pAux
-                    const userModule = yield *wrapSqlite3Module(sqlite3, args.moduleURL, {
-                        preload: [args.preloadAux],
-                        transfer: event.ports
-                    });
+                    const userModule = yield* wrapSqlite3Module(
+                        sqlite3,
+                        args.moduleURL,
+                        {
+                            preload: [args.preloadAux],
+                            transfer: event.ports,
+                        },
+                    );
                     // @ts-ignore - idk why this is callable at runtime but
                     // the sqlite3 wasm types indicate it as an object...
                     const vtabMod = sqlite3.vtab.setupModule({
@@ -204,8 +211,7 @@ const run = Effect.gen(function* () {
                             moduleName: args.moduleName,
                         },
                     });
-                })
-                .pipe(Effect.runPromise)
+                }).pipe(Effect.runPromise),
         });
     };
     return { onMessage };
@@ -220,11 +226,11 @@ const main = run.pipe(
     }),
 );
 
-import type { 
-    MessageHandlers, 
-    BetterWorker1Request, 
-    BetterWorker1Response, 
-    BetterWorker1MessageType 
+import type {
+    MessageHandlers,
+    BetterWorker1Request,
+    BetterWorker1Response,
+    BetterWorker1MessageType,
 } from "./types.js";
 
 /* put import here for clarity on when we actually need the initializer */

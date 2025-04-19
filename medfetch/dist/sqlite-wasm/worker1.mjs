@@ -1,10 +1,16 @@
 import { Data as g, Context as y, Effect as o, Match as a, pipe as E } from "effect";
 import N from "@sqlite.org/sqlite-wasm";
-class h extends g.TaggedError("better-worker1.services.Sqlite3BootstrapError") {
+class h extends g.TaggedError(
+  "better-worker1.services.Sqlite3BootstrapError"
+) {
 }
-class p extends y.Tag("better-worker1.services.Sqlite3InitModule")() {
+class p extends y.Tag(
+  "better-worker1.services.Sqlite3InitModule"
+)() {
 }
-class $ extends y.Tag("better-worker1.services.BetterSqlite3Static")() {
+class $ extends y.Tag(
+  "better-worker1.services.BetterSqlite3Static"
+)() {
 }
 function L(t) {
   return o.tryPromise({
@@ -80,7 +86,9 @@ function _(t, e, c) {
     o.andThen(
       (n) => o.tryPromise({
         try: () => n(t, c),
-        catch: (l) => (console.error(`better-worker1: error loading user's virtual table module ${l}`), new s({
+        catch: (l) => (console.error(
+          `better-worker1: error loading user's virtual table module ${l}`
+        ), new s({
           message: "",
           path: e,
           code: "UNKNOWN"
@@ -141,10 +149,14 @@ const U = o.gen(function* () {
         });
       const w = C(m);
       e.wasm.allocPtr(1);
-      const k = yield* _(e, r.moduleURL, {
-        preload: [r.preloadAux],
-        transfer: i.ports
-      }), x = e.vtab.setupModule({
+      const k = yield* _(
+        e,
+        r.moduleURL,
+        {
+          preload: [r.preloadAux],
+          transfer: i.ports
+        }
+      ), x = e.vtab.setupModule({
         methods: k
       });
       let u = 0, d = 0;

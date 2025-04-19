@@ -124,20 +124,24 @@ export function project(
 
             Select: ({ select }) =>
                 Array.flatMap(data, (resource) => {
-                    return Array.reduce(select, [] as any[], (acc, selectNode) => {
-                        const results = aux(selectNode, [resource]);
-                        if (acc.length === 0) {
-                            return results;
-                        }
-                        return Array.flatMap(acc, (row) => {
-                            return Array.map(results, (newRow) => {
-                                return {
-                                    ...row,
-                                    ...newRow,
-                                };
+                    return Array.reduce(
+                        select,
+                        [] as any[],
+                        (acc, selectNode) => {
+                            const results = aux(selectNode, [resource]);
+                            if (acc.length === 0) {
+                                return results;
+                            }
+                            return Array.flatMap(acc, (row) => {
+                                return Array.map(results, (newRow) => {
+                                    return {
+                                        ...row,
+                                        ...newRow,
+                                    };
+                                });
                             });
-                        });
-                    });
+                        },
+                    );
                 }),
 
             UnionAll: ({ unionAll }) =>

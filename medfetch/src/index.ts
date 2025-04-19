@@ -26,17 +26,8 @@ export type {
 } from "./view";
 
 /* view.js dependencies for this file */
-import {
-    viewDefinition, 
-    columnPath,
-    Column as column 
-} from "./view";
-export { 
-    viewDefinition, 
-    columnPath, 
-    column
-};
-
+import { viewDefinition, columnPath, Column as column } from "./view";
+export { viewDefinition, columnPath, column };
 
 import { Chunk, Effect, pipe, Stream } from "effect";
 

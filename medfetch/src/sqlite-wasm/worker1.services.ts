@@ -10,7 +10,9 @@ import { UnknownException } from "effect/Cause";
  * @prop errorName - the name of the actual caught error
  * @prop phase     - what point was the error returned?
  */
-export class Sqlite3BootstrapError extends Data.TaggedError("better-worker1.services.Sqlite3BootstrapError")<{
+export class Sqlite3BootstrapError extends Data.TaggedError(
+    "better-worker1.services.Sqlite3BootstrapError",
+)<{
     message?: string;
     errorName?: string;
     phase: "wasm" | "worker1API";
@@ -19,23 +21,22 @@ export class Sqlite3BootstrapError extends Data.TaggedError("better-worker1.serv
 /**
  * Default export type
  */
-type Sqlite3InitModuleFunc = (typeof import("@sqlite.org/sqlite-wasm"))["default"]
+type Sqlite3InitModuleFunc =
+    (typeof import("@sqlite.org/sqlite-wasm"))["default"];
 
 /**
  * Now make it a service
  */
-export class Sqlite3InitModule extends Context.Tag("better-worker1.services.Sqlite3InitModule")<
-    Sqlite3InitModule,
-    Sqlite3InitModuleFunc
->() {}
+export class Sqlite3InitModule extends Context.Tag(
+    "better-worker1.services.Sqlite3InitModule",
+)<Sqlite3InitModule, Sqlite3InitModuleFunc>() {}
 
 /**
  * The Effect version
  */
-export class BetterSqlite3Static extends Context.Tag("better-worker1.services.BetterSqlite3Static")<
-    BetterSqlite3Static,
-    Sqlite3Static
->() {}
+export class BetterSqlite3Static extends Context.Tag(
+    "better-worker1.services.BetterSqlite3Static",
+)<BetterSqlite3Static, Sqlite3Static>() {}
 
 /**
  * Loads the sqlite3 wasm API via the default ESM module export
@@ -109,7 +110,6 @@ export type VirtualTableExtensionFn = (
     aux?: ModuleAux,
 ) => Promise<sqlite3_module>;
 
-
 export class LoadModuleError extends Data.TaggedError(
     "better-worker1.worker.LoadModule",
 )<{
@@ -125,7 +125,7 @@ export class LoadModuleError extends Data.TaggedError(
         | "TYPE_MISMATCH_DEFAULT_EXPORT"
         | "SQLITE_INTERNAL"
         | "UNKNOWN";
-}> {};
+}> {}
 
 const dynamicImport = (path: string) =>
     Effect.tryPromise({
@@ -201,7 +201,6 @@ function importUserModule(path: string) {
         );
 }
 
-
 /**
  * For getting a runtime virtual table URL
  * @param moduleURL The pathstring to the es module
@@ -211,24 +210,24 @@ function importUserModule(path: string) {
  */
 export function wrapSqlite3Module(
     sqlite3: Sqlite3Static,
-    moduleURL: string, 
-    aux?: ModuleAux
+    moduleURL: string,
+    aux?: ModuleAux,
 ): Effect.Effect<sqlite3_module, LoadModuleError | UnknownException> {
     return importUserModule(moduleURL).pipe(
-        Effect.andThen(
-            (userFunction) => 
+        Effect.andThen((userFunction) =>
             Effect.tryPromise({
                 try: () => userFunction(sqlite3, aux),
                 catch: (e) => {
-                    console.error(`better-worker1: error loading user's virtual table module ${e}`);
+                    console.error(
+                        `better-worker1: error loading user's virtual table module ${e}`,
+                    );
                     return new LoadModuleError({
                         message: ``,
                         path: moduleURL,
-                        code: "UNKNOWN"
+                        code: "UNKNOWN",
                     });
-                }
-            })
-        )
+                },
+            }),
+        ),
     );
 }
-

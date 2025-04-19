@@ -28,9 +28,7 @@ type _Better1MessageType = "load-module";
 /**
  * Combined typed with the base Worker1 Message Types
  */
-export type BetterWorker1MessageType =
-    | Worker1MessageType
-    | _Better1MessageType;
+export type BetterWorker1MessageType = Worker1MessageType | _Better1MessageType;
 
 /**
  * Extended message base type

@@ -1,6 +1,8 @@
 import { flat as A } from "../sof.mjs";
 import { T as Q, c as _, v as R, C as V } from "../view-DDTz-rtv.mjs";
-class b extends Q("medfetch/sqlite-wasm/medfetch.vtab") {
+class b extends Q(
+  "medfetch/sqlite-wasm/medfetch.vtab"
+) {
   constructor(r) {
     typeof r == "string" ? super({ message: r }) : super(r);
   }
@@ -64,11 +66,17 @@ function B(o, r) {
           );
         } else if (a.length === 3) {
           const [e, t, s] = a;
-          throw new b(`medfetch.vtab: ${e} currently not supported!`);
+          throw new b(
+            `medfetch.vtab: ${e} currently not supported!`
+          );
         } else
-          throw new b(`medfetch.vtab: i don't know what to do with an array of length ${a.length}`);
+          throw new b(
+            `medfetch.vtab: i don't know what to do with an array of length ${a.length}`
+          );
       else
-        throw new b(`medfetch.vtab: Can't fp parse that: ${a}`);
+        throw new b(
+          `medfetch.vtab: Can't fp parse that: ${a}`
+        );
   }
   return (!i.has("id") || !i.has("getResourceKey()")) && p.unshift(
     _({

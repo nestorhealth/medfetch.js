@@ -13,10 +13,10 @@ with the SQLite Web Assembly build to see it firsthand!
 ## Medfetch.js as a Table Valued Function
 Medfetch.js hooks into the SQLite database logic via the [Virtual Table API](https://www.sqlite.org/vtab.html).
 For browsers, Medfetch.js is an ES6 module that interfaces with the WebAssembly Virtual Table API,
-while on native builds, Medfetch.js is a dynamic library that interfaces with the core SQLite C API.
+while on native builds, Medfetch.js is a dynamically linked library that interfaces with the core SQLite C API.
 
 Medfetch.js is registered under SQLite as a `table valued function`, or TVF for short, meaning it can be called as 
-if it were to return a table, because that's exactly* what it does.
+if it were to return a table, because that's exactly what it does.
 
 The underlying vtab declaration call that Medfetch.js makes to the sqlite3 API:
 

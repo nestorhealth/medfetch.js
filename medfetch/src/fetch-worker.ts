@@ -38,13 +38,11 @@ const onMessage = async (e: MessageEvent<FetchCallRequest>) => {
 };
 
 self.onmessage = (e) =>
-    Effect.fromNullable(e.ports[0]).pipe(
-        Effect.tap(
-            (port) => {
+    Effect.fromNullable(e.ports[0])
+        .pipe(
+            Effect.tap((port) => {
                 port.onmessage = onMessage;
                 port.postMessage("fetch-ready");
-            }
+            }),
         )
-    )
-    .pipe(Effect.runSync)
-
+        .pipe(Effect.runSync);

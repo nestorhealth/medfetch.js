@@ -15,7 +15,7 @@ import { SQLCodeblock } from "@/components/SQLCodeblock";
 Welcome to the medfetch.js docs!
 
 ## What is Medfetch.js?
-Medfetch.js is a Javascript implementation of View the [SQL-on-FHIR]() v2 specs. 
+Medfetch.js is a Javascript implementation of a FHIR to SQL pipeline inspired by the [SQL-on-FHIR](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/index.html) v2 specs. 
 At a high level, Medfetch.js *fetches* FHIR JSON, *flattens* them, then *inserts* them into an SQL database.
 
 ```mermaid
@@ -25,10 +25,10 @@ flowchart LR
 
 The following table gives a summary on the databases and runtime Medfetch is currently supported on.
 
-| Runtime  | Javascript|SQLite  | Postgres | MySQL |
-|----------|-----------|--------|----------|-------|
-| Browser  | ✅        | ✅     | ❌       |   ❌
-| Node.js  | ✅        | ❌     | ❌       |   ❌
+| Runtime           | Javascript| SQLite | Postgres | MySQL |
+|-------------------|-----------|--------|----------|-------|
+| Browser           | ✅        | ✅     | ❌       |   ❌  |
+| Node.js / Native  | ✅        | ❌     | ❌       |   ❌  |
 
 > Medfetch.js is still in early development, but I plan on extracting the core logic to other SQL databases
 and nodejs once the SQLite WebAssembly version is stable, so keep an eye out!
@@ -120,10 +120,10 @@ should hopefully give you a better idea on which option you would want to use.
 |----------------------------|---------------------------------------------|-----------------------------------------------|
 | **Performance**            | ✅ Less I/O overhead. | ⚠️  *Usually* slower due to I/O overhead. |
 | **Ease of Use**            | ✅ FHIR knowledge optional. | ❌ Requires familiarity of FHIR and SQL. |
-| **Relational Semantics**   | ✅ Can perform JOINs (what else were you expecting!) | ❌ Can only manipulate one resource type at a time. |
+| **Relational Semantics**   | ✅ Can perform JOINs (what else were you expecting!) | ⚠️ Can only manipulate one resource type at a time. |
 | **Transformation Control** |⚠️  SQL for  JSON data transformations + a limited [`sof`]() port on the database. | ✅ Best control over transformations. |
 
-Apart from JOINs* not being supported by the in-memory runner, the only other tangible 
+Apart from JOINs* not being supported by the in-memory runner, the only other real
 downside to the in-memory runner is the implicit requirement of FHIR knowledge, since the 
 in-memory runner depends entirely on [View Definitions](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html).
 

@@ -12,7 +12,9 @@ class I {
     w(this, p);
     w(this, f);
     w(this, u);
-    k(this, f, /* @__PURE__ */ new Map()), k(this, u, Object.fromEntries(x.map((e) => [e, 0])));
+    k(this, f, /* @__PURE__ */ new Map()), k(this, u, Object.fromEntries(
+      x.map((e) => [e, 0])
+    ));
   }
   /**
    * Increment the counter and get back the message id
@@ -26,7 +28,7 @@ class I {
   }
   /**
    * Wrap reading from object directly COUNT_MAP[msgType]
-   * @param msgType The message type 
+   * @param msgType The message type
    * @returns How many times a request of type msgType has been called by any given promiser
    */
   messageId(e) {
@@ -81,11 +83,16 @@ function j(t = !1) {
       { type: "module" }
     ), r = new I(), o = e.postMessage.bind(e);
     e.postMessage = (s, i) => {
-      t && console.log("better-worker1.main.w1thread: sending with ports:", i);
+      t && console.log(
+        "better-worker1.main.w1thread: sending with ports:",
+        i
+      );
       const c = r.get(r.messageId(s.type));
       return c ? o(s, c) : o(s);
     };
-    const l = globalThis.sqlite3Worker1Promiser.v2({ worker: e });
+    const l = globalThis.sqlite3Worker1Promiser.v2({
+      worker: e
+    });
     let n = $(l, r);
     return n.$worker = e, n.lazy = (...s) => d.promise(() => n(...s)), n;
   } else
@@ -110,18 +117,30 @@ class P extends S.TaggedError("medfetch.sqlite") {
 }
 let y;
 function T() {
-  return d.promise(() => new Promise((t, e) => {
-    const { port1: r, port2: o } = new MessageChannel(), l = new Worker(
-      new URL("../fetch-worker.mjs", import.meta.url),
-      { type: "module" }
-    ), n = (s) => {
-      var i;
-      s.data === "fetch-ready" || ((i = s.data) == null ? void 0 : i.type) === "fetch-ready" ? (r.removeEventListener("message", n), t(r)) : (r.removeEventListener("message", n), e(new Error(`Unexpected message: ${JSON.stringify(s.data)}`)));
-    };
-    r.addEventListener("message", n), r.start(), l.postMessage({
-      type: "init"
-    }, [o]);
-  }));
+  return d.promise(
+    () => new Promise((t, e) => {
+      const { port1: r, port2: o } = new MessageChannel(), l = new Worker(
+        new URL(
+          "../fetch-worker.mjs",
+          import.meta.url
+        ),
+        { type: "module" }
+      ), n = (s) => {
+        var i;
+        s.data === "fetch-ready" || ((i = s.data) == null ? void 0 : i.type) === "fetch-ready" ? (r.removeEventListener("message", n), t(r)) : (r.removeEventListener("message", n), e(
+          new Error(
+            `Unexpected message: ${JSON.stringify(s.data)}`
+          )
+        ));
+      };
+      r.addEventListener("message", n), r.start(), l.postMessage(
+        {
+          type: "init"
+        },
+        [o]
+      );
+    })
+  );
 }
 function N(t, { trace: e = !1, filename: r, dbId: o } = {}) {
   if (!L())
@@ -145,15 +164,18 @@ function N(t, { trace: e = !1, filename: r, dbId: o } = {}) {
           const { dbId: c } = yield* n.lazy("open");
           o = yield* d.fromNullable(c);
         }
-      const s = yield* T(), { result: i } = yield* n.lazy({
-        dbId: o,
-        type: "load-module",
-        args: {
-          moduleURL: q().toString(),
-          moduleName: "medfetch",
-          aux: new TextEncoder().encode(t)
-        }
-      }, [s]);
+      const s = yield* T(), { result: i } = yield* n.lazy(
+        {
+          dbId: o,
+          type: "load-module",
+          args: {
+            moduleURL: q().toString(),
+            moduleName: "medfetch",
+            aux: new TextEncoder().encode(t)
+          }
+        },
+        [s]
+      );
       return i.rc !== 0 ? yield* new P({
         message: `medfetch.sqlite: couldn't load in the module at ${q().toString()}`,
         type: "load-module"
@@ -161,7 +183,10 @@ function N(t, { trace: e = !1, filename: r, dbId: o } = {}) {
     }
   });
   return function(s, ...i) {
-    const c = s.reduce((m, h, R) => m + h + (i[R] ?? ""), "");
+    const c = s.reduce(
+      (m, h, R) => m + h + (i[R] ?? ""),
+      ""
+    );
     return d.gen(function* () {
       const m = yield* l, { result: h } = yield* M().lazy({
         type: "exec",

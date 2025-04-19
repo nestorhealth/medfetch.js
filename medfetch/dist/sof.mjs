@@ -63,13 +63,17 @@ function R(r, t, e) {
         (u) => n(h({ select: o }), [u])
       );
     }),
-    Select: ({ select: l }) => f.flatMap(s, (o) => f.reduce(l, [], (i, a) => {
-      const u = n(a, [o]);
-      return i.length === 0 ? u : f.flatMap(i, (g) => f.map(u, (y) => ({
-        ...g,
-        ...y
-      })));
-    })),
+    Select: ({ select: l }) => f.flatMap(s, (o) => f.reduce(
+      l,
+      [],
+      (i, a) => {
+        const u = n(a, [o]);
+        return i.length === 0 ? u : f.flatMap(i, (g) => f.map(u, (y) => ({
+          ...g,
+          ...y
+        })));
+      }
+    )),
     UnionAll: ({ unionAll: l }) => l.flatMap((o) => n(o, s)),
     Column: ({ column: l }) => f.map(
       s,

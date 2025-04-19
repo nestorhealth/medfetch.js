@@ -4,7 +4,11 @@ import type {
     Sqlite3Worker1Promiser,
     Worker1Promiser,
 } from "@sqlite.org/sqlite-wasm";
-import { BetterWorker1MessageType, BetterWorker1PromiserFunc, BetterWorker1PromiserLazy } from "./types";
+import {
+    BetterWorker1MessageType,
+    BetterWorker1PromiserFunc,
+    BetterWorker1PromiserLazy,
+} from "./types";
 // import as side effect to attach "sqlite3Worker1Promiser()" to `globalThis`
 // This is a workaround for named "sqlite3Worker1Promiser()" function not being recognized by webpack
 import "@sqlite.org/sqlite-wasm";
@@ -69,8 +73,7 @@ function defer(
     ): Promise<any> {
         const { messageType, params, transfers } = checkArgs([arg0, arg1]);
         const messageId = counter.increment(messageType);
-        if (transfers)
-            counter.set(messageId, transfers);
+        if (transfers) counter.set(messageId, transfers);
         return f.then((f) => f(...params));
     };
 }
@@ -117,14 +120,19 @@ export function w1thread(trace = false) {
         const post = worker.postMessage.bind(worker);
         worker.postMessage = (msg, transfer) => {
             if (trace)
-                console.log("better-worker1.main.w1thread: sending with ports:", transfer);
+                console.log(
+                    "better-worker1.main.w1thread: sending with ports:",
+                    transfer,
+                );
             const messageTransfers = counter.get(counter.messageId(msg.type));
             if (messageTransfers) {
                 return post(msg, messageTransfers);
             }
             return post(msg);
         };
-        const promiser = (globalThis as any).sqlite3Worker1Promiser.v2({ worker });
+        const promiser = (globalThis as any).sqlite3Worker1Promiser.v2({
+            worker,
+        });
         let f = defer(promiser, counter);
         (f as any).$worker = worker;
         (f as any).lazy = (...args: Parameters<BetterWorker1PromiserFunc>) =>

@@ -16,16 +16,16 @@ import { TaggedError } from "effect/Data";
 /**
  * Namespaced error class
  */
-class MedfetchVTabError extends TaggedError("medfetch/sqlite-wasm/medfetch.vtab")<{
+class MedfetchVTabError extends TaggedError(
+    "medfetch/sqlite-wasm/medfetch.vtab",
+)<{
     message: string;
 }> {
-    constructor(args: { message: string; } | string) {
-        if (typeof args === "string")
-            super({ message: args });
-        else
-            super(args);
+    constructor(args: { message: string } | string) {
+        if (typeof args === "string") super({ message: args });
+        else super(args);
     }
-};
+}
 
 /**
  * service wrapper so we dont need to keep passing it
@@ -129,17 +129,23 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
                         columnPath({
                             path: _columnPath,
                             name: columnName,
-                            collection: true
-                        })
+                            collection: true,
+                        }),
                     );
                 } else if (path.length === 3) {
                     const [operation, columnName, columnPath] = path;
-                    throw new MedfetchVTabError(`medfetch.vtab: ${operation} currently not supported!`)
+                    throw new MedfetchVTabError(
+                        `medfetch.vtab: ${operation} currently not supported!`,
+                    );
                 } else {
-                    throw new MedfetchVTabError(`medfetch.vtab: i don't know what to do with an array of length ${path.length}`);
+                    throw new MedfetchVTabError(
+                        `medfetch.vtab: i don't know what to do with an array of length ${path.length}`,
+                    );
                 }
             } else {
-                throw new MedfetchVTabError(`medfetch.vtab: Can't fp parse that: ${path}`);
+                throw new MedfetchVTabError(
+                    `medfetch.vtab: Can't fp parse that: ${path}`,
+                );
             }
         }
     }
@@ -149,8 +155,8 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
             columnPath({
                 name: "id",
                 path: "id",
-                collection: false
-            })
+                collection: false,
+            }),
         );
     }
     return viewDefinition({

@@ -1,5 +1,5 @@
 import { Effect, Stream } from "effect";
-import { Bundle, Data } from "./schema/index.js";
+import { Resource, Link, Entry } from "./data.schema.js";
 declare const DataError_base: new <A extends Record<string, any> = {}>(args: import("effect/Types").Equals<A, {}> extends true ? void : { readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }) => import("effect/Cause").YieldableError & {
     readonly _tag: "Data";
 } & Readonly<A>;
@@ -10,7 +10,7 @@ declare const DataError_base: new <A extends Record<string, any> = {}>(args: imp
  *
  * @field message -> the error message
  */
-export declare class DataError extends DataError_base<{
+declare class DataError extends DataError_base<{
     readonly message: string;
 }> {
 }
@@ -30,7 +30,13 @@ export declare class DataError extends DataError_base<{
  *        sandbox server.
  * @returns a Stream of Bundles
  */
-export declare const pages: (baseUrl: string, resourceType: string, n?: number, maxPageSize?: number) => Stream.Stream<Bundle.Bundle, DataError, never>;
+export declare const pages: (baseUrl: string, resourceType: string, n?: number, maxPageSize?: number) => Stream.Stream<{
+    readonly id: string;
+    readonly resourceType: "Bundle";
+} & {
+    readonly link: readonly Link[];
+    readonly entry: readonly Entry<Resource<string, {}, []>>[];
+}, DataError, never>;
 /**
  * From a given Bundle `Stream`, fold all of its
  * `entry.resource` elements into an array.
@@ -51,12 +57,12 @@ export declare const pages: (baseUrl: string, resourceType: string, n?: number, 
  * @param stream the bundle stream
  * @returns Effect wrapped resource list
  */
-export declare const flatResources: (stream: ReturnType<typeof pages>) => Effect.Effect<Data.Resource[], DataError, never>;
+export declare const flatResources: (stream: ReturnType<typeof pages>) => Effect.Effect<Resource[], DataError, never>;
 /**
  * Promised version of `flatResources(pages(...))`;
  * @param params - the pages params
  * @returns a flat array of n resources from the server
  */
-export declare function pagen(...params: Parameters<typeof pages>): Promise<Data.Resource[]>;
+export declare function pagen(...params: Parameters<typeof pages>): Promise<Resource[]>;
 export declare function unionKeys(resources: any[]): Set<string>;
 export {};
