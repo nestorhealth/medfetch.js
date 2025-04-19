@@ -1,0 +1,4 @@
+src/
+sql/
+*.config.ts
+*.ts
