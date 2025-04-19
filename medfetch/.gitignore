@@ -6,3 +6,4 @@
 .env
 *.db
 .next
+*.tgz
