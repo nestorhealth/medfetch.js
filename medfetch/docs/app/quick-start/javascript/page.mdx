@@ -21,7 +21,94 @@ npm install effect fhirpath medfetch
 </Tabs>
 
 ## Usage
-You will need a FHIR base URL (duh). If you just want to test Medfetch out on some
+You will need a FHIR base URL. If you just want to test Medfetch out on some
 live dummy data, I recommend using a public sandbox like the [smarthealth it]() r4 server.
 Many more can be found on the [Confluence](https://confluence.hl7.org/spaces/FHIR/pages/35718859/Public+Test+Servers) 
 sandbox listings page.
+
+Once you have your base url, you can instantiate the `sof` (sql-on-fhir shorthand) client like so:
+
+```ts
+// sof.ts
+import { medfetch } from "medfetch";
+
+// Your base URL as arg0
+export const sof = medfetch("https://r4.smarthealthit.org/");
+```
+
+This `sof` client is just a function with the following type signature:
+
+```ts
+export type SOF = <
+    ResourceType extends string,
+    Keys extends readonly string[]
+>(
+    resourceType: ResourceType,
+    keys: readonly [...Keys],
+) => Promise<Flattened<Keys>[]>;
+```
+
+So you might call it like so:
+
+```ts
+import { sof } from "./sof";
+
+const patientsClean: {
+    id: unknown;
+    name: unknown;
+    birthDate: unknown;
+}[] = await sof("Patient", [
+    "id",
+    "name",
+    "birthDate"
+]);
+```
+
+Under the hood, this function acts as a wrapper over ViewDefinition creation and
+executes the generated ViewDefinition against our sql-on-fhir memory flattener.
+
+>The `sof` client function is still in early development right now, so as of the time of writing,
+FHIRpath transformations with this sof client are restricted to zero-whitespaced path strings,
+with the last non-function subpath becoming the name of the column in the corresponding ViewDefinition.
+
+## View Definitions
+If you're interested in writing up your own View Definitions, you can do so with Medfetch, although this 
+isn't intended to be the primary API export of Medfetch.js due to its boiler-platy nature.
+
+You can either write up the ViewDefinitions as plain objects / JSON yourself, or use the
+`viewDefinition` helper function that provides type safety over your view definitions.
+In either case, you can then pass your View Definition to the exported `flat` function
+that 
+
+```ts
+import { 
+    viewDefinition,
+    column,
+    columnPath,
+    flat
+} from "medfetch";
+import { getPatients } from "./my-data-fetchers";
+
+const patientView = viewDefinition({
+    status: "active",
+    resource: "Patient",
+    select: [
+        column({
+            column: [
+                columnPath({
+                    name: "id",
+                    path: "id"
+                })
+            ]
+        })
+    ],
+    where: [
+        {
+            path: "name.family.exists() and name.family = 'foo'"
+        }
+    ]
+});
+
+const jsonData = await getPatients();
+const flattened = flat(jsonData, patientView);
+```

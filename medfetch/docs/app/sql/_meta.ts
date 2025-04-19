@@ -1,5 +1,7 @@
 import type { MetaRecord } from "nextra";
 
 export default {
-  "quick-start": "Quick Start",
+    "sqlite": "SQLite",
+    "postgresql": "PostgreSQL",
+    "mysql": "MySQL"
 } satisfies MetaRecord;

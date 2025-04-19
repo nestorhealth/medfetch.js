@@ -1,16 +1,16 @@
 import { Data, Effect } from "effect";
-import { isBrowser, worker1 } from "better-worker1";
-import { BetterWorker1MessageType } from "better-worker1/types";
+import { isBrowser, worker1 } from "./main.js"
+import { BetterWorker1MessageType } from "./types.js";
 
 const DEV = import.meta.env.DEV;
 
-export function ModuleURL(url?: URL) {
+function ModuleURL(url?: URL) {
     if (url)
         return url;
     else
         return new URL(
             // namespace for extension in static folder
-            DEV ? "sqlite-wasm.vtab.js" : "sqlite-ext/medfetch.vtab.mjs", 
+            DEV ? "medfetch.vtab.js" : "sqlite-ext/medfetch.vtab.mjs", 
             // relative to source  : relative to static root
             DEV ? import.meta.url : self.location.origin
         );
@@ -47,8 +47,8 @@ function getFetchWorkerPort(){
         const { port1, port2 } = new MessageChannel();
         const fetchWorker = new Worker(
             new URL(import.meta.env.DEV ?
-            "fetch-worker"
-            : "fetch-worker.mjs", import.meta.url),
+            "../fetch-worker"
+            : "../fetch-worker.mjs", import.meta.url),
             { type: "module" }
         );
         const onMessage = (e: MessageEvent) => {
@@ -69,7 +69,7 @@ function getFetchWorkerPort(){
 }
 
 /**
- * Loads in sqlite3 Web Assembly binary via the [sqliteow]()
+ * Loads in sqlite3 Web Assembly binary via the []()
  * wrapper handle, loads in the virtual table module,
  * then returns back an sql template string function for querying
  * the database.

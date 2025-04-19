@@ -25,11 +25,18 @@ export type {
     Constant,
 } from "./view";
 
-import { viewDefinition } from "./view";
-export { viewDefinition };
+/* view.js dependencies for this file */
+import {
+    viewDefinition, 
+    columnPath,
+    Column as column 
+} from "./view";
+export { 
+    viewDefinition, 
+    columnPath, 
+    column
+};
 
-import { columnPath, Column as column } from "./view";
-export { columnPath, column };
 
 import { Chunk, Effect, pipe, Stream } from "effect";
 
@@ -74,11 +81,10 @@ export type SOF = <ResourceType extends string, Keys extends readonly string[]>(
 ) => Promise<Flattened<Keys>[]>;
 /**
  * Get an in-memory sql-on-fhir runner (aka View Runner)
- *
  * @param baseURL The FHIR server base
  * @returns sof The sql-on-fhir runner, which is just a function
  */
-export default function medfetch(baseURL: string): SOF {
+export function medfetch(baseURL: string): SOF {
     return async function sof<
         ResourceType extends string,
         Keys extends readonly string[],

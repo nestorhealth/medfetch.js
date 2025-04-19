@@ -7,8 +7,8 @@ description:
   `content` and `src` directories.
 ---
 
-import { RunInDatabase } from "./RunInDatabase";
 import { Cards, Callout } from "nextra/components";
+import { SQLCodeblock } from "@/components/SQLCodeblock";
 
 # Introduction
 
@@ -36,7 +36,6 @@ and nodejs once the SQLite WebAssembly version is stable, so keep an eye out!
 ## In Database vs In Memory runners
 Arguably speaking, Medfetch.js is *not* a faithful implementation of the specs, depending on
 how you interpret the specs. For the purposes of an introduction the terms "in-database" and "in-memory" do a good enough job. 
-The section on [architecture]() goes further in depth into how (and how not) Medfetch.js follows the specs.
 
 ### In-Database
 Medfetch.js's in-database runners live inside your database as an extension, meaning
@@ -57,7 +56,7 @@ JSON payload prior to inserting, if such a mapping is provided.
 Here's an example of pulling some Patient data from the [SmartHealth R4 Sandbox Server]()
 on the Web Assembly build of SQLite. Hit run to see it Medfetch.js in action!
 
-<RunInDatabase>
+<SQLCodeblock columns={["id", "gender", "first_name", "last_name", "birth_date", "city", "state"]}>
 ```sql
 SELECT 
     json ->> 'id' AS id,
@@ -78,7 +77,7 @@ FROM medfetch('Patient', json_array(
 ))
 LIMIT 5;
 ```
-</ RunInDatabase>
+</SQLCodeblock>
 
 ### In-Memory
 Medfetch.js in-memory view runners are written in plain Javascript (TypeScript technically).
@@ -121,6 +120,7 @@ should hopefully give you a better idea on which option you would want to use.
 |----------------------------|---------------------------------------------|-----------------------------------------------|
 | **Performance**            | ✅ Less I/O overhead. | ⚠️  *Usually* slower due to I/O overhead. |
 | **Ease of Use**            | ✅ FHIR knowledge optional. | ❌ Requires familiarity of FHIR and SQL. |
+| **Relational Semantics**   | ✅ Can perform JOINs (what else were you expecting!) | ❌ Can only manipulate one resource type at a time. |
 | **Transformation Control** |⚠️  SQL for  JSON data transformations + a limited [`sof`]() port on the database. | ✅ Best control over transformations. |
 
 The only tangible downside to the in-memory runner is the implicit requirement of FHIR knowledge, since the 
@@ -134,8 +134,8 @@ downstream to a traditional client/server database like [PostgreSQL](https://www
 
 <Callout type="info"> 
 <sup>1</sup> 
-WebAssembly databases may be the exception to this rule, since the sql-on-fhir runner that Medfetch.js will use for this 
-is the in-memory version!
+WebAssembly databases may be the exception to this rule, since Medfetch.js can use the in-memory
+runner prior to writing the data to the database with native js!
 </Callout>
 
 For most real-world pipelines, the simpler option is often to run Medfetch.js directly inside the database. 

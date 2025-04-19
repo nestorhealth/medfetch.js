@@ -1,6 +1,5 @@
 import { Effect } from "effect";
-import { BetterWorker1MessageType } from "better-worker1/types";
-export declare function ModuleURL(url?: URL): URL;
+import { BetterWorker1MessageType } from "./types.js";
 interface MedfetchOptions {
     /**
      * If provided, overrides the default path of
@@ -21,7 +20,7 @@ export declare class MedfetchSqliteError extends MedfetchSqliteError_base<{
 }
 type SQLFn<E, R, Templated = any> = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
 /**
- * Loads in sqlite3 Web Assembly binary via the [sqliteow]()
+ * Loads in sqlite3 Web Assembly binary via the []()
  * wrapper handle, loads in the virtual table module,
  * then returns back an sql template string function for querying
  * the database.

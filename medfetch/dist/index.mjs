@@ -1,7 +1,7 @@
 import { Schema as e, String as C, pipe as v, Array as o, Data as R, identity as ae, ParseResult as S, Option as E, Match as d, Stream as x, Effect as m, Chunk as re } from "effect";
 import { flat as ie } from "./sof.mjs";
-import { v as ce, C as oe, c as ue } from "./view-wKnUKvlF.mjs";
-import { F as St, a as gt, n as ft, S as yt, U as ht } from "./view-wKnUKvlF.mjs";
+import { v as ce, C as oe, c as ue } from "./view-DDTz-rtv.mjs";
+import { F as St, a as gt, n as ft, S as yt, U as ht } from "./view-DDTz-rtv.mjs";
 const B = e.Literal(
   "Resource",
   "BackboneElement",
@@ -911,10 +911,10 @@ function dt(a) {
 export {
   oe as column,
   ue as columnPath,
-  dt as default,
   ie as flat,
   St as forEach,
   gt as forEachOrNull,
+  dt as medfetch,
   ft as normalize,
   yt as select,
   ht as unionAll,

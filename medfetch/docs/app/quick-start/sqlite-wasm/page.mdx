@@ -1,65 +1,62 @@
-import { Steps, Tabs } from 'nextra/components'
+import { Callout, Steps, Tabs } from 'nextra/components'
  
 # sqlite-wasm
 Spin up a sql-on-fhir View Runner directly on the browser with Medfetch.js
 and [sqlite-wasm]()!
 
 ## Installation
-[effect](), [@sqlite.org/sqlite-wasm](), and [better-worker1]() are required as peer dependencies.
-
->On top of effect and the database driver, using sqlite-wasm with medfetch requires
-the SQLite wasm glue code library [better-worker1]() to load the virtual table dynamically.
-I will eventually get [better-worker1]() integrated alongside medfetch sqlite-wasm!!
+[effect]() and [@sqlite.org/sqlite-wasm]() are peer dependencies.
 
 <Tabs items={["pnpm", "npm"]}>
 <Tabs.Tab>
 ```bash copy
-pnpm add effect @sqlite.org/sqlite-wasm better-worker1 medfetch
+pnpm add effect @sqlite.org/sqlite-wasm medfetch
 ```
 </Tabs.Tab>
 
 <Tabs.Tab>
 ```bash copy
-npm install effect @sqlite.org/sqlite-wasm better-worker1 medfetch
+npm install effect @sqlite.org/sqlite-wasm medfetch
 ```
 </Tabs.Tab>
 </Tabs>
 
-Then transpile the virtual table extension into your `/public` folder as `/public/sqlite-ext/medfetch.vtab.mjs`.
+Then transpile the virtual table extension into your `/public` folder as `/public/sqlite-ext/medfetch.mjs`.
 
 ```bash
 npx medfetch bundle
 ```
 
 > This is a very involved setup but I will be actively working on making this process smoother especially
-once I get closer to version 1!
+once I get closer to version 1.0.0!
 
 ## Usage
 If using as a new database:
 
 ```ts
 // sof.ts
-import { medfetch } from "medfetch/sqlite";
-import { Effect } from "effect";
+import { medfetch } from "medfetch/sqlite-wasm";
 
 // Can name this whatever of course
 export const sql = medfetch("https://your-fhir-server.here");
 
-// Opens a new file in the OPFS VFS.
+// Or if you want to open a file in the OPFS VFS with medfetch attached to the database
 const sql2 = medfetch("...", {
-    filename: "my-db"
+  filename: "my-db"
 });
 ```
 
-If you want to attach Medfetch onto an existing database:
+Currently, if you want to mutate a SQLite database prior to
+attaching Medfetch onto it, you must use the [`worker1`]()
+from the package <sup>1</sup>.
 
 ```ts
-import { medfetch } from "medfetch/sqlite";
-import { worker1 } from "better-worker1";
+import { medfetch, worker1 } from "medfetch/sqlite-wasm";
+
 
 // Create a worker1 thread, or get an existing one
-const thread = w1Thread();
-const { dbId } = await thread("open", {
+const w1 = worker1();
+const { dbId } = await w1("open", {
     vfs: "opfs",
     filename: "my-db"
 });
@@ -67,6 +64,14 @@ const { dbId } = await thread("open", {
 // Can name this whatever of course
 export const sql = medfetch("https://your-fhir-server.here", { dbId });
 ```
+
+<Callout type="info"> 
+<sup>1</sup> 
+This is meant to be a temporary requirement as I plan to make Medfetch.js compatible
+with the base `@sqlite.org/sqlite-wasm` package. It's just that currently, I need
+a way to load virtual tables from the main thread dynamically at runtime, which
+is what that `worker1()` function handles.
+</Callout>
 
 `sql` here is a lazily executed template strings function.
 Meaning it won't take effect until you call the `Effect.runPromise` function on it.

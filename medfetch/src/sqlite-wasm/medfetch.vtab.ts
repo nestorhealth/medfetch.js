@@ -7,10 +7,25 @@ import type {
     SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
-import type { FetchCallRequest } from "./worker.js";
+import type { FetchCallRequest } from "~/fetch-worker.js";
 import { flat } from "~/sof";
-import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view";
-import type { UserVirtualTableExport } from "sqliteow/services";
+import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view.js";
+import type { VirtualTableExtensionFn } from "./worker1.services";
+import { TaggedError } from "effect/Data";
+
+/**
+ * Namespaced error class
+ */
+class MedfetchVTabError extends TaggedError("medfetch/sqlite-wasm/medfetch.vtab")<{
+    message: string;
+}> {
+    constructor(args: { message: string; } | string) {
+        if (typeof args === "string")
+            super({ message: args });
+        else
+            super(args);
+    }
+};
 
 /**
  * service wrapper so we dont need to keep passing it
@@ -71,22 +86,26 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
     if (!resourceType || typeof resourceType !== "string")
         throw new Error(`medfetch: unexpected invalid resourceType in args[0]`);
 
-    if (!fp)
+    if (!fp) {
         // no fhirpath map, then just return null and default to the whole object
         return null;
+    }
 
     const paths: (string | [string, any])[] = JSON.parse(fp); // todo: allow for forEach's and more complex path mappings
-    if (!Array.isArray(paths))
+    if (!Array.isArray(paths)) {
         // no arg1 then we just return null
         return null;
+    }
     const inferredSet = new Set();
     const column: ColumnPath[] = [];
     for (let i = 0; i < rows.length; i++) {
-        if (inferredSet.size === paths.length)
-            // early exit! ideally we hit this on rows[0]
+        if (inferredSet.size === paths.length) {
+            // ideally we get an early exit!
             break;
+        }
         const rowLike = rows[i];
         for (const path of paths) {
+            // case pathstring literal
             if (typeof path === "string") {
                 if (top(path) in rowLike) {
                     const value = rowLike[path];
@@ -102,8 +121,37 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
                         }),
                     );
                 }
+            } else if (Array.isArray(path)) {
+                if (path.length === 2) {
+                    const [columnName, _columnPath] = path;
+                    inferredSet.add(_columnPath);
+                    column.push(
+                        columnPath({
+                            path: _columnPath,
+                            name: columnName,
+                            collection: true
+                        })
+                    );
+                } else if (path.length === 3) {
+                    const [operation, columnName, columnPath] = path;
+                    throw new MedfetchVTabError(`medfetch.vtab: ${operation} currently not supported!`)
+                } else {
+                    throw new MedfetchVTabError(`medfetch.vtab: i don't know what to do with an array of length ${path.length}`);
+                }
+            } else {
+                throw new MedfetchVTabError(`medfetch.vtab: Can't fp parse that: ${path}`);
             }
         }
+    }
+    if (!inferredSet.has("id") || !inferredSet.has("getResourceKey()")) {
+        // Add 'id' to the columns if it wasn't given by fp
+        column.unshift(
+            columnPath({
+                name: "id",
+                path: "id",
+                collection: false
+            })
+        );
     }
     return viewDefinition({
         status: "active",
@@ -122,7 +170,7 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
 /**
  * JS port of the original Medfetch virtual table extension for native SQLite.
  */
-const medfetch_module: UserVirtualTableExport = async (
+const medfetch_module: VirtualTableExtensionFn = async (
     sqlite3,
     { preload, transfer },
 ) => {

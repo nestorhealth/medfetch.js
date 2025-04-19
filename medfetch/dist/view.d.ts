@@ -265,10 +265,9 @@ export declare const normalize: (i: {
     readonly forEachOrNull?: string | undefined;
     readonly unionAll?: readonly BaseSelect[] | undefined;
 }, overrideOptions?: import("effect/SchemaAST").ParseOptions) => {
-    readonly _tag: "Column";
     readonly column: readonly ColumnPath<string>[];
+    readonly _tag: "Column";
 } | {
-    readonly _tag: "Select";
     readonly select: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -287,8 +286,8 @@ export declare const normalize: (i: {
         readonly _tag: "UnionAll";
         readonly unionAll: ReadonlyArray<Node>;
     })[];
+    readonly _tag: "Select";
 } | {
-    readonly _tag: "ForEach";
     readonly forEach: string;
     readonly select: readonly ({
         readonly _tag: "Column";
@@ -308,8 +307,8 @@ export declare const normalize: (i: {
         readonly _tag: "UnionAll";
         readonly unionAll: ReadonlyArray<Node>;
     })[];
+    readonly _tag: "ForEach";
 } | {
-    readonly _tag: "ForEachOrNull";
     readonly select: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -329,8 +328,8 @@ export declare const normalize: (i: {
         readonly unionAll: ReadonlyArray<Node>;
     })[];
     readonly forEachOrNull: string;
+    readonly _tag: "ForEachOrNull";
 } | {
-    readonly _tag: "UnionAll";
     readonly unionAll: readonly ({
         readonly _tag: "Column";
         readonly column: ReadonlyArray<ColumnPath>;
@@ -349,6 +348,7 @@ export declare const normalize: (i: {
         readonly _tag: "UnionAll";
         readonly unionAll: ReadonlyArray<Node>;
     })[];
+    readonly _tag: "UnionAll";
 };
 declare const _ViewDefinition: Schema.TaggedStruct<"Select", {
     status: Schema.Literal<["draft", "active", "retired", "unknown"]>;

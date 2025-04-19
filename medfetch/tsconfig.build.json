@@ -30,9 +30,7 @@
     }
   },
   "include": [
-        "src/sqlite-wasm.ts" ,"src/sqlite-wasm.*.ts", 
-        "src/fetch-worker.ts",
-        "sof.ts", "view.ts"
+        "src/**/*.ts"
     ],
   "exclude": ["/**/*.test.ts"]
 }
