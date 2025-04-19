@@ -1,6 +1,6 @@
 {
     "name": "medfetch",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "type": "module",
     "description": "sql + fhir REST call wrappers",
     "scripts": {
