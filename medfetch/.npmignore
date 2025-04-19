@@ -4,3 +4,4 @@ sql/
 *.ts
 docs/
 .vscode/
+*.json
