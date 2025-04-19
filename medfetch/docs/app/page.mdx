@@ -81,7 +81,7 @@ LIMIT 5;
 
 ### In-Memory
 Medfetch.js in-memory view runners are written in plain Javascript (TypeScript technically).
-Currently, it is stable on the modern web browsers and [Node.js](https://nodejs.org/en).
+Currently, it is stable on modern web browsers and [Node.js](https://nodejs.org/en).
 
 ```mermaid
 flowchart LR
@@ -123,8 +123,13 @@ should hopefully give you a better idea on which option you would want to use.
 | **Relational Semantics**   | ✅ Can perform JOINs (what else were you expecting!) | ❌ Can only manipulate one resource type at a time. |
 | **Transformation Control** |⚠️  SQL for  JSON data transformations + a limited [`sof`]() port on the database. | ✅ Best control over transformations. |
 
-The only tangible downside to the in-memory runner is the implicit requirement of FHIR knowledge, since the 
-in-memory runner depends entirely on [View Definitions](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html). 
+Apart from JOINs* not being supported by the in-memory runner, the only other tangible 
+downside to the in-memory runner is the implicit requirement of FHIR knowledge, since the 
+in-memory runner depends entirely on [View Definitions](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/StructureDefinition-ViewDefinition.html).
+
+> *JOINs are explicitly left up to the database per the SQL on FHIR specs, which makes
+a lot of sense considering the View Definition transformations are run indiscriminantly
+against each resource in the input, so this isn't necessarily a downside, just a design limitation.
 
 Performance is difficult to compare since V8 optimizes aggressively for JSON tree traversals / manipulations, meaning
 FHIRpath transformations are actually faster in-memory than in-database <sup>1</sup>. Even then, the I/O overhead of
