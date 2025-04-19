@@ -2,3 +2,5 @@ src/
 sql/
 *.config.ts
 *.ts
+docs/
+.vscode/
