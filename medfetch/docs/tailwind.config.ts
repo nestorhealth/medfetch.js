@@ -4,8 +4,7 @@ import twAnimate from "tw-animate-css";
 const config: Config = {
     content: [
         "./app/**/*.{ts,tsx}",
-        "./components/**/*.{ts,tsx}",
-        "./node_modules/shadcn-ui/**/*.{ts,tsx}", // or however you're including ShadCN
+        "./components/**/*.{ts,tsx}"
     ],
     theme: {
         extend: {},

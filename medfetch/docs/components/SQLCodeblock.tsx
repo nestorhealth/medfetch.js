@@ -30,9 +30,12 @@ export function SQLCodeblock({ children, columns }: Props) {
   const { data, mutate, isPending } = useMutation({
     mutationFn: async () => {
       if (sqlText) {
-        return await sql<any>`${sqlText}`.pipe(Effect.runPromise);
+        const result = await sql<any>`${sqlText}`.pipe(Effect.runPromise);
+        return result;
       }
-    }
+    },
+    onError: (e) => console.error(`medfetch-docs error: ${e}`),
+    onSuccess: (data) => console.log(`medfetch-docs sof result ok: size ${data?.length}`)
   });
 
   return (

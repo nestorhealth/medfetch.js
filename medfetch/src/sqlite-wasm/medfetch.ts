@@ -95,11 +95,16 @@ export function medfetch(
         } else {
             const promiser = worker1();
             if (!dbId) {
-                const { dbId: newDbId } = yield *promiser.lazy("open", {
-                    vfs: "opfs",
-                    filename
-                });
-                dbId = yield *Effect.fromNullable(newDbId);
+                if (filename) {
+                    const { dbId: newDbId } = yield *promiser.lazy("open", {
+                        vfs: "opfs",
+                        filename
+                    });
+                    dbId = yield *Effect.fromNullable(newDbId);
+                } else {
+                    const { dbId: newDbId } = yield *promiser.lazy("open");
+                    dbId = yield *Effect.fromNullable(newDbId);
+                }
             }
             const port1 = yield *getFetchWorkerPort();
             const { result } = yield *promiser.lazy({
