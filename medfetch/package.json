@@ -32,6 +32,11 @@
     "bin": {
         "medfetch": "./bin/cli.mjs"
     },
+    "files": [
+        "dist",
+        "bin",
+        "README.md"
+    ],
     "keywords": [],
     "author": "",
     "license": "ISC",

@@ -1,0 +1,67 @@
+{
+  "name": "medfetch",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "sql + fhir REST call wrappers",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./sqlite-wasm": {
+      "types": "./dist/sqlite-wasm/index.d.ts",
+      "import": "./dist/sqlite-wasm/index.mjs",
+      "default": "./dist/sqlite-wasm/index.mjs"
+    },
+    "./view": {
+      "types": "./dist/view.d.ts",
+      "import": "./dist/view.mjs",
+      "default": "./dist/view.mjs"
+    }
+  },
+  "bin": {
+    "medfetch": "./bin/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@smile-cdr/fhirts": "^2.2.8",
+    "@tanstack/react-query": "^5.67.2",
+    "clsx": "^2.1.1",
+    "comlink": "^4.4.2",
+    "dotenv": "^16.4.7",
+    "lucide-react": "^0.411.0"
+  },
+  "peerDependencies": {
+    "@sqlite.org/sqlite-wasm": "3.49.1-build2",
+    "effect": "^3.14.1",
+    "fhirpath": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "pagefind": "^1.3.0",
+    "prettier": "^3.4.2",
+    "ts-morph": "^25.0.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.2",
+    "vitest": "^2.1.8"
+  },
+  "scripts": {
+    "test": "vitest",
+    "build": "rm -rf dist && npx vite build && npx tsc -p tsconfig.build.json && cp ./src/sqlite-wasm/sqlite3-wasm.d.ts dist/sqlite-wasm",
+    "make:linux-x86": "mkdir -p bin/linux-x86 && cd src/server && make && cp build/linux/x86_64/medfetch.so ../../bin/linux-x86",
+    "make:mac-x86": "mkdir -p bin/mac-x86 && cd src/server && make && cp build/Darwin/x86_64/fetch.dylib ../../../bin/mac-x86",
+    "unit": "vitest src",
+    "integration": "vitest tests/integration",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+  }
+}

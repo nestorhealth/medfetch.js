@@ -1,0 +1,31 @@
+import { Effect } from "effect";
+import { BetterWorker1MessageType } from "./types.js";
+interface MedfetchOptions {
+    /**
+     * If provided, overrides the default path of
+     * `/public/sqlite-ext/medfetch.vtab.mjs`.
+     */
+    moduleURL?: URL;
+    trace?: boolean;
+    filename?: string;
+    dbId?: string;
+}
+declare const MedfetchSqliteError_base: new <A extends Record<string, any> = {}>(args: import("effect/Types").Equals<A, {}> extends true ? void : { readonly [P in keyof A as P extends "_tag" ? never : P]: A[P]; }) => import("effect/Cause").YieldableError & {
+    readonly _tag: "medfetch.sqlite";
+} & Readonly<A>;
+export declare class MedfetchSqliteError extends MedfetchSqliteError_base<{
+    message?: string;
+    type: BetterWorker1MessageType;
+}> {
+}
+type SQLFn<E, R, Templated = any> = <T = unknown>(strings: TemplateStringsArray, ...rest: Templated[]) => Effect.Effect<T[], E, R>;
+/**
+ * Loads in sqlite3 Web Assembly binary via the []()
+ * wrapper handle, loads in the virtual table module,
+ * then returns back an sql template string function for querying
+ * the database.
+ * @param baseURL The fhir server base url
+ * @param options
+ */
+export declare function medfetch(baseURL: string, { trace, filename, dbId }?: MedfetchOptions): SQLFn<MedfetchSqliteError, never>;
+export {};
