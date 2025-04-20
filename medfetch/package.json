@@ -1,6 +1,6 @@
 {
     "name": "medfetch",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "type": "module",
     "description": "sql + fhir REST call wrappers",
     "scripts": {
@@ -34,7 +34,7 @@
     },
     "files": [
         "dist",
-        "src",
+        "src/**/*.ts",
         "tsconfig.json",
         "bin",
         "README.md"

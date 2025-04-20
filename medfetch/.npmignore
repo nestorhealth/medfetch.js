@@ -1,6 +1,0 @@
-src/
-sql/
-*.config.ts
-docs/
-.vscode/
-*.json

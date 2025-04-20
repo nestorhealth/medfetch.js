@@ -1,6 +1,7 @@
-import { m as r, a as m, w as o } from "../medfetch-BTEXPx16.mjs";
+import { medfetch as o } from "./medfetch.mjs";
+import { w1thread as f, worker1 as m } from "./main.mjs";
 export {
-  r as medfetch,
-  m as w1thread,
-  o as worker1
+  o as medfetch,
+  f as w1thread,
+  m as worker1
 };
