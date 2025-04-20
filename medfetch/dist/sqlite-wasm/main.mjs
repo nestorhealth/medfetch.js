@@ -77,6 +77,7 @@ function I(r = !1) {
   if (M()) {
     const e = new Worker(
       new URL(
+        /* @vite-ignore */
         "worker1.mjs",
         import.meta.url
       ),

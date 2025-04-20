@@ -108,7 +108,8 @@ export function w1thread(trace = false) {
     if (isBrowser()) {
         const worker = new Worker(
             new URL(
-                import.meta.env.DEV ? "worker1.js" : "worker1.mjs",
+                /* @vite-ignore */
+                import.meta.env.DEV ? "worker.js" : "worker1.mjs",
                 import.meta.url,
             ),
             { type: "module" },
