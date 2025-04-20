@@ -5,6 +5,9 @@ import { BetterWorker1MessageType } from "./types.js";
 const DEV = import.meta.env.DEV;
 
 function ModuleURL(url?: URL) {
+    if (window === undefined) {
+        return new URL("file:///dev/null");
+    }
     if (url) return url;
     else
         return new URL(
