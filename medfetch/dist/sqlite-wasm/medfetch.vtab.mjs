@@ -1,5 +1,5 @@
 import { flat as A } from "../sof.mjs";
-import { T as Q, c as _, v as R, C as V } from "../view-DDTz-rtv.mjs";
+import { T as Q, c as _, v as R, C as V } from "../view-bvE2dEbi.mjs";
 class b extends Q(
   "medfetch/sqlite-wasm/medfetch.vtab"
 ) {

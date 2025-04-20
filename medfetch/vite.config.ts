@@ -53,6 +53,7 @@ export default defineConfig({
                 sof: "src/sof.ts",
                 "fetch-worker": "src/fetch-worker.ts",
                 "sqlite-wasm/index": "src/sqlite-wasm/index.ts",
+                "sqlite-wasm/medfetch": "src/sqlite-wasm/medfetch.ts",
                 "sqlite-wasm/medfetch.vtab": "src/sqlite-wasm/medfetch.vtab.ts",
                 "sqlite-wasm/types": "src/sqlite-wasm/types.ts",
                 "sqlite-wasm/worker1": "src/sqlite-wasm/worker1.ts"
