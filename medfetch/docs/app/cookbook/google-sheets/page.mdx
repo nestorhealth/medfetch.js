@@ -1,0 +1,36 @@
+import { FileTree, Tabs, Steps } from 'nextra/components';
+import SQLiteQuery from "./sqlite-query.mdx";
+
+# Google Sheets Integration
+This example shows a potential sql-on-fhir integration with Google Sheets using Medfetch.js.
+
+## Prerequisites
+Let's assume you are interested in sending SQL-on-FHIR queries made with Medfetch.js into your
+Google Sheets for some data analysis. In this example, we will be performing the analysis on
+patients who underwent *any* treatment for acute bronchitis from 2000-2021 inclusive.
+We will also assume the primary coding system our FHIR server uses is [SNOMED CT]().
+
+With that out of the way, let's get right into it!
+
+## The Queries
+These certainly aren't the only ways to get the same result, so treat these as just
+one possibility out of many.
+
+<Steps>
+### Conditions Query
+Here is how we can get all [Condition]() resources
+that have an entry in their `code` property that equals the SNOMED code for
+acute bronchitis (10509002).
+
+<Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
+
+  <Tabs.Tab>
+    <SQLiteQuery />
+  </Tabs.Tab>
+
+  <Tabs.Tab></Tabs.Tab>
+  <Tabs.Tab></Tabs.Tab>
+  <Tabs.Tab></Tabs.Tab>
+</Tabs>
+
+</Steps>

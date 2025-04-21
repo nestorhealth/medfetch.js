@@ -35,20 +35,29 @@ export function SQLCodeblock({ children, columns }: Props) {
       }
     },
     onError: (e) => console.error(`medfetch-docs error: ${e}`),
-    onSuccess: (data) => console.log(`medfetch-docs sof result ok: size ${data?.length}`)
+    onSuccess: (data) =>
+      console.log(`medfetch-docs sof result ok: size ${data?.length}`),
   });
 
   return (
     <div>
-      <pre ref={ref}>{children}</pre>
-      {sqlText && (
-        <Button
-          className="mt-2 border px-3 py-1 rounded cursor-pointer"
-          onClick={() => mutate()}
-        >
-          Run
-        </Button>
-      )}
+      <pre
+        ref={ref}
+        className="relative overflow-auto rounded"
+      >
+        {children}
+
+        {sqlText && (
+          <Button
+            onClick={() => mutate()}
+            className="absolute bottom-2 right-2 z-10 px-2 py-1 text-xs bg-white/10 text-white hover:bg-white/20 border border-white/20"
+            variant="secondary"
+          >
+            Run
+          </Button>
+        )}
+      </pre>
+
       <DataTable
         data={data}
         columns={columns ?? ["id", "json"]}
@@ -57,3 +66,4 @@ export function SQLCodeblock({ children, columns }: Props) {
     </div>
   );
 }
+

@@ -1,0 +1,22 @@
+import { SQLCodeblock } from "@/components/SQLCodeblock";
+
+<SQLCodeblock columns={["id", "gender", "first_name", "last_name", "birth_date", "city", "state"]}>
+```sql copy
+CREATE TABLE acute_bronchitis_conditions AS
+SELECT
+  id,
+  json->'reference'->>0 AS patient_id
+FROM medfetch('Condition', json_array(
+  json_array('code', 'code.coding[0].code'),
+  json_array('code_system', 'code.coding[0].system'),
+  json_array('reference_type', 'subject.reference.split(''/'').first()'),
+  json_array('reference', 'subject.reference.split(''/'').last()')
+))
+WHERE
+  json->'reference_type'->>0 = 'Patient'
+  AND
+  json->'code_system'->>0 = 'http://snomed.info/sct'
+  AND
+  json->'code'->>0 = '10509002'
+```
+</SQLCodeblock>

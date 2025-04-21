@@ -2,7 +2,7 @@
     "name": "medfetch",
     "version": "0.0.8",
     "type": "module",
-    "description": "sql + fhir REST call wrappers",
+    "description": "sql on fhir database runner implementation",
     "scripts": {
         "test": "vitest",
         "build": "rm -rf dist && npx vite build && npx tsc -p tsconfig.build.json && cp ./src/sqlite-wasm/sqlite3-wasm.d.ts dist/sqlite-wasm",
