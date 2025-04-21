@@ -51,7 +51,7 @@
         "lucide-react": "^0.411.0"
     },
     "peerDependencies": {
-        "@sqlite.org/sqlite-wasm": "3.49.1-build2",
+        "@sqlite.org/sqlite-wasm": "^3.49.1-build2",
         "effect": "^3.14.1",
         "fhirpath": "^3.17.0"
     },
