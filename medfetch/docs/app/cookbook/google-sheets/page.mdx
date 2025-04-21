@@ -1,5 +1,7 @@
 import { FileTree, Tabs, Steps } from 'nextra/components';
-import SQLiteQuery from "./sqlite-query.mdx";
+import SQLiteConditions from "./sqlite/conditions.mdx";
+import SQLitePatients from "./sqlite/patients.mdx";
+import SQLiteEncounters from "./sqlite/encounters.mdx";
 
 # Google Sheets Integration
 This example shows a potential sql-on-fhir integration with Google Sheets using Medfetch.js.
@@ -16,8 +18,7 @@ With that out of the way, let's get right into it!
 These certainly aren't the only ways to get the same result, so treat these as just
 one possibility out of many.
 
-<Steps>
-### Conditions Query
+### Conditions
 Here is how we can get all [Condition]() resources
 that have an entry in their `code` property that equals the SNOMED code for
 acute bronchitis (10509002).
@@ -25,7 +26,7 @@ acute bronchitis (10509002).
 <Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
 
   <Tabs.Tab>
-    <SQLiteQuery />
+    <SQLiteConditions />
   </Tabs.Tab>
 
   <Tabs.Tab></Tabs.Tab>
@@ -33,4 +34,35 @@ acute bronchitis (10509002).
   <Tabs.Tab></Tabs.Tab>
 </Tabs>
 
-</Steps>
+### Patients
+Next let's get all the patients with the corresponding IDs.
+
+<Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
+
+  <Tabs.Tab>
+    <SQLitePatients />
+  </Tabs.Tab>
+
+  <Tabs.Tab></Tabs.Tab>
+  <Tabs.Tab></Tabs.Tab>
+  <Tabs.Tab></Tabs.Tab>
+</Tabs>
+
+### Encounters
+Next, we'll grab all the [Encounter]() rows who reference a Patient
+in our `abc_patients` table.
+
+<Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
+
+  <Tabs.Tab>
+    <SQLiteEncounters />
+  </Tabs.Tab>
+
+  <Tabs.Tab></Tabs.Tab>
+  <Tabs.Tab></Tabs.Tab>
+  <Tabs.Tab></Tabs.Tab>
+</Tabs>
+
+### Procedures
+Then we'll get all [Procedure]() rows that reference this [Encounter]()
+in its `encounter` row.

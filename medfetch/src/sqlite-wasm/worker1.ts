@@ -123,7 +123,7 @@ const run = Effect.gen(function* () {
             onExport: () => onBaseMessage(event),
 
             /* custom event handlers starts here */
-            onLoadModule: async ({ dbId, args, messageId }) =>
+            onLoadModule: async ({ dbId, args }) =>
                 await Effect.gen(function* () {
                     if (!dbId) {
                         return yield* new LoadModuleError({
@@ -204,7 +204,6 @@ const run = Effect.gen(function* () {
                     return yield* response({
                         type: "exec",
                         dbId,
-                        messageId,
                         result: {
                             rc,
                             operation: "load-module",

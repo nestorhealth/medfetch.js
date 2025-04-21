@@ -1,0 +1,17 @@
+import { SQLCodeblock } from "@/components/SQLCodeblock";
+
+<SQLCodeblock columns={["id", "patient_id"]}>
+```sql copy
+CREATE TABLE IF NOT EXISTS abc_encounters AS
+SELECT
+  id,
+  json->'reference'->>0 AS patient_id
+FROM medfetch('Encounter', json_array(
+  json_array('reference_type', 'subject.reference.split(''/'').first()'),
+  json_array('reference', 'subject.reference.split(''/'').last()'),
+)) e
+INNER JOIN abc_patients p ON p.id = e.json->'reference'->>0 AND e.json->'reference_type'->>0 = 'Patient';
+
+SELECT * FROM abc_encounters;
+```
+</SQLCodeblock>

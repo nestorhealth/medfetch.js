@@ -74,8 +74,7 @@ FROM medfetch('Patient', json_array(
     'birthDate',
     'address.city.last()',
     'address.state.last()'
-))
-LIMIT 5;
+));
 ```
 </SQLCodeblock>
 

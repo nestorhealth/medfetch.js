@@ -3,18 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import { medfetch } from "medfetch/sqlite-wasm";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation } from "@tanstack/react-query";
 import { Effect } from "effect";
-import { DataTable } from "./DataTable";
+import { DataTable } from "@/components/ui/data-table";
+import { ArrowUpDown } from "lucide-react";
 
 const sql = medfetch("https://r4.smarthealthit.org");
 
 type Props = {
   children: React.ReactNode;
   columns?: string[];
+  dropTables?: string[];
 };
 
-export function SQLCodeblock({ children, columns }: Props) {
+export function SQLCodeblock({ children, columns, dropTables }: Props) {
   const ref = useRef<HTMLPreElement>(null);
   const [sqlText, setSqlText] = useState<string | null>(null);
 
@@ -36,7 +40,14 @@ export function SQLCodeblock({ children, columns }: Props) {
     },
     onError: (e) => console.error(`medfetch-docs error: ${e}`),
     onSuccess: (data) =>
-      console.log(`medfetch-docs sof result ok: size ${data?.length}`),
+      console.log(`medfetch-docs sof result ok: size ${data?.length}, rows=${JSON.stringify(data, null, 2)}`),
+    onSettled: async () => {
+      if (dropTables && dropTables.length > 0) {
+        for (const query of dropTables.map((table) => sql`drop table if exists${table};`)) {
+          await query.pipe(Effect.runPromise);
+        }
+      }
+    }
   });
 
   return (
@@ -52,17 +63,47 @@ export function SQLCodeblock({ children, columns }: Props) {
             onClick={() => mutate()}
             className="absolute bottom-2 right-2 z-10 px-2 py-1 text-xs bg-white/10 text-white hover:bg-white/20 border border-white/20"
             variant="secondary"
+            disabled={isPending}
           >
             Run
           </Button>
         )}
       </pre>
 
-      <DataTable
-        data={data}
-        columns={columns ?? ["id", "json"]}
-        isPending={isPending}
-      />
+      <Separator className="my-6" />
+
+      {isPending ? (
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-3/4" />
+        </div>
+      ) : (
+          <DataTable
+            data={data ?? []}
+            columns={columns?.map((columnName) => ({
+              accessorKey: columnName,
+              header: ({ column }) => (
+                <Button
+                  variant="ghost"
+                  onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                  {columnName}
+                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+              )
+            })) ?? [
+                {
+                  accessorKey: "id",
+                  header: "id"
+                },
+                {
+                  accessorKey: "json",
+                  header: "json"
+                }
+              ]}
+          />
+        )}
     </div>
   );
 }
