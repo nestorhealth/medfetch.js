@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { medfetch } from "medfetch/sqlite-wasm";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,8 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Effect } from "effect";
 import { DataTable } from "@/components/ui/data-table";
 import { ArrowUpDown } from "lucide-react";
-
-const sql = medfetch("https://r4.smarthealthit.org");
+import { sql } from "@/lib/sqlite-wasm";
 
 type Props = {
   children: React.ReactNode;

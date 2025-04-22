@@ -13,7 +13,7 @@ const banner = (
 );
 const navbar = (
     <Navbar
-        logo={<b>medfetch.js</b>}
+        logo={<b>Medfetch.js</b>}
         // ... Your additional navbar options
     />
 );

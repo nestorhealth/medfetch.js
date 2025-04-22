@@ -1,0 +1,23 @@
+import { SQLCodeblock } from "@/components/SQLCodeblock";
+
+<SQLCodeblock columns={["condition_id", "condition_duration", "procedure_code", "procedure_display"]}>
+```sql copy
+CREATE TABLE IF NOT EXISTS ab_dataset AS
+SELECT
+    c.id AS condition_id,
+    c.duration AS condition_duration,
+    proc.json->'code_value'->>0 AS procedure_code,
+    proc.json->'code_display'->>0 AS procedure_display
+FROM medfetch('Procedure', json_array(
+    json_array('ref_type', 'reasonReference.first().reference.split(''/'').first()'),
+    json_array('ref_value', 'reasonReference.first().reference.split(''/'').last()'),
+    json_array('code_value', 'code.coding.first().code'),
+    json_array('code_display', 'code.text')
+)) proc
+INNER JOIN ab_conditions c ON c.id = proc.json->'ref_value'->>0
+WHERE proc.json->'ref_type'->>0 = 'Condition'
+  AND c.duration IS NOT NULL;
+
+SELECT * from ab_dataset;
+```
+</SQLCodeblock>

@@ -1,24 +1,26 @@
 import { SQLCodeblock } from "@/components/SQLCodeblock";
 
-<SQLCodeblock columns={["id", "patient_id"]}>
+<SQLCodeblock columns={["id", "duration"]}>
 ```sql copy
-CREATE TABLE IF NOT EXISTS acute_bronchitis_conditions AS
+CREATE TABLE IF NOT EXISTS ab_conditions AS
 SELECT
-  id,
-  json->'reference'->>0 AS patient_id
+    id,
+    (julianday(json->'abatement'->>0) - julianday(json->'onset'->>0)) || ' ' || 'days' AS duration
 FROM medfetch('Condition', json_array(
-  json_array('code', 'code.coding[0].code'),
-  json_array('code_system', 'code.coding[0].system'),
-  json_array('reference_type', 'subject.reference.split(''/'').first()'),
-  json_array('reference', 'subject.reference.split(''/'').last()')
+    json_array('code', 'code.coding[0].code'),
+    json_array('code_system', 'code.coding[0].system'),
+    json_array('reference_type', 'subject.reference.split(''/'').first()'),
+    json_array('reference', 'subject.reference.split(''/'').last()'),
+    json_array('onset', 'onsetDateTime'),
+    json_array('abatement', 'abatementDateTime')
 ))
 WHERE
-  json->'reference_type'->>0 = 'Patient'
-  AND
-  json->'code_system'->>0 = 'http://snomed.info/sct'
-  AND
-  json->'code'->>0 = '10509002';
+    json->'reference_type'->>0 = 'Patient'
+    AND
+    json->'code_system'->>0 = 'http://snomed.info/sct'
+    AND
+    json->'code'->>0 = '10509002';
 
-SELECT * FROM acute_bronchitis_conditions;
+SELECT * FROM ab_conditions;
 ```
 </SQLCodeblock>

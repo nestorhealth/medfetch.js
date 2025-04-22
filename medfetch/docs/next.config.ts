@@ -27,7 +27,7 @@ export default nextConfig({
                     {
                         key: "Cross-Origin-Opener-Policy",
                         value: "same-origin",
-                    },
+                    }
                 ],
             },
         ];
