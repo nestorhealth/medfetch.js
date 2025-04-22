@@ -18,7 +18,16 @@ export function ExportDatasetToSheets() {
 
   const redirectToAuth = () => {
     localStorage.setItem("oauth_return_to", window.location.href);
-    window.location.href = googleRedirectURI();
+    const authWindow = window.open(googleRedirectURI(), "_blank", "popup, width=500,height=600");
+
+    const poll = setInterval(() => {
+      const token = localStorage.getItem("google_access_token");
+      if (token) {
+        authWindow?.close();
+        setToken(token);
+        clearInterval(poll);
+      }
+    }, 1000);
   };
 
   const handleExport = async () => {

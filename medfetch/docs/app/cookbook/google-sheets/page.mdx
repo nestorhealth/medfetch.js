@@ -51,8 +51,7 @@ acute bronchitis (10509002).
 
 ### Procedures
 Then we'll get all [Procedure]() rows that reference any of our `ab_conditions` rows as 
-their `reasonReference`, and then `INNER JOIN` them so we get a nice compact table
-ready for analysis.
+their `reasonReference`, and then `INNER JOIN` them so we can squash the relevant data into a single nice compact table.
 
 <Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
 
@@ -80,8 +79,8 @@ we'll write out the boilerplate for exporting the results via a button press on 
 though the overall logic should be the same no matter what framework you are using.
 
 Follow the [OAuth2]() protocol for your runtime. If you're not serving Medfetch.js to
-3rd party users, then you don't need to set up redirects like here and just write
-to the Sheets API immediately with your client secret like we do here.
+3rd party users, then you don't need to set up redirects like we do here and can just write
+to the Sheets API immediately with your client secret.
 
 <Tabs items={["sqlite-wasm.ts", "google.oauth2.ts", "export-dataset-to-sheets.tsx"]}>
 
@@ -99,7 +98,7 @@ to the Sheets API immediately with your client secret like we do here.
 
 </Tabs>
 
-### Export to Google Sheets!
+### All together
 Once we have our Google OAuth setup, we can now write our `ab_dataset` as a plain Google Sheet.
 Below is our demo `<ExportDatasetToSheets />{:jsx}` component. Click on it to see all the pieces
 come together! If successful, the alert should redirect you to the newly created Sheet.

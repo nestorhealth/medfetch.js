@@ -66,13 +66,13 @@ export function GoogleCallback() {
     const accessToken = hashParams.get("access_token");
 
     if (accessToken) {
-      console.log("OAuth access token:", accessToken);
       localStorage.setItem("google_access_token", accessToken);
-      const returnTo = localStorage.getItem("oauth_return_to");
-      if (returnTo) {
-        window.location.href = returnTo;
+
+      if (window.opener) {
+        window.close();
       } else {
-        window.location.href = "/";
+        const returnTo = localStorage.getItem("oauth_return_to");
+        window.location.href = returnTo ?? "/";
       }
     }
   }, []);
