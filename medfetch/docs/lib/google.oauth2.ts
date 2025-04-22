@@ -9,7 +9,7 @@ const GOOGLE_SCOPES = [
 ].join(",");
 
 export function googleRedirectURI() {
-  let authURL = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  const authURL = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authURL.searchParams.set("client_id", GOOGLE_CLIENT_ID);
   authURL.searchParams.set("redirect_uri", REDIRECT_URI);
   authURL.searchParams.set("response_type", "token");
