@@ -4,8 +4,8 @@
     "type": "module",
     "description": "sql on fhir database runner implementation",
     "scripts": {
-        "test": "vitest",
-        "build": "rm -rf dist && npx vite build && npx tsc -p tsconfig.build.json && cp ./src/sqlite-wasm/sqlite3-wasm.d.ts dist/sqlite-wasm",
+        "test": "vitest run --coverage",
+        "build": "rm -rf dist && npx vite build && npx concurrently \"npx tsc -p tsconfig.build.json\" \"cp src/sqlite-wasm/sqlite3-wasm.d.ts dist/sqlite-wasm\"",
         "unit": "vitest src",
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
     },
@@ -19,11 +19,6 @@
             "types": "./dist/sqlite-wasm/index.d.ts",
             "import": "./dist/sqlite-wasm/index.mjs",
             "default": "./dist/sqlite-wasm/index.mjs"
-        },
-        "./view": {
-            "types": "./dist/view.d.ts",
-            "import": "./dist/view.mjs",
-            "default": "./dist/view.mjs"
         }
     },
     "bin": {
@@ -46,6 +41,8 @@
     },
     "devDependencies": {
         "@types/node": "^22.13.1",
+        "@vitest/coverage-v8": "2.1.9",
+        "concurrently": "^9.1.2",
         "pagefind": "^1.3.0",
         "prettier": "^3.4.2",
         "ts-morph": "^25.0.0",

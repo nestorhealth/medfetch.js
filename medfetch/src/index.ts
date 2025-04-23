@@ -66,7 +66,7 @@ function keysToViewDefinition<Keys extends readonly string[]>(
     });
 }
 
-export type SOF = <ResourceType extends string, Keys extends readonly string[]>(
+export type SofFn = <ResourceType extends string, Keys extends readonly string[]>(
     resourceType: ResourceType,
     keys: readonly [...Keys],
 ) => Promise<Flattened<Keys>[]>;
@@ -75,7 +75,7 @@ export type SOF = <ResourceType extends string, Keys extends readonly string[]>(
  * @param baseURL The FHIR server base
  * @returns sof The sql-on-fhir runner, which is just a function
  */
-export function medfetch(baseURL: string): SOF {
+export function medfetch(baseURL: string): SofFn {
     return async function sof<
         ResourceType extends string,
         Keys extends readonly string[],

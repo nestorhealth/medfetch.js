@@ -18,13 +18,13 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true,
         "exactOptionalPropertyTypes": true,
 
         /* custom */
         "baseUrl": ".",
         "paths": {
-            "~/*": ["src/*"]
+            "~/*": ["src/*"],
+            "@sqlite.org/sqlite-wasm": ["node_modules/@sqlite.org/sqlite-wasm"]
         }
     },
     "include": ["src"]

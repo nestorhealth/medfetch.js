@@ -121,19 +121,7 @@ export type MessageHandlers<O> = {
  */
 export type BetterWorker1ResponseError<
     MessageType extends BetterWorker1MessageType = BetterWorker1MessageType,
-> = Worker1ResponseError<MessageType, BetterWorker1Request>;
-
-type BetterWorker1MessagePair<Type extends BetterWorker1MessageType> = {
-    request: BetterWorker1Request<Type>;
-    response: BetterWorker1Response<Type>;
-};
-
-/**
- * Type lookup helper
- */
-type MessageMap = {
-    [Type in BetterWorker1MessageType]: BetterWorker1MessagePair<Type>;
-};
+> = Worker1ResponseError<MessageType>;
 
 /**
  * A request is a message sent from the MAIN thread.
@@ -153,28 +141,40 @@ export type MessageTypeObjMap<V> = {
 
 /**
  * The base BetterWorker1 Promiser, which extends the promiser messenger
- * with an additional `StructuredSerializeOptions` arg at the end.
+ * with an additional StructuredSerializeOptions arg at the end.
  */
-export type BetterWorker1PromiserFunc = {
-    <T extends BetterWorker1MessageType>(
-        type: T,
-        args?: MessageMap[T]["request"]["args"],
-    ): Promise<MessageMap[T]["response"] | BetterWorker1ResponseError<T>>;
+export type BetterWorker1PromiserFn = {
+  <T extends BetterWorker1MessageType>(
+    messageData: BetterWorker1Request<T>,
+    transfer?: StructuredSerializeOptions | Transferable[],
+  ): Promise<
+    BetterWorker1Response<T> | BetterWorker1ResponseError<T>
+  >;
 
-    <T extends BetterWorker1MessageType>(
-        messageData: { type: T } & MessageMap[T]["request"],
-        transfer?: StructuredSerializeOptions | Transferable[],
-    ): Promise<MessageMap[T]["response"] | BetterWorker1ResponseError<T>>;
+  <T extends BetterWorker1MessageType>(
+    type: T,
+    args?: BetterWorker1Request<T>["args"],
+  ): Promise<
+    BetterWorker1Response<T> | BetterWorker1ResponseError<T>
+  >;
+
 };
 
 export type BetterWorker1PromiserLazy = {
-    <T extends BetterWorker1MessageType>(
-        type: T,
-        args?: MessageMap[T]["request"]["args"],
-    ): Effect.Effect<MessageMap[T]["response"], BetterWorker1ResponseError<T>>;
-
-    <T extends BetterWorker1MessageType>(
-        messageData: { type: T } & MessageMap[T]["request"],
-        transfer?: StructuredSerializeOptions | Transferable[],
-    ): Effect.Effect<MessageMap[T]["response"], BetterWorker1ResponseError<T>>;
+  <T extends BetterWorker1MessageType>(
+    messageData: BetterWorker1Request<T>,
+    transfer?: StructuredSerializeOptions | Transferable[],
+  ): Effect.Effect<
+    BetterWorker1Response<T>,
+    BetterWorker1ResponseError<T>
+  >;
+    
+  <T extends BetterWorker1MessageType>(
+    type: T,
+    args?: BetterWorker1Request<T>["args"],
+  ): Effect.Effect<
+    BetterWorker1Response<T>,
+    BetterWorker1ResponseError<T>
+  >;
 };
+

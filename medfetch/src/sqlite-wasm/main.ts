@@ -1,12 +1,12 @@
-import "./sqlite3-wasm.d.ts"; // include type extensions in the declaration output
-
+import "./sqlite3-wasm.d.ts";
 import type {
     Sqlite3Worker1Promiser,
     Worker1Promiser,
 } from "@sqlite.org/sqlite-wasm";
-import {
+
+import type {
     BetterWorker1MessageType,
-    BetterWorker1PromiserFunc,
+    BetterWorker1PromiserFn,
     BetterWorker1PromiserLazy,
 } from "./types";
 // import as side effect to attach "sqlite3Worker1Promiser()" to `globalThis`
@@ -66,7 +66,7 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
 function defer(
     f: Promise<Worker1Promiser>,
     counter: Counter,
-): BetterWorker1PromiserFunc {
+): BetterWorker1PromiserFn {
     return async function betterWorker1Promiser(
         arg0: any,
         arg1?: any,
@@ -81,7 +81,7 @@ function defer(
 /**
  * Main thread `Promiser` function / Web Worker handler.
  */
-export type BetterWorker1Promiser = BetterWorker1PromiserFunc & {
+export type BetterWorker1Promiser = BetterWorker1PromiserFn & {
     /**
      * The worker instance that this promiser was bound to by
      * {@link Sqlite3Worker1Promiser.v2} from the `@sqlite.org/sqlite-wasm`
@@ -135,7 +135,7 @@ export function w1thread(trace = false) {
         });
         let f = defer(promiser, counter);
         (f as any).$worker = worker;
-        (f as any).lazy = (...args: Parameters<BetterWorker1PromiserFunc>) =>
+        (f as any).lazy = (...args: Parameters<BetterWorker1PromiserFn>) =>
             Effect.promise(() => f(...args));
 
         return f as BetterWorker1Promiser;

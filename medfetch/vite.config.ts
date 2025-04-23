@@ -2,6 +2,18 @@ import { defineConfig } from "vite";
 import path from "node:path";
 
 export default defineConfig({
+    // @ts-ignore
+    test: {
+        coverage: {
+            exclude: [
+                "src/examples/**",
+                "**/*.test.ts"
+            ],
+            include: [
+                "src/**"
+            ]
+        }
+    },
     server: {
         headers: {
             "Cross-Origin-Opener-Policy": "same-origin",
@@ -25,26 +37,6 @@ export default defineConfig({
                 chunkFileNames: `[name]-[hash].mjs`,
                 assetFileNames: `[name]-[hash].[ext]`,
             },
-            plugins: [
-                {
-                    name: "rename-js-to-mjs",
-                    generateBundle(_, bundle) {
-                        for (const [fileName, chunkInfo] of Object.entries(bundle)) {
-                            if (
-                                chunkInfo.type === "chunk" &&
-                                fileName.endsWith(".js")
-                            ) {
-                                const newFileName = fileName.replace(/\.js$/, ".mjs");
-                                bundle[newFileName] = {
-                                    ...chunkInfo,
-                                    fileName: newFileName,
-                                };
-                                delete bundle[fileName];
-                            }
-                        }
-                    },
-                },
-            ],
         },
         lib: {
             entry: {
@@ -61,7 +53,7 @@ export default defineConfig({
             },
             name: "medfetch",
             formats: ["es"],
-            fileName: (format, name) => `${name}.mjs`,
+            fileName: (format, name) => format === "esm" || format === "es" ? `${name}.mjs` : `${name}.js`,
         },
     }
 });
