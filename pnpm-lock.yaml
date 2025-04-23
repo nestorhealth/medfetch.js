@@ -6,6 +6,8 @@ settings:
 
 importers:
 
+  .: {}
+
   docs:
     dependencies:
       '@chevrotain/regexp-to-ast':
@@ -41,9 +43,6 @@ importers:
       fhirpath:
         specifier: ^4.0.0
         version: 4.1.1
-      gapi-script:
-        specifier: ^1.2.0
-        version: 1.2.0
       lucide-react:
         specifier: ^0.411.0
         version: 0.411.0(react@19.1.0)
@@ -111,33 +110,15 @@ importers:
 
   medfetch:
     dependencies:
-      '@smile-cdr/fhirts':
-        specifier: ^2.2.8
-        version: 2.3.0
       '@sqlite.org/sqlite-wasm':
         specifier: ^3.49.1-build2
         version: 3.49.1-build2
-      '@tanstack/react-query':
-        specifier: ^5.67.2
-        version: 5.74.4(react@19.1.0)
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-      comlink:
-        specifier: ^4.4.2
-        version: 4.4.2
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.5.0
       effect:
         specifier: ^3.14.1
         version: 3.14.12
       fhirpath:
         specifier: ^3.17.0
         version: 3.18.0
-      lucide-react:
-        specifier: ^0.411.0
-        version: 0.411.0(react@19.1.0)
     devDependencies:
       '@types/node':
         specifier: ^22.13.1
@@ -1352,9 +1333,6 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
-  '@smile-cdr/fhirts@2.3.0':
-    resolution: {integrity: sha512-RFLn8EZLqYzndmi0gY8xMSOlrQPzsTXxNrqilZGQEW/pXjCnroYOIfJWiq7Jt2D9uxRAwtnY8DAF4T2o/Sx7qQ==}
-
   '@sqlite.org/sqlite-wasm@3.49.1-build2':
     resolution: {integrity: sha512-pZi8OSjNDZEYkvefsTOFKNRRN0GG9S5mtB6qBmrFZ5sraF5vxElPnTOl0DbJgiz9twlsOF5OzVkOce6Uc1TXsw==}
     hasBin: true
@@ -2072,9 +2050,6 @@ packages:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
 
-  comlink@4.4.2:
-    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
-
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
 
@@ -2370,10 +2345,6 @@ packages:
 
   dompurify@3.2.5:
     resolution: {integrity: sha512-mLPd29uoRe9HpvwP2TxClGQBzGXeEC/we/q+bFlmPPmj2p2Ugl3r6ATu/UU1v77DXNcehiBg9zsr1dREyA/dJQ==}
-
-  dotenv@16.5.0:
-    resolution: {integrity: sha512-m/C+AwOAr9/W1UOIZUo232ejMNnJAJtYQjUbHoNTBNTJSvqzzDh7vnrei3o3r3m9blf6ZoDkvcw0VmozNRFJxg==}
-    engines: {node: '>=12'}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -2727,9 +2698,6 @@ packages:
 
   functions-have-names@1.2.3:
     resolution: {integrity: sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==}
-
-  gapi-script@1.2.0:
-    resolution: {integrity: sha512-NKTVKiIwFdkO1j1EzcrWu/Pz7gsl1GmBmgh+qhuV2Ytls04W/Eg5aiBL91SCiBM9lU0PMu7p1hTVxhh1rPT5Lw==}
 
   get-intrinsic@1.3.0:
     resolution: {integrity: sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==}
@@ -5648,8 +5616,6 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@smile-cdr/fhirts@2.3.0': {}
-
   '@sqlite.org/sqlite-wasm@3.49.1-build2': {}
 
   '@standard-schema/spec@1.0.0': {}
@@ -6390,8 +6356,6 @@ snapshots:
       color-string: 1.9.1
     optional: true
 
-  comlink@4.4.2: {}
-
   comma-separated-tokens@2.0.3: {}
 
   commander@13.1.0: {}
@@ -6695,8 +6659,6 @@ snapshots:
   dompurify@3.2.5:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
-
-  dotenv@16.5.0: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -7262,8 +7224,6 @@ snapshots:
       is-callable: 1.2.7
 
   functions-have-names@1.2.3: {}
-
-  gapi-script@1.2.0: {}
 
   get-intrinsic@1.3.0:
     dependencies:
