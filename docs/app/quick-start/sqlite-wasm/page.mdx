@@ -1,11 +1,10 @@
 import { Callout, Steps, Tabs } from 'nextra/components'
  
 # sqlite-wasm
-Spin up a sql-on-fhir View Runner directly on the browser with Medfetch.js
-and [sqlite-wasm]()!
+How to spin up a sql-on-fhir View Runner directly on the browser with Medfetch.js and [sqlite-wasm](https://github.com/sqlite/sqlite-wasm)
 
 ## Installation
-[effect]() and [@sqlite.org/sqlite-wasm]() are peer dependencies.
+[effect](https://effect.website/), [fhirpath](https://hl7.github.io/fhirpath.js/), and [@sqlite.org/sqlite-wasm]() are peer dependencies.
 
 <Tabs items={["pnpm", "npm"]}>
 <Tabs.Tab>
@@ -21,14 +20,11 @@ npm install effect @sqlite.org/sqlite-wasm medfetch
 </Tabs.Tab>
 </Tabs>
 
-Then transpile the virtual table extension into your `/public` folder as `/public/sqlite-ext/medfetch.mjs`.
+Then compile/transpile the virtual table extension into your `/public` folder as `/public/sqlite-ext/medfetch.mjs`.
 
 ```bash
 npx medfetch bundle
 ```
-
-> This is a very involved setup but I will be actively working on making this process smoother especially
-once I get closer to version 1.0.0!
 
 ## Usage
 If using as a new database:
@@ -46,9 +42,9 @@ const sql2 = medfetch("...", {
 });
 ```
 
-Currently, if you want to mutate a SQLite database prior to
+Currently, if you want to mutate a SQLite database before
 attaching Medfetch onto it, you must use the [`worker1`]()
-from the package <sup>1</sup>.
+from the package (this is to load the Virtual Table).
 
 ```ts
 import { medfetch, worker1 } from "medfetch/sqlite-wasm";
@@ -64,14 +60,6 @@ const { dbId } = await w1("open", {
 // Can name this whatever of course
 export const sql = medfetch("https://your-fhir-server.here", { dbId });
 ```
-
-<Callout type="info"> 
-<sup>1</sup> 
-This is meant to be a temporary requirement as I plan to make Medfetch.js compatible
-with the base `@sqlite.org/sqlite-wasm` package. It's just that currently, I need
-a way to load virtual tables from the main thread dynamically at runtime, which
-is what that `worker1()` function handles.
-</Callout>
 
 `sql` here is a lazily executed template strings function.
 Meaning it won't take effect until you call the `Effect.runPromise` function on it.
@@ -94,21 +82,17 @@ const patients_clean = sql<{
 export const getPatients = async () => patients_clean.pipe(Effect.runPromise);
 ```
 
-Then when a user does some action, say from React code,
-you can wrap the query like you would with any stateful
-async query e.g. react-query.
+Then when a user does some action, say from React code, you can wrap the query like 
+you would with any stateful async query.
 
 ```ts
-// some-component.ts
 import { getPatients } from "./queries.js";
 import { useMutation } from "@tanstack/react-query";
 
 export function ExecuteOnClick() {
-  // Just use react query for the love of god!!!
   const { mutate, isPending, data } = useMutation({
     mutationFn: getPatients
   });
   return <Button onClick={() => mutate()}></Button>;
 }
-
 ```

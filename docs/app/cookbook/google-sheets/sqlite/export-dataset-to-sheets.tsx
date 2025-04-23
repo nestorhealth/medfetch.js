@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { sql } from "@/lib/sqlite-wasm";
-import { createSpreadsheet, googleRedirectURI, writeToSpreadsheet } from "@/lib/google.oauth2";
+import {
+  createSpreadsheet,
+  googleRedirectURI,
+  writeToSpreadsheet,
+} from "@/lib/google.oauth2";
 import { Effect } from "effect";
 
 export function ExportDatasetToSheets() {
@@ -18,7 +22,11 @@ export function ExportDatasetToSheets() {
 
   const redirectToAuth = () => {
     localStorage.setItem("oauth_return_to", window.location.href);
-    const authWindow = window.open(googleRedirectURI(), "_blank", "popup, width=500,height=600");
+    const authWindow = window.open(
+      googleRedirectURI(),
+      "_blank",
+      "popup, width=500,height=600",
+    );
 
     const poll = setInterval(() => {
       const token = localStorage.getItem("google_access_token");
@@ -60,7 +68,10 @@ export function ExportDatasetToSheets() {
       const writeRes = await writeToSpreadsheet(token, sheetId, values);
       if (!writeRes.ok) throw new Error(await writeRes.text());
       alert("Exported to new Google Sheet! 🚀");
-      window.open(`https://docs.google.com/spreadsheets/d/${sheetId}`, "_blank");
+      window.open(
+        `https://docs.google.com/spreadsheets/d/${sheetId}`,
+        "_blank",
+      );
     } catch (err) {
       console.error("Export failed:", err);
       alert("Failed to export data.");
@@ -70,7 +81,6 @@ export function ExportDatasetToSheets() {
   return token ? (
     <Button onClick={handleExport}>Export to Google Sheets</Button>
   ) : (
-      <Button onClick={redirectToAuth}>Sign in with Google</Button>
-    );
+    <Button onClick={redirectToAuth}>Sign in with Google</Button>
+  );
 }
-

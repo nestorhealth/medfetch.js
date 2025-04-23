@@ -33,9 +33,6 @@ The following table gives a summary on the databases and runtime Medfetch is cur
 | Browser           | ✅        | ✅     | ❌       |   ❌  |
 | Node.js / Native  | ✅        | ❌     | ❌       |   ❌  |
 
-> Medfetch.js is still in early development, but I plan on extracting the core logic to other SQL databases
-and nodejs once the SQLite WebAssembly version is stable, so keep an eye out!
-
 ## In Database vs In Memory runners
 Arguably speaking, Medfetch.js is *not* a faithful implementation of the specs, depending on
 how you interpret the specs. For the purposes of an introduction the terms "in-database" and "in-memory" do a good enough job. 
@@ -56,8 +53,8 @@ From your database, it pulls FHIR data directly and allows it to be queried as a
 Optionally, it will use any user provided FHIRPath transformations and apply them to the 
 JSON payload prior to inserting, if such a mapping is provided.
 
-Here's an example of pulling some Patient data from the [SmartHealth R4 Sandbox Server]()
-on the Web Assembly build of SQLite. Hit run to see it Medfetch.js in action!
+Here's an example of pulling some Patient data from the SmartHealth R4 Sandbox Server
+on the Web Assembly build of SQLite. Hit run to see the query live.
 
 <SQLCodeblock columns={["id", "gender", "first_name", "last_name", "birth_date", "city", "state"]}>
 ```sql
@@ -112,7 +109,7 @@ const flattened = await sof("Patient", [
 ]);
 ```
 
-How you insert the flattened data into a database, if any at all, is up to you.
+How you insert the flattened data into a database is up to you.
 
 ### Choosing
 Which type is best depends on your use case. The following table
@@ -122,8 +119,8 @@ should hopefully give you a better idea on which option you would want to use.
 |----------------------------|---------------------------------------------|-----------------------------------------------|
 | **Performance**            | ✅ Less I/O overhead. | ⚠️  *Usually* slower due to I/O overhead. |
 | **Ease of Use**            | ✅ FHIR knowledge optional. | ❌ Requires familiarity of FHIR and SQL. |
-| **Relational Semantics**   | ✅ Can perform JOINs (what else were you expecting!) | ⚠️ Can only manipulate one resource type at a time. |
-| **Transformation Control** |⚠️  SQL for  JSON data transformations + a limited [`sof`]() port on the database. | ✅ Best control over transformations. |
+| **Relational Semantics**   | ✅ Can perform JOINs | ⚠️ Can only manipulate one resource type at a time. |
+| **Transformation Control** |⚠️ SQL for JSON data transformations. | ✅ Best control over transformations. |
 
 Apart from JOINs* not being supported by the in-memory runner, the only other real
 downside to the in-memory runner is the implicit requirement of FHIR knowledge, since the 
@@ -134,23 +131,16 @@ a lot of sense considering the View Definition transformations are run indiscrim
 against each resource in the input, so this isn't necessarily a downside, just a design limitation.
 
 Performance is difficult to compare since V8 optimizes aggressively for JSON tree traversals / manipulations, meaning
-FHIRpath transformations are actually faster in-memory than in-database <sup>1</sup>. Even then, the I/O overhead of
+FHIRpath transformations are actually faster in-memory than in-database. Even then, the I/O overhead of
 *just* having to connect to the database separately to insert the database usually ends up rendering any speed gains
 from V8 insignificant at best. This is especially true if you end up writing the flattened data
 downstream to a traditional client/server database like [PostgreSQL](https://www.postgresql.org/).
-
-<Callout type="info"> 
-<sup>1</sup> 
-WebAssembly databases may be the exception to this rule, since Medfetch.js can use the in-memory
-runner prior to writing the data to the database with native js!
-</Callout>
 
 For most real-world pipelines, the simpler option is often to run Medfetch.js directly inside the database. 
 Since the library supports the full ViewDefinition transformation set in the database runners, what the memory runner 
 provides in practice is more *control* over the transformation process.
 
-At the end of the day, the best way to know which runner is right for you is to try it out yourself,
-something Medfetch.js makes it easy to do no matter which runner you choose!
+At the end of the day, the best way to know which runner is right for you is to try it out yourself.
 
 ## Why SQL On FHIR?
 JSONs are great. You can compact rich data into relatively small payloads
@@ -181,6 +171,4 @@ and SQL tables as the data-out, giving you the best of both worlds.
 Dive into the [quick start](/quick-start) section to get started within in minutes.
 
 Once you're up and running, feel free to check out the dedicated interface docs
-for either the [in-memory]() or your specific [database](/sql) view runner. 
-You don't need to read it all to start your FHIR to SQL pipeline, but if you're curious 
-about the *why* behind the *what* with Medfetch.js it'll be well worth your time.
+for either the [in-memory](/javascript) or your specific [database](/sql) view runner. 

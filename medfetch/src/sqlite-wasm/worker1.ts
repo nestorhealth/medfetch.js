@@ -208,7 +208,7 @@ const run = Effect.gen(function* () {
                         result: {
                             operation: "load-module",
                             rc,
-                            moduleName: args.moduleName
+                            moduleName: args.moduleName,
                         },
                     });
                 }).pipe(Effect.runPromise),

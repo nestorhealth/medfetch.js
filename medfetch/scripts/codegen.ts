@@ -1,7 +1,7 @@
 import fhirpath_r4_model from "fhirpath/fhir-context/r4";
 import { writeFileSync } from "node:fs";
-import { hd, length, split } from "./src/path";
-import { FhirType } from "./src/fhir-type";
+import { hd, length, split } from "../src/path";
+import { FhirType } from "../src/fhir-type";
 
 const path2Type = fhirpath_r4_model["path2Type"];
 

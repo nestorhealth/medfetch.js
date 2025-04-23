@@ -4,7 +4,7 @@ import { Steps, Tabs } from 'nextra/components'
 Pull and flatten FHIR data directly from your own Javascript code with Medfetch.js in-memory runner!
 
 ## Installation
-[effect]() and [fhirpath]() are required as peer dependencies.
+[effect](https://effect.website/) and [fhirpath](https://hl7.github.io/fhirpath.js/) are required as peer dependencies.
 
 <Tabs items={["pnpm", "npm"]}>
 <Tabs.Tab>
@@ -22,11 +22,10 @@ npm install effect fhirpath medfetch
 
 ## Usage
 You will need a FHIR base URL. If you just want to test Medfetch out on some
-live dummy data, I recommend using a public sandbox like the [smarthealth it]() r4 server.
-Many more can be found on the [Confluence](https://confluence.hl7.org/spaces/FHIR/pages/35718859/Public+Test+Servers) 
-sandbox listings page.
+live dummy data, I recommend using a public sandbox like the smarthealth-it r4 server.
+More can be found on the [Confluence](https://confluence.hl7.org/spaces/FHIR/pages/35718859/Public+Test+Servers) sandbox listings page.
 
-Once you have your base url, you can instantiate the `sof` (sql-on-fhir shorthand) client like so:
+Once you have your base url, you can instantiate the `sof` (sql-on-fhir shorthand) client:
 
 ```ts
 // sof.ts
@@ -36,7 +35,7 @@ import { medfetch } from "medfetch";
 export const sof = medfetch("https://r4.smarthealthit.org/");
 ```
 
-This `sof` client is just a function with the following type signature:
+This `sof` client is a function with the following signature:
 
 ```ts
 export type SOF = <
@@ -67,18 +66,13 @@ const patientsClean: {
 Under the hood, this function acts as a wrapper over ViewDefinition creation and
 executes the generated ViewDefinition against our sql-on-fhir memory flattener.
 
->The `sof` client function is still in early development right now, so as of the time of writing,
-FHIRpath transformations with this sof client are restricted to zero-whitespaced path strings,
-with the last non-function subpath becoming the name of the column in the corresponding ViewDefinition.
-
 ## View Definitions
 If you're interested in writing up your own View Definitions, you can do so with Medfetch, although this 
-isn't intended to be the primary API export of Medfetch.js due to its boiler-platy nature.
+isn't intended to be the primary API because of its boiler-platy nature.
 
 You can either write up the ViewDefinitions as plain objects / JSON yourself, or use the
-`viewDefinition` helper function that provides type safety over your view definitions.
-In either case, you can then pass your View Definition to the exported `flat` function
-that 
+`viewDefinition` helper function that provides "type safety" over your view definitions.
+In either case, you pass your View Definition to the `flat` function:
 
 ```ts
 import { 

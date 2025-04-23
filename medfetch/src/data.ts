@@ -3,9 +3,9 @@ import { Resource, Link, Entry } from "./data.schema.js";
 
 const Bundle = Resource("Bundle", {
     link: Link.pipe(Schema.Array),
-    entry: Entry(Resource()).pipe(Schema.Array)
-})
-interface Bundle extends Schema.Schema.Type<typeof Bundle> {};
+    entry: Entry(Resource()).pipe(Schema.Array),
+});
+interface Bundle extends Schema.Schema.Type<typeof Bundle> {}
 const decodeBundle = Schema.decodeUnknown(Bundle);
 
 /**
@@ -55,7 +55,7 @@ const get = (url: string) =>
             ),
         ),
         Effect.andThen((response) => Effect.tryPromise(() => response.json())),
-        Effect.flatMap(decodeBundle)
+        Effect.flatMap(decodeBundle),
     );
 
 /**

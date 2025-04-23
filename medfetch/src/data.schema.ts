@@ -10,14 +10,14 @@ const Base = Schema.Struct(
 type Base = typeof Base.Type;
 
 export type Resource<
-  ResourceType extends string = string,
-  Shape extends Record<string, any> = {}
+    ResourceType extends string = string,
+    Shape extends Record<string, any> = {},
 > = {
-  id: string;
-  resourceType: ResourceType;
+    id: string;
+    resourceType: ResourceType;
 } & {
-  [K in keyof Shape]: Shape[K];
-}
+    [K in keyof Shape]: Shape[K];
+};
 
 export function Resource(): Schema.Schema<{
     readonly id: string;
@@ -102,4 +102,3 @@ type _Link = typeof _Link.Type;
 
 export interface Link extends Schema.Schema.Type<typeof _Link> {}
 export const Link: Schema.Schema<Link> = _Link;
-
