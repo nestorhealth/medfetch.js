@@ -21,7 +21,6 @@
     "clsx": "^2.1.1",
     "effect": "^3.14.1",
     "fhirpath": "^4.0.0",
-    "gapi-script": "^1.2.0",
     "lucide-react": "^0.411.0",
     "medfetch": "workspace:^",
     "next": "15.3.0",

@@ -110,7 +110,7 @@ export function medfetch(
         if (__DB_ID__) {
             return __DB_ID__;
         } else {
-            const promiser = worker1();
+            const promiser = worker1(import.meta.env.DEV);
             if (!dbId) {
                 if (filename) {
                     const { dbId: newDbId } = yield* promiser.lazy("open", {
@@ -138,7 +138,7 @@ export function medfetch(
             );
             if (result.rc !== 0) {
                 return yield* new MedfetchSqliteError({
-                    message: `medfetch.sqlite: couldn't load in the module at ${ModuleURL().toString()}`,
+                    message: `medfetch.sqlite: couldn't load in vtab module at ${ModuleURL().toString()}`,
                     type: "load-module",
                 });
             }

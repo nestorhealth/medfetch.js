@@ -13,7 +13,7 @@ import {
 // This is a workaround for named "sqlite3Worker1Promiser()" function not being recognized by webpack
 import "@sqlite.org/sqlite-wasm";
 
-import { Counter } from "./main.services.ts";
+import { Counter } from "./main.services";
 import { Effect } from "effect";
 
 /**
@@ -108,7 +108,6 @@ export function w1thread(trace = false) {
     if (isBrowser()) {
         const worker = new Worker(
             new URL(
-                /* @vite-ignore */
                 import.meta.env.DEV ? "worker.js" : "worker1.mjs",
                 import.meta.url,
             ),

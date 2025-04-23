@@ -314,7 +314,6 @@ const medfetch_module: VirtualTableExtensionFn = async (
             let resources: any[] = [];
             const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
 
-            const start = performance.now();
             while (url !== null && url !== undefined) {
                 request({ sharedSignal, url });
                 const size = new DataView(sharedSignal, 4, 4).getUint32(
@@ -334,8 +333,6 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     (link: any) => link.relation === "next",
                 )?.url;
             }
-            const end = performance.now();
-            console.log(`medfetch/sqlite-wasm/medfetch.vtab: request time = ${end - start} ms`);
 
             // handle inline fhirpath transformations
             const viewDefinition = generateViewDefinition(args, resources);

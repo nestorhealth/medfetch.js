@@ -107,7 +107,7 @@ export interface ModuleAux {
  */
 export type VirtualTableExtensionFn = (
     sqlite3: Sqlite3Static,
-    aux?: ModuleAux,
+    aux: ModuleAux,
 ) => Promise<sqlite3_module>;
 
 export class LoadModuleError extends Data.TaggedError(
@@ -211,7 +211,7 @@ function importUserModule(path: string) {
 export function wrapSqlite3Module(
     sqlite3: Sqlite3Static,
     moduleURL: string,
-    aux?: ModuleAux,
+    aux: ModuleAux,
 ): Effect.Effect<sqlite3_module, LoadModuleError | UnknownException> {
     return importUserModule(moduleURL).pipe(
         Effect.andThen((userFunction) =>
