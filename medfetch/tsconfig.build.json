@@ -32,5 +32,9 @@
     "include": [
         "src/**/*.ts"
     ],
-    "exclude": ["/**/*.test.ts"]
+    "exclude": [
+        "/**/*.test.ts",
+        "src/sqlite-wasm/vtab.ts",
+        "src/sqlite-wasm/vtab.*.ts"
+    ]
 }
