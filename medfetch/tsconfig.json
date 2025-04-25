@@ -23,8 +23,7 @@
         /* custom */
         "baseUrl": ".",
         "paths": {
-            "~/*": ["src/*"],
-            "@sqlite.org/sqlite-wasm": ["node_modules/@sqlite.org/sqlite-wasm"]
+            "~/*": ["src/*"]
         }
     },
     "include": ["src"]

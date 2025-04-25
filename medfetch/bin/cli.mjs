@@ -67,7 +67,7 @@ export async function resolveUserPeers({ failOnMissing = true } = {}) {
 }
 
 
-const entryFile = resolve(__dirname, "../src/sqlite-wasm/medfetch.vtab.ts");
+const entryFile = resolve(__dirname, "../src/sqlite-wasm/vtab.ts");
 const cmd = argv[2];
 
 if (cmd === "bundle") {
