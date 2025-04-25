@@ -10,6 +10,14 @@ export type Fetch = Data.TaggedEnum<{
     readonly readJson: {
         readonly sab: SharedArrayBuffer;
         readonly id: number;
+    };
+    readonly startStream: {
+        readonly sab: SharedArrayBuffer;
+        readonly id: number;
+    };
+    readonly readChunk: {
+        readonly sab: SharedArrayBuffer;
+        readonly id: number;
     }
 }>;
 
@@ -20,9 +28,38 @@ export class FetchSyncError extends Data.Error<{
 }> {};
 
 class ResponseProxySync {
-    #sab: SharedArrayBuffer;
-    #port: MessagePort;
-    #id: number;
+    readonly #sab: SharedArrayBuffer;
+    readonly #port: MessagePort;
+    readonly #id: number;
+
+    #signal() {
+        const signal = new Int32Array(this.#sab, 0, 1);
+        signal[0] = 0;
+        return signal;
+    }
+
+    *#bodyIt() {
+        while (true) {
+            const signal = this.#signal();
+            const msg = Fetch.readChunk({
+                sab: this.#sab,
+                id: this.#id
+            });
+            this.#port.postMessage(msg);
+            Atomics.wait(signal, 0, 0);
+            const result = Atomics.load(signal, 0);
+            if (result < 0) {
+                throw new FetchSyncError({ message: `stream chunk fetch error` });
+            }
+            const size = new DataView(this.#sab, 4, 4).getUint32(0, true);
+            if (size === 0) {
+                return;
+            }
+            const body = new Uint8Array(this.#sab, 8, size);
+            const chunk = new TextDecoder().decode(body.slice());
+            yield chunk;
+        }
+    }
 
     constructor(port: MessagePort, sab: SharedArrayBuffer, responseId: number) {
         this.#port = port;
@@ -31,8 +68,7 @@ class ResponseProxySync {
     }
 
     get json() {
-        const signal = new Int32Array(this.#sab, 0, 1);
-        signal[0] = 0;
+        const signal = this.#signal();
         const msg = Fetch.readJson({
             sab: this.#sab,
             id: this.#id
@@ -49,6 +85,23 @@ class ResponseProxySync {
         const body = new Uint8Array(this.#sab, 8, size);
         const serialized = new TextDecoder().decode(body.slice());
         return JSON.parse(serialized);
+    }
+
+    get stream() {
+        const signal = this.#signal();
+        const msg = Fetch.startStream({
+            sab: this.#sab,
+            id: this.#id
+        });
+        this.#port.postMessage(msg);
+        Atomics.wait(signal, 0, 0);
+        const result = Atomics.load(signal, 0);
+        if (result < 0) {
+            throw new FetchSyncError({ 
+                message: `FetchSync: something went wrong with getting the Reader stream, response id was: ${this.#id}`
+            });
+        }
+        return this.#bodyIt();
     }
 }
 
