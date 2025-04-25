@@ -308,8 +308,8 @@ const medfetch_module: VirtualTableExtensionFn = async (
 
             while (url !== null && url !== undefined) {
                 // look ma, no await!
-                const payload = fetchSync(url);
-                const bundle: Bundle = JSON.parse(payload);
+                const response = fetchSync(url);
+                const bundle: Bundle = response.json;
                 const extractedResources = bundle.entry.map(
                     ({ resource }) => resource,
                 );
