@@ -1,5 +1,5 @@
 import { Context, Data, Effect } from "effect";
-import type { Sqlite3, Sqlite3Module, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
+import type { Sqlite3, Sqlite3Module } from "@sqlite.org/sqlite-wasm";
 import { UnknownException } from "effect/Cause";
 
 /**
@@ -18,11 +18,12 @@ export class Sqlite3BootstrapError extends Data.TaggedError(
     phase: "wasm" | "worker1API";
 }> {}
 
+type BaseSqlite3InitModuleFunc = (typeof import("@sqlite.org/sqlite-wasm"))["default"];
+
 /**
  * Default export type
  */
-type Sqlite3InitModuleFunc =
-    (typeof import("@sqlite.org/sqlite-wasm"))["default"];
+export type Sqlite3InitModuleFunc = (...args: Parameters<BaseSqlite3InitModuleFunc>) => Promise<Sqlite3>;
 
 /**
  * Now make it a service
@@ -30,13 +31,6 @@ type Sqlite3InitModuleFunc =
 export class Sqlite3InitModule extends Context.Tag(
     "better-worker1.services.Sqlite3InitModule",
 )<Sqlite3InitModule, Sqlite3InitModuleFunc>() {}
-
-/**
- * The Effect version
- */
-export class BetterSqlite3Static extends Context.Tag(
-    "better-worker1.services.BetterSqlite3Static",
-)<BetterSqlite3Static, Sqlite3Static>() {}
 
 /**
  * Loads the sqlite3 wasm API via the default ESM module export
@@ -209,14 +203,14 @@ function importUserModule(path: string) {
  * @throws {@link BetterModuleLoadError} | UnknownException
  */
 export function wrapSqlite3Module(
-    sqlite3: Sqlite3Static,
+    sqlite3: Sqlite3,
     moduleURL: string,
     aux: ModuleAux,
 ): Effect.Effect<Sqlite3Module, LoadModuleError | UnknownException> {
     return importUserModule(moduleURL).pipe(
-        Effect.andThen((userFunction) =>
+        Effect.andThen((makeUserModule) =>
             Effect.tryPromise({
-                try: () => userFunction(sqlite3, aux),
+                try: () => makeUserModule(sqlite3, aux),
                 catch: (e) => {
                     console.error(
                         `better-worker1: error loading user's virtual table module ${e}`,

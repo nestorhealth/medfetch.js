@@ -9,6 +9,7 @@ import { Effect, Match, pipe } from "effect";
 import {
     LoadModuleError,
     Sqlite3InitModule,
+    Sqlite3InitModuleFunc,
     bootstrap,
     wrapSqlite3Module,
 } from "./worker1.services.js";
@@ -234,7 +235,9 @@ import type {
 } from "./types.js";
 
 /* put import here for clarity on when we actually need the initializer */
-import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import __ from "@sqlite.org/sqlite-wasm";
+
+const sqlite3InitModule: Sqlite3InitModuleFunc = __ as unknown as Sqlite3InitModuleFunc;
 
 // @ts-ignore
 const _ = Effect.provideService(
