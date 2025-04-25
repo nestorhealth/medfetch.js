@@ -1,7 +1,8 @@
 import type { Resource } from "~/data.schema.js";
 import { Schema } from "effect";
 
-// The bundle 'shape' aka the stuff we care about from a FHIR bundle
+/** The bundle 'shape' aka the stuff we care about from a FHIR bundle
+ */
 export type Bundle<TResource extends Resource = Resource> = Resource<"Bundle", {
     readonly link: {
         readonly relation: string;

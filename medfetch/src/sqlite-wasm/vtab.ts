@@ -6,12 +6,12 @@ import type {
     SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
-import type { FetchCallRequest } from "~/fetch.js";
 import { flat } from "~/sof";
 import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
 import { TaggedError } from "effect/Data";
 import { Bundle, decodeJsonFp } from "./vtab.services";
+import { FetchSync } from "~/fetch.services";
 
 /**
  * Namespaced error class
@@ -44,15 +44,6 @@ interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     index: number;
     rows: any[];
 }
-
-const Requester = (port: MessagePort) =>
-    function request(message: Omit<FetchCallRequest, "type">) {
-        const signal = new Int32Array(message.sharedSignal, 0, 1);
-        signal[0] = 0;
-        port.postMessage({ ...message, type: "request" });
-        // sleep until signal != 0
-        Atomics.wait(signal, 0, 0);
-    };
 
 function getColumnName(path: string | [string, any]) {
     if (typeof path !== "string") return path[0]; // default to the 'key' element in the 2-tuple
@@ -186,7 +177,9 @@ const medfetch_module: VirtualTableExtensionFn = async (
             "medfetch: expected Fetch Worker port at ports[0] but got nothing",
         );
 
-    const request = Requester(fetchPort);
+    // Blocking fetch function
+    const fetchSync = FetchSync(fetchPort);
+
     const getCursor = (pcursor: WasmPointer) =>
         vtab.xCursor.get(pcursor) as medfetch_vtab_cursor;
     const getVirtualTable = (pvtab: WasmPointer) =>
@@ -312,19 +305,10 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
             let resources: any[] = [];
-            const sharedSignal = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
 
             while (url !== null && url !== undefined) {
-                request({ sharedSignal, url });
-                const size = new DataView(sharedSignal, 4, 4).getUint32(
-                    0,
-                    true,
-                );
-                const dataBytes = new Uint8Array(sharedSignal, 8, size);
-                const payloadSerialized = new TextDecoder().decode(
-                    dataBytes.slice(),
-                ); // can't read from shared buffer directly, need to slice() to copy
-                const bundle: Bundle = JSON.parse(payloadSerialized);
+                const payload = fetchSync(url);
+                const bundle: Bundle = JSON.parse(payload);
                 const extractedResources = bundle.entry.map(
                     ({ resource }) => resource,
                 );
