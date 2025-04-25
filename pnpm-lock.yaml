@@ -117,6 +117,9 @@ importers:
       '@sqlite.org/sqlite-wasm':
         specifier: ^3.49.1-build2
         version: 3.49.1-build2
+      clarinet:
+        specifier: ^0.12.6
+        version: 0.12.6
       effect:
         specifier: ^3.14.1
         version: 3.14.12
@@ -124,6 +127,9 @@ importers:
         specifier: ^3.17.0
         version: 3.18.0
     devDependencies:
+      '@types/clarinet':
+        specifier: ^0.12.3
+        version: 0.12.3
       '@types/node':
         specifier: ^22.13.1
         version: 22.14.1
@@ -1555,6 +1561,9 @@ packages:
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
 
+  '@types/clarinet@0.12.3':
+    resolution: {integrity: sha512-7Fwiv6RNH6JW86U7Vvae7sFHrNmNWxMIx9iAH49F+5d9Kizew5GMYz6rixupn3PK4t+oqP7GZMqOQR77QbcrAQ==}
+
   '@types/d3-array@3.2.1':
     resolution: {integrity: sha512-Y2Jn2idRrLzUfAKV2LyRImR+y4oa2AntrgID95SHJxuMUrkNXmanDSed71sRNZysveJVt1hLLemQZIady0FpEg==}
 
@@ -2117,6 +2126,10 @@ packages:
   chokidar@4.0.3:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
     engines: {node: '>= 14.16.0'}
+
+  clarinet@0.12.6:
+    resolution: {integrity: sha512-0FR+TrvLbYHLjhzs9oeIbd3yfZmd4u2DzYQEjUTm2dNfh4Y/9RIRWPjsm3aBtrVEpjKI7+lWa4ouqEXoml84mQ==}
+    engines: {chrome: '>=16.0.912', firefox: '>=0.8.0', node: '>=0.3.6'}
 
   class-variance-authority@0.7.1:
     resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
@@ -6082,6 +6095,10 @@ snapshots:
   '@types/argparse@1.0.38':
     optional: true
 
+  '@types/clarinet@0.12.3':
+    dependencies:
+      '@types/node': 22.14.1
+
   '@types/d3-array@3.2.1': {}
 
   '@types/d3-axis@3.0.6':
@@ -6700,6 +6717,8 @@ snapshots:
   chokidar@4.0.3:
     dependencies:
       readdirp: 4.1.2
+
+  clarinet@0.12.6: {}
 
   class-variance-authority@0.7.1:
     dependencies:
