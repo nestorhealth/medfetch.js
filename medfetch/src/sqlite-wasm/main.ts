@@ -13,7 +13,7 @@ import type {
 // This is a workaround for named "sqlite3Worker1Promiser()" function not being recognized by webpack
 import "@sqlite.org/sqlite-wasm";
 
-import { Counter } from "./main.services";
+import { Counter } from "./main.services.js";
 import { Effect } from "effect";
 
 /**
@@ -54,13 +54,8 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
 }
 
 /**
- * idk how readonly works apparently in typescript.
- */
-/**
- * Defer resolving worker init promise by calling then() on it,
- * then calling the resolved 'promiser' function.
- *
- * @param promiser The PROMISIFIED worker1 api function
+ * Defer resolving worker init promise by calling then() on it, then calling the resolved 'promiser' function.
+ * @param promiser The worker1promiser function wrapped in a Promise
  * @returns The deferred async promiser worker1 function
  */
 function defer(
@@ -108,7 +103,7 @@ export function w1thread(trace = false) {
     if (isBrowser()) {
         const worker = new Worker(
             new URL(
-                import.meta.env.DEV ? "worker.js" : "worker1.mjs",
+                import.meta.env.DEV ? "worker1.js" : "worker1.mjs",
                 import.meta.url,
             ),
             { type: "module" },

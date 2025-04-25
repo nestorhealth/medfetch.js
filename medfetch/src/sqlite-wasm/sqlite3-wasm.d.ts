@@ -1,4 +1,44 @@
 import "@sqlite.org/sqlite-wasm";
+import type {
+    Sqlite3Static,
+    sqlite3_index_info,
+    sqlite3_module,
+    StructPtrMapper,
+    WasmPointer,
+    sqlite3_index_constraint_usage,
+    sqlite3_index_constraint,
+    sqlite3_vtab_cursor,
+} from "@sqlite.org/sqlite-wasm";
+
+type CStructify<T> = {
+  [K in keyof T as `$${string & K}`]: T[K];
+};
+
+interface FixedStructPtrMapper<T> extends StructPtrMapper<T> {
+  unget: (ptr: WasmPointer, val?: T) => void; // make arg1 optional
+};
+
+type PointerLikeMethods<T> = {
+  [K in keyof T]?: T[K] extends (...args: any[]) => any ? T[K] | 0 | true: T[K];
+};
+
+type Sqlite3IndexConstraintUsage = CStructify<sqlite3_index_constraint_usage>;
+type Sqlite3IndexConstraint = CStructify<sqlite3_index_constraint>;
+
+interface Sqlite3IndexInfo extends sqlite3_index_info {
+    $nConstraint: number;
+    nthConstraintUsage: (index: number) => Sqlite3IndexConstraintUsage;
+    nthConstraint: (index: number) => Sqlite3IndexConstraint;
+}
+
+/**
+ * Overriden vtab type so tsc stops screaming at me
+ */
+type Sqlite3Vtab = Omit<Sqlite3Static["vtab"], "xVtab" | "xIndexInfo"> & {
+    xVtab: FixedStructPtrMapper<sqlite3_vtab>;
+    xCursor: FixedStructPtrMapper<sqlite3_vtab_cursor>;
+    xIndexInfo: (ptr: WasmPointer) => Sqlite3IndexInfo;
+};
 
 declare module "@sqlite.org/sqlite-wasm" {
     /**
@@ -211,8 +251,16 @@ declare module "@sqlite.org/sqlite-wasm" {
      * This is the name of the CTOR that brings in Sqlite3's
      * worker1 promiser function into main thread.
      *
-     * This is just to get that type, the Worker1 function type
-     * is [Worker1PromiserFunc]()
+     * This is, just to get that type, the Worker1 function type is [Worker1PromiserFunc]()
      */
     export type Sqlite3Worker1Promiser = typeof sqlite3Worker1Promiser;
+
+    export interface Sqlite3Module extends PointerLikeMethods<sqlite3_module> {}
+
+    /**
+     * "Fixed" Sqlite3Static type, which only modifies the `.vtab` type
+     */
+    export interface Sqlite3 extends Omit<Sqlite3Static, "vtab"> {
+        vtab: Sqlite3Vtab;
+    };
 }

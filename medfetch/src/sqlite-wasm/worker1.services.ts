@@ -1,5 +1,5 @@
 import { Context, Data, Effect } from "effect";
-import type { sqlite3_module, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
+import type { Sqlite3, Sqlite3Module, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { UnknownException } from "effect/Cause";
 
 /**
@@ -92,8 +92,8 @@ export const bootstrap = (mod: Sqlite3InitModuleFunc) =>
     init.pipe(Effect.provideService(Sqlite3InitModule, mod));
 
 export interface ModuleAux {
-    transfer?: StructuredSerializeOptions | readonly Transferable[];
-    preload: any[];
+    transfer: readonly MessagePort[];
+    preload: any[] | undefined;
 }
 
 /**
@@ -106,9 +106,9 @@ export interface ModuleAux {
  * @returns vtab A `sqlite3_module` Promise
  */
 export type VirtualTableExtensionFn = (
-    sqlite3: Sqlite3Static,
+    sqlite3: Sqlite3,
     aux: ModuleAux,
-) => Promise<sqlite3_module>;
+) => Promise<Sqlite3Module>;
 
 export class LoadModuleError extends Data.TaggedError(
     "better-worker1.worker.LoadModule",
@@ -212,7 +212,7 @@ export function wrapSqlite3Module(
     sqlite3: Sqlite3Static,
     moduleURL: string,
     aux: ModuleAux,
-): Effect.Effect<sqlite3_module, LoadModuleError | UnknownException> {
+): Effect.Effect<Sqlite3Module, LoadModuleError | UnknownException> {
     return importUserModule(moduleURL).pipe(
         Effect.andThen((userFunction) =>
             Effect.tryPromise({

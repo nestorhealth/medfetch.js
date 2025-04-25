@@ -146,7 +146,7 @@ const run = Effect.gen(function* () {
                         sqlite3,
                         args.moduleURL,
                         {
-                            preload: [args.preloadAux],
+                            preload: args.preloadAux,
                             transfer: event.ports,
                         },
                     );

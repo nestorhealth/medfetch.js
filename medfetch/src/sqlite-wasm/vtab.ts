@@ -1,9 +1,8 @@
-// @ts-nocheck
 import type {
-    sqlite3_module,
+    Sqlite3,
     sqlite3_vtab,
     sqlite3_vtab_cursor,
-    Sqlite3Static,
+    Sqlite3Module,
     SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
@@ -12,6 +11,7 @@ import { flat } from "~/sof";
 import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
 import { TaggedError } from "effect/Data";
+import { Bundle, decodeJsonFp } from "./vtab.services";
 
 /**
  * Namespaced error class
@@ -31,7 +31,7 @@ class MedfetchVTabError extends TaggedError(
  * service wrapper so we dont need to keep passing it
  * as an arg
  */
-function getBaseUrl({ wasm }: Sqlite3Static, pAux: WasmPointer) {
+function getBaseUrl({ wasm }: Sqlite3, pAux: WasmPointer) {
     const size = new DataView(wasm.heap8().buffer, pAux, 4).getUint32(0, true);
     const urlBuffer = new DataView(wasm.heap8().buffer, pAux + 4, size);
     return new TextDecoder().decode(urlBuffer);
@@ -84,17 +84,15 @@ function size(path: string) {
 function generateViewDefinition(args: SqlValue[], rows: any[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
-        throw new Error(`medfetch: unexpected invalid resourceType in args[0]`);
+        throw new Error(`medfetch: unexpected invalid "type" column value (args[0])`);
 
-    if (!fp) {
+    if (!fp || typeof fp !== "string") {
         // no fhirpath map, then just return null and default to the whole object
         return null;
     }
-
-    const paths: (string | [string, any])[] = JSON.parse(fp); // todo: allow for forEach's and more complex path mappings
+    const paths = decodeJsonFp(fp);
     if (!Array.isArray(paths)) {
-        // no arg1 then we just return null
-        return null;
+        throw new Error(`medfetch: unexpected non-json-array "fp" column value (args[1])`);
     }
     const inferredSet = new Set();
     const column: ColumnPath[] = [];
@@ -133,7 +131,7 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
                         }),
                     );
                 } else if (path.length === 3) {
-                    const [operation, columnName, columnPath] = path;
+                    const [operation, _columnName, _columnPath] = path;
                     throw new MedfetchVTabError(
                         `medfetch.vtab: ${operation} currently not supported!`,
                     );
@@ -174,13 +172,14 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
 }
 
 /**
- * JS port of the original Medfetch virtual table extension for native SQLite.
+ * Based on the original C extension for native, but this time... 
+ * with actual FHIRPath support !!
  */
 const medfetch_module: VirtualTableExtensionFn = async (
     sqlite3,
-    { preload, transfer },
+    { transfer },
 ) => {
-    const { wasm, capi, vtab } = sqlite3;
+    const { capi, vtab } = sqlite3;
     const fetchPort = transfer[0];
     if (!fetchPort)
         throw new Error(
@@ -195,7 +194,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
 
     return {
         xCreate: 0,
-        xConnect(pDb, pAux, argc, argv, ppVtab, pzErr) {
+        xConnect(pDb, pAux, _argc, _argv, ppVtab, _pzErr) {
             let rc = capi.SQLITE_OK;
             rc += capi.sqlite3_declare_vtab(
                 pDb,
@@ -212,7 +211,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             }
             return rc;
         },
-        xBestIndex(pVtab, pIdxInfo) {
+        xBestIndex(_pVtab, pIdxInfo) {
             const index = vtab.xIndexInfo(pIdxInfo);
             for (let i = 0; i < index.$nConstraint; i++) {
                 const constraint = index.nthConstraint(i);
@@ -297,7 +296,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             const atEnd = cursor.index >= cursor.rows.length;
             return Number(atEnd);
         },
-        xFilter: (pCursor, idxNum, idxCStr, argc, argv) => {
+        xFilter: (pCursor, _idxNum, _idxCStr, argc, argv) => {
             const args = capi.sqlite3_values_to_js(argc, argv);
             const [resourceType] = args;
             if (typeof resourceType !== "string")
@@ -307,7 +306,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             const cursor = getCursor(pCursor);
             const { baseUrl } = getVirtualTable(cursor.pVtab);
             // to allow for (1) trailing slash
-            let url =
+            let url: string | undefined =
                 baseUrl[baseUrl.length - 1] === "/"
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
@@ -324,7 +323,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
                 const payloadSerialized = new TextDecoder().decode(
                     dataBytes.slice(),
                 ); // can't read from shared buffer directly, need to slice() to copy
-                const bundle: any = JSON.parse(payloadSerialized);
+                const bundle: Bundle = JSON.parse(payloadSerialized);
                 const extractedResources = bundle.entry.map(
                     ({ resource }) => resource,
                 );
@@ -344,7 +343,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             }
             return 0;
         },
-    } satisfies sqlite3_module;
+    } satisfies Sqlite3Module;
 };
 
 export default medfetch_module;
