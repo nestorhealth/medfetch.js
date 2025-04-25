@@ -1,3 +1,15 @@
+import { Data } from "effect";
+
+export type Fetch = Data.TaggedEnum<{
+    readonly request: {
+        readonly sab: SharedArrayBuffer;
+        readonly url: string;
+        readonly init: RequestInit | undefined;
+    };
+}>;
+
+export const Fetch = Data.taggedEnum<Fetch>();
+
 /**
  * "ctor" esque function for a blocking fetch call, meant to be called from
  * a worker thread that doesn't care about blocking
@@ -9,12 +21,16 @@ export function FetchSync(port: MessagePort) {
     return function request(...args: Parameters<typeof fetch>) {
         const signal = new Int32Array(sab, 0, 1);
         signal[0] = 0;
-        port.postMessage({
-            sharedSignal: sab,
-            url: args[0],
+        let url = args[0];
+        if (typeof url !== "string") {
+            url = url.toString();
+        }
+        const message = Fetch.request({
+            sab,
+            url,
             init: args[1],
-            type: "request"
-        });
+        })
+        port.postMessage(message);
         // sleep until signal != 0
         Atomics.wait(signal, 0, 0);
 

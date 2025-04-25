@@ -307,6 +307,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             let resources: any[] = [];
 
             while (url !== null && url !== undefined) {
+                // look ma, no await!
                 const payload = fetchSync(url);
                 const bundle: Bundle = JSON.parse(payload);
                 const extractedResources = bundle.entry.map(
