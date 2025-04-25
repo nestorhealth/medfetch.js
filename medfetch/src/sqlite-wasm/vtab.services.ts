@@ -14,7 +14,7 @@ export type Bundle<TResource extends Resource = Resource> = Resource<"Bundle", {
 }>;
 
 const UserFp = Schema.Array(Schema.Union(
-    Schema.Tuple(Schema.String),
+    Schema.String,
     Schema.Tuple(Schema.String, Schema.String),
     Schema.Tuple(Schema.String, Schema.String, Schema.String),
 ));

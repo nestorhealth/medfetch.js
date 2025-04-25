@@ -51,8 +51,8 @@ function getFetchWorkerPort() {
                 const fetchWorker = new Worker(
                     new URL(
                         import.meta.env.DEV
-                            ? "../fetch-worker"
-                            : "../fetch-worker.mjs",
+                            ? "../fetch"
+                            : "../fetch.mjs",
                         import.meta.url,
                     ),
                     { type: "module" },

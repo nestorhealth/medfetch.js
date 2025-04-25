@@ -6,7 +6,7 @@ import type {
     SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
-import type { FetchCallRequest } from "~/fetch-worker.js";
+import type { FetchCallRequest } from "~/fetch.js";
 import { flat } from "~/sof";
 import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
@@ -299,9 +299,10 @@ const medfetch_module: VirtualTableExtensionFn = async (
         xFilter: (pCursor, _idxNum, _idxCStr, argc, argv) => {
             const args = capi.sqlite3_values_to_js(argc, argv);
             const [resourceType] = args;
-            if (typeof resourceType !== "string")
+            if (typeof resourceType !== "string") {
                 // basic check, may add enum inclusion check later
                 return capi.SQLITE_ERROR;
+            }
 
             const cursor = getCursor(pCursor);
             const { baseUrl } = getVirtualTable(cursor.pVtab);
