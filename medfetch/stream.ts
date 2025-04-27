@@ -19,11 +19,9 @@ parser.onkey = (key) => {
     }
 };
 
-parser.onopenarray = () => {
-    // do nothing special yet
-};
+parser.onopenarray = () => {};
 
-parser.onopenobject = (o) => {
+parser.onopenobject = () => {
     if (insideLinkArray) {
         insideLinkObject = true;
         currentLink = {};
@@ -32,9 +30,6 @@ parser.onopenobject = (o) => {
 
 parser.onvalue = (value) => {
     if (insideLinkArray && insideLinkObject) {
-        if (currentKey === "relation") {
-            console.log("got relation value:", value);
-        }
         currentLink[currentKey] = value;
     }
 };

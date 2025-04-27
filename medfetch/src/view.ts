@@ -158,10 +158,9 @@ const Node = Schema.Union(
 );
 
 /**
- * [[ decodeSelect nd ]] is the normalized select node
- * which uses the logic from the sql-on-fhir-v2 reference implementation
+ * `decodeSelect(nd)` is the normalized select node uses the logic from the sql-on-fhir-v2 reference implementation
  * but returns a COPY of the SelectNode rather than mutating it in place.
- * (If it's too slow then I'll just make it imperative... lmao)
+ * (If it's too slow then I'll just mutate...)
  * @param nd - The incoming Select node from the JSON
  * @returns the normalized SelectNode
  */
@@ -406,21 +405,11 @@ export function getColumns(
 ) {
     const aux = (acc: ColumnPath[], node: Node): ColumnPath[] => {
         return $match(node, {
-            ForEach: ({ select }) => {
-                return select.flatMap((selectNode) => aux(acc, selectNode));
-            },
-            ForEachOrNull: ({ select }) => {
-                return select.flatMap((selectNode) => aux(acc, selectNode));
-            },
-            Select: ({ select }) => {
-                return select.flatMap((selectNode) => aux(acc, selectNode));
-            },
-            UnionAll: ({ unionAll }) => {
-                return unionAll.flatMap((selectNode) => aux(acc, selectNode));
-            },
-            Column: ({ column }) => {
-                return appendAll(acc, column);
-            },
+            ForEach: ({ select }) => select.flatMap((selectNode) => aux(acc, selectNode)),
+            ForEachOrNull: ({ select }) => select.flatMap((selectNode) => aux(acc, selectNode)),
+            Select: ({ select }) => select.flatMap((selectNode) => aux(acc, selectNode)),
+            UnionAll: ({ unionAll }) => unionAll.flatMap((selectNode) => aux(acc, selectNode)),
+            Column: ({ column }) => appendAll(acc, column)
         });
     };
 

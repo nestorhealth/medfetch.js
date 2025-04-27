@@ -1,5 +1,10 @@
 import { ParseResult, Schema } from "effect";
 
+/**
+ * The bare minimum schema for a Resource
+ * @param id The surrogate key for the Resource
+ * @param resourceType The type of the Resource
+ */
 const Base = Schema.Struct(
     {
         id: Schema.String,
@@ -9,6 +14,11 @@ const Base = Schema.Struct(
 );
 type Base = typeof Base.Type;
 
+/**
+ * FHIR Resource generic builder
+ * @template ResourceType The allowed values for `resourceType`
+ * @template Shape The "rest" of the object shape
+ */
 export type Resource<
     ResourceType extends string = string,
     Shape extends Record<string, any> = {},

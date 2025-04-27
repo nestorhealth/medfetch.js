@@ -1,5 +1,24 @@
-import { Array, Data, Effect, Option, Schema, Stream } from "effect";
+import {
+    Array,
+    Data,
+    Effect,
+    Option,
+    Schema,
+    Stream,
+} from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
+
+class DataError extends Data.TaggedError("medfetch.data")<{
+    readonly message: string;
+}> {
+    constructor(msg: string | { message: string } = "Unknown error") {
+        if (typeof msg === "string") {
+            super({ message: msg });
+        } else {
+            super({ message: msg.message });
+        }
+    }
+}
 
 const Bundle = Resource("Bundle", {
     link: Link.pipe(Schema.Array),
@@ -7,17 +26,6 @@ const Bundle = Resource("Bundle", {
 });
 interface Bundle extends Schema.Schema.Type<typeof Bundle> {}
 const decodeBundle = Schema.decodeUnknown(Bundle);
-
-/**
- * Labeled `Data` layer Error
- * that indicates some error occurred while working
- * with the Data Buffers from the `Data` Layer
- *
- * @field message -> the error message
- */
-class DataError extends Data.TaggedError("Data")<{
-    readonly message: string;
-}> {}
 
 /**
  * Gets the link from the `Bundle.link`

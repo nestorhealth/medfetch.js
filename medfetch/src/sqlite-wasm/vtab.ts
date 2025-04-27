@@ -7,11 +7,20 @@ import type {
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
 import { flat } from "~/sof";
-import { type ColumnPath, Column, viewDefinition, columnPath } from "~/view.js";
+import { type ColumnPath, Column, viewDefinition, columnPath, ViewDefinition } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
 import { TaggedError } from "effect/Data";
 import { Bundle, decodeJsonFp } from "./vtab.services";
 import { FetchSync } from "~/fetch.services";
+
+interface medfetch_vtab extends sqlite3_vtab {
+    baseUrl: string;
+}
+interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
+    index: number;
+    rows: any[];
+    viewDefinition: ViewDefinition | null;
+}
 
 /**
  * Namespaced error class
@@ -35,14 +44,6 @@ function getBaseUrl({ wasm }: Sqlite3, pAux: WasmPointer) {
     const size = new DataView(wasm.heap8().buffer, pAux, 4).getUint32(0, true);
     const urlBuffer = new DataView(wasm.heap8().buffer, pAux + 4, size);
     return new TextDecoder().decode(urlBuffer);
-}
-
-interface medfetch_vtab extends sqlite3_vtab {
-    baseUrl: string;
-}
-interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
-    index: number;
-    rows: any[];
 }
 
 function getColumnName(path: string | [string, any]) {
@@ -72,7 +73,7 @@ function size(path: string) {
     return path.split(".").length;
 }
 
-function generateViewDefinition(args: SqlValue[], rows: any[]) {
+function generateViewDefinition(args: SqlValue[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
         throw new Error(`medfetch: unexpected invalid "type" column value (args[0])`);
@@ -82,72 +83,26 @@ function generateViewDefinition(args: SqlValue[], rows: any[]) {
         return null;
     }
     const paths = decodeJsonFp(fp);
-    if (!Array.isArray(paths)) {
-        throw new Error(`medfetch: unexpected non-json-array "fp" column value (args[1])`);
-    }
-    const inferredSet = new Set();
-    const column: ColumnPath[] = [];
-    for (let i = 0; i < rows.length; i++) {
-        if (inferredSet.size === paths.length) {
-            // ideally we get an early exit!
-            break;
-        }
-        const rowLike = rows[i];
-        for (const path of paths) {
-            // case pathstring literal
-            if (typeof path === "string") {
-                if (top(path) in rowLike) {
-                    const value = rowLike[path];
-                    const name = getColumnName(path);
-                    // if it's not a top level extraction, then make it an array
-                    const collection = Array.isArray(value) || size(path) > 1;
-                    inferredSet.add(path);
-                    column.push(
-                        columnPath({
-                            path,
-                            name,
-                            collection,
-                        }),
-                    );
-                }
-            } else if (Array.isArray(path)) {
-                if (path.length === 2) {
-                    const [columnName, _columnPath] = path;
-                    inferredSet.add(_columnPath);
-                    column.push(
-                        columnPath({
-                            path: _columnPath,
-                            name: columnName,
-                            collection: true,
-                        }),
-                    );
-                } else if (path.length === 3) {
-                    const [operation, _columnName, _columnPath] = path;
-                    throw new MedfetchVTabError(
-                        `medfetch.vtab: ${operation} currently not supported!`,
-                    );
-                } else {
-                    throw new MedfetchVTabError(
-                        `medfetch.vtab: i don't know what to do with an array of length ${path.length}`,
-                    );
-                }
-            } else {
-                throw new MedfetchVTabError(
-                    `medfetch.vtab: Can't fp parse that: ${path}`,
+    const column = paths.reduce(
+        (acc, pathArg) => {
+            if (typeof pathArg === "string") {
+                acc.push(columnPath({
+                    path: pathArg,
+                    name: getColumnName(pathArg)
+                }));
+            } else if (pathArg.length === 2) {
+                const [name, path] = pathArg;
+                acc.push(
+                    columnPath({
+                        path,
+                        name
+                    })
                 );
             }
-        }
-    }
-    if (!inferredSet.has("id") || !inferredSet.has("getResourceKey()")) {
-        // Add 'id' to the columns if it wasn't given by fp
-        column.unshift(
-            columnPath({
-                name: "id",
-                path: "id",
-                collection: false,
-            }),
-        );
-    }
+            return acc;
+        },
+        [] as ColumnPath[]
+    );
     return viewDefinition({
         status: "active",
         name: resourceType,
@@ -304,33 +259,16 @@ const medfetch_module: VirtualTableExtensionFn = async (
                 baseUrl[baseUrl.length - 1] === "/"
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
-            let resources: any[] = [];
 
+            let streams: Generator<string>[] = [];
             while (url !== null && url !== undefined) {
                 // look mom, no await!
                 const response = fetchSync(url);
-                let fullText = "";
-                for (const chunk of response.stream) {
-                    fullText += chunk;
-                }
-                const bundle: Bundle = JSON.parse(fullText);
-                const extractedResources = bundle.entry.map(
-                    ({ resource }) => resource,
-                );
-                resources.push(...extractedResources);
-                url = bundle.link?.find(
-                    (link: any) => link.relation === "next",
-                )?.url;
             }
 
             // handle inline fhirpath transformations
-            const viewDefinition = generateViewDefinition(args, resources);
-            if (viewDefinition) {
-                const rows = flat(resources, viewDefinition);
-                cursor.rows = rows;
-            } else {
-                cursor.rows = resources;
-            }
+            cursor.viewDefinition = generateViewDefinition(args);
+            cursor.rows = streams;
             return 0;
         },
     } satisfies Sqlite3Module;

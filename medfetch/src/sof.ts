@@ -1,8 +1,39 @@
-import { pipe, Array } from "effect";
+import { pipe } from "effect";
 import { evaluate, UserInvocationTable } from "fhirpath";
 import { type ViewDefinition, type Node, $match, Select } from "./view";
 import { value, when, orElse } from "effect/Match";
 import { set } from "effect/Record";
+
+const userInvocationTable: UserInvocationTable = {
+    getResourceKey: {
+        fn: (inputs: any[]) => {
+            return inputs.map((i) => i.id);
+        },
+        arity: { 0: [] },
+    },
+    getReferenceKey: {
+        fn: (inputs: any[], _type?: string) =>
+            inputs.map((input: Reference) => getReferenceKey(input)),
+        arity: { 0: [], 1: ["String"] },
+    },
+    code: {
+        fn: (inputs: CodeableConcept[]) =>
+            inputs.flatMap((input) => {
+                return input.coding?.map(
+                    (coding) =>
+                        `${codeSystemAlias(coding.system)}#${coding.code ?? "NOCODE"}`,
+                );
+            }),
+        arity: { 0: [] },
+    },
+};
+
+function evaluateSync(data: any | any[], path: string): any[] {
+    return evaluate(data, path, undefined, undefined, {
+        userInvocationTable,
+        async: false,
+    });
+}
 
 interface Reference {
     reference: string;
@@ -38,54 +69,21 @@ function codeSystemAlias(codeSystem: string | undefined) {
 
 function getReferenceKey({ reference }: { reference: string }) {
     // idk
-    if (reference === undefined) {
+    if (reference === undefined)
         return null;
-    }
 
     // "urn:uuid:<reference>" case
-    if (reference.startsWith("urn")) {
+    if (reference.startsWith("urn"))
         return reference.slice(9);
-    }
 
     const split = reference.split("/");
     // "<Resource>/id" relative reference case
-    if (split.length === 2) {
+    if (split.length === 2)
         return split[1];
-    }
 
     // Don't handle
     return null;
 }
-
-const userInvocationTable: UserInvocationTable = {
-    getResourceKey: {
-        fn: (inputs: any[]) => {
-            return inputs.map((i) => i.id);
-        },
-        arity: { 0: [] },
-    },
-    getReferenceKey: {
-        fn: (inputs: any[], _type?: string) =>
-            inputs.map((input: Reference) => getReferenceKey(input)),
-        arity: { 0: [], 1: ["String"] },
-    },
-    code: {
-        fn: (inputs: CodeableConcept[]) =>
-            inputs.flatMap((input) => {
-                return input.coding?.map(
-                    (coding) =>
-                        `${codeSystemAlias(coding.system)}#${coding.code ?? "NOCODE"}`,
-                );
-            }),
-        arity: { 0: [] },
-    },
-};
-
-export const evaluateSync = (data: any, path: string): any[] =>
-    evaluate(data, path, undefined, undefined, {
-        userInvocationTable,
-        async: false,
-    });
 
 /**
  * The main sql-on-fhir workhorse function. Flat maps the projection
@@ -96,16 +94,12 @@ export const evaluateSync = (data: any, path: string): any[] =>
  * @param data - the resources to project to rows
  * @returns a flattened row view of the given resources
  */
-export function project(
-    nd: Node,
-    data: any | any[],
-    evaluate: (data: any[], expr: string) => any[],
-): any[] {
+export function project(nd: Node, data: any | any[]): any[] {
     const aux = (nd: Node, data: any[]): any[] => {
         return $match(nd, {
             ForEach: ({ forEach, select }) =>
                 data.flatMap((resource) => {
-                    const items = evaluate(resource, forEach);
+                    const items = evaluateSync(resource, forEach);
                     return items.flatMap((item) =>
                         aux(Select({ select }), [item]),
                     );
@@ -113,51 +107,47 @@ export function project(
 
             ForEachOrNull: ({ forEachOrNull, select }) =>
                 data.flatMap((resource) => {
-                    const items = evaluate(resource, forEachOrNull);
-                    if (items.length === 0) {
+                    const items = evaluateSync(resource, forEachOrNull);
+                    if (items.length === 0)
                         return aux(Select({ select }), [{}]);
-                    }
                     return items.flatMap((item) =>
                         aux(Select({ select }), [item]),
                     );
                 }),
 
             Select: ({ select }) =>
-                Array.flatMap(data, (resource) => {
-                    return Array.reduce(
-                        select,
-                        [] as any[],
-                        (acc, selectNode) => {
-                            const results = aux(selectNode, [resource]);
-                            if (acc.length === 0) {
-                                return results;
-                            }
-                            return Array.flatMap(acc, (row) => {
-                                return Array.map(results, (newRow) => {
-                                    return {
-                                        ...row,
-                                        ...newRow,
-                                    };
-                                });
+                data.flatMap((resource) =>
+                    select.reduce((acc, selectNode) => {
+                        const results = aux(selectNode, [resource]);
+                        if (acc.length === 0)
+                            return results;
+                        return acc.flatMap((row) => {
+                            return results.map((newRow) => {
+                                return {
+                                    ...row,
+                                    ...newRow,
+                                };
                             });
-                        },
-                    );
-                }),
+                        });
+                    }, [] as any[]),
+                ),
 
             UnionAll: ({ unionAll }) =>
                 unionAll.flatMap((subQuery) => aux(subQuery, data)),
 
             Column: ({ column }) =>
-                Array.map(data, (resource) =>
-                    Array.reduce(column, {} as any, (acc, col) => {
-                        return pipe(evaluate(resource, col.path), (value) =>
-                            set(
-                                acc,
-                                col.name,
-                                col.collection ? value : (value[0] ?? null),
+                data.map((resource) =>
+                    column.reduce(
+                        (acc, col) =>
+                            pipe(evaluateSync(resource, col.path), (value) =>
+                                set(
+                                    acc,
+                                    col.name,
+                                    col.collection ? value : (value[0] ?? null),
+                                ),
                             ),
-                        );
-                    }),
+                        {} as any,
+                    ),
                 ),
         });
     };
@@ -175,25 +165,16 @@ export function project(
  * @returns the 'rowified' json resources
  */
 export function flat(data: any[], viewDefinition: ViewDefinition): any[] {
-    let filtered = data.filter(
+    let matching = data.filter(
         (data) => data.resourceType === viewDefinition.resource,
     );
-    if (filtered.length === 0) {
-        return [];
-    }
-
-    const doEvaluate = (data: any | any[], expr: string) => {
-        return evaluate(data, expr, {}, undefined, {
-            async: false,
-            userInvocationTable,
-        });
-    };
+    if (matching.length === 0) return matching;
 
     for (const { path } of viewDefinition.where ?? []) {
-        filtered = Array.filter(filtered, (resource) => {
-            return doEvaluate(resource, `where(${path})`).length > 0;
-        });
+        matching = matching.filter(
+            (resource) => evaluateSync(resource, `where(${path})`).length > 0,
+        );
     }
 
-    return project(viewDefinition, filtered, doEvaluate);
+    return project(viewDefinition, matching);
 }
