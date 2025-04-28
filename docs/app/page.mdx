@@ -59,15 +59,14 @@ on the Web Assembly build of SQLite. Hit run to see the query live.
 <SQLCodeblock columns={["id", "gender", "first_name", "last_name", "birth_date", "city", "state"]}>
 ```sql
 SELECT 
-    json ->> 'id' AS id,
-    json ->> 'gender' AS gender,
+    id AS id,
+    json -> 'gender' ->> 0 AS gender,
     json -> 'given' ->> 0 AS first_name,
     json -> 'family' ->> 0 AS last_name,
-    json ->> 'birthDate' AS birth_date,
+    json -> 'birthDate' ->> 0 AS birth_date,
     json -> 'city' ->> 0 AS city,
     json -> 'state' ->> 0 AS state
 FROM medfetch('Patient', json_array(
-    'id',
     'gender',
     'name.given.first()',
     'name.family.first()',

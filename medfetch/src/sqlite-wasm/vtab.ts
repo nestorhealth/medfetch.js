@@ -74,14 +74,16 @@ function generateViewDefinition(args: SqlValue[]) {
             if (typeof pathArg === "string") {
                 acc.push(({
                     path: pathArg,
-                    name: getColumnName(pathArg)
+                    name: getColumnName(pathArg),
+                    collection: true
                 }));
             } else if (pathArg.length === 2) {
                 const [name, path] = pathArg;
                 acc.push(
                     ({
                         path,
-                        name
+                        name,
+                        collection: true
                     })
                 );
             }
@@ -210,7 +212,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
                 case 1: {
                     let json: string;
                     if (cursor.viewDefinition)
-                        json = JSON.stringify(flat([row], cursor.viewDefinition));
+                        json = JSON.stringify(flat([row], cursor.viewDefinition)[0]);
                     else
                         json = JSON.stringify(row);
                     capi.sqlite3_result_text(
@@ -265,7 +267,6 @@ const medfetch_module: VirtualTableExtensionFn = async (
 
             // handle inline fhirpath transformations
             cursor.viewDefinition = generateViewDefinition(args);
-            console.log("CURSOR VIEW DEFINITION", JSON.stringify(cursor.viewDefinition, null, 2));
             return 0;
         },
     } satisfies Sqlite3Module;
