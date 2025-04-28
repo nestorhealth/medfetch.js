@@ -172,56 +172,41 @@ export class Page extends Effect.Service<Page>()("data.Page", {
             link: "",
             entry: ""
         },
-        parser: kdv(),
+        next: kdv<Link[]>("link", 1),
+        entries: kdv<Entry[]>("entry", 1),
         resources: [] as Resource[],
         flush(stream: Stream.Stream<string>) {
             if (this.resources.length > 0)
-                return this.resources.shift();
-
-            const parser = clarinet.parser();
-            let insideEntryArray = false;
-            let currentResource: any = null;
-            let depth = 0;
-            let currentKey = "";
-            
-            parser.onopenarray = () => {
-                if (currentKey === "entry") {
-                    insideEntryArray = true;
-                }
-                if (insideEntryArray) depth++;
-            };
-
-            parser.onopenobject = () => {
-                if (insideEntryArray) {
-                    depth++;
-                    if (depth === 1) {
-                        currentResource = {};
-                    }
-                }
-            };
-
-            parser.onkey = (key) => {
-                currentKey = key;
-            };
-
-            parser.onvalue = (value) => {
-                if (insideEntryArray && currentResource !== null) {
-                    currentResource[parser.currentKey] = value;
-                }
-            };
-
-            parser.oncloseobject = () => {
-                if (insideEntryArray) {
-                    if (depth === 1) {
-                        this.resources.push(currentResource);
-                        currentResource = null;
-                    }
-                    depth--;
-                    if (this.resources.length > 0) {
-                        parser.close(); // stop parsing after 1+ resource
-                    }
-                }
-            };
+                return this.resources.shift() as Resource;
+            const parse = this.entries;
+            const acc = this.resources;
+            const parsedStream = stream.pipe(
+                Stream.map(
+                    (chunk) => parse(chunk)
+                )
+            );
+            return parsedStream.pipe(
+                Stream.takeUntil(
+                    Option.isSome,
+                ),
+                Stream.runCollect,
+                Effect.flatMap(
+                    ([ chunk ]) =>
+                        Effect.gen(function *() {
+                            if (Option.isNone(chunk))
+                                return yield *new DataError(`data.Page: unexpected None data chunk`);
+                            const { hd } = Option.getOrThrowWith(chunk, () => new DataError(`data.Page: couldn't unwrap the chunk Some Option`));
+                            const resources = hd
+                                .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)
+                                .map(({ resource }) => resource);
+                            if (resources.length === 0)
+                                return yield *new DataError(`data.Page: unexpected empty resources from parser`);
+                            acc.push(...resources);
+                            return acc.shift() as Resource;
+                        })
+                ),
+                Effect.runSync
+            )
         }
     }),
     accessors: true

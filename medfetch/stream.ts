@@ -1,5 +1,5 @@
-import { Option } from "effect";
-import { kdv } from "~/data";
+import { Effect, Option, Stream } from "effect";
+import { kdv, Page } from "~/data";
 
 const startURL = "https://r4.smarthealthit.org/Patient";
 const response = await fetch(startURL);
@@ -19,12 +19,9 @@ function *stream() {
         yield chunk;
 }
 
-const write = kdv<any[]>("entry", 1);
-const { value } = stream().next();
-if (value) {
-    const a = write(value);
-    if (Option.isSome(a)) {
-        const some = Option.getOrThrow(a);
-        console.log(some.hd, some.tl);
-    }
-}
+const resource1 = Page.flush(Stream.fromIterable(stream())).pipe(
+    Effect.provide(Page.Default),
+    Effect.runSync
+);
+
+console.log("hmmm", resource1);
