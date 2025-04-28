@@ -180,6 +180,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     : `${baseUrl}/${resourceType}`;
 
             cursor.rows = [];
+            console.time("vtab::fetch+json");
             while (url) {
                 // look mom, no await!
                 const response = fetchSync(url);
@@ -191,6 +192,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     ...bundle.entry.map(({ resource }) => resource)
                 );
             }
+            console.timeEnd("vtab::fetch+json");
 
             // handle inline fhirpath transformations
             cursor.viewDefinition = generateViewDefinition(args);

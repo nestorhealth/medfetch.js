@@ -38,12 +38,11 @@ is arg0 `type`.
 The `type` column acts as arg0 for the TVF that simply indicates which Resource you want to pull.
 
 For example, if you wanted to get all [Practitioners](https://build.fhir.org/practitioner.html) 
-from your FHIR server, you would do it like so (minus the LIMIT for all of course):
+from your FHIR server, you could do it like so:
 
 <SQLCodeblock>
-
 ```sql
-SELECT * FROM medfetch('Practitioner') LIMIT 5;
+SELECT * FROM medfetch('Practitioner');
 ```
 
 </SQLCodeblock>
@@ -62,7 +61,7 @@ SELECT
     (json -> 'name' -> 0 -> 'given' ->> 0) 
         || ' '
             || (json -> 'name' -> 0 ->> 'family') AS name
-FROM medfetch('Practitioner') LIMIT 5;
+FROM medfetch('Practitioner');
 ```
 
 </SQLCodeblock>
@@ -102,7 +101,7 @@ SELECT
     || ' '
     || (json -> 'address' -> 0 ->> 'postalCode') AS address
     
-FROM medfetch('Practitioner') LIMIT 5;
+FROM medfetch('Practitioner');
 ```
 </SQLCodeblock>
 
@@ -138,8 +137,7 @@ medfetch('Practitioner', json_array(
         | address[0].state 
         | address[0].postalCode).join('' '')'
     )
-))
-LIMIT 5;
+));
 ```
 </SQLCodeblock>
 
@@ -202,9 +200,3 @@ export function medfetch(
   fp?: (string | [string, string] | [string, string, string])[] 
 ): SQLiteTable<{ id: string; json: string; }>;
 ```
-
-SQLite has a special place in my heart since it was the first database I experimented an in-database runner on
-due to the sheer ease of spinning one up (as compared to something like PostgreSQL). While SQLite isn't the most
-featureful or "powerful" SQL database by any means (that title goes to PostgreSQL vs. MySQL), you may be surprised
-at just how good SQLite can be, so my personal recommendation is to use SQLite if you're just getting started and
-then consider upgrading if you find that you're working with millions of rows!
