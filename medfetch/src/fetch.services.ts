@@ -1,4 +1,4 @@
-import { Data } from "effect";
+import { Data, Stream } from "effect";
 
 export type Fetch = Data.TaggedEnum<{
     readonly request: {
@@ -49,7 +49,7 @@ class ResponseProxySync {
             Atomics.wait(signal, 0, 0);
             const result = Atomics.load(signal, 0);
             if (result < 0) {
-                throw new FetchSyncError({ message: `stream chunk fetch error` });
+                throw new FetchSyncError({ message: `Stream chunk fetch error` });
             }
             const size = new DataView(this.#sab, 4, 4).getUint32(0, true);
             if (size === 0) {
@@ -101,7 +101,7 @@ class ResponseProxySync {
                 message: `FetchSync: something went wrong with getting the Reader stream, response id was: ${this.#id}`
             });
         }
-        return this.#bodyIt();
+        return Stream.fromIterable(this.#bodyIt());
     }
 }
 
