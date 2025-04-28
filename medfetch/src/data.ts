@@ -21,9 +21,16 @@ class DataError extends Data.TaggedError("medfetch.DataError")<{
     }
 }
 
-export const Clarinet = <Value = unknown>(
-    kd: { key: string; depth: number },
-    _kveq?: <T>(k: string, v: T) => boolean // ignored for now
+/**
+ * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
+ * indexed (so root is depth 0), and returns value `v` indexed by `k`.
+ * @param k The key
+ * @param d The depth (first key is depth 1)
+ * @returns Some value if it exists, None otherwise.
+ */
+export const kdv = <Value = unknown>(
+    k: string,
+    d: number
 ) => {
     const parser = clarinet.parser();
     let currentKey = "";
@@ -31,34 +38,31 @@ export const Clarinet = <Value = unknown>(
 
     let v: Value | null = null;
     let capturing = false;
-    let captureDepth = 0;
 
     let stack: any[] = [];
-    const top = () => stack[stack.length - 1];
+    const peek = () => stack[stack.length - 1];
     const empty = () => stack.length === 0;
 
     parser.onkey = (key) => {
-        if (key === kd.key && depth === kd.depth) {
+        if (key === k && depth === d) {
             capturing = true;
-            captureDepth = depth;
         }
         currentKey = key;
     };
 
     parser.onopenobject = (key) => {
-        if ((depth + 1) === kd.depth && key === kd.key) {
+        if ((depth + 1) === d && key === k) {
             capturing = true;
-            captureDepth = depth + 1;
             stack.push({});
         } else if (capturing) {
             if (empty()) {
                 stack.push({});
             } else {
                 const obj = {};
-                if (Array.isArray(top())) {
-                    top().push(obj);
+                if (Array.isArray(peek())) {
+                    peek().push(obj);
                 } else {
-                    top()[currentKey] = obj;
+                    peek()[currentKey] = obj;
                 }
                 stack.push(obj);
             }
@@ -73,10 +77,10 @@ export const Clarinet = <Value = unknown>(
             if (empty()) {
                 stack.push([]);
             } else {
-                if (Array.isArray(top())) {
-                    top().push(arr);
+                if (Array.isArray(peek())) {
+                    peek().push(arr);
                 } else {
-                    top()[currentKey] = arr;
+                    peek()[currentKey] = arr;
                 }
                 stack.push(arr);
             }
@@ -87,16 +91,16 @@ export const Clarinet = <Value = unknown>(
     parser.onvalue = (value) => {
         if (capturing) {
             if (stack.length > 0) {
-                if (Array.isArray(top())) {
-                    top().push(value);
+                if (Array.isArray(peek())) {
+                    peek().push(value);
                 } else {
-                    top()[currentKey] = value;
+                    peek()[currentKey] = value;
                 }
             } else {
                 v = value as Value;
                 capturing = false;
             }
-        } else if (currentKey === kd.key && depth === kd.depth) {
+        } else if (currentKey === k && depth === d) {
             v = value as Value;
         }
     };
@@ -105,7 +109,7 @@ export const Clarinet = <Value = unknown>(
         depth--;
         if (capturing) {
             const top = stack.pop();
-            if (depth === captureDepth) {
+            if (depth === d) {
                 capturing = false;
                 stack = [];
                 v = top;
@@ -117,14 +121,13 @@ export const Clarinet = <Value = unknown>(
         depth--;
         if (capturing) {
             const top = stack.pop();
-            if (depth === captureDepth) {
+            if (depth === d) {
                 capturing = false;
                 stack = [];
                 v = top;
             }
         }
     };
-
 
     return (chunk: string): Option.Option<Value> => {
         parser.write(chunk);
@@ -143,7 +146,7 @@ export class Page extends Effect.Service<Page>()("data.Page", {
             link: "",
             entry: ""
         },
-        parser: Clarinet(),
+        parser: kdv(),
         resources: [] as Resource[],
         flush(stream: Stream.Stream<string>) {
             if (this.resources.length > 0)

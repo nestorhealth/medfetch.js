@@ -1,4 +1,4 @@
-import { Clarinet } from "~/data";
+import { kdv } from "~/data";
 
 const startURL = "https://r4.smarthealthit.org/Patient";
 const response = await fetch(startURL);
@@ -18,10 +18,9 @@ function *stream() {
         yield chunk;
 }
 
-const sax = Clarinet<any[]>({ key: "link", depth: 1 });
+const sax = kdv<any[]>("link", 1);
 const { value } = stream().next();
 if (value) {
-    console.log("sending over next", value);
     const result = sax(value);
     console.log('result', result);
 }
