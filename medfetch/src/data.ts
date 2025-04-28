@@ -33,6 +33,7 @@ export const kdv = <Value = unknown>(
     d: number
 ) => {
     const parser = clarinet.parser();
+    
     let currentKey = "";
     let depth = 0;
 
@@ -131,10 +132,12 @@ export const kdv = <Value = unknown>(
 
     return (chunk: string): Option.Option<Value> => {
         parser.write(chunk);
-        if (v == null) {
-            return Option.none();
-        } else {
+        if (!!v) {
             return Option.some(v);
+        } else if (stack.length > 0) {
+            return Option.some(stack[0]);
+        } else {
+            return Option.none();
         }
     };
 };

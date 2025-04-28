@@ -18,9 +18,9 @@ function *stream() {
         yield chunk;
 }
 
-const sax = kdv<any[]>("link", 1);
+const write = kdv<any[]>("entry", 1);
 const { value } = stream().next();
 if (value) {
-    const result = sax(value);
-    console.log('result', result);
+    const a = write(value);
+    console.log("result", JSON.stringify(a, null, 2));
 }
