@@ -1,3 +1,4 @@
+/* eslint-disable */
 import type {
     Sqlite3,
     sqlite3_vtab,
