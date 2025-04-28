@@ -7,7 +7,7 @@ import type {
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
 import { flat } from "~/sof";
-import { type ColumnPath, Column, viewDefinition, columnPath, ViewDefinition } from "~/view.js";
+import { type ColumnPath, Column, viewDefinition, ViewDefinition } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
 import { TaggedError } from "effect/Data";
 import { Bundle, decodeJsonFp } from "./vtab.services";
@@ -59,20 +59,6 @@ function getColumnName(path: string | [string, any]) {
     return parts[parts.length - 1];
 }
 
-function top(path: string) {
-    const split = path.split(".");
-    // check if we have a top level resource pathstring
-    // such as "Patient.foo". If so, return foo.
-    if (split[0][0].toUpperCase() === split[0][0]) {
-        return split[1];
-    } else {
-        return split[0];
-    }
-}
-function size(path: string) {
-    return path.split(".").length;
-}
-
 function generateViewDefinition(args: SqlValue[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
@@ -83,17 +69,17 @@ function generateViewDefinition(args: SqlValue[]) {
         return null;
     }
     const paths = decodeJsonFp(fp);
-    const column = paths.reduce(
+    const columns = paths.reduce(
         (acc, pathArg) => {
             if (typeof pathArg === "string") {
-                acc.push(columnPath({
+                acc.push(({
                     path: pathArg,
                     name: getColumnName(pathArg)
                 }));
             } else if (pathArg.length === 2) {
                 const [name, path] = pathArg;
                 acc.push(
-                    columnPath({
+                    ({
                         path,
                         name
                     })
@@ -110,7 +96,7 @@ function generateViewDefinition(args: SqlValue[]) {
         constant: [],
         select: [
             Column({
-                column,
+                column: columns
             }),
         ],
         where: [],
@@ -222,10 +208,14 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     break;
                 }
                 case 1: {
-                    const encoded = JSON.stringify(row);
+                    let json: string;
+                    if (cursor.viewDefinition)
+                        json = JSON.stringify(flat([row], cursor.viewDefinition));
+                    else
+                        json = JSON.stringify(row);
                     capi.sqlite3_result_text(
                         pCtx,
-                        encoded,
+                        json,
                         -1,
                         capi.SQLITE_TRANSIENT,
                     );
@@ -260,15 +250,22 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
 
-            let streams: Generator<string>[] = [];
-            while (url !== null && url !== undefined) {
+            cursor.rows = [];
+            while (url) {
                 // look mom, no await!
                 const response = fetchSync(url);
+                const bundle: Bundle = response.json;
+                url = bundle.link.find(
+                    (link) => link.relation === "next"
+                )?.url;
+                cursor.rows.push(
+                    ...bundle.entry.map(({ resource }) => resource)
+                );
             }
 
             // handle inline fhirpath transformations
             cursor.viewDefinition = generateViewDefinition(args);
-            cursor.rows = streams;
+            console.log("CURSOR VIEW DEFINITION", JSON.stringify(cursor.viewDefinition, null, 2));
             return 0;
         },
     } satisfies Sqlite3Module;

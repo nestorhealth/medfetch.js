@@ -17,17 +17,12 @@ export type {
     ViewDefinition,
     ColumnPath,
     Node,
-    Column,
-    Select,
-    ForEach,
-    ForEachOrNull,
-    UnionAll,
     Constant,
 } from "./view";
 
 /* view.js dependencies for this file */
-import { viewDefinition, columnPath, Column as column } from "./view";
-export { viewDefinition, columnPath, column };
+import { viewDefinition, Column } from "./view";
+export { viewDefinition, Column };
 
 import { Chunk, Effect, pipe, Stream } from "effect";
 
@@ -54,9 +49,9 @@ function keysToViewDefinition<Keys extends readonly string[]>(
         resource: resourceType,
         status: "active",
         select: [
-            column({
+            Column({
                 column: keys.map((key) =>
-                    columnPath({
+                    ({
                         path: key,
                         name: last(key),
                     }),

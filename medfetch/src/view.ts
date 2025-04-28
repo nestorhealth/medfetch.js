@@ -69,9 +69,6 @@ export interface ColumnPath<TName extends string = string>
 }
 
 export const ColumnPath: Schema.Schema<ColumnPath> = _ColumnPath;
-export const columnPath: (
-    ...args: Parameters<typeof _ColumnPath.make>
-) => ColumnPath = _ColumnPath.make;
 
 /**
  * "Typesafe" `ColumnPath` constructor function that binds

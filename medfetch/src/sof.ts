@@ -69,17 +69,14 @@ function codeSystemAlias(codeSystem: string | undefined) {
 
 function getReferenceKey({ reference }: { reference: string }) {
     // idk
-    if (reference === undefined)
-        return null;
+    if (reference === undefined) return null;
 
     // "urn:uuid:<reference>" case
-    if (reference.startsWith("urn"))
-        return reference.slice(9);
+    if (reference.startsWith("urn")) return reference.slice(9);
 
     const split = reference.split("/");
     // "<Resource>/id" relative reference case
-    if (split.length === 2)
-        return split[1];
+    if (split.length === 2) return split[1];
 
     // Don't handle
     return null;
@@ -94,72 +91,60 @@ function getReferenceKey({ reference }: { reference: string }) {
  * @param data - the resources to project to rows
  * @returns a flattened row view of the given resources
  */
-export function project(nd: Node, data: any | any[]): any[] {
-    const aux = (nd: Node, data: any[]): any[] => {
-        return $match(nd, {
-            ForEach: ({ forEach, select }) =>
-                data.flatMap((resource) => {
-                    const items = evaluateSync(resource, forEach);
-                    return items.flatMap((item) =>
-                        aux(Select({ select }), [item]),
-                    );
-                }),
+export function project(nd: Node, data: any[]): any[] {
+    return $match(nd, {
+        ForEach: ({ forEach, select }) =>
+            data.flatMap((resource) => {
+                const items = evaluateSync(resource, forEach);
+                return items.flatMap((item) => project(Select({ select }), [item]));
+            }),
 
-            ForEachOrNull: ({ forEachOrNull, select }) =>
-                data.flatMap((resource) => {
-                    const items = evaluateSync(resource, forEachOrNull);
-                    if (items.length === 0)
-                        return aux(Select({ select }), [{}]);
-                    return items.flatMap((item) =>
-                        aux(Select({ select }), [item]),
-                    );
-                }),
+        ForEachOrNull: ({ forEachOrNull, select }) =>
+            data.flatMap((resource) => {
+                const items = evaluateSync(resource, forEachOrNull);
+                if (items.length === 0) return project(Select({ select }), [{}]);
+                return items.flatMap((item) => project(Select({ select }), [item]));
+            }),
 
-            Select: ({ select }) =>
-                data.flatMap((resource) =>
-                    select.reduce((acc, selectNode) => {
-                        const results = aux(selectNode, [resource]);
-                        if (acc.length === 0)
-                            return results;
-                        return acc.flatMap((row) => {
-                            return results.map((newRow) => {
-                                return {
-                                    ...row,
-                                    ...newRow,
-                                };
-                            });
+        Select: ({ select }) =>
+            data.flatMap((resource) =>
+                select.reduce((acc, selectNode) => {
+                    const results = project(selectNode, [resource]);
+                    if (acc.length === 0) return results;
+                    return acc.flatMap((row) => {
+                        return results.map((newRow) => {
+                            return {
+                                ...row,
+                                ...newRow,
+                            };
                         });
-                    }, [] as any[]),
-                ),
+                    });
+                }, [] as any[]),
+            ),
 
-            UnionAll: ({ unionAll }) =>
-                unionAll.flatMap((subQuery) => aux(subQuery, data)),
+        UnionAll: ({ unionAll }) =>
+            unionAll.flatMap((subQuery) => project(subQuery, data)),
 
-            Column: ({ column }) =>
-                data.map((resource) =>
-                    column.reduce(
-                        (acc, col) =>
-                            pipe(evaluateSync(resource, col.path), (value) =>
-                                set(
-                                    acc,
-                                    col.name,
-                                    col.collection ? value : (value[0] ?? null),
-                                ),
+        Column: ({ column }) =>
+            data.map((resource) =>
+                column.reduce(
+                    (acc, col) =>
+                        pipe(evaluateSync(resource, col.path), (value) =>
+                            set(
+                                acc,
+                                col.name,
+                                col.collection ? value : (value[0] ?? null),
                             ),
-                        {} as any,
-                    ),
+                        ),
+                    {} as any,
                 ),
-        });
-    };
-    return aux(nd, data);
+            ),
+    });
 }
 
 /**
- * The public api that filters the data based on the WHERE query in a ViewDefinition
- * before calling the column projector [[ columns ]].
- *
- * ...meaning [[ flat viewDefinition data ]] is a flat array of rows derived from the columns vd.select
- *
+ * The public api that filters the data based on the WHERE query in a ViewDefinition,
+ * then passes data off to project
  * @param viewDefinition - the normalized and tagged ViewDefinition
  * @param data - the resources to project
  * @returns the 'rowified' json resources
@@ -176,5 +161,6 @@ export function flat(data: any[], viewDefinition: ViewDefinition): any[] {
         );
     }
 
+    console.log("here", matching);
     return project(viewDefinition, matching);
 }
