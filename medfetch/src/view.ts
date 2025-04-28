@@ -392,9 +392,7 @@ export interface ViewDefinition<ResourceType extends string = string>
     extends Schema.Schema.Type<typeof _ViewDefinition> {
     resource: ResourceType;
 }
-
-const ViewDefinition: Schema.Schema<ViewDefinition> = _ViewDefinition;
-export const viewDefinition = tagged<ViewDefinition>("Select");
+export const ViewDefinition = tagged<ViewDefinition>("Select");
 
 export function getColumns(
     vd: ViewDefinition,

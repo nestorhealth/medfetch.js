@@ -3,14 +3,12 @@ import type {
     sqlite3_vtab,
     sqlite3_vtab_cursor,
     Sqlite3Module,
-    SqlValue,
     WasmPointer,
 } from "@sqlite.org/sqlite-wasm";
 import { flat } from "~/sof";
-import { type ColumnPath, Column, viewDefinition, ViewDefinition } from "~/view.js";
+import { ViewDefinition } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
-import { TaggedError } from "effect/Data";
-import { Bundle, decodeJsonFp } from "./vtab.services";
+import { Bundle, generateViewDefinition } from "./vtab.services";
 import { FetchSync } from "~/fetch.services";
 
 interface medfetch_vtab extends sqlite3_vtab {
@@ -22,19 +20,6 @@ interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     viewDefinition: ViewDefinition | null;
 }
 
-/**
- * Namespaced error class
- */
-class MedfetchVTabError extends TaggedError(
-    "medfetch/sqlite-wasm/medfetch.vtab",
-)<{
-    message: string;
-}> {
-    constructor(args: { message: string } | string) {
-        if (typeof args === "string") super({ message: args });
-        else super(args);
-    }
-}
 
 /**
  * service wrapper so we dont need to keep passing it
@@ -46,64 +31,6 @@ function getBaseUrl({ wasm }: Sqlite3, pAux: WasmPointer) {
     return new TextDecoder().decode(urlBuffer);
 }
 
-function getColumnName(path: string | [string, any]) {
-    if (typeof path !== "string") return path[0]; // default to the 'key' element in the 2-tuple
-
-    let cleaned = path;
-    while (cleaned.match(/\.\w+\([^)]*\)$/)) {
-        cleaned = cleaned.replace(/\.\w+\([^)]*\)$/, "");
-    }
-
-    // split on '.' and return tail
-    const parts = cleaned.split(".");
-    return parts[parts.length - 1];
-}
-
-function generateViewDefinition(args: SqlValue[]) {
-    const [resourceType, fp] = args;
-    if (!resourceType || typeof resourceType !== "string")
-        throw new Error(`medfetch: unexpected invalid "type" column value (args[0])`);
-
-    if (!fp || typeof fp !== "string") {
-        // no fhirpath map, then just return null and default to the whole object
-        return null;
-    }
-    const paths = decodeJsonFp(fp);
-    const columns = paths.reduce(
-        (acc, pathArg) => {
-            if (typeof pathArg === "string") {
-                acc.push(({
-                    path: pathArg,
-                    name: getColumnName(pathArg),
-                    collection: true
-                }));
-            } else if (pathArg.length === 2) {
-                const [name, path] = pathArg;
-                acc.push(
-                    ({
-                        path,
-                        name,
-                        collection: true
-                    })
-                );
-            }
-            return acc;
-        },
-        [] as ColumnPath[]
-    );
-    return viewDefinition({
-        status: "active",
-        name: resourceType,
-        resource: resourceType,
-        constant: [],
-        select: [
-            Column({
-                column: columns
-            }),
-        ],
-        where: [],
-    });
-}
 
 /**
  * Based on the original C extension for native, but this time... 

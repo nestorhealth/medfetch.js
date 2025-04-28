@@ -14,15 +14,14 @@ export {
 } from "./view";
 
 export type {
-    ViewDefinition,
     ColumnPath,
     Node,
     Constant,
 } from "./view";
 
 /* view.js dependencies for this file */
-import { viewDefinition, Column } from "./view";
-export { viewDefinition, Column };
+import { ViewDefinition, Column } from "./view";
+export { ViewDefinition, Column };
 
 import { Chunk, Effect, pipe, Stream } from "effect";
 
@@ -45,7 +44,7 @@ function keysToViewDefinition<Keys extends readonly string[]>(
     resourceType: string,
     keys: readonly [...Keys],
 ) {
-    return viewDefinition({
+    return ViewDefinition({
         resource: resourceType,
         status: "active",
         select: [

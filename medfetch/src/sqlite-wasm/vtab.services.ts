@@ -1,5 +1,22 @@
 import type { Resource } from "~/data.schema.js";
 import { Schema } from "effect";
+import type { SqlValue } from "@sqlite.org/sqlite-wasm";
+import { Column, ColumnPath, ViewDefinition } from "~/view";
+import { TaggedError } from "effect/Data";
+
+/**
+ * Namespaced error class
+ */
+class MedfetchVtabError extends TaggedError(
+    "sqlite-wasm/vtab",
+)<{
+    message: string;
+}> {
+    constructor(args: { message: string } | string) {
+        if (typeof args === "string") super({ message: args });
+        else super(args);
+    }
+}
 
 /** The bundle 'shape' aka the stuff we care about from a FHIR bundle
  */
@@ -36,3 +53,67 @@ const UserFp = Schema.Array(Schema.Union(
  * @returns The validated JSON parsed object (array).
  */
 export const decodeJsonFp = Schema.parseJson(UserFp).pipe(Schema.decodeSync);
+
+function getColumnName(path: string | [string, any]) {
+    if (typeof path !== "string") return path[0]; // default to the 'key' element in the 2-tuple
+
+    let cleaned = path;
+    while (cleaned.match(/\.\w+\([^)]*\)$/)) {
+        cleaned = cleaned.replace(/\.\w+\([^)]*\)$/, "");
+    }
+
+    // split on '.' and return tail
+    const parts = cleaned.split(".");
+    return parts[parts.length - 1];
+}
+
+/**
+ * Generates a ViewDefinition from a `WHERE "fp" = json_array(...)` query clause
+ * @param args The vtable function args
+ * @returns The ViewDefinition 
+ */
+export function generateViewDefinition(args: SqlValue[]) {
+    const [resourceType, fp] = args;
+    if (!resourceType || typeof resourceType !== "string")
+        throw new MedfetchVtabError(`unexpected invalid "type" column value (args[0])`);
+
+    if (!fp || typeof fp !== "string") {
+        // no fhirpath map, then just return null and default to the whole object
+        return null;
+    }
+    const paths = decodeJsonFp(fp);
+    const columns = paths.reduce(
+        (acc, pathArg) => {
+            if (typeof pathArg === "string") {
+                acc.push(({
+                    path: pathArg,
+                    name: getColumnName(pathArg),
+                    collection: true
+                }));
+            } else if (pathArg.length === 2) {
+                const [name, path] = pathArg;
+                acc.push(
+                    ({
+                        path,
+                        name,
+                        collection: true
+                    })
+                );
+            }
+            return acc;
+        },
+        [] as ColumnPath[]
+    );
+    return ViewDefinition({
+        status: "active",
+        name: resourceType,
+        resource: resourceType,
+        constant: [],
+        select: [
+            Column({
+                column: columns
+            }),
+        ],
+        where: [],
+    });
+}
