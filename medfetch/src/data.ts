@@ -21,6 +21,10 @@ class DataError extends Data.TaggedError("medfetch.DataError")<{
     }
 }
 
+type KDVResult<Value> = {
+    hd: Value;
+    tl: Value[keyof Value] | null;
+}
 /**
  * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
  * indexed (so root is depth 0), and returns value `v` indexed by `k`.
@@ -130,12 +134,31 @@ export const kdv = <Value = unknown>(
         }
     };
 
-    return (chunk: string): Option.Option<Value> => {
+    return (chunk: string): Option.Option<KDVResult<Value>> => {
         parser.write(chunk);
         if (!!v) {
-            return Option.some(v);
+            return Option.some({
+                hd: v,
+                tl: null
+            });
         } else if (stack.length > 0) {
-            return Option.some(stack[0]);
+            const hd = structuredClone(stack[0]);
+            if (Array.isArray(hd)) {
+                const popped = hd.pop();
+                return Option.some({
+                    hd: hd as Value,
+                    tl: popped as any
+                });
+            } else {
+                const keys = Object.keys(hd);
+                const last = keys[keys.length - 1];
+                const lastChild = hd[last];
+                delete hd[last];
+                return Option.some({
+                    hd: hd as Value,
+                    tl: lastChild as any
+                });
+            }
         } else {
             return Option.none();
         }

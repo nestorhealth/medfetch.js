@@ -1,3 +1,4 @@
+import { Option } from "effect";
 import { kdv } from "~/data";
 
 const startURL = "https://r4.smarthealthit.org/Patient";
@@ -22,5 +23,8 @@ const write = kdv<any[]>("entry", 1);
 const { value } = stream().next();
 if (value) {
     const a = write(value);
-    console.log("result", JSON.stringify(a, null, 2));
+    if (Option.isSome(a)) {
+        const some = Option.getOrThrow(a);
+        console.log(some.hd, some.tl);
+    }
 }
