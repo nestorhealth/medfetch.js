@@ -31,6 +31,14 @@ class ResponseProxySync {
     readonly #sab: SharedArrayBuffer;
     readonly #port: MessagePort;
     readonly #id: number;
+    readonly status: number;
+
+    constructor(port: MessagePort, sab: SharedArrayBuffer, responseId: number, statusCode: number) {
+        this.#port = port;
+        this.#sab = sab;
+        this.#id = responseId;
+        this.status = statusCode;
+    }
 
     #signal() {
         const signal = new Int32Array(this.#sab, 0, 1);
@@ -59,12 +67,6 @@ class ResponseProxySync {
             const chunk = new TextDecoder().decode(body.slice());
             yield chunk;
         }
-    }
-
-    constructor(port: MessagePort, sab: SharedArrayBuffer, responseId: number) {
-        this.#port = port;
-        this.#sab = sab;
-        this.#id = responseId;
     }
 
     get json() {
@@ -118,6 +120,7 @@ export function FetchSync(port: MessagePort) {
     let nextId = 1;
     return function fetchSync(...args: Parameters<typeof fetch>) {
         const signal = new Int32Array(sab, 0, 1);
+        const status = new Int32Array(sab, 4, 1);
         signal[0] = 0;
         let url = args[0];
         if (typeof url !== "string") {
@@ -133,6 +136,7 @@ export function FetchSync(port: MessagePort) {
         port.postMessage(message);
         // sleep until signal != 0
         Atomics.wait(signal, 0, 0);
-        return new ResponseProxySync(port, sab, id);
+        const statusCode = status[0];
+        return new ResponseProxySync(port, sab, id, statusCode);
     };
 }

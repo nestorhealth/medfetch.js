@@ -203,11 +203,11 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     cursor.rows = flush();
                     cursor.pageNext = nexturl;
                     cursor.peeked = cursor.rows.next();
-                    return cursor.peeked.done ? 1 : 0;
+                    return cursor.peeked.done ? 1 : capi.SQLITE_OK;
                 } else
                     return 1;
             }
-            return 0;
+            return capi.SQLITE_OK;
         },
         xFilter: (pCursor, _idxNum, _idxCStr, argc, argv) => {
             const args = capi.sqlite3_values_to_js(argc, argv);
@@ -225,11 +225,13 @@ const medfetch_module: VirtualTableExtensionFn = async (
 
             // Look mom, no await!
             const response = fetchSync(url);
+            if (response.status === 401) {
+            }
             const { flush, nexturl } = Page.handler(response.stream);
             cursor.rows = flush();
             cursor.pageNext = nexturl;
             cursor.viewDefinition = generateViewDefinition(args);
-            return 0;
+            return capi.SQLITE_OK;
         },
     } satisfies Sqlite3Module;
 };

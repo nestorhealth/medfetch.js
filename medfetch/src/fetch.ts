@@ -5,18 +5,20 @@ const __RESPONSE_MAP__ = new Map<number, Response>();
 const __READER_MAP__ = new Map<number, ReadableStreamDefaultReader>();
 
 /**
- * The main call routine, which sets the "condvar"
- * signal to 1 to wake up the sleeping thread.
- * Or something like that...
- * @param e
- * @returns void 0, writes the payload back to dataBytes from the sharedSignal
+ * The main call routine, which sets the "condvar" signal to 1 to wake up the sleeping thread.
+ * @param e The incoming MessageEvent
+ * @returns Promise<void 0>; writes the payload back to dataBytes from the sharedSignal
  */
-const onMessage = (e: MessageEvent<Fetch>) => {
+const onMessage = (e: MessageEvent<Fetch>): Promise<void> => {
     return Fetch.$match(e.data, {
         request: async ({ sab, url, init, id }) => {
             const signal = new Int32Array(sab, 0, 1);
+            const status = new Int32Array(sab, 4, 1);
+
             const response = await fetch(url, init);
             __RESPONSE_MAP__.set(id, response);
+            status[0] = response.status;
+
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
         },
