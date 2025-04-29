@@ -14,27 +14,56 @@ import { FetchSync } from "~/fetch.services";
 import { Page } from "~/data";
 import { Resource } from "~/data.schema";
 
+/**
+ * JS version of the medfetch_vtab "struct". *Extends* the vtab struct
+ * rather than composing it, but this might change later
+ */
 interface medfetch_vtab extends sqlite3_vtab {
+    /**
+     * The base URL of the FHIR server to ping, expected
+     * to be passed in via pAux from the user.
+     */
     baseUrl: string;
 }
+
+/**
+ * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
+ * rather than composing it, though this may change in the future
+ */
 interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
+    /**
+     * Return resources one by one via the `flush()` generator returned by {@link Page.genny}
+     */
     rows: Generator<Resource>;
+    
+    /**
+     * Get the next bundle page URL via the `nexturl()` function returned by {@link Page.genny}.
+     * @returns The next Bundle page's URL if it exists, otherwise null.
+     */
     pageNext: () => string | null;
+    
+    /**
+     * The last resource popped by `flush()` from {@link Page.genny}
+     */
     peeked: IteratorResult<Resource>;
+
+    /**
+     * The View Definition to apply to {@link peeked} if not null
+     */
     viewDefinition: ViewDefinition | null;
 }
 
-
 /**
- * service wrapper so we dont need to keep passing it
- * as an arg
+ * UTF-8 decode the base URL from the wasm pointer `pAux`
+ * @param sqlite3 The Sqlite3Static module that the sqlite-wasm loader retursn
+ * @param pAux The pointer to the 
+ * @returns pAux dereferneced: *(pAux)
  */
-function getBaseUrl({ wasm }: Sqlite3, pAux: WasmPointer) {
+function decodeBaseURL({ wasm }: Sqlite3, pAux: WasmPointer): string {
     const size = new DataView(wasm.heap8().buffer, pAux, 4).getUint32(0, true);
     const urlBuffer = new DataView(wasm.heap8().buffer, pAux + 4, size);
     return new TextDecoder().decode(urlBuffer);
 }
-
 
 /**
  * Based on the original C extension for native, but this time... 
@@ -53,13 +82,13 @@ const medfetch_module: VirtualTableExtensionFn = async (
 
     // Blocking fetch function
     const fetchSync = FetchSync(fetchPort);
-
     const getCursor = (pcursor: WasmPointer) =>
         vtab.xCursor.get(pcursor) as medfetch_vtab_cursor;
     const getVirtualTable = (pvtab: WasmPointer) =>
         vtab.xVtab.get(pvtab) as medfetch_vtab;
 
     return {
+        /* Set to 0 to mark as eponymous (something to do with being able to call as TVF) */
         xCreate: 0,
         xConnect(pDb, pAux, _argc, _argv, ppVtab, _pzErr) {
             let rc = capi.SQLITE_OK;
@@ -74,7 +103,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             );
             if (!rc) {
                 const virtualTable = vtab.xVtab.create(ppVtab) as medfetch_vtab;
-                virtualTable.baseUrl = getBaseUrl(sqlite3, pAux);
+                virtualTable.baseUrl = decodeBaseURL(sqlite3, pAux);
             }
             return rc;
         },
@@ -163,9 +192,8 @@ const medfetch_module: VirtualTableExtensionFn = async (
         },
         xEof: (pCursor) => {
             const cursor = getCursor(pCursor);
-            if (!cursor.peeked) {
+            if (!cursor.peeked) // False on initial call
                 cursor.peeked = cursor.rows.next();
-            }
             
             if (cursor.peeked.done) {
                 const nextURL = cursor.pageNext();
