@@ -32,18 +32,18 @@ interface medfetch_vtab extends sqlite3_vtab {
  */
 interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     /**
-     * Return resources one by one via the `flush()` generator returned by {@link Page.genny}
+     * Return resources one by one via the `flush()` generator returned by {@link Page.handler}
      */
     rows: Generator<Resource>;
     
     /**
-     * Get the next bundle page URL via the `nexturl()` function returned by {@link Page.genny}.
+     * Get the next bundle page URL via the `nexturl()` function returned by {@link Page.handler}.
      * @returns The next Bundle page's URL if it exists, otherwise null.
      */
     pageNext: () => string | null;
     
     /**
-     * The last resource popped by `flush()` from {@link Page.genny}
+     * The last resource popped by `flush()` from {@link Page.handler}
      */
     peeked: IteratorResult<Resource>;
 
@@ -199,7 +199,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
                 const nextURL = cursor.pageNext();
                 if (nextURL) {
                     const stream = fetchSync(nextURL).stream;
-                    const { flush, nexturl } = Page.genny(stream);
+                    const { flush, nexturl } = Page.handler(stream);
                     cursor.rows = flush();
                     cursor.pageNext = nexturl;
                     cursor.peeked = cursor.rows.next();
@@ -225,7 +225,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
 
             // Look mom, no await!
             const response = fetchSync(url);
-            const { flush, nexturl } = Page.genny(response.stream);
+            const { flush, nexturl } = Page.handler(response.stream);
             cursor.rows = flush();
             cursor.pageNext = nexturl;
             cursor.viewDefinition = generateViewDefinition(args);

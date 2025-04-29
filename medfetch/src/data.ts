@@ -21,10 +21,33 @@ class DataError extends Data.TaggedError("medfetch.DataError")<{
     }
 }
 
-type KDVResult<Value> = {
+/**
+ * Unwrapped return type of calling the parser returned by {@link kdv}
+ * @template Value The expected type of value at key `k`. This is *NOT* a runtime type:
+ * you must validate the payload yourself if you're unsure about type at key `k`.
+ */
+interface KDVParseResult<Value> {
+    /**
+     * A *copy* of the first element of the value stack from the provided key (so the 'bottom' of the stack).
+     * If stack head is a container (array / object) and has a child pointer that points to an incomplete
+     * child (so hd.next / stack[1], same thing), then that child is pruned.
+     */
     hd: Value;
+
+    /**
+     * The pruned incomplete child of {@link hd} if it exists. Otherwise null.
+     */
     tl: Value[keyof Value] | null;
 }
+
+/**
+ * The key-depth-value {@link clarinet} parser returned by {@link kdv}.
+ * @template Value The expected type of the value from the key provided to {@link kdv} ctor.
+ * @param chunk The next available chunk of the Bundle to send to {@link clarinet.CParser.write}
+ * @returns Some {@link KDVParseResult} if it exists. None otherwise.
+ */
+type KDVParseFn<Value> = (chunk: string) => Option.Option<KDVParseResult<Value>>;
+
 /**
  * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
  * indexed (so root is depth 0), and returns value `v` indexed by `k`.
@@ -35,7 +58,7 @@ type KDVResult<Value> = {
 export const kdv = <Value = unknown>(
     k: string,
     d: number
-) => {
+): KDVParseFn<Value> => {
     const parser = clarinet.parser();
     
     let currentKey = "";
@@ -134,7 +157,7 @@ export const kdv = <Value = unknown>(
         }
     };
 
-    return (chunk: string): Option.Option<KDVResult<Value>> => {
+    return (chunk: string): Option.Option<KDVParseResult<Value>> => {
         parser.write(chunk);
         if (!!v) {
             return Option.some({
@@ -165,32 +188,63 @@ export const kdv = <Value = unknown>(
     };
 };
 
-export class PageFault extends Data.TaggedError("PageFault")<{
-    readonly message: string;
-    readonly cause:
-        | "EOF"
-        | "UNKNOWN";
-}> {};
+/**
+ * Bundle stream utility functions
+ * @template ResourceType the expected resource types the Bundle will return, defaulting to any string value
+ */
+interface PageHandler<ResourceType extends string = string> {
+    /**
+     * Stateful next bundle url getter that only returns non-null if
+     * 1. The {@link Link} property was able to be parsed at depth 1 and
+     * 2. The {@link Link} array value has an element with key "relation" == "next".
+     * Call when {@link flush} returns `done` to check if a next URL exists or not.
+     * @returns The next page URL if it exists, null otherwise.
+     */
+    nexturl: () => string | null;
 
+    /**
+     * Get back a generator wrapper over the Bundle text chunk generator provided
+     * that flushes out resources one by one.
+     * @returns {@link Resource} generator
+     */
+    flush: () => Generator<Resource<ResourceType>, void>;
+};
+
+/**
+ * Ctor for {@link PageHandler}
+ * @param args The required fields of a {@link PageHandler}
+ * @returns {@link PageHandler}
+ */
+const pageHandler = Data.case<PageHandler>();
+
+/**
+ * Template for Bundle stream handling
+ */
 export class page extends Effect.Service<page>()("data.Page", {
     sync: () => ({
-        genny(buffer: Generator<string>) {
+        /**
+         * Parse text chunks of a FHIR bundle from a *synchronous* generator
+         * and get back a {@link Resource} generator + a next {@link Link} getter
+         * @param bundleChunks Bundle plaintext generator
+         * @returns A {@link PageHandler} for the given Bundle Page
+         */
+        handler(bundleChunks: Generator<string>): PageHandler {
             let cursor = -1;
             let nextURL = Option.none<string>();
             let isLinkParsed = false;
             const parseLink = kdv<Link[]>("link", 1);
             const parseEntry = kdv<Entry[]>("entry", 1);
             const acc: Resource[] = [];
-            
-            function nexturl() {
-                return Option.getOrNull(nextURL);
-            }
-            function *flush() {
+            return pageHandler({
+                nexturl() {
+                    return Option.getOrNull(nextURL);
+                },
+                *flush() {
                 while (true) {
                     if (acc.length > 0) {
                         yield acc.shift()!;
                     }
-                    const { done, value } = buffer.next();
+                    const { done, value } = bundleChunks.next();
                     if (done || !value)
                         break;
                     if (Option.isNone(nextURL) && !isLinkParsed) {
@@ -227,17 +281,16 @@ export class page extends Effect.Service<page>()("data.Page", {
                 }
                 while (acc.length > 0)
                     yield acc.shift()!;
-            };
-            
-            return {
-                nexturl,
-                flush
-            };
+                }
+            });
         },
     }),
     accessors: true
 }) {};
 
+/**
+ * The default implementation of the {@link page} helper class.
+ */
 export const Page = Effect.runSync(Effect.provide(page.Default)(page));
 
 const Bundle = Resource("Bundle", {
