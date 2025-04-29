@@ -1,6 +1,5 @@
-import { Stream } from "effect";
-import { PageSync } from "~/data";
-import { Bundle } from "~/sqlite-wasm/vtab.services";
+import { PageSync } from "./src/data"
+import { Bundle } from "./src/sqlite-wasm/vtab.services";
 
 const startURL = "https://r4.smarthealthit.org/Patient";
 const response = await fetch(startURL);
@@ -32,4 +31,4 @@ try {
     }
 } catch (e) {};
 
-console.log("got amt", amt);
+console.log(amt);

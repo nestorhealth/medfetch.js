@@ -1,4 +1,4 @@
-import { Data, Stream } from "effect";
+import { Data } from "effect";
 
 export type Fetch = Data.TaggedEnum<{
     readonly request: {
@@ -101,7 +101,7 @@ class ResponseProxySync {
                 message: `FetchSync: something went wrong with getting the Reader stream, response id was: ${this.#id}`
             });
         }
-        return Stream.fromIterable(this.#bodyIt());
+        return this.#bodyIt();
     }
 }
 

@@ -165,27 +165,49 @@ export const kdv = <Value = unknown>(
     };
 };
 
-class PageFault extends Data.TaggedError("PageFault")<{
+export class PageFault extends Data.TaggedError("PageFault")<{
+    readonly message: string;
     readonly cause:
         | "EOF"
+        | "UNKNOWN";
 }> {};
 
 export class Page extends Effect.Service<Page>()("data.Page", {
     sync: () => ({
-        next: kdv<Link[]>("link", 1),
+        links: kdv<Link[]>("link", 1),
         entries: kdv<Entry[]>("entry", 1),
         buffer: [] as Resource[],
         cursor: -1,
+        nextURL: Option.none<string | undefined>(),
+        reset() {
+            this.entries = kdv<Entry[]>("entry", 1);
+            this.links = kdv<Link[]>("link", 1);
+            this.cursor = -1;
+            this.buffer = [];
+        },
         flush(buffer: Generator<string>): Resource {
             if (this.buffer.length > 0) {
                 return this.buffer.shift()!;
             }
             const { value, done } = buffer.next();
             if (done || !value) {
-                throw new PageFault({ cause: "EOF" });
+                throw new PageFault({ cause: "EOF", message: "Genny done." });
+            }
+            if (Option.isNone(this.nextURL)) {
+                const opt = this.links(value);
+                if (Option.isSome(opt)) {
+                    const { hd } = Option.getOrThrowWith(opt, () => new PageFault({
+                        cause: "UNKNOWN",
+                        message: "Page flush unexpected unknown error while grabbing Bundle Links."
+                    }));
+                    this.nextURL = Option.some(hd.find((link) => link.relation === "next")?.url);
+                }
             }
             const result = this.entries(value);
-            const { hd } = Option.getOrThrowWith(result, () => new DataError(`data.Page: couldn't unwrap the chunk Some Option`));
+            const { hd } = Option.getOrThrowWith(result, () => new PageFault({
+                message: `data.Page: couldn't unwrap the chunk Some Option`,
+                cause: "UNKNOWN"
+            }));
             this.buffer = hd
                 .slice(this.cursor + 1)
                 .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)

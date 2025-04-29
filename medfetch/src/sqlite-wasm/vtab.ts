@@ -9,17 +9,16 @@ import type {
 import { flat } from "~/sof";
 import { ViewDefinition } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
-import { generateViewDefinition } from "./vtab.services";
+import { Bundle, generateViewDefinition } from "./vtab.services";
 import { FetchSync } from "~/fetch.services";
-import { Stream } from "effect";
 
 interface medfetch_vtab extends sqlite3_vtab {
     baseUrl: string;
 }
 interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     index: number;
+    rows: any[];
     viewDefinition: ViewDefinition | null;
-    stream: Stream.Stream<string, never, never>;
 }
 
 
@@ -52,9 +51,9 @@ const medfetch_module: VirtualTableExtensionFn = async (
     // Blocking fetch function
     const fetchSync = FetchSync(fetchPort);
 
-    const getCursor = (pcursor: WasmPointer): medfetch_vtab_cursor =>
+    const getCursor = (pcursor: WasmPointer) =>
         vtab.xCursor.get(pcursor) as medfetch_vtab_cursor;
-    const getVirtualTable = (pvtab: WasmPointer): medfetch_vtab =>
+    const getVirtualTable = (pvtab: WasmPointer) =>
         vtab.xVtab.get(pvtab) as medfetch_vtab;
 
     return {
@@ -113,6 +112,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             ) as medfetch_vtab_cursor;
             cursor.pVtab = pVtab;
             cursor.index = 0;
+            cursor.rows = [];
             return capi.SQLITE_OK;
         },
         xClose: (pCursor) => {
@@ -179,8 +179,23 @@ const medfetch_module: VirtualTableExtensionFn = async (
                 baseUrl[baseUrl.length - 1] === "/"
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
-            // Look mom, no await!
-            cursor.stream = fetchSync(url).stream;
+
+            cursor.rows = [];
+            console.time("vtab::fetch+json");
+            while (url) {
+                // look mom, no await!
+                const response = fetchSync(url);
+                const bundle: Bundle = response.json;
+                url = bundle.link.find(
+                    (link) => link.relation === "next"
+                )?.url;
+                cursor.rows.push(
+                    ...bundle.entry.map(({ resource }) => resource)
+                );
+            }
+            console.timeEnd("vtab::fetch+json");
+
+            // handle inline fhirpath transformations
             cursor.viewDefinition = generateViewDefinition(args);
             return 0;
         },
