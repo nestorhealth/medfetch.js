@@ -165,52 +165,40 @@ export const kdv = <Value = unknown>(
     };
 };
 
+class PageFault extends Data.TaggedError("PageFault")<{
+    readonly cause:
+        | "EOF"
+}> {};
 
 export class Page extends Effect.Service<Page>()("data.Page", {
     sync: () => ({
-        buffers: {
-            link: "",
-            entry: ""
-        },
         next: kdv<Link[]>("link", 1),
         entries: kdv<Entry[]>("entry", 1),
-        resources: [] as Resource[],
-        flush(stream: Stream.Stream<string>) {
-            if (this.resources.length > 0)
-                return this.resources.shift() as Resource;
-            const parse = this.entries;
-            const acc = this.resources;
-            const parsedStream = stream.pipe(
-                Stream.map(
-                    (chunk) => parse(chunk)
-                )
-            );
-            return parsedStream.pipe(
-                Stream.takeUntil(
-                    Option.isSome,
-                ),
-                Stream.runCollect,
-                Effect.flatMap(
-                    ([ chunk ]) =>
-                        Effect.gen(function *() {
-                            if (Option.isNone(chunk))
-                                return yield *new DataError(`data.Page: unexpected None data chunk`);
-                            const { hd } = Option.getOrThrowWith(chunk, () => new DataError(`data.Page: couldn't unwrap the chunk Some Option`));
-                            const resources = hd
-                                .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)
-                                .map(({ resource }) => resource);
-                            if (resources.length === 0)
-                                return yield *new DataError(`data.Page: unexpected empty resources from parser`);
-                            acc.push(...resources);
-                            return acc.shift() as Resource;
-                        })
-                ),
-                Effect.runSync
-            )
+        buffer: [] as Resource[],
+        cursor: -1,
+        flush(buffer: Generator<string>): Resource {
+            if (this.buffer.length > 0) {
+                return this.buffer.shift()!;
+            }
+            const { value, done } = buffer.next();
+            if (done || !value) {
+                throw new PageFault({ cause: "EOF" });
+            }
+            const result = this.entries(value);
+            const { hd } = Option.getOrThrowWith(result, () => new DataError(`data.Page: couldn't unwrap the chunk Some Option`));
+            this.buffer = hd
+                .slice(this.cursor + 1)
+                .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)
+                .map(({ resource }) => resource);
+            this.cursor = hd.length - 1;
+
+            return this.buffer.shift()!;
         }
     }),
     accessors: true
 }) {};
+
+export const PageSync = Effect.runSync(Effect.provide(Page.Default)(Page));
 
 const Bundle = Resource("Bundle", {
     link: Link.pipe(Schema.Array),

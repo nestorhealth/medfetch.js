@@ -1,5 +1,6 @@
-import { Effect, Option, Stream } from "effect";
-import { kdv, Page } from "~/data";
+import { Stream } from "effect";
+import { PageSync } from "~/data";
+import { Bundle } from "~/sqlite-wasm/vtab.services";
 
 const startURL = "https://r4.smarthealthit.org/Patient";
 const response = await fetch(startURL);
@@ -13,15 +14,22 @@ while (true) {
     if (done) break;
     chunks.push(decoder.decode(value));
 }
+const fullText = chunks.reduce((acc, chunk) => acc += chunk);
+const parsed: Bundle = JSON.parse(fullText);
+console.log("parsed", parsed.entry.length);
 
-function *stream() {
+const stream = function *() {
     for (const chunk of chunks)
         yield chunk;
-}
+}();
 
-const resource1 = Page.flush(Stream.fromIterable(stream())).pipe(
-    Effect.provide(Page.Default),
-    Effect.runSync
-);
+let amt = 0;
+try {
+    while (true) {
+        const one = PageSync.flush(stream);
+        console.log(one.id);
+        amt++;
+    }
+} catch (e) {};
 
-console.log("hmmm", resource1);
+console.log("got amt", amt);
