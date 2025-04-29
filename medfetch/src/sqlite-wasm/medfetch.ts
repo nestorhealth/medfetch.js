@@ -18,23 +18,40 @@ function ModuleURL(url?: URL) {
         );
 }
 
-interface MedfetchOptions {
+/**
+ * User config for invoking `medfetch()` with sqlite-wasm
+ */
+interface MedfetchSqliteWasmOptions {
     /**
      * If provided, overrides the default path of
      * `/public/sqlite-ext/medfetch.vtab.mjs`.
      */
     moduleURL?: URL;
 
+    /**
+     * Want dev logs?
+     */
     trace?: boolean;
 
+    /**
+     * What filename to attach to
+     */
     filename?: string;
+    
+    /**
+     * Attach to an existing database?
+     */
     dbId?: string;
 }
 
-export class MedfetchSqliteError extends Data.TaggedError("medfetch.sqlite")<{
-    message?: string;
-    type: BetterWorker1MessageType;
-}> {}
+export class SqliteWasmError extends Data.TaggedError("medfetch/sqlite-wasm")<{
+    readonly message?: string;
+    readonly type: BetterWorker1MessageType;
+}> {
+    constructor({ message, type }: { message?: string; type: BetterWorker1MessageType }) {
+        super({ type, message: `[medfetch/sqlite-wasm]: ${message ?? "Unknown error."}` });
+    }
+}
 
 type SQLFn<E, R, Templated = any> = <T = unknown>(
     strings: TemplateStringsArray,
@@ -95,12 +112,12 @@ function getFetchWorkerPort() {
  */
 export function medfetch(
     baseURL: string,
-    { trace = false, filename, dbId }: MedfetchOptions = {},
-): SQLFn<MedfetchSqliteError, never> {
+    { trace = false, filename, dbId }: MedfetchSqliteWasmOptions = {},
+): SQLFn<SqliteWasmError, never> {
     if (!isBrowser()) {
         if (trace) {
             console.warn(
-                `medfetch: non-browser environment detected, returning stub function...`,
+                `[medfetch/sqlite-wasm]: non-browser environment detected, returning stub function...`,
             );
         }
         return ((_: any, ...__: any[]) => void 0) as any;
@@ -137,8 +154,8 @@ export function medfetch(
                 [port1],
             );
             if (result.rc !== 0) {
-                return yield* new MedfetchSqliteError({
-                    message: `medfetch.sqlite: couldn't load in vtab module at ${ModuleURL().toString()}`,
+                return yield* new SqliteWasmError({
+                    message: `Unable to load in vtab module at ${ModuleURL().toString()}`,
                     type: "load-module",
                 });
             }
@@ -159,7 +176,7 @@ export function medfetch(
             let start = 0;
             if (trace) {
                 start = performance.now();
-                console.log(`[medfetch] executing SQL: ${querystring}`);
+                console.log(`[medfetch/sqlite-wasm] executing SQL: ${querystring}`);
             }
 
             const dbId = yield* loadMedfetch;
@@ -174,7 +191,7 @@ export function medfetch(
             
             if (trace) {
                 const elapsed = performance.now() - start;
-                console.log(`[medfetch] query completed in ${elapsed.toFixed(2)}ms`);
+                console.log(`[medfetch/sqlite-wasm] query completed in ${elapsed.toFixed(2)}ms`);
             }
             return result.resultRows as T[];
         });

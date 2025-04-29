@@ -195,10 +195,8 @@ const medfetch_module: VirtualTableExtensionFn = async (
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
 
-            console.time("vtab::fetch");
+            // Look mom, no await!
             const response = fetchSync(url);
-            console.timeEnd("vtab::fetch");
-
             const { flush, nexturl } = Page.genny(response.stream);
             cursor.rows = flush();
             cursor.pageNext = nexturl;
