@@ -38,7 +38,7 @@ export function SQLCodeblock({ children, columns, dropTables }: Props) {
     },
     onError: (e) => console.error(`medfetch-docs error: ${e}`),
     onSuccess: (data) =>
-      console.log(`medfetch-docs sof result ok: size ${data?.length}, rows=${JSON.stringify(data, null, 2)}`),
+      console.log(`medfetch-docs sof result ok: size ${data?.length}`),
     onSettled: async () => {
       if (dropTables && dropTables.length > 0) {
         for (const query of dropTables.map((table) => sql`drop table if exists${table};`)) {

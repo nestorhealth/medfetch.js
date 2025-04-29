@@ -1,3 +1,5 @@
 import { medfetch } from "medfetch/sqlite-wasm";
 
-export const sql = medfetch("https://r4.smarthealthit.org");
+export const sql = medfetch("https://r4.smarthealthit.org", {
+  trace: true
+});

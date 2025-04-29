@@ -156,6 +156,12 @@ export function medfetch(
             "",
         );
         return Effect.gen(function* () {
+            let start = 0;
+            if (trace) {
+                start = performance.now();
+                console.log(`[medfetch] executing SQL: ${querystring}`);
+            }
+
             const dbId = yield* loadMedfetch;
             const { result } = yield* worker1().lazy({
                 type: "exec",
@@ -165,6 +171,11 @@ export function medfetch(
                     rowMode: "object",
                 },
             });
+            
+            if (trace) {
+                const elapsed = performance.now() - start;
+                console.log(`[medfetch] query completed in ${elapsed.toFixed(2)}ms`);
+            }
             return result.resultRows as T[];
         });
     } as any;
