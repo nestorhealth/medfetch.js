@@ -1,5 +1,6 @@
-import { PageSync } from "./src/data"
-import { Bundle } from "./src/sqlite-wasm/vtab.services";
+import { Option } from "effect";
+import { Page } from "../src/data"
+import { Bundle } from "../src/sqlite-wasm/vtab.services";
 
 const startURL = "https://r4.smarthealthit.org/Patient";
 const response = await fetch(startURL);
@@ -22,13 +23,6 @@ const stream = function *() {
         yield chunk;
 }();
 
-let amt = 0;
-try {
-    while (true) {
-        const one = PageSync.flush(stream);
-        console.log(one.id);
-        amt++;
-    }
-} catch (e) {};
-
-console.log(amt);
+const { flush, nexturl } = Page.genny(stream);
+const gen = flush();
+const ids: string[] = [];

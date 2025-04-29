@@ -9,15 +9,18 @@ import type {
 import { flat } from "~/sof";
 import { ViewDefinition } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
-import { Bundle, generateViewDefinition } from "./vtab.services";
+import { generateViewDefinition } from "./vtab.services";
 import { FetchSync } from "~/fetch.services";
+import { Page } from "~/data";
+import { Resource } from "~/data.schema";
 
 interface medfetch_vtab extends sqlite3_vtab {
     baseUrl: string;
 }
 interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
-    index: number;
-    rows: any[];
+    rows: Generator<Resource>;
+    pageNext: () => string | null;
+    peeked: IteratorResult<Resource>;
     viewDefinition: ViewDefinition | null;
 }
 
@@ -111,8 +114,6 @@ const medfetch_module: VirtualTableExtensionFn = async (
                 ppCursor,
             ) as medfetch_vtab_cursor;
             cursor.pVtab = pVtab;
-            cursor.index = 0;
-            cursor.rows = [];
             return capi.SQLITE_OK;
         },
         xClose: (pCursor) => {
@@ -121,12 +122,15 @@ const medfetch_module: VirtualTableExtensionFn = async (
         },
         xNext: (pCursor) => {
             const cursor = getCursor(pCursor);
-            cursor.index++;
+            cursor.peeked = cursor.rows.next();
             return capi.SQLITE_OK;
         },
         xColumn(pCursor, pCtx, iCol) {
             const cursor = getCursor(pCursor);
-            const row = cursor.rows[cursor.index];
+            const { done, value } = cursor.peeked;
+            if (done)
+                throw new Error(`xColumn: cursor.peeked shouldn't be done...`);
+            const row = value;
             switch (iCol) {
                 case 0: {
                     capi.sqlite3_result_text(
@@ -154,48 +158,50 @@ const medfetch_module: VirtualTableExtensionFn = async (
             }
             return capi.SQLITE_OK;
         },
-        xRowid: (pCursor, ppRowid64) => {
-            const cursor = getCursor(pCursor);
-            vtab.xRowid(ppRowid64, cursor.index);
+        xRowid: (_pCursor, _ppRowid64) => {
             return capi.SQLITE_OK;
         },
         xEof: (pCursor) => {
             const cursor = getCursor(pCursor);
-            const atEnd = cursor.index >= cursor.rows.length;
-            return Number(atEnd);
+            if (!cursor.peeked) {
+                cursor.peeked = cursor.rows.next();
+            }
+            
+            if (cursor.peeked.done) {
+                const nextURL = cursor.pageNext();
+                if (nextURL) {
+                    const stream = fetchSync(nextURL).stream;
+                    const { flush, nexturl } = Page.genny(stream);
+                    cursor.rows = flush();
+                    cursor.pageNext = nexturl;
+                    cursor.peeked = cursor.rows.next();
+                    return cursor.peeked.done ? 1 : 0;
+                } else
+                    return 1;
+            }
+            return 0;
         },
         xFilter: (pCursor, _idxNum, _idxCStr, argc, argv) => {
             const args = capi.sqlite3_values_to_js(argc, argv);
             const [resourceType] = args;
             if (typeof resourceType !== "string") {
-                // basic check, may add enum inclusion check later
                 return capi.SQLITE_ERROR;
             }
 
             const cursor = getCursor(pCursor);
             const { baseUrl } = getVirtualTable(cursor.pVtab);
-            // to allow for (1) trailing slash
             let url: string | undefined =
                 baseUrl[baseUrl.length - 1] === "/"
                     ? `${baseUrl}${resourceType}`
                     : `${baseUrl}/${resourceType}`;
 
-            cursor.rows = [];
-            console.time("vtab::fetch+json");
-            while (url) {
-                // look mom, no await!
-                const response = fetchSync(url);
-                const bundle: Bundle = response.json;
-                url = bundle.link.find(
-                    (link) => link.relation === "next"
-                )?.url;
-                cursor.rows.push(
-                    ...bundle.entry.map(({ resource }) => resource)
-                );
-            }
-            console.timeEnd("vtab::fetch+json");
+            console.time("vtab::fetch");
+            const response = fetchSync(url);
+            console.timeEnd("vtab::fetch");
 
-            // handle inline fhirpath transformations
+            const { flush, nexturl } = Page.genny(response.stream);
+            cursor.rows = flush();
+            cursor.pageNext = nexturl;
             cursor.viewDefinition = generateViewDefinition(args);
             return 0;
         },

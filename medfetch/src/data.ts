@@ -172,55 +172,73 @@ export class PageFault extends Data.TaggedError("PageFault")<{
         | "UNKNOWN";
 }> {};
 
-export class Page extends Effect.Service<Page>()("data.Page", {
+export class page extends Effect.Service<page>()("data.Page", {
     sync: () => ({
-        links: kdv<Link[]>("link", 1),
-        entries: kdv<Entry[]>("entry", 1),
-        buffer: [] as Resource[],
-        cursor: -1,
-        nextURL: Option.none<string | undefined>(),
-        reset() {
-            this.entries = kdv<Entry[]>("entry", 1);
-            this.links = kdv<Link[]>("link", 1);
-            this.cursor = -1;
-            this.buffer = [];
-        },
-        flush(buffer: Generator<string>): Resource {
-            if (this.buffer.length > 0) {
-                return this.buffer.shift()!;
+        genny(buffer: Generator<string>) {
+            let cursor = -1;
+            let nextURL = Option.none<string>();
+            let isLinkParsed = false;
+            const parseLink = kdv<Link[]>("link", 1);
+            const parseEntry = kdv<Entry[]>("entry", 1);
+            const acc: Resource[] = [];
+            
+            function nexturl() {
+                return Option.getOrNull(nextURL);
             }
-            const { value, done } = buffer.next();
-            if (done || !value) {
-                throw new PageFault({ cause: "EOF", message: "Genny done." });
-            }
-            if (Option.isNone(this.nextURL)) {
-                const opt = this.links(value);
-                if (Option.isSome(opt)) {
-                    const { hd } = Option.getOrThrowWith(opt, () => new PageFault({
-                        cause: "UNKNOWN",
-                        message: "Page flush unexpected unknown error while grabbing Bundle Links."
-                    }));
-                    this.nextURL = Option.some(hd.find((link) => link.relation === "next")?.url);
+            function *flush() {
+                while (true) {
+                    if (acc.length > 0) {
+                        yield acc.shift()!;
+                    }
+                    const { done, value } = buffer.next();
+                    if (done || !value)
+                        break;
+                    if (Option.isNone(nextURL) && !isLinkParsed) {
+                        parseLink(value).pipe(
+                            Option.map(
+                                ({ hd }) => {
+                                    isLinkParsed = true;
+                                    const searched = hd.find((link) => link.relation === "next")?.url;
+                                    if (searched)
+                                        nextURL = Option.some(searched);
+                                } 
+                            ),
+                        )
+                    }
+                    const popped = parseEntry(value).pipe(
+                        Option.flatMap(
+                            ({ hd }) => {
+                                if (hd.length > 0) {
+                                    const flushed = hd
+                                        .slice(cursor + 1)
+                                        .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)
+                                        .map(({ resource }) => resource);
+                                    cursor = hd.length - 1;
+                                    acc.push(...flushed);
+                                    return Option.some(acc.shift()!);
+                                } else
+                                    return Option.none();
+                            }
+                        )
+                    );
+                    if (Option.isSome(popped)) {
+                        yield Option.getOrThrow(popped);
+                    }
                 }
-            }
-            const result = this.entries(value);
-            const { hd } = Option.getOrThrowWith(result, () => new PageFault({
-                message: `data.Page: couldn't unwrap the chunk Some Option`,
-                cause: "UNKNOWN"
-            }));
-            this.buffer = hd
-                .slice(this.cursor + 1)
-                .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)
-                .map(({ resource }) => resource);
-            this.cursor = hd.length - 1;
-
-            return this.buffer.shift()!;
-        }
+                while (acc.length > 0)
+                    yield acc.shift()!;
+            };
+            
+            return {
+                nexturl,
+                flush
+            };
+        },
     }),
     accessors: true
 }) {};
 
-export const PageSync = Effect.runSync(Effect.provide(Page.Default)(Page));
+export const Page = Effect.runSync(Effect.provide(page.Default)(page));
 
 const Bundle = Resource("Bundle", {
     link: Link.pipe(Schema.Array),
