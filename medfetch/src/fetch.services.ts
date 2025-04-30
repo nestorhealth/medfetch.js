@@ -23,7 +23,7 @@ export type Fetch = Data.TaggedEnum<{
 
 export const Fetch = Data.taggedEnum<Fetch>();
 
-export class FetchSyncError extends Data.Error<{ 
+export class FetchSyncError extends Data.TaggedError("medfetch/fetch")<{ 
     message?: string;
 }> {};
 

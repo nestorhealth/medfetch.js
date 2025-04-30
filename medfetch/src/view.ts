@@ -1,4 +1,4 @@
-import { Schema } from "effect";
+import { Data, Schema } from "effect";
 
 import { appendAll, filterMap } from "effect/Array";
 import { when, value, orElse, defined } from "effect/Match";
@@ -55,6 +55,7 @@ const _ColumnPath = Schema.Struct({
     type: ow(Schema.String, { exact: true }),
     tags: ow(Schema.Array(Tag), { exact: true }),
 });
+
 /**
  * The ColumnPath schema that the View
  * layer expects to work with
@@ -67,8 +68,8 @@ export interface ColumnPath<TName extends string = string>
     name: TName;
     type?: string;
 }
+export const ColumnPath = Data.case<ColumnPath>();
 
-export const ColumnPath: Schema.Schema<ColumnPath> = _ColumnPath;
 
 /**
  * "Typesafe" `ColumnPath` constructor function that binds
@@ -81,7 +82,7 @@ export const ColumnPath: Schema.Schema<ColumnPath> = _ColumnPath;
  * @param input - the column path
  * @returns input args
  */
-const decodeColumnPathOption = Schema.decodeOption(ColumnPath);
+const decodeColumnPathOption = Schema.decodeOption(_ColumnPath);
 type BaseSelect = {
     readonly column?: readonly ColumnPath[];
     readonly select?: readonly BaseSelect[];
@@ -91,7 +92,7 @@ type BaseSelect = {
 };
 
 const SelectJSON = Schema.Struct({
-    column: ow(Schema.Array(ColumnPath), {
+    column: ow(Schema.Array(_ColumnPath), {
         exact: true,
     }),
     select: ow(
@@ -136,7 +137,7 @@ export const { Select, Column, ForEach, ForEachOrNull, UnionAll, $match } =
 
 const Node = Schema.Union(
     Schema.TaggedStruct("Column", {
-        column: Schema.Array(Schema.typeSchema(ColumnPath)),
+        column: Schema.Array(Schema.typeSchema(_ColumnPath)),
     }),
     Schema.TaggedStruct("Select", {
         select: Schema.Array(Schema.suspend((): Schema.Schema<Node> => Node)),

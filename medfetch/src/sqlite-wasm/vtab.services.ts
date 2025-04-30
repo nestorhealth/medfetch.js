@@ -8,7 +8,7 @@ import { TaggedError } from "effect/Data";
  * Namespaced error class
  */
 class MedfetchVtabError extends TaggedError(
-    "sqlite-wasm/vtab",
+    "medfetch/sqlite-wasm/vtab",
 )<{
     message: string;
 }> {
@@ -85,7 +85,7 @@ export function generateViewDefinition(args: SqlValue[]) {
     const columns = paths.reduce(
         (acc, pathArg) => {
             if (typeof pathArg === "string") {
-                acc.push(({
+                acc.push(ColumnPath({
                     path: pathArg,
                     name: getColumnName(pathArg),
                     collection: true
@@ -93,7 +93,7 @@ export function generateViewDefinition(args: SqlValue[]) {
             } else if (pathArg.length === 2) {
                 const [name, path] = pathArg;
                 acc.push(
-                    ({
+                    ColumnPath({
                         path,
                         name,
                         collection: true

@@ -77,7 +77,7 @@ In either case, you pass your View Definition to the `flat` function:
 ```ts
 import { 
     viewDefinition,
-    column,
+    Column,
     columnPath,
     flat
 } from "medfetch";
@@ -87,7 +87,7 @@ const patientView = viewDefinition({
     status: "active",
     resource: "Patient",
     select: [
-        column({
+        Column({
             column: [
                 columnPath({
                     name: "id",

@@ -9,7 +9,7 @@ import {
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
 
-class DataError extends Data.TaggedError("medfetch.DataError")<{
+class DataError extends Data.TaggedError("medfetch/data")<{
     readonly message: string;
 }> {
     constructor(msg: string | { message: string } = "Unknown error") {

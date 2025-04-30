@@ -1,5 +1,3 @@
-// Export select 'leaf' builder
-
 import { pages } from "./data";
 
 import { flat } from "./sof";
@@ -9,14 +7,14 @@ export { pkce } from "./data";
 
 export {
     normalize,
-    Select as select,
-    ForEach as forEach,
-    ForEachOrNull as forEachOrNull,
-    UnionAll as unionAll,
+    Select,
+    ForEach,
+    ForEachOrNull,
+    UnionAll,
+    ColumnPath
 } from "./view";
 
 export type {
-    ColumnPath,
     Node,
     Constant,
 } from "./view";
