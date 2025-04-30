@@ -148,7 +148,7 @@ export function medfetch(
                     args: {
                         moduleURL: ModuleURL().toString(),
                         moduleName: "medfetch",
-                        aux: new TextEncoder().encode(baseURL),
+                        aux: { baseURL }
                     },
                 },
                 [port1],
@@ -176,7 +176,7 @@ export function medfetch(
             let start = 0;
             if (trace) {
                 start = performance.now();
-                console.log(`[medfetch/sqlite-wasm] executing SQL: ${querystring}`);
+                console.log(`[medfetch/sqlite-wasm]: executing SQL ("${querystring}")`);
             }
 
             const dbId = yield* loadMedfetch;
@@ -191,7 +191,7 @@ export function medfetch(
             
             if (trace) {
                 const elapsed = performance.now() - start;
-                console.log(`[medfetch/sqlite-wasm] query completed in ${elapsed.toFixed(2)}ms`);
+                console.log(`[medfetch/sqlite-wasm]: query completed in ${elapsed.toFixed(2)}ms`);
             }
             return result.resultRows as T[];
         });

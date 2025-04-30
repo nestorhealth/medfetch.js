@@ -23,7 +23,7 @@ interface medfetch_vtab extends sqlite3_vtab {
      * The base URL of the FHIR server to ping, expected
      * to be passed in via pAux from the user.
      */
-    baseUrl: string;
+    baseURL: string;
 }
 
 /**
@@ -59,6 +59,7 @@ interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
  * @param pAux The pointer to the 
  * @returns pAux dereferneced: *(pAux)
  */
+//@ts-ignore -- don't need this if user's can pass in plain JS data from the closure
 function decodeBaseURL({ wasm }: Sqlite3, pAux: WasmPointer): string {
     const size = new DataView(wasm.heap8().buffer, pAux, 4).getUint32(0, true);
     const urlBuffer = new DataView(wasm.heap8().buffer, pAux + 4, size);
@@ -66,12 +67,13 @@ function decodeBaseURL({ wasm }: Sqlite3, pAux: WasmPointer): string {
 }
 
 /**
- * Based on the original C extension for native, but this time... 
- * with actual FHIRPath support !!
+ * Based on the original C extension for native, but this time... with actual FHIRPath support !!
  */
-const medfetch_module: VirtualTableExtensionFn = async (
+const medfetch_module: VirtualTableExtensionFn<{
+    baseURL: string;
+}> = async (
     sqlite3,
-    { transfer },
+    { transfer, aux },
 ) => {
     const { capi, vtab } = sqlite3;
     const fetchPort = transfer[0];
@@ -90,7 +92,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
     return {
         /* Set to 0 to mark as eponymous (something to do with being able to call as TVF) */
         xCreate: 0,
-        xConnect(pDb, pAux, _argc, _argv, ppVtab, _pzErr) {
+        xConnect(pDb, _pAux, _argc, _argv, ppVtab, _pzErr) {
             let rc = capi.SQLITE_OK;
             rc += capi.sqlite3_declare_vtab(
                 pDb,
@@ -103,7 +105,7 @@ const medfetch_module: VirtualTableExtensionFn = async (
             );
             if (!rc) {
                 const virtualTable = vtab.xVtab.create(ppVtab) as medfetch_vtab;
-                virtualTable.baseUrl = decodeBaseURL(sqlite3, pAux);
+                virtualTable.baseURL = aux.baseURL;
             }
             return rc;
         },
@@ -217,16 +219,14 @@ const medfetch_module: VirtualTableExtensionFn = async (
             }
 
             const cursor = getCursor(pCursor);
-            const { baseUrl } = getVirtualTable(cursor.pVtab);
+            const { baseURL } = getVirtualTable(cursor.pVtab);
             let url: string | undefined =
-                baseUrl[baseUrl.length - 1] === "/"
-                    ? `${baseUrl}${resourceType}`
-                    : `${baseUrl}/${resourceType}`;
+                baseURL[baseURL.length - 1] === "/"
+                    ? `${baseURL}${resourceType}`
+                    : `${baseURL}/${resourceType}`;
 
             // Look mom, no await!
             const response = fetchSync(url);
-            if (response.status === 401) {
-            }
             const { flush, nexturl } = Page.handler(response.stream);
             cursor.rows = flush();
             cursor.pageNext = nexturl;

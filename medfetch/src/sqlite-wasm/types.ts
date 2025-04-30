@@ -9,6 +9,7 @@ import type {
     Worker1Request,
     Worker1ResponseBase,
     Worker1ResponseError,
+    sqlite3_module
 } from "@sqlite.org/sqlite-wasm";
 import { Effect } from "effect";
 
@@ -55,9 +56,22 @@ interface BetterWorker1LoadModuleRequest extends BetterWorker1MessageBase {
         moduleURL: string; // can't pass a URL over threads (it's a class!)
         moduleName: string;
         portKeys?: string[]; // corresponding messageIds
-        preloadAux?: any[];
-        aux?: Uint8Array; // encode as Uint8Array, so user is in charge of converting it back
-        // correctly in their module code
+        
+        /**
+         * Any user defined auxillary data they want to pass back
+         * to their module init export function.
+         */
+        aux?: Record<string, any>;
+
+        /**
+         * The data that {@link sqlite3_module["xCreate"]} will pass in for
+         * arg1 `pAux`.
+         *
+         * Mainly unnecessary since the load-module interface for user-modules
+         * wraps {@link aux} in a closure (so you can pass plain JS data through it), but is here anyway as an option if aux doesn't work
+         * for some edge case.
+         */
+        pAuxBytes?: Uint8Array;
     };
 }
 
@@ -93,7 +107,7 @@ type _BetterWorker1Response =
     | BetterWorker1LoadModuleResponse;
 
 /**
- * Response message
+ * Public Response {@link MessageEvent.data} type
  */
 export type BetterWorker1Response<
     MessageType extends BetterWorker1MessageType = BetterWorker1MessageType,

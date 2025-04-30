@@ -7,7 +7,7 @@ import type {
 } from "@sqlite.org/sqlite-wasm";
 import { Effect, Match, pipe } from "effect";
 import {
-    LoadModuleError,
+    MedfetchLoadModuleError,
     Sqlite3InitModule,
     Sqlite3InitModuleFunc,
     bootstrap,
@@ -15,7 +15,6 @@ import {
 } from "./worker1.services.js";
 
 /* END SQLITE-ON-WASM CUSTOM EXTENSIONS FOR WORKER */
-
 function matchMessage<O>(
     message: BetterWorker1Request,
     handlers: MessageHandlers<O>,
@@ -33,7 +32,6 @@ function matchMessage<O>(
 
 /**
  * Response wrapper
- *
  * @param response the response data
  * @returns void, this just sends it, if we get an error, it's unexpected
  */
@@ -56,7 +54,6 @@ function response(
 function checkRc(
     sqlite3: Sqlite3Static,
     db: WasmPointer | Database | number,
-    path: string,
     rc: number,
 ) {
     return Effect.try({
@@ -64,9 +61,8 @@ function checkRc(
             sqlite3.oo1.DB.checkRc(db, rc),
         catch: (e) => {
             if (e instanceof sqlite3.SQLite3Error) return e;
-            return new LoadModuleError({
+            return new MedfetchLoadModuleError({
                 code: "UNKNOWN",
-                path,
                 message: `better-worker1.main.checkRc: (rc=${rc}) unknown error thrown injecting the module:`,
             });
         },
@@ -74,9 +70,9 @@ function checkRc(
 }
 
 /**
- * Hack to get the pointer from the dbId,
- * despite the docs saying it's not guaranteed to mean anything...
- * based on the dist code:
+ * Hack to get the pointer from the dbId, despite the docs saying it's 
+ * not guaranteed to mean anything...
+ * Based on the dist code:
  * ```ts
  * // sqlite3.mjs line 11390
  * const getDbId = function (db) {
@@ -88,12 +84,12 @@ function checkRc(
  *   return id;
  * };
  * ```
- * a virtual table / any runtime loadable extension lives in memory only,
+ * A virtual table / any runtime loadable extension lives in memory only,
  * so the lifetime of an extension should match that of a database
  * on the heap, so this should (hopefully) be fine...
  *
- * @param dbId the database id assigned by the worker API
- * @returns the pointer value as a raw js number
+ * @param dbId The database id assigned by the worker API
+ * @returns The pointer value as a raw js number
  *
  */
 function idToPointer(dbId: string): number {
@@ -127,16 +123,14 @@ const run = Effect.gen(function* () {
             onLoadModule: async ({ dbId, args, messageId }) =>
                 await Effect.gen(function* () {
                     if (!dbId) {
-                        return yield* new LoadModuleError({
-                            message: `better-worker1.worker1: you have no database opened lol`,
-                            path: "",
+                        return yield* new MedfetchLoadModuleError({
+                            message: `you have no database opened lol`,
                             code: "BAD_CALL",
                         });
                     }
                     if (args === undefined) {
-                        return yield* new LoadModuleError({
-                            message: `better-worker1.worker1: "message.args" can't be undefined when invoking load-module`,
-                            path: "",
+                        return yield* new MedfetchLoadModuleError({
+                            message: `"message.args" can't be undefined when invoking load-module`,
                             code: "BAD_CALL",
                         });
                     }
@@ -147,7 +141,7 @@ const run = Effect.gen(function* () {
                         sqlite3,
                         args.moduleURL,
                         {
-                            preload: args.preloadAux,
+                            aux: args.aux,
                             transfer: event.ports,
                         },
                     );
@@ -158,14 +152,13 @@ const run = Effect.gen(function* () {
                     });
 
                     // user aux pointer if they have any data
-                    // and then
                     // pAux only lives for the xCreate call,
                     // so we'll let sqlite's scope api handle destroying it
                     let rc = 0;
                     let pAux: WasmPointer = 0;
                     try {
-                        if (args.aux) {
-                            const size = args.aux.byteLength;
+                        if (args.pAuxBytes) {
+                            const size = args.pAuxBytes.byteLength;
                             pAux = sqlite3.wasm.alloc(size);
                             if (pAux === 0) {
                                 rc = -1;
@@ -177,8 +170,8 @@ const run = Effect.gen(function* () {
                                 4,
                             );
                             // write in size from bytes 0 - 4 (supports up to 2^31 bits)
-                            view.setInt32(0, args.aux.byteLength, true); // little endian
-                            sqlite3.wasm.heap8u().set(args.aux, pAux + 4);
+                            view.setInt32(0, args.pAuxBytes.byteLength, true); // little endian
+                            sqlite3.wasm.heap8u().set(args.pAuxBytes, pAux + 4);
                         }
                         rc = sqlite3.capi.sqlite3_create_module(
                             pdb,
@@ -188,16 +181,15 @@ const run = Effect.gen(function* () {
                         );
                     } finally {
                         if (rc === -1) {
-                            return yield* new LoadModuleError({
-                                message: `better-worker1.worker1: stack can't handle ${args.aux?.byteLength} more bytes`,
+                            return yield* new MedfetchLoadModuleError({
+                                message: `better-worker1.worker1: stack can't handle ${args.pAuxBytes?.byteLength} more bytes`,
                                 code: "NO_MEM",
-                                path: args.moduleURL,
                             });
                         }
                     }
 
                     // will short circut if rc != 0
-                    yield* checkRc(sqlite3, pdb, args.moduleURL, rc);
+                    yield* checkRc(sqlite3, pdb, rc);
 
                     // workaround: just use the 'exec' type
                     // which i didn't bother typing out for now
