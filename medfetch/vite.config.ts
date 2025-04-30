@@ -4,13 +4,20 @@ import path from "node:path";
 export default defineConfig({
     // @ts-ignore
     test: {
-        coverage: {
-            exclude: [
-                "src/examples/**",
-                "**/*.test.ts"
-            ],
-            include: [
-                "src/**"
+        // coverage: {
+        //     exclude: [
+        //         "src/examples/**",
+        //         "**/*.test.ts"
+        //     ],
+        //     include: [
+        //         "src/**"
+        //     ]
+        // },
+        browser: {
+            enabled: true,
+            provider: "preview",
+            instances: [
+                { browser: "chromium" }
             ]
         }
     },

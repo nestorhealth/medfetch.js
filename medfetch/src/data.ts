@@ -394,3 +394,5 @@ export const pages = (
         pageIterator(baseUrl, resourceType)(n, maxPageSize),
         (e) => new DataError({ message: String(e) }),
     );
+
+export { pkce } from "./data.auth.js";

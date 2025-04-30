@@ -5,6 +5,8 @@ import { pages } from "./data";
 import { flat } from "./sof";
 export { flat };
 
+export { pkce } from "./data";
+
 export {
     normalize,
     Select as select,
