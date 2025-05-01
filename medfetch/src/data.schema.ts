@@ -1,16 +1,17 @@
-import { ParseResult, Schema } from "effect";
+import { Any, Array as $Array, Struct, String, type Schema, tag, declare, optionalWith } from "effect/Schema";
+import { decodeUnknown, encodeUnknown } from "effect/ParseResult";
 
 /**
  * The bare minimum schema for a Resource
  * @param id The surrogate key for the Resource
  * @param resourceType The type of the Resource
  */
-const Base = Schema.Struct(
+const Base = Struct(
     {
-        id: Schema.String,
-        resourceType: Schema.String,
+        id: String,
+        resourceType: String,
     },
-    { key: Schema.String, value: Schema.Any },
+    { key: String, value: Any },
 );
 type Base = typeof Base.Type;
 
@@ -29,48 +30,48 @@ export type Resource<
     [K in keyof Shape]: Shape[K];
 };
 
-export function Resource(): Schema.Schema<{
+export function Resource(): Schema<{
     readonly id: string;
     readonly resourceType: string;
 }>;
 export function Resource<
     const ResourceType extends string,
-    const Shape extends Record<string, Schema.Struct.Field>,
+    const Shape extends Record<string, Struct.Field>,
 >(
     resourceType: ResourceType,
     shape?: Shape,
-): Schema.Schema<
+): Schema<
     {
         readonly id: string;
         readonly resourceType: ResourceType;
-    } & Schema.Schema.Type<Schema.Struct<Shape>>,
+    } & Schema.Type<Struct<Shape>>,
     {
         readonly id: string;
         readonly resourceType: ResourceType;
-    } & Schema.Schema.Encoded<Schema.Struct<Shape>>
+    } & Schema.Encoded<Struct<Shape>>
 >;
 export function Resource<
     const ResourceType extends string,
-    const Shape extends Record<string, Schema.Struct.Field>,
+    const Shape extends Record<string, Struct.Field>,
 >(resourceType?: ResourceType, shape?: Shape) {
     if (!resourceType) return Base;
 
     const fullShape = {
-        id: Schema.String,
-        resourceType: Schema.tag(resourceType),
+        id: String,
+        resourceType: tag(resourceType),
         ...shape,
     };
 
-    const struct = Schema.Struct(fullShape);
+    const struct = Struct(fullShape);
 
-    return Schema.declare(
+    return declare(
         [struct],
         {
             decode: (s) => (input, options, _ast) => {
-                return ParseResult.decodeUnknown(s)(input, options);
+                return decodeUnknown(s)(input, options);
             },
             encode: (s) => (input, options, _ast) => {
-                return ParseResult.encodeUnknown(s)(input, options);
+                return encodeUnknown(s)(input, options);
             },
         },
         {
@@ -89,26 +90,26 @@ export function Entry<
     ResourceType extends string,
     Shape extends Record<string, any> = {},
 >(
-    resource: Schema.Schema<Resource<ResourceType, Shape>>,
-): Schema.Schema<
-    Entry<Schema.Schema.Type<typeof resource>>,
-    Entry<Schema.Schema.Encoded<typeof resource>>
+    resource: Schema<Resource<ResourceType, Shape>>,
+): Schema<
+    Entry<Schema.Type<typeof resource>>,
+    Entry<Schema.Encoded<typeof resource>>
 > {
-    return Schema.Struct({
-        link: Schema.String.pipe(
-            Schema.Array,
-            Schema.optionalWith({ exact: true }),
+    return Struct({
+        link: String.pipe(
+            $Array,
+            optionalWith({ exact: true }),
         ),
-        fullUrl: Schema.String.pipe(Schema.optionalWith({ exact: true })),
-        resource: resource.pipe(Schema.optionalWith({ exact: true })),
+        fullUrl: String.pipe(optionalWith({ exact: true })),
+        resource: resource.pipe(optionalWith({ exact: true })),
     });
 }
 
-const _Link = Schema.Struct({
-    relation: Schema.String,
-    url: Schema.String,
+const _Link = Struct({
+    relation: String,
+    url: String,
 });
 type _Link = typeof _Link.Type;
 
-export interface Link extends Schema.Schema.Type<typeof _Link> {}
-export const Link: Schema.Schema<Link> = _Link;
+export interface Link extends Schema.Type<typeof _Link> {}
+export const Link: Schema<Link> = _Link;

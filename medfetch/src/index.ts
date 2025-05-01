@@ -1,10 +1,10 @@
+import { Chunk, Effect, pipe, Stream } from "effect";
 import { pages } from "./data";
-
 import { flat } from "./sof";
+import { ViewDefinition, Column } from "./view";
+
 export { flat };
-
 export { pkce } from "./data";
-
 export {
     normalize,
     Select,
@@ -13,17 +13,11 @@ export {
     UnionAll,
     ColumnPath
 } from "./view";
-
 export type {
     Node,
     Constant,
 } from "./view";
-
-/* view.js dependencies for this file */
-import { ViewDefinition, Column } from "./view";
 export { ViewDefinition, Column };
-
-import { Chunk, Effect, pipe, Stream } from "effect";
 
 type Last<Path extends string> = Path extends `${infer _}.${infer Rest}`
     ? Last<Rest>

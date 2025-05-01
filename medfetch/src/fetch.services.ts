@@ -1,6 +1,6 @@
-import { Data } from "effect";
+import { type TaggedEnum, taggedEnum, TaggedError } from "effect/Data";
 
-export type Fetch = Data.TaggedEnum<{
+export type Fetch = TaggedEnum<{
     readonly request: {
         readonly sab: SharedArrayBuffer;
         readonly id: number;
@@ -21,9 +21,9 @@ export type Fetch = Data.TaggedEnum<{
     }
 }>;
 
-export const Fetch = Data.taggedEnum<Fetch>();
+export const Fetch = taggedEnum<Fetch>();
 
-export class FetchSyncError extends Data.TaggedError("medfetch/fetch")<{ 
+export class FetchSyncError extends TaggedError("medfetch/fetch")<{ 
     message?: string;
 }> {};
 

@@ -1,5 +1,5 @@
-import { Effect } from "effect";
 import { Fetch } from "./fetch.services.js";
+import { fromNullable, runSync, tap } from "effect/Effect";
 
 const __RESPONSE_MAP__ = new Map<number, Response>();
 const __READER_MAP__ = new Map<number, ReadableStreamDefaultReader>();
@@ -109,11 +109,11 @@ const onMessage = (e: MessageEvent<Fetch>): Promise<void> => {
 };
 
 self.onmessage = (e) =>
-    Effect.fromNullable(e.ports[0])
+    fromNullable(e.ports[0])
     .pipe(
-        Effect.tap((port) => {
+        tap((port) => {
             port.onmessage = onMessage;
             port.postMessage("fetch-ready");
         }),
     )
-    .pipe(Effect.runSync);
+    .pipe(runSync);

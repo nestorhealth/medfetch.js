@@ -1,15 +1,13 @@
-import {
-    Array,
-    Data,
-    Effect,
-    Option,
-    Schema,
-    Stream,
-} from "effect";
+import { pipe } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
+import { case as createCase, TaggedError } from "effect/Data";
+import { getOrNull, isNone, none, type Option, some, map as mapOption, flatMap as flatMapOption, isSome, getOrThrow, fromNullable } from "effect/Option";
+import { Service, andThen, flatMap, liftPredicate, provide, runPromise, runSync, tryPromise } from "effect/Effect";
+import { Array as $Array, decodeUnknown, type Schema } from "effect/Schema";
+import { fromAsyncIterable } from "effect/Stream";
 
-class DataError extends Data.TaggedError("medfetch/data")<{
+class DataError extends TaggedError("medfetch/data")<{
     readonly message: string;
 }> {
     constructor(msg: string | { message: string } = "Unknown error") {
@@ -46,7 +44,7 @@ interface KDVParseResult<Value> {
  * @param chunk The next available chunk of the Bundle to send to {@link clarinet.CParser.write}
  * @returns Some {@link KDVParseResult} if it exists. None otherwise.
  */
-type KDVParseFn<Value> = (chunk: string) => Option.Option<KDVParseResult<Value>>;
+type KDVParseFn<Value> = (chunk: string) => Option<KDVParseResult<Value>>;
 
 /**
  * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
@@ -157,10 +155,10 @@ export const kdv = <Value = unknown>(
         }
     };
 
-    return (chunk: string): Option.Option<KDVParseResult<Value>> => {
+    return (chunk: string): Option<KDVParseResult<Value>> => {
         parser.write(chunk);
         if (!!v) {
-            return Option.some({
+            return some({
                 hd: v,
                 tl: null
             });
@@ -168,7 +166,7 @@ export const kdv = <Value = unknown>(
             const hd = structuredClone(stack[0]);
             if (Array.isArray(hd)) {
                 const popped = hd.pop();
-                return Option.some({
+                return some({
                     hd: hd as Value,
                     tl: popped as any
                 });
@@ -177,13 +175,13 @@ export const kdv = <Value = unknown>(
                 const last = keys[keys.length - 1];
                 const lastChild = hd[last];
                 delete hd[last];
-                return Option.some({
+                return some({
                     hd: hd as Value,
                     tl: lastChild as any
                 });
             }
         } else {
-            return Option.none();
+            return none();
         }
     };
 };
@@ -215,12 +213,12 @@ interface PageHandler<ResourceType extends string = string> {
  * @param args The required fields of a {@link PageHandler}
  * @returns {@link PageHandler}
  */
-const pageHandler = Data.case<PageHandler>();
+const pageHandler = createCase<PageHandler>();
 
 /**
  * Template for Bundle stream handling
  */
-export class page extends Effect.Service<page>()("data.Page", {
+export class page extends Service<page>()("data.Page", {
     sync: () => ({
         /**
          * Parse text chunks of a FHIR bundle from a *synchronous* generator
@@ -230,14 +228,14 @@ export class page extends Effect.Service<page>()("data.Page", {
          */
         handler(bundleChunks: Generator<string>): PageHandler {
             let cursor = -1;
-            let nextURL = Option.none<string>();
+            let nextURL = none<string>();
             let isLinkParsed = false;
             const parseLink = kdv<Link[]>("link", 1);
             const parseEntry = kdv<Entry[]>("entry", 1);
             const acc: Resource[] = [];
             return pageHandler({
                 nexturl() {
-                    return Option.getOrNull(nextURL);
+                    return getOrNull(nextURL);
                 },
                 *flush() {
                 while (true) {
@@ -247,20 +245,20 @@ export class page extends Effect.Service<page>()("data.Page", {
                     const { done, value } = bundleChunks.next();
                     if (done || !value)
                         break;
-                    if (Option.isNone(nextURL) && !isLinkParsed) {
+                    if (isNone(nextURL) && !isLinkParsed) {
                         parseLink(value).pipe(
-                            Option.map(
+                            mapOption(
                                 ({ hd }) => {
                                     isLinkParsed = true;
                                     const searched = hd.find((link) => link.relation === "next")?.url;
                                     if (searched)
-                                        nextURL = Option.some(searched);
+                                        nextURL = some(searched);
                                 } 
                             ),
                         )
                     }
                     const popped = parseEntry(value).pipe(
-                        Option.flatMap(
+                        flatMapOption(
                             ({ hd }) => {
                                 if (hd.length > 0) {
                                     const flushed = hd
@@ -269,14 +267,14 @@ export class page extends Effect.Service<page>()("data.Page", {
                                         .map(({ resource }) => resource);
                                     cursor = hd.length - 1;
                                     acc.push(...flushed);
-                                    return Option.some(acc.shift()!);
+                                    return some(acc.shift()!);
                                 } else
-                                    return Option.none();
+                                    return none();
                             }
                         )
                     );
-                    if (Option.isSome(popped)) {
-                        yield Option.getOrThrow(popped);
+                    if (isSome(popped)) {
+                        yield getOrThrow(popped);
                     }
                 }
                 while (acc.length > 0)
@@ -291,14 +289,14 @@ export class page extends Effect.Service<page>()("data.Page", {
 /**
  * The default implementation of the {@link page} helper class.
  */
-export const Page = Effect.runSync(Effect.provide(page.Default)(page));
+export const Page = runSync(provide(page.Default)(page));
 
 const Bundle = Resource("Bundle", {
-    link: Link.pipe(Schema.Array),
-    entry: Entry(Resource()).pipe(Schema.Array),
+    link: Link.pipe($Array),
+    entry: Entry(Resource()).pipe($Array),
 });
-interface Bundle extends Schema.Schema.Type<typeof Bundle> {}
-const decodeBundle = Schema.decodeUnknown(Bundle);
+interface Bundle extends Schema.Type<typeof Bundle> {}
+const decodeBundle = decodeUnknown(Bundle);
 
 /**
  * Gets the link from the `Bundle.link`
@@ -307,10 +305,11 @@ const decodeBundle = Schema.decodeUnknown(Bundle);
  * @returns `Option.some` with the url if `'next' in Bundle.link.relation` exists. `Option.none` otherwise.
  *
  */
-const nextLink = (bundle: Bundle) =>
-    Array.findFirst(bundle.link, (link) => link.relation === "next").pipe(
-        Option.map((link) => link.url),
-    );
+const nextLink = (bundle: Bundle) => pipe(
+    bundle.link.find((link) => link.relation === "next"),
+    fromNullable,
+    mapOption((link) => link.url)
+);
 
 /**
  * `fetch()` wrapper over an HTTP GET call.
@@ -324,9 +323,9 @@ const nextLink = (bundle: Bundle) =>
  * @returns a decoded Bundle
  */
 const get = (url: string) =>
-    Effect.tryPromise(() => fetch(url)).pipe(
-        Effect.andThen((response) =>
-            Effect.liftPredicate(
+    tryPromise(() => fetch(url)).pipe(
+        andThen((response) =>
+            liftPredicate(
                 response,
                 (res) => res.ok,
                 (res) =>
@@ -335,8 +334,8 @@ const get = (url: string) =>
                     }),
             ),
         ),
-        Effect.andThen((response) => Effect.tryPromise(() => response.json())),
-        Effect.flatMap(decodeBundle),
+        andThen((response) => tryPromise(() => response.json())),
+        flatMap(decodeBundle),
     );
 
 /**
@@ -351,16 +350,16 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         const upperLimit = n < 0 ? Infinity : n;
         let count = 0;
 
-        const firstPage = await Effect.runPromise(
+        const firstPage = await runPromise(
             get(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
         );
         yield firstPage;
         count += firstPage.entry!.length;
 
         let linkOption = nextLink(firstPage);
-        while (Option.isSome(linkOption) && count < upperLimit) {
-            const link = Option.getOrThrow(linkOption);
-            const page = await Effect.runPromise(get(link));
+        while (isSome(linkOption) && count < upperLimit) {
+            const link = getOrThrow(linkOption);
+            const page = await runPromise(get(link));
             yield page;
 
             count++;
@@ -390,7 +389,7 @@ export const pages = (
     n = 100,
     maxPageSize = 250,
 ) =>
-    Stream.fromAsyncIterable(
+    fromAsyncIterable(
         pageIterator(baseUrl, resourceType)(n, maxPageSize),
         (e) => new DataError({ message: String(e) }),
     );

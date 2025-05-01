@@ -1,59 +1,58 @@
-import { Data, Schema } from "effect";
-
 import { appendAll, filterMap } from "effect/Array";
 import { when, value, orElse, defined } from "effect/Match";
+import { Array as $Array, Boolean, Schema, Struct, String, Number, Union, is, decodeOption, suspend, optionalWith, TaggedStruct, typeSchema, transform, decodeSync, Literal, NonEmptyArray } from "effect/Schema";
 import type { TaggedEnum } from "effect/Data";
-import { tagged, taggedEnum } from "effect/Data";
+import { tagged, taggedEnum, case as createCase } from "effect/Data";
 
 /// ALIAS
-const ow = Schema.optionalWith;
+const ow = optionalWith;
 
-export const Where = Schema.Struct({
-    path: Schema.String,
-    description: ow(Schema.String, { exact: true }),
+export const Where = Struct({
+    path: String,
+    description: ow(String, { exact: true }),
 });
-export type Where = Schema.Schema.Type<typeof Where>;
+export type Where = Schema.Type<typeof Where>;
 
-const _Constant = Schema.Struct({
-    name: Schema.String,
-    valueBase64Binary: ow(Schema.String, { exact: true }),
-    valueBoolean: ow(Schema.String, { exact: true }),
-    valueCanonical: ow(Schema.String, { exact: true }),
-    valueCode: ow(Schema.String, { exact: true }),
-    valueDate: ow(Schema.String, { exact: true }),
-    valueDateTime: ow(Schema.String, { exact: true }),
-    valueDecimal: ow(Schema.String, { exact: true }),
-    valueId: ow(Schema.String, { exact: true }),
-    valueInstant: ow(Schema.Number, { exact: true }),
-    valueInteger: ow(Schema.Number, { exact: true }),
-    valueOid: ow(Schema.String, { exact: true }),
-    valuePositiveInt: ow(Schema.Number, { exact: true }),
-    valueString: ow(Schema.String, { exact: true }),
-    valueTime: ow(Schema.String, { exact: true }),
-    valueUnsignedInt: ow(Schema.Number, { exact: true }),
-    valueUri: ow(Schema.String, { exact: true }),
-    valueUrl: ow(Schema.String, { exact: true }),
-    valueUuid: ow(Schema.String, { exact: true }),
+const _Constant = Struct({
+    name: String,
+    valueBase64Binary: ow(String, { exact: true }),
+    valueBoolean: ow(String, { exact: true }),
+    valueCanonical: ow(String, { exact: true }),
+    valueCode: ow(String, { exact: true }),
+    valueDate: ow(String, { exact: true }),
+    valueDateTime: ow(String, { exact: true }),
+    valueDecimal: ow(String, { exact: true }),
+    valueId: ow(String, { exact: true }),
+    valueInstant: ow(Number, { exact: true }),
+    valueInteger: ow(Number, { exact: true }),
+    valueOid: ow(String, { exact: true }),
+    valuePositiveInt: ow(Number, { exact: true }),
+    valueString: ow(String, { exact: true }),
+    valueTime: ow(String, { exact: true }),
+    valueUnsignedInt: ow(Number, { exact: true }),
+    valueUri: ow(String, { exact: true }),
+    valueUrl: ow(String, { exact: true }),
+    valueUuid: ow(String, { exact: true }),
 });
-export interface Constant extends Schema.Schema.Type<typeof _Constant> {}
-export const Constant: Schema.Schema<Constant> = _Constant;
+export interface Constant extends Schema.Type<typeof _Constant> {}
+export const Constant: Schema<Constant> = _Constant;
 
-const _Tag = Schema.Struct({
-    name: Schema.String,
-    value: Schema.String,
+const _Tag = Struct({
+    name: String,
+    value: String,
 });
 
-export interface Tag extends Schema.Schema.Type<typeof _Tag> {}
-export const Tag: Schema.Schema<Tag> = _Tag;
-export const isTag = Schema.is(Tag);
+export interface Tag extends Schema.Type<typeof _Tag> {}
+export const Tag: Schema<Tag> = _Tag;
+export const isTag = is(Tag);
 
-const _ColumnPath = Schema.Struct({
-    path: Schema.String,
-    name: Schema.String,
-    description: ow(Schema.String, { exact: true }),
-    collection: ow(Schema.Boolean, { exact: true }),
-    type: ow(Schema.String, { exact: true }),
-    tags: ow(Schema.Array(Tag), { exact: true }),
+const _ColumnPath = Struct({
+    path: String,
+    name: String,
+    description: ow(String, { exact: true }),
+    collection: ow(Boolean, { exact: true }),
+    type: ow(String, { exact: true }),
+    tags: ow($Array(Tag), { exact: true }),
 });
 
 /**
@@ -64,11 +63,11 @@ const _ColumnPath = Schema.Struct({
  * literal to denote the name of the column
  */
 export interface ColumnPath<TName extends string = string>
-    extends Schema.Schema.Type<typeof _ColumnPath> {
+    extends Schema.Type<typeof _ColumnPath> {
     name: TName;
     type?: string;
 }
-export const ColumnPath = Data.case<ColumnPath>();
+export const ColumnPath = createCase<ColumnPath>();
 
 
 /**
@@ -82,7 +81,7 @@ export const ColumnPath = Data.case<ColumnPath>();
  * @param input - the column path
  * @returns input args
  */
-const decodeColumnPathOption = Schema.decodeOption(_ColumnPath);
+const decodeColumnPathOption = decodeOption(_ColumnPath);
 type BaseSelect = {
     readonly column?: readonly ColumnPath[];
     readonly select?: readonly BaseSelect[];
@@ -91,21 +90,21 @@ type BaseSelect = {
     readonly unionAll?: readonly BaseSelect[];
 };
 
-const SelectJSON = Schema.Struct({
-    column: ow(Schema.Array(_ColumnPath), {
+const SelectJSON = Struct({
+    column: ow($Array(_ColumnPath), {
         exact: true,
     }),
     select: ow(
-        Schema.Array(
-            Schema.suspend((): Schema.Schema<BaseSelect> => SelectJSON),
+        $Array(
+            suspend((): Schema<BaseSelect> => SelectJSON),
         ),
         { exact: true },
     ),
-    forEach: ow(Schema.String, { exact: true }),
-    forEachOrNull: ow(Schema.String, { exact: true }),
+    forEach: ow(String, { exact: true }),
+    forEachOrNull: ow(String, { exact: true }),
     unionAll: ow(
-        Schema.Array(
-            Schema.suspend((): Schema.Schema<BaseSelect> => SelectJSON),
+        $Array(
+            suspend((): Schema<BaseSelect> => SelectJSON),
         ),
         { exact: true },
     ),
@@ -135,23 +134,26 @@ export type Node = TaggedEnum<{
 export const { Select, Column, ForEach, ForEachOrNull, UnionAll, $match } =
     taggedEnum<Node>();
 
-const Node = Schema.Union(
-    Schema.TaggedStruct("Column", {
-        column: Schema.Array(Schema.typeSchema(_ColumnPath)),
+/**
+ * Discriminated union schema for a View Definition 'node'.
+ */
+const Node = Union(
+    TaggedStruct("Column", {
+        column: $Array(typeSchema(_ColumnPath)),
     }),
-    Schema.TaggedStruct("Select", {
-        select: Schema.Array(Schema.suspend((): Schema.Schema<Node> => Node)),
+    TaggedStruct("Select", {
+        select: $Array(suspend((): Schema<Node> => Node)),
     }),
-    Schema.TaggedStruct("ForEach", {
-        forEach: Schema.String,
-        select: Schema.Array(Schema.suspend((): Schema.Schema<Node> => Node)),
+    TaggedStruct("ForEach", {
+        forEach: String,
+        select: $Array(suspend((): Schema<Node> => Node)),
     }),
-    Schema.TaggedStruct("ForEachOrNull", {
-        forEachOrNull: Schema.String,
-        select: Schema.Array(Schema.suspend((): Schema.Schema<Node> => Node)),
+    TaggedStruct("ForEachOrNull", {
+        forEachOrNull: String,
+        select: $Array(suspend((): Schema<Node> => Node)),
     }),
-    Schema.TaggedStruct("UnionAll", {
-        unionAll: Schema.Array(Schema.suspend((): Schema.Schema<Node> => Node)),
+    TaggedStruct("UnionAll", {
+        unionAll: $Array(suspend((): Schema<Node> => Node)),
     }),
 );
 
@@ -364,33 +366,33 @@ export function decodeSelect(nd: SelectJSON): Node {
         }),
     );
 }
-const SelectFromData = Schema.transform(SelectJSON, Node, {
+const SelectFromData = transform(SelectJSON, Node, {
     strict: true,
     encode: ({ _tag, ...rest }) => rest,
     decode: (dataNode) => decodeSelect(dataNode),
 });
 
-export const normalize = Schema.decodeSync(SelectFromData);
+export const normalize = decodeSync(SelectFromData);
 
-const _ViewDefinition = Schema.TaggedStruct("Select", {
-    status: Schema.Literal("draft", "active", "retired", "unknown"),
-    url: ow(Schema.String, { exact: true }),
-    name: ow(Schema.String, { exact: true }),
-    title: ow(Schema.String, { exact: true }),
-    experimental: ow(Schema.Boolean, { exact: true }),
-    publisher: ow(Schema.String, { exact: true }),
-    description: ow(Schema.String, { exact: true }),
-    copyright: ow(Schema.String, { exact: true }),
-    resource: Schema.String,
-    constant: ow(Schema.Array(Constant), {
+const _ViewDefinition = TaggedStruct("Select", {
+    status: Literal("draft", "active", "retired", "unknown"),
+    url: ow(String, { exact: true }),
+    name: ow(String, { exact: true }),
+    title: ow(String, { exact: true }),
+    experimental: ow(Boolean, { exact: true }),
+    publisher: ow(String, { exact: true }),
+    description: ow(String, { exact: true }),
+    copyright: ow(String, { exact: true }),
+    resource: String,
+    constant: ow($Array(Constant), {
         exact: true,
     }),
-    where: ow(Schema.Array(Where), { exact: true }),
-    select: Schema.NonEmptyArray(Node),
+    where: ow($Array(Where), { exact: true }),
+    select: NonEmptyArray(Node),
 });
 
 export interface ViewDefinition<ResourceType extends string = string>
-    extends Schema.Schema.Type<typeof _ViewDefinition> {
+    extends Schema.Type<typeof _ViewDefinition> {
     resource: ResourceType;
 }
 export const ViewDefinition = tagged<ViewDefinition>("Select");
