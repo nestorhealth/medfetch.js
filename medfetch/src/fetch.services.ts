@@ -68,6 +68,10 @@ class ResponseProxySync {
             yield chunk;
         }
     }
+    
+    get ok() {
+        return this.status >= 200 && this.status < 300;
+    }
 
     get json() {
         const signal = this.#signal();

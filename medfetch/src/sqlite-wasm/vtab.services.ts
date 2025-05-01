@@ -148,8 +148,9 @@ export class Tokenizer {
         this.#port?.start();
     }
 
-    get token(): string | undefined {
-        if (this.#accessToken) return this.#accessToken;
+    get(expired = false): string | undefined {
+        if (this.#accessToken && !expired)
+            return this.#accessToken;
         if (!this.#port) {
             console.error(`[medfetch/sqlite-wasm/vtab::Tokenizer]: No MessagePort to get the access token from, returning undefined...`);
             return undefined;
@@ -169,8 +170,7 @@ export class Tokenizer {
         const code = status[0];
         if (code !== 1) return undefined;
 
-        const decoder = new TextDecoder();
-        const token = decoder.decode(buffer.slice()).replace(/\0.*$/, ''); // strip null padding
+        const token = new TextDecoder().decode(buffer.slice()).replace(/\0.*$/, ''); // strip null padding
         return (this.#accessToken = token);
     }
 

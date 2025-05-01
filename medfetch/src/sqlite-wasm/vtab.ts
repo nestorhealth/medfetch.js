@@ -90,6 +90,18 @@ const medfetch_module: VirtualTableExtensionFn<{
         vtab.xCursor.get(pcursor) as medfetch_vtab_cursor;
     const getVirtualTable = (pvtab: WasmPointer) =>
         vtab.xVtab.get(pvtab) as medfetch_vtab;
+        
+    /* Convenience to get auth headers if token port + access token state matches up to exist */
+    const headers = (expired = false): Record<string, string> => {
+        const kvs: Record<string, string> = {
+            "Content-Type": "application/json+fhir"
+        }
+        const token = tokenizer.get(expired);
+        if (tokenPort && token) {
+            kvs["Authorization"] = `Bearer ${token}`;
+        }
+        return kvs;
+    }
 
     return {
         /* Set to 0 to mark as eponymous (something to do with being able to call as TVF) */
@@ -202,7 +214,19 @@ const medfetch_module: VirtualTableExtensionFn<{
             if (cursor.peeked.done) {
                 const nextURL = cursor.pageNext();
                 if (nextURL) {
-                    const stream = fetchSync(nextURL).stream;
+                    let response = fetchSync(nextURL, {
+                        headers: headers()
+                    });
+                    if (response.status === 401) {
+                        response = fetchSync(nextURL, {
+                            headers: headers(true)
+                        });
+                        if (!response.ok) {
+                            console.error(`[medfetch/sqlite-wasm/vtab]: Bad response from server even after refreshing token, exiting now`);
+                            return capi.SQLITE_ERROR;
+                        }
+                    }
+                    const stream = response.stream;
                     const { flush, nexturl } = Page.handler(stream);
                     cursor.rows = flush();
                     cursor.pageNext = nexturl;
@@ -227,21 +251,18 @@ const medfetch_module: VirtualTableExtensionFn<{
                     ? `${baseURL}${resourceType}`
                     : `${baseURL}/${resourceType}`;
 
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json+fhir"
-            }
-            const accessToken = tokenizer.token;
-            if (accessToken)
-                headers["Authorization"] = `Bearer ${accessToken}`;
-
             // Look mom, no await!
-            const response = fetchSync(url, {
-                headers
+            let response = fetchSync(url, {
+                headers: headers()
             });
             if (response.status === 401) {
-                const accessToken = tokenizer.token;
-                if (!accessToken)
+                response = fetchSync(url, { 
+                    headers: headers(true)
+                });
+                if (!response.ok) {
+                    console.error(`[medfetch/sqlite-wasm/vtab]: Bad response from server even after refreshing token, exiting now`);
                     return capi.SQLITE_ERROR;
+                }
             }
             const { flush, nexturl } = Page.handler(response.stream);
             cursor.rows = flush();

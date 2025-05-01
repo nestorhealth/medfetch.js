@@ -19,9 +19,8 @@ export const sql = medfetch(BASE_URL, {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (code) {
-      console.log("ok!");
       const body = await exchange(code);
-      return body.access_token;
+      return body;
     } else {
       const redirectURL = await getRedirectURL();
       window.location.href = redirectURL;

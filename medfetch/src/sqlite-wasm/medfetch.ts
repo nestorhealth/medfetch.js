@@ -44,7 +44,10 @@ interface MedfetchSqliteWasmOptions {
      */
     dbId?: string;
     
-    getAccessToken?: () => Promise<string>;
+    getAccessToken?: () => Promise<{
+        access_token: string;
+        expiresIn?: number;
+    }>;
 }
 
 export class SqliteWasmError extends Data.TaggedError("medfetch/sqlite-wasm")<{
@@ -105,7 +108,10 @@ function createFetchChannel(): Effect.Effect<MessagePort> {
     );
 }
 
-function createTokenChannel(getAccessToken: () => Promise<string>): Effect.Effect<MessagePort> {
+function createTokenChannel(getAccessToken: () => Promise<{
+    access_token: string;
+    expiresIn?: number;
+}>): Effect.Effect<MessagePort> {
     return Effect.promise(() =>
         new Promise<MessagePort>((resolve, reject) => {
             const { port1, port2 } = new MessageChannel();
@@ -118,12 +124,12 @@ function createTokenChannel(getAccessToken: () => Promise<string>): Effect.Effec
                         const buffer = new Uint8Array(sab, 8);    // remainder is token bytes
 
                         try {
-                            const accessToken = await getAccessToken();
+                            const { access_token } = await getAccessToken();
                             // Write token to SAB
-                            const encoded = new TextEncoder().encode(accessToken);
-                            buffer.fill(0); // clear first
-                            buffer.set(encoded.slice(0, buffer.length)); // truncate if too long
-                            status[0] = 1; // signal success
+                            const encoded = new TextEncoder().encode(access_token);
+                            buffer.fill(0);
+                            buffer.set(encoded.slice(0, buffer.length));
+                            status[0] = 1;
                         } catch (e) {
                             status[0] = -1;
                         }
@@ -138,7 +144,7 @@ function createTokenChannel(getAccessToken: () => Promise<string>): Effect.Effec
                 });
             };
 
-            resolve(port2); // give worker this end
+            resolve(port2); // port2 is for the sqlite3 worker
         })
     );
 }
