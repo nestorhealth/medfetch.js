@@ -43,7 +43,7 @@ function last<Path extends string>(path: string): Last<Path> {
 function keysToViewDefinition<Keys extends readonly string[]>(
     resourceType: string,
     keys: readonly [...Keys],
-) {
+): ViewDefinition {
     return ViewDefinition({
         resource: resourceType,
         status: "active",

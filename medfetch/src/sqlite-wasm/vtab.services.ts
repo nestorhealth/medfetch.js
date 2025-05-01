@@ -2,7 +2,7 @@ import type { Resource } from "~/data.schema.js";
 import { Schema } from "effect";
 import type { SqlValue } from "@sqlite.org/sqlite-wasm";
 import { Column, ColumnPath, ViewDefinition } from "~/view";
-import { TaggedError } from "effect/Data";
+import { taggedEnum, TaggedEnum, TaggedError } from "effect/Data";
 
 /**
  * Namespaced error class
@@ -116,4 +116,65 @@ export function generateViewDefinition(args: SqlValue[]) {
         ],
         where: [],
     });
+}
+
+export type TokenMessage = TaggedEnum<{
+    /**
+     * @category Both
+     */
+    error: {
+        readonly id: string;
+        readonly message: string;
+    };
+    
+    /**
+     * @category Incoming
+     */
+    tokenExpired: {
+        readonly sab: SharedArrayBuffer;
+    };
+}>;
+export const TokenMessage = taggedEnum<TokenMessage>();
+
+export class Tokenizer {
+    #port: MessagePort | undefined;
+    #accessToken: string | undefined;
+
+    // 4B for signal + 4B for status code + 512B for token string (UTF-8 encoded)
+    static readonly BUFFER_SIZE = 4 + 4 + 512;
+
+    constructor(port: MessagePort | undefined) {
+        this.#port = port;
+        this.#port?.start();
+    }
+
+    get token(): string | undefined {
+        if (this.#accessToken) return this.#accessToken;
+        if (!this.#port) {
+            console.error(`[medfetch/sqlite-wasm/vtab::Tokenizer]: No MessagePort to get the access token from, returning undefined...`);
+            return undefined;
+        }
+
+        const sab = new SharedArrayBuffer(Tokenizer.BUFFER_SIZE);
+        const signal = new Int32Array(sab, 0, 1); // signal[0] = wake flag
+        const status = new Int32Array(sab, 4, 1); // status[0] = success (1) or error (-1)
+        const buffer = new Uint8Array(sab, 8);    // token string as bytes
+
+        this.#port.postMessage(
+            TokenMessage.tokenExpired({ sab })
+        );
+
+        Atomics.wait(signal, 0, 0); // wait for main thread to wake us
+
+        const code = status[0];
+        if (code !== 1) return undefined;
+
+        const decoder = new TextDecoder();
+        const token = decoder.decode(buffer.slice()).replace(/\0.*$/, ''); // strip null padding
+        return (this.#accessToken = token);
+    }
+
+    clear(): void {
+        this.#accessToken = undefined;
+    }
 }

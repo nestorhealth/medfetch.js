@@ -9,7 +9,7 @@ import type {
 import { flat } from "~/sof";
 import { ViewDefinition } from "~/view.js";
 import type { VirtualTableExtensionFn } from "./worker1.services";
-import { generateViewDefinition } from "./vtab.services";
+import { generateViewDefinition, Tokenizer } from "./vtab.services";
 import { FetchSync } from "~/fetch.services";
 import { Page } from "~/data";
 import { Resource } from "~/data.schema";
@@ -81,6 +81,8 @@ const medfetch_module: VirtualTableExtensionFn<{
         throw new Error(
             "medfetch: expected Fetch Worker port at ports[0] but got nothing",
         );
+    const tokenPort = transfer.at(1);
+    const tokenizer = new Tokenizer(tokenPort);
 
     // Blocking fetch function
     const fetchSync = FetchSync(fetchPort);
@@ -225,8 +227,22 @@ const medfetch_module: VirtualTableExtensionFn<{
                     ? `${baseURL}${resourceType}`
                     : `${baseURL}/${resourceType}`;
 
+            const headers: Record<string, string> = {
+                "Content-Type": "application/json+fhir"
+            }
+            const accessToken = tokenizer.token;
+            if (accessToken)
+                headers["Authorization"] = `Bearer ${accessToken}`;
+
             // Look mom, no await!
-            const response = fetchSync(url);
+            const response = fetchSync(url, {
+                headers
+            });
+            if (response.status === 401) {
+                const accessToken = tokenizer.token;
+                if (!accessToken)
+                    return capi.SQLITE_ERROR;
+            }
             const { flush, nexturl } = Page.handler(response.stream);
             cursor.rows = flush();
             cursor.pageNext = nexturl;

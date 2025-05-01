@@ -1,6 +1,7 @@
 import { Data, Effect } from "effect";
 import { isBrowser, worker1 } from "./main.js";
 import { BetterWorker1MessageType } from "./types.js";
+import { TokenMessage } from "~/sqlite-wasm/vtab.services.js";
 
 const DEV = import.meta.env.DEV;
 
@@ -42,6 +43,8 @@ interface MedfetchSqliteWasmOptions {
      * Attach to an existing database?
      */
     dbId?: string;
+    
+    getAccessToken?: () => Promise<string>;
 }
 
 export class SqliteWasmError extends Data.TaggedError("medfetch/sqlite-wasm")<{
@@ -60,7 +63,7 @@ type SQLFn<E, R, Templated = any> = <T = unknown>(
 
 let __DB_ID__: string | undefined;
 
-function getFetchWorkerPort() {
+function createFetchChannel(): Effect.Effect<MessagePort> {
     return Effect.promise(
         () =>
             new Promise<MessagePort>((resolve, reject) => {
@@ -102,17 +105,55 @@ function getFetchWorkerPort() {
     );
 }
 
+function createTokenChannel(getAccessToken: () => Promise<string>): Effect.Effect<MessagePort> {
+    return Effect.promise(() =>
+        new Promise<MessagePort>((resolve, reject) => {
+            const { port1, port2 } = new MessageChannel();
+
+            port1.onmessage = (event) => {
+                return TokenMessage.$match(event.data, {
+                    async tokenExpired({ sab }) {
+                        const signal = new Int32Array(sab, 0, 1);  // 4B at offset 0
+                        const status = new Int32Array(sab, 4, 1);  // 4B at offset 4
+                        const buffer = new Uint8Array(sab, 8);    // remainder is token bytes
+
+                        try {
+                            const accessToken = await getAccessToken();
+                            // Write token to SAB
+                            const encoded = new TextEncoder().encode(accessToken);
+                            buffer.fill(0); // clear first
+                            buffer.set(encoded.slice(0, buffer.length)); // truncate if too long
+                            status[0] = 1; // signal success
+                        } catch (e) {
+                            status[0] = -1;
+                        }
+
+                        Atomics.store(signal, 0, 1); // mark ready
+                        Atomics.notify(signal, 0);   // wake the waiting thread
+                    },
+
+                    error(data) {
+                        reject(data);
+                    },
+                });
+            };
+
+            resolve(port2); // give worker this end
+        })
+    );
+}
+
 /**
- * Loads in sqlite3 Web Assembly binary via the []()
- * wrapper handle, loads in the virtual table module,
- * then returns back an sql template string function for querying
- * the database.
+ * Loads in sqlite3 Web Assembly binary by calling the {@link worker1} function, 
+ * loads in the virtual table module, then returns back an sql template string function 
+ * for querying the database. Call this from the main thread!
  * @param baseURL The fhir server base url
- * @param options
+ * @param options Optional config
+ * @returns An effectful SQL client with signature {@link SQLFn}
  */
 export function medfetch(
     baseURL: string,
-    { trace = false, filename, dbId }: MedfetchSqliteWasmOptions = {},
+    { trace = false, filename, dbId, getAccessToken }: MedfetchSqliteWasmOptions = {},
 ): SQLFn<SqliteWasmError, never> {
     if (!isBrowser()) {
         if (trace) {
@@ -134,13 +175,18 @@ export function medfetch(
                         vfs: "opfs",
                         filename,
                     });
-                    dbId = yield* Effect.fromNullable(newDbId);
+                    dbId = yield *Effect.fromNullable(newDbId);
                 } else {
                     const { dbId: newDbId } = yield* promiser.lazy("open");
-                    dbId = yield* Effect.fromNullable(newDbId);
+                    dbId = yield *Effect.fromNullable(newDbId);
                 }
             }
-            const port1 = yield* getFetchWorkerPort();
+            const fetchPort = yield *createFetchChannel();
+            const transfers = [fetchPort];
+            if (getAccessToken) {
+                const tokenPort = yield *createTokenChannel(getAccessToken);
+                transfers.push(tokenPort);
+            }
             const { result } = yield* promiser.lazy(
                 {
                     dbId,
@@ -151,10 +197,10 @@ export function medfetch(
                         aux: { baseURL }
                     },
                 },
-                [port1],
+                transfers
             );
             if (result.rc !== 0) {
-                return yield* new SqliteWasmError({
+                return yield *new SqliteWasmError({
                     message: `Unable to load in vtab module at ${ModuleURL().toString()}`,
                     type: "load-module",
                 });
