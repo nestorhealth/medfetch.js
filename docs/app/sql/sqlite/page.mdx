@@ -188,6 +188,22 @@ Since incorporating [FHIR StructureDefinitions](https://build.fhir.org/structure
 has yet to be implemented, we are limited to *overguessing* that the output will be an array at runtime for the time being.
 </Callout>
 
+## Auth
+To connect to a server that authenticates / authorizes access via
+JWTs, you can provide an implementation for the `getAccessToken()`
+callback. This function should return an object that looks like this:
+
+```ts
+{
+  access_token: string;
+  expires_in?: number;
+}
+```
+
+Virtual table methods need to be synchronous, so similar to how the worker
+thread sleeps via [Atomics.wait](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics/wait) and 
+defers the actual `fetch` call to the [Fetch Worker thread](),
+
 ## Summary
 Like the other database runners, Medfetch.js on SQLite adheres as closely as possible to the [in-memory](/quick-start/javascript)
 runner signature, so that you only need to learn 1 API and can swap the underlying sql-on-fhir runner.

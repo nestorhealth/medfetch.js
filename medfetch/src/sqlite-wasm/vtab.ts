@@ -67,6 +67,19 @@ function decodeBaseURL({ wasm }: Sqlite3, pAux: WasmPointer): string {
 }
 
 /**
+ * Appends {@link baseURL} with {@link resourceType}, handling
+ * if {@link baseURL} was written with a trailing slash or not.
+ * @param baseURL The base URL, can have one trailing slash or none
+ * @param resourceType The resource type to fetch
+ * @returns The initial search URL
+ */
+function url(baseURL: string, resourceType: string) {
+    return baseURL[baseURL.length - 1] === "/"
+        ? `${baseURL}${resourceType}`
+        : `${baseURL}/${resourceType}`;
+}
+
+/**
  * Based on the original C extension for native, but this time... with actual FHIRPath support !!
  */
 const medfetch_module: VirtualTableExtensionFn<{
@@ -96,9 +109,10 @@ const medfetch_module: VirtualTableExtensionFn<{
         const kvs: Record<string, string> = {
             "Content-Type": "application/json+fhir"
         }
-        const token = tokenizer.get(expired);
-        if (tokenPort && token) {
-            kvs["Authorization"] = `Bearer ${token}`;
+        if (tokenPort) {
+            const token = tokenizer.get(expired);
+            if (token)
+                kvs["Authorization"] = `Bearer ${token}`;
         }
         return kvs;
     }
@@ -175,12 +189,11 @@ const medfetch_module: VirtualTableExtensionFn<{
             const { done, value } = cursor.peeked;
             if (done)
                 throw new Error(`xColumn: cursor.peeked shouldn't be done...`);
-            const row = value;
             switch (iCol) {
                 case 0: {
                     capi.sqlite3_result_text(
                         pCtx,
-                        row.id,
+                        value.id,
                         -1,
                         capi.SQLITE_TRANSIENT,
                     );
@@ -189,9 +202,9 @@ const medfetch_module: VirtualTableExtensionFn<{
                 case 1: {
                     let json: string;
                     if (cursor.viewDefinition)
-                        json = JSON.stringify(flat([row], cursor.viewDefinition)[0]);
+                        json = JSON.stringify(flat([value], cursor.viewDefinition)[0]);
                     else
-                        json = JSON.stringify(row);
+                        json = JSON.stringify(value);
                     capi.sqlite3_result_text(
                         pCtx,
                         json,
@@ -246,17 +259,12 @@ const medfetch_module: VirtualTableExtensionFn<{
 
             const cursor = getCursor(pCursor);
             const { baseURL } = getVirtualTable(cursor.pVtab);
-            let url: string | undefined =
-                baseURL[baseURL.length - 1] === "/"
-                    ? `${baseURL}${resourceType}`
-                    : `${baseURL}/${resourceType}`;
-
             // Look mom, no await!
-            let response = fetchSync(url, {
+            let response = fetchSync(url(baseURL, resourceType), {
                 headers: headers()
             });
             if (response.status === 401) {
-                response = fetchSync(url, { 
+                response = fetchSync(url(baseURL, resourceType), { 
                     headers: headers(true)
                 });
                 if (!response.ok) {

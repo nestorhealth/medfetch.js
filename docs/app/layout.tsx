@@ -44,7 +44,7 @@ export default async function RootLayout({
             banner={banner}
             navbar={navbar}
             pageMap={await getPageMap()}
-            docsRepositoryBase="https://github.com/bathan1/medfetch/tree/main"
+            docsRepositoryBase="https://github.com/nestorhealth/medfetch.js/tree/main/docs"
             footer={footer}
           >
             {children}

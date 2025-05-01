@@ -1,6 +1,6 @@
 {
     "name": "medfetch",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "type": "module",
     "description": "sql on fhir database runner implementation",
     "scripts": {

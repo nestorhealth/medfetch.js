@@ -92,7 +92,7 @@ const TokenResponseBody = Schema.Struct({
     expires_in: Schema.Number,
     scope: Schema.String
 });
-type TokenResponseBody = typeof TokenResponseBody.Type;
+export type TokenResponseBody = typeof TokenResponseBody.Type;
 const decodeTokenResponseBodySync = TokenResponseBody.pipe(Schema.decodeUnknownSync);
 
 /**

@@ -7,7 +7,11 @@ const CLIENT_ID = "whatever";
 const REDIRECT_URI = "http://localhost:3000";
 const scope = ["user/*.cruds"];
 
-export const sql = medfetch(BASE_URL, {
+export const sql = medfetch("https://r4.smarthealthit.org", {
+  trace: true
+});
+
+export const sql2 = medfetch(BASE_URL, {
   trace: true,
   async getAccessToken() {
     const { getRedirectURL, exchange } = pkce(
@@ -18,14 +22,22 @@ export const sql = medfetch(BASE_URL, {
     );
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    if (code) {
-      const body = await exchange(code);
-      return body;
-    } else {
-      const redirectURL = await getRedirectURL();
-      window.location.href = redirectURL;
+    let body: Awaited<ReturnType<typeof exchange>>;
+    try {
+      if (code) {
+        body = await exchange(code);
+      } else {
+        const redirectURL = await getRedirectURL();
+        window.location.href = redirectURL;
+        throw new Error("This shouldn't happen");
+      }
+    } finally {
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    if (body)
+      return body;
     
-    throw new Error("uh oh");
+    throw new Error("Shouldn't happen");
   },
 });

@@ -88,7 +88,7 @@ static int xconnect(
     sqlite3 *pdb, void *paux, int argc, const char *const *argv,
     sqlite3_vtab **pp_vtab, char **pz_err) {
     int rc = SQLITE_OK;
-    rc += sqlite3_declare_vtab(pdb, "CREATE TABLE resource(id TEXT, json TEXT, type HIDDEN)");
+    rc += sqlite3_declare_vtab(pdb, "CREATE TABLE resource(id TEXT, json TEXT, type HIDDEN, fp HIDDEN)");
     if (rc == SQLITE_OK) {
         medfetch_vtab *vtab = sqlite3_malloc(sizeof(medfetch_vtab));
         if (vtab == NULL)

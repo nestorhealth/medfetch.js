@@ -46,7 +46,7 @@ interface MedfetchSqliteWasmOptions {
     
     getAccessToken?: () => Promise<{
         access_token: string;
-        expiresIn?: number;
+        expires_in?: number;
     }>;
 }
 

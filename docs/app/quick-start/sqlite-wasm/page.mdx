@@ -4,18 +4,18 @@ import { Callout, Steps, Tabs } from 'nextra/components'
 How to spin up a sql-on-fhir View Runner directly on the browser with Medfetch.js and [sqlite-wasm](https://github.com/sqlite/sqlite-wasm)
 
 ## Installation
-[effect](https://effect.website/), [fhirpath](https://hl7.github.io/fhirpath.js/), and [@sqlite.org/sqlite-wasm]() are peer dependencies.
+[effect](https://effect.website/), [fhirpath](https://hl7.github.io/fhirpath.js/), and [@sqlite.org/sqlite-wasm](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) are peer dependencies.
 
 <Tabs items={["pnpm", "npm"]}>
 <Tabs.Tab>
 ```bash copy
-pnpm add effect @sqlite.org/sqlite-wasm medfetch
+pnpm add effect fhirpath @sqlite.org/sqlite-wasm medfetch
 ```
 </Tabs.Tab>
 
 <Tabs.Tab>
 ```bash copy
-npm install effect @sqlite.org/sqlite-wasm medfetch
+npm install effect fhirpath @sqlite.org/sqlite-wasm medfetch
 ```
 </Tabs.Tab>
 </Tabs>
