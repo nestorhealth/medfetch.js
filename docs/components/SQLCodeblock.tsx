@@ -8,15 +8,16 @@ import { useMutation } from "@tanstack/react-query";
 import { Effect } from "effect";
 import { DataTable } from "@/components/ui/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { sql } from "@/lib/sqlite-wasm";
+import { sql, sql2 } from "@/lib/sqlite-wasm";
 
 type Props = {
   children: React.ReactNode;
+  mode?: "auth" | "public";
   columns?: string[];
   dropTables?: string[];
 };
 
-export function SQLCodeblock({ children, columns, dropTables }: Props) {
+export function SQLCodeblock({ children, columns, dropTables, mode = "public" }: Props) {
   const ref = useRef<HTMLPreElement>(null);
   const [sqlText, setSqlText] = useState<string | null>(null);
 
@@ -32,7 +33,11 @@ export function SQLCodeblock({ children, columns, dropTables }: Props) {
   const { data, mutate, isPending } = useMutation({
     mutationFn: async () => {
       if (sqlText) {
-        const result = await sql<any>`${sqlText}`.pipe(Effect.runPromise);
+        let result: any[];
+        if (mode === "auth") // for auth demos
+          result = await sql2<any>`${sqlText}`.pipe(Effect.runPromise);
+        else
+          result = await sql<any>`${sqlText}`.pipe(Effect.runPromise);
         return result;
       }
     },

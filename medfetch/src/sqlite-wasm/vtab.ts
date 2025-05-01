@@ -187,8 +187,10 @@ const medfetch_module: VirtualTableExtensionFn<{
         xColumn(pCursor, pCtx, iCol) {
             const cursor = getCursor(pCursor);
             const { done, value } = cursor.peeked;
-            if (done)
-                throw new Error(`xColumn: cursor.peeked shouldn't be done...`);
+            if (done || !value) {
+                console.error(`[medfetch/sqlite-wasm] Unexpected "done" or undefined "value" returned by cursor (done=${done}, (value == undefined) = ${value === undefined})`);
+                return capi.SQLITE_ERROR
+            }
             switch (iCol) {
                 case 0: {
                     capi.sqlite3_result_text(

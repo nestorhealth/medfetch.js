@@ -1,15 +1,15 @@
 import { pkce } from "medfetch";
 import { medfetch } from "medfetch/sqlite-wasm";
 
-const BASE_URL =
-  "https://launch.smarthealthit.org/v/r4/sim/WzIsIiIsIiIsIkFVVE8iLDAsMCwwLCIiLCIiLCJ3aGF0ZXZlciIsIiIsIiIsIiIsIiIsMCwyLCIiXQ/fhir";
-const CLIENT_ID = "whatever";
-const REDIRECT_URI = "http://localhost:3000";
-const scope = ["user/*.cruds"];
-
 export const sql = medfetch("https://r4.smarthealthit.org", {
   trace: true
 });
+
+const BASE_URL =
+  "https://launch.smarthealthit.org/v/r4/sim/WzIsIiIsIiIsIkFVVE8iLDAsMCwwLCIiLCIiLCJ3aGF0ZXZlciIsIiIsIiIsIiIsIiIsMCwyLCIiXQ/fhir";
+const CLIENT_ID = "whatever";
+const REDIRECT_URI = process.env.NODE_ENV === "development" ? "http://localhost:3000/sql" : "https://medfetchjs.pages.dev/sql";
+const scope = ["user/*.cruds"];
 
 export const sql2 = medfetch(BASE_URL, {
   trace: true,

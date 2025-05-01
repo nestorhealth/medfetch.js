@@ -7,8 +7,9 @@ description:
   `content` and `src` directories.
 ---
 
-import { Cards, Tabs } from "nextra/components";
+import { Callout, Cards, Tabs } from "nextra/components";
 import { DiPostgresql, DiSqllite } from "react-icons/di";
+import { SQLCodeblock } from "@/components/SQLCodeblock";
 
 # SQL Interface
 In this page, you will learn
@@ -259,12 +260,99 @@ const onMessage = (e: MessageEvent<Fetch>): Promise<void> => {
 </Tabs.Tab>
 </Tabs>
 
-Going in depth over the SAX parsing logic would be out of the scope of this page,
-so what you should really take away from this is that Medfetch.js yields resource "rows"
+Going in depth over the SAX parsing logic would be out of the scope of this page.
+What you should really take away from this is that Medfetch.js yields resource "rows"
 to your database one by one via a Stream abstraction to squeeze out as much performance
 as possible!
 
+<Callout type="warning">
+As of the time of writing, only the Web Assembly ports have Streaming implemented, since
+the original C extension was written early on as a prototype. I will eventually
+get to implementing it on C since the JS based SAX parser I used, [clarinet](https://www.npmjs.com/package/clarinet),
+is based on [yajl](https://github.com/lloyd/yajl), so (hopefully) this port won't be too bad!
+</Callout>
+
 ### Auth
+Since FHIR servers are web APIs, authenticating and authorizing (which we'll group together as *auth*) access to data is implementation dependent.
+Luckily, the [SMART on FHIR](https://docs.smarthealthit.org/) protocol a standard for FHIR servers to
+manage auth via user-familiar sign-ins with [OAuth2](https://oauth.net/2/).
+
+Going over the OAuth2 flows goes ***way*** beyond the scope of this page, but generally speaking,
+the end-result of any OAuth2 flow is getting an access token (usually a JWT) that you send over
+via the Headers in your FHIR API calls.
+
+And since all the database cares about insofar as pulling the FHIR data is that access token,
+Medfetch.js abstracts the auth process into providing a callback for retrieving said
+access token.
+
+Here's one way we could provide that callback to the SQLite Web Assembly port. Note that
+the only helper the core library exposes for browser based builds is the `pkce` function for the
+[PKCE OAuth2 flow](https://oauth.net/2/pkce/), although you can of course, get the access token however you want.
+
+```ts
+import { pkce } from "medfetch";
+import { medfetch } from "medfetch/sqlite-wasm";
+
+const BASE_URL =
+  "https://launch.smarthealthit.org/v/r4/sim/WzIsIiIsIiIsIkFVVE8iLDAsMCwwLCIiLCIiLCJ3aGF0ZXZlciIsIiIsIiIsIiIsIiIsMCwyLCIiXQ/fhir";
+const CLIENT_ID = "whatever";
+const REDIRECT_URI = process.env.NODE_ENV === "development" 
+    ? "http://localhost:3000/sql"
+    : "https://medfetchjs.pages.dev/sql";
+const scope = ["user/*.cruds"];
+
+export const sql = medfetch(BASE_URL, {
+  trace: true,
+  async getAccessToken() {
+    const { getRedirectURL, exchange } = pkce(
+      BASE_URL,
+      CLIENT_ID,
+      REDIRECT_URI,
+      scope,
+    );
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    let body: Awaited<ReturnType<typeof exchange>>;
+    try {
+      if (code) {
+        body = await exchange(code);
+      } else {
+        const redirectURL = await getRedirectURL();
+        window.location.href = redirectURL;
+        throw new Error("This shouldn't happen");
+      }
+    } finally {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    if (body)
+      return body;
+    
+    throw new Error("Shouldn't happen");
+  },
+});
+```
+
+Done this way, as long as your access token getter callback returns the expected payload, which is database implementation specific,
+then Medfetch.js will handle determining the access token state (is it expired / is it not expired) and calling `getAccessToken()`
+when it needs a new token.
+
+You can see how the above example would work right here. Click run to initiate the user-login and then
+when redirected back, hit run again to send that token over to the sqlite wasm runner.
+
+<SQLCodeblock mode="auth">
+```sql
+SELECT * FROM medfetch('Practitioner');
+```
+</SQLCodeblock>
+
+<Callout type="warning">
+As of the time of writing, only the Web Assembly ports have Authorization headers implemented,
+but the overall idea of deferring the actual auth handling to the application developer as much as possible
+will probably remain.
+</Callout>
+
+Specifics regarding auth for each database, along with data streaming, can be found in the corresponding database interface pages.
 
 ## Next Steps
 Navigate to your database specific guide to learn how to pull FHIR data
