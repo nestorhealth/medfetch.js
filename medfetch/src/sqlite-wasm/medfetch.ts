@@ -1,7 +1,8 @@
-import { Data, Effect } from "effect";
-import { isBrowser, worker1 } from "./main.js";
-import { BetterWorker1MessageType } from "./types.js";
+import { worker1 } from "./main.js";
+import { makeAwaitable, AwaitableEffect, BetterWorker1MessageType } from "./types.js";
 import { TokenMessage } from "~/sqlite-wasm/vtab.services.js";
+import { type Effect, fromNullable, gen, promise, } from "effect/Effect";
+import { TaggedError } from "effect/Data";
 
 const DEV = import.meta.env.DEV;
 
@@ -22,7 +23,7 @@ function ModuleURL(url?: URL) {
 /**
  * User config for invoking `medfetch()` with sqlite-wasm
  */
-interface MedfetchSqliteWasmOptions {
+interface SqliteWebAssemblyOptions {
     /**
      * If provided, overrides the default path of
      * `/public/sqlite-ext/medfetch.vtab.mjs`.
@@ -50,7 +51,7 @@ interface MedfetchSqliteWasmOptions {
     }>;
 }
 
-export class SqliteWasmError extends Data.TaggedError("medfetch/sqlite-wasm")<{
+export class SqliteWebAssemblyError extends TaggedError("medfetch/sqlite-wasm")<{
     readonly message?: string;
     readonly type: BetterWorker1MessageType;
 }> {
@@ -63,20 +64,27 @@ export class SqliteWasmError extends Data.TaggedError("medfetch/sqlite-wasm")<{
     }) {
         super({
             type,
-            message: `[medfetch/sqlite-wasm]: ${message ?? "Unknown error."}`,
+            message: `[medfetch/sqlite-wasm] > ${message ?? "Unknown error."}`,
         });
     }
 }
 
-type SQLFn<E, R, Templated = any> = <T = unknown>(
+/**
+ * An sql template strings function that can be executed
+ * on an sqlite web assembly database.
+ * 
+ * @template E Any errors from this effect
+ * @template R Any requirements
+ */
+type SQLFn<E, R> = <T = unknown>(
     strings: TemplateStringsArray,
-    ...rest: Templated[]
+    ...rest: any[]
 ) => AwaitableEffect<T[], E, R>;
 
 let __DB_ID__: string | undefined;
 
-function createFetchChannel(): Effect.Effect<MessagePort> {
-    return Effect.promise(
+function createFetchChannel(): Effect<MessagePort> {
+    return promise(
         () =>
             new Promise<MessagePort>((resolve, reject) => {
                 const { port1, port2 } = new MessageChannel();
@@ -120,8 +128,8 @@ function createTokenChannel(
         access_token: string;
         expiresIn?: number;
     }>,
-): Effect.Effect<MessagePort> {
-    return Effect.promise(
+): Effect<MessagePort> {
+    return promise(
         () =>
             new Promise<MessagePort>((resolve, reject) => {
                 const { port1, port2 } = new MessageChannel();
@@ -161,27 +169,13 @@ function createTokenChannel(
     );
 }
 
-type AwaitableEffect<A, E, R> = Effect.Effect<A, E, R> & Promise<A>;
-function makeAwaitableEffect<A, E, R>(
-    eff: Effect.Effect<A, E, R>,
-): AwaitableEffect<A, E, R> {
-    return Object.assign(eff, {
-        then(
-            onfulfilled: (val: unknown) => any,
-            onrejected?: (err: any) => any,
-        ) {
-            return Effect.runPromise(eff as any).then(onfulfilled, onrejected);
-        },
-    }) as any;
-}
-
 /**
  * Loads in sqlite3 Web Assembly binary by calling the {@link worker1} function,
  * loads in the virtual table module, then returns back an sql template string function
  * for querying the database. Call this from the main thread!
  * @param baseURL The fhir server base url
  * @param options Optional config
- * @returns An effectful SQL client with signature {@link SQLFn}
+ * @returns An SQL client function {@link SQLFn}
  */
 export function medfetch(
     baseURL: string,
@@ -190,18 +184,9 @@ export function medfetch(
         filename,
         dbId,
         getAccessToken,
-    }: MedfetchSqliteWasmOptions = {},
-): SQLFn<SqliteWasmError, never> {
-    if (!isBrowser()) {
-        if (trace) {
-            console.warn(
-                `[medfetch/sqlite-wasm]: non-browser environment detected, returning stub function...`,
-            );
-        }
-        return ((_: any, ...__: any[]) => void 0) as any;
-    }
-
-    const loadMedfetch = Effect.gen(function* () {
+    }: SqliteWebAssemblyOptions = {},
+): SQLFn<SqliteWebAssemblyError, never> {
+    const loadMedfetch = gen(function* () {
         if (__DB_ID__) {
             return __DB_ID__;
         } else {
@@ -212,10 +197,10 @@ export function medfetch(
                         vfs: "opfs",
                         filename,
                     });
-                    dbId = yield* Effect.fromNullable(newDbId);
+                    dbId = yield* fromNullable(newDbId);
                 } else {
                     const { dbId: newDbId } = yield* promiser.lazy("open");
-                    dbId = yield* Effect.fromNullable(newDbId);
+                    dbId = yield* fromNullable(newDbId);
                 }
             }
             const fetchPort = yield* createFetchChannel();
@@ -237,7 +222,7 @@ export function medfetch(
                 transfers,
             );
             if (result.rc !== 0) {
-                return yield* new SqliteWasmError({
+                return yield* new SqliteWebAssemblyError({
                     message: `Unable to load in vtab module at ${ModuleURL().toString()}`,
                     type: "load-module",
                 });
@@ -255,7 +240,7 @@ export function medfetch(
             (acc, str, i) => acc + str + (rest[i] ?? ""),
             "",
         );
-        return Effect.gen(function* () {
+        return gen(function* () {
             let start = 0;
             if (trace) {
                 start = performance.now();
@@ -281,6 +266,6 @@ export function medfetch(
                 );
             }
             return result.resultRows as T[];
-        }).pipe(makeAwaitableEffect);
+        }).pipe(makeAwaitable);
     } as any;
 }

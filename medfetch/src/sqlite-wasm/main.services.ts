@@ -1,5 +1,8 @@
+import { Tag } from "effect/Context";
 import type { BetterWorker1MessageType, MessageTypeObjMap } from "./types.js";
 import { MESSAGE_TYPES } from "./types.js";
+
+export class WebWorker extends Tag("WebWorker")<WebWorker, Worker>() {}
 
 export class Counter {
     #transfers: Map<string, StructuredSerializeOptions>;

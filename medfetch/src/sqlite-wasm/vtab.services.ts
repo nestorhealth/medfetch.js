@@ -1,14 +1,16 @@
 import type { Resource } from "~/data.schema.js";
-import { Schema } from "effect";
+import { Array, Union, String, Tuple, parseJson, decodeSync } from "effect/Schema";
 import type { SqlValue } from "@sqlite.org/sqlite-wasm";
 import { Column, ColumnPath, ViewDefinition } from "~/view";
 import { taggedEnum, TaggedEnum, TaggedError } from "effect/Data";
 
 /**
  * Namespaced error class
+ * 
+ * @internal
  */
-class MedfetchVtabError extends TaggedError(
-    "medfetch/sqlite-wasm/vtab",
+class VtabError extends TaggedError(
+    "/sqlite-wasm/vtab",
 )<{
     message: string;
 }> {
@@ -34,16 +36,16 @@ export type Bundle<TResource extends Resource = Resource> = Resource<"Bundle", {
 /**
  * `fp` hidden column accepted types once it is JSON parsed
  */
-const UserFp = Schema.Array(Schema.Union(
+const UserFp = Array(Union(
     /* 'any.path.string()'; name becomes 'path' (last non-function subpath) */
-    Schema.String,
+    String,
     /* json_array('column_name', 'column_path') */
-    Schema.Tuple(Schema.String, Schema.String),
+    Tuple(String, String),
     /* json_array('forEach' | 'forEachOrNull', 'parent_path', 'child_column_path')'
        'child_column_path' column name defaults to last non-function subpath */
-    Schema.Tuple(Schema.String, Schema.String, Schema.String),
+    Tuple(String, String, String),
     /* json_array('forEach' | 'forEachOrNull', 'parent_path', 'child_column_name', 'child_column_name') */
-    Schema.Tuple(Schema.String, Schema.String, Schema.String, Schema.String),
+    Tuple(String, String, String, String),
 ));
 
 /**
@@ -52,7 +54,7 @@ const UserFp = Schema.Array(Schema.Union(
  * @param options Effect options
  * @returns The validated JSON parsed object (array).
  */
-export const decodeJsonFp = Schema.parseJson(UserFp).pipe(Schema.decodeSync);
+export const decodeJsonFp = parseJson(UserFp).pipe(decodeSync);
 
 function getColumnName(path: string | [string, any]) {
     if (typeof path !== "string") return path[0]; // default to the 'key' element in the 2-tuple
@@ -75,7 +77,7 @@ function getColumnName(path: string | [string, any]) {
 export function generateViewDefinition(args: SqlValue[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
-        throw new MedfetchVtabError(`unexpected invalid "type" column value (args[0])`);
+        throw new VtabError(`unexpected invalid "type" column value (args[0])`);
 
     if (!fp || typeof fp !== "string") {
         // no fhirpath map, then just return null and default to the whole object

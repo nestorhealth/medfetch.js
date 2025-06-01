@@ -1,6 +1,6 @@
 import { type TaggedEnum, taggedEnum, TaggedError } from "effect/Data";
 
-export type Fetch = TaggedEnum<{
+export type FetchMessage = TaggedEnum<{
     readonly request: {
         readonly sab: SharedArrayBuffer;
         readonly id: number;
@@ -21,9 +21,9 @@ export type Fetch = TaggedEnum<{
     }
 }>;
 
-export const Fetch = taggedEnum<Fetch>();
+export const FetchMessage = taggedEnum<FetchMessage>();
 
-export class FetchSyncError extends TaggedError("medfetch/fetch")<{ 
+class FetchSyncError extends TaggedError("medfetch/fetch")<{ 
     message?: string;
 }> {};
 
@@ -49,7 +49,7 @@ class ResponseProxySync {
     *#bodyIt() {
         while (true) {
             const signal = this.#signal();
-            const msg = Fetch.readChunk({
+            const msg = FetchMessage.readChunk({
                 sab: this.#sab,
                 id: this.#id
             });
@@ -75,7 +75,7 @@ class ResponseProxySync {
 
     get json() {
         const signal = this.#signal();
-        const msg = Fetch.readJson({
+        const msg = FetchMessage.readJson({
             sab: this.#sab,
             id: this.#id
         });
@@ -95,7 +95,7 @@ class ResponseProxySync {
 
     get stream() {
         const signal = this.#signal();
-        const msg = Fetch.startStream({
+        const msg = FetchMessage.startStream({
             sab: this.#sab,
             id: this.#id
         });
@@ -113,10 +113,10 @@ class ResponseProxySync {
 
 
 /**
- * "ctor" esque function for a blocking fetch call, meant to be called from
- * a worker thread that doesn't care about blocking
+ * "ctor" function for a blocking fetch call, meant to be called from
+ * a worker thread
  * @param port The "write" port of the Fetch worker
- * @returns A synchronous fetch request function
+ * @returns A "synchronous" fetch request function
  */
 export function FetchSync(port: MessagePort) {
     // 4B for size + 4B offset + 3 MB payload
@@ -131,7 +131,7 @@ export function FetchSync(port: MessagePort) {
             url = url.toString();
         }
         const id = nextId++;
-        const message = Fetch.request({
+        const message = FetchMessage.request({
             sab,
             url,
             init: args[1],

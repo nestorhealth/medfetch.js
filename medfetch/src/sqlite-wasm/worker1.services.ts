@@ -1,20 +1,15 @@
-import { Context, Data, Effect } from "effect";
 import type { Sqlite3, Sqlite3Module } from "@sqlite.org/sqlite-wasm";
+import { Tag } from "effect/Context";
+import { TaggedError } from "effect/Data";
+import { andThen, type Effect, liftPredicate, provideService, tap, tryPromise } from "effect/Effect";
 
 /**
- * indicate an issue with the bootstrapping
- * proc
- *
- * @prop message   - user friendly text
- * @prop errorName - the name of the actual caught error
- * @prop phase     - what point was the error returned?
+ * @internal
  */
-export class Sqlite3BootstrapError extends Data.TaggedError(
-    "worker1.services.Sqlite3BootstrapError",
-)<{
+export class Worker1Error extends TaggedError("sqlite-wasm/worker1")<{
+    operation: "bootstrap" | "load-module";
     message?: string;
     errorName?: string;
-    phase: "wasm" | "worker1API";
 }> {}
 
 type BaseSqlite3InitModuleFunc =
@@ -22,6 +17,7 @@ type BaseSqlite3InitModuleFunc =
 
 /**
  * Default export type
+ * @internal
  */
 export type Sqlite3InitModuleFunc = (
     ...args: Parameters<BaseSqlite3InitModuleFunc>
@@ -29,9 +25,11 @@ export type Sqlite3InitModuleFunc = (
 
 /**
  * Now make it a service
+ * 
+ * @internal
  */
-export class Sqlite3InitModule extends Context.Tag(
-    "better-worker1.services.Sqlite3InitModule",
+export class Sqlite3InitModule extends Tag(
+    "Sqlite3InitModule",
 )<Sqlite3InitModule, Sqlite3InitModuleFunc>() {}
 
 /**
@@ -39,7 +37,7 @@ export class Sqlite3InitModule extends Context.Tag(
  * @param wasmLoader The default export function of @sqlite/sqlite-wasm
  */
 function load(wasmLoader: Sqlite3InitModuleFunc) {
-    return Effect.tryPromise({
+    return tryPromise({
         try: () =>
             wasmLoader({
                 print: console.log,
@@ -47,15 +45,15 @@ function load(wasmLoader: Sqlite3InitModuleFunc) {
             }),
         catch: (e) => {
             if (e instanceof Error) {
-                return new Sqlite3BootstrapError({
-                    phase: "wasm",
+                return new Worker1Error({
+                    operation: "bootstrap",
                     message: e.message,
                     errorName: e.name,
                 });
             } else {
-                return new Sqlite3BootstrapError({
-                    phase: "wasm",
-                    message: `sqliteow: unknown error ${e} thrown while loading the wasm module`,
+                return new Worker1Error({
+                    operation: "bootstrap",
+                    message: `Unknown error ${e} thrown while loading the wasm module`,
                 });
             }
         },
@@ -71,8 +69,8 @@ function load(wasmLoader: Sqlite3InitModuleFunc) {
  * @yields the sqlite3 wasm api object
  */
 const init = Sqlite3InitModule.pipe(
-    Effect.andThen(load),
-    Effect.tap((sqlite3) => sqlite3.initWorker1API()),
+    andThen(load),
+    tap((sqlite3) => sqlite3.initWorker1API()),
 );
 
 /**
@@ -84,7 +82,7 @@ const init = Sqlite3InitModule.pipe(
  *            static object and its onmessage reflected back
  */
 export const bootstrap = (mod: Sqlite3InitModuleFunc) =>
-    init.pipe(Effect.provideService(Sqlite3InitModule, mod));
+    init.pipe(provideService(Sqlite3InitModule, mod));
 
 export interface VirtualTableUserConfig<AuxMap extends Record<string, any>> {
     /**
@@ -115,33 +113,8 @@ export type VirtualTableExtensionFn<
     aux: VirtualTableUserConfig<AuxMap>,
 ) => Promise<Sqlite3Module>;
 
-interface LoadModuleError {
-    message?: string;
-    errorName?: string;
-    code:
-        | "BAD_CALL"
-        | "BAD_DB_HANDLE"
-        | "NO_SUCH_PATH"
-        | "NO_DEFAULT_EXPORT"
-        | "NO_MEM"
-        | "TYPE_MISMATCH_DEFAULT_EXPORT"
-        | "SQLITE_INTERNAL"
-        | "UNKNOWN";
-}
-
-export class MedfetchLoadModuleError extends Data.TaggedError(
-    "worker1.services.LoadModuleError",
-)<LoadModuleError> {
-    constructor(args: LoadModuleError) {
-        super({
-            ...args,
-            message: `[medfetch/sqlite-wasm]: ${args.message ?? "Unknown error"}`,
-        });
-    }
-}
-
 const dynamicImport = (path: string) =>
-    Effect.tryPromise({
+    tryPromise({
         try: async () =>
             await import(
                 // so esbuild, rollup, and webpack static
@@ -152,15 +125,16 @@ const dynamicImport = (path: string) =>
             ),
         catch: (e) => {
             if (!(e instanceof Error)) {
-                return new MedfetchLoadModuleError({
+                return new Worker1Error({
+                    operation: "load-module",
                     message: `Unknown error occurred while loading dynamic import`,
-                    code: "UNKNOWN",
+                    errorName: "UNKNOWN",
                 });
             } else {
-                return new MedfetchLoadModuleError({
-                    message: e.message,
-                    errorName: e.name,
-                    code: "NO_SUCH_PATH",
+                return new Worker1Error({
+                    operation: "load-module",
+                    message: `That path doesn't exist ${path}`,
+                    errorName: "NO_SUCH_PATH",
                 });
             }
         },
@@ -182,28 +156,30 @@ const dynamicImport = (path: string) =>
 function importUserModule(path: string) {
     return dynamicImport(path)
         .pipe(
-            Effect.andThen((mod) =>
-                Effect.liftPredicate(
+            andThen((mod) =>
+                liftPredicate(
                     mod.default,
                     (defaultExport) => typeof defaultExport !== "undefined",
                     () =>
-                        new MedfetchLoadModuleError({
+                        new Worker1Error({
+                            operation: "load-module",
                             message: `No default export found`,
-                            code: "NO_DEFAULT_EXPORT",
+                            errorName: "NO_DEFAULT_EXPORT",
                         }),
                 ),
             ),
         )
         .pipe(
-            Effect.andThen(
-                Effect.liftPredicate(
+            andThen(
+                liftPredicate(
                     (defaultExport): defaultExport is VirtualTableExtensionFn =>
                         typeof defaultExport === "function" &&
                         defaultExport.length > 0,
                     (mod) =>
-                        new MedfetchLoadModuleError({
+                        new Worker1Error({
+                            operation: "load-module",
                             message: `Expected a function with 2 args as the default export but got ${typeof mod} with ${mod.length} args`,
-                            code: "TYPE_MISMATCH_DEFAULT_EXPORT",
+                            errorName: "TYPE_MISMATCH_DEFAULT_EXPORT",
                         }),
                 ),
             ),
@@ -222,16 +198,17 @@ export function wrapSqlite3Module(
     sqlite3: Sqlite3,
     moduleURL: string,
     aux: VirtualTableUserConfig<any>,
-): Effect.Effect<Sqlite3Module, MedfetchLoadModuleError> {
+): Effect<Sqlite3Module, Worker1Error> {
     return importUserModule(moduleURL).pipe(
-        Effect.andThen((makeUserModule) =>
-            Effect.tryPromise({
+        andThen((makeUserModule) =>
+            tryPromise({
                 try: () => makeUserModule(sqlite3, aux),
                 catch: (e) =>
-                    new MedfetchLoadModuleError({
-                        message: `Unknwon error while wrapping user vtable module (${makeUserModule.name, e})`,
-                        code: "UNKNOWN",
-                    })
+                    new Worker1Error({
+                        operation: "load-module",
+                        message: `Unknown error while wrapping user vtable module (${(makeUserModule.name, e)})`,
+                        errorName: "UNKNOWN",
+                    }),
             }),
         ),
     );

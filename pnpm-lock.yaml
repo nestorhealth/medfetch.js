@@ -129,9 +129,6 @@ importers:
       oauth-pkce:
         specifier: ^0.0.7
         version: 0.0.7
-      vitest:
-        specifier: ^3.1.2
-        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.14.1)(@vitest/browser@3.1.2)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.3)(yaml@2.7.1)
     devDependencies:
       '@types/clarinet':
         specifier: ^0.12.3
@@ -169,6 +166,9 @@ importers:
       vite:
         specifier: ^6.2.2
         version: 6.3.2(@types/node@22.14.1)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.3)(yaml@2.7.1)
+      vitest:
+        specifier: ^3.1.2
+        version: 3.1.2(@types/debug@4.1.12)(@types/node@22.14.1)(@vitest/browser@3.1.2)(jiti@2.4.2)(lightningcss@1.29.2)(tsx@4.19.3)(yaml@2.7.1)
 
 packages:
 

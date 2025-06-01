@@ -4,24 +4,17 @@ import type {
     Worker1Promiser,
 } from "@sqlite.org/sqlite-wasm";
 
-import type {
-    BetterWorker1MessageType,
-    BetterWorker1PromiserFn,
-    BetterWorker1PromiserLazy,
+import {
+    type BetterWorker1MessageType,
+    type BetterWorker1PromiserFn,
+    type BetterWorker1PromiserLazy,
 } from "./types";
 // import as side effect to attach "sqlite3Worker1Promiser()" to `globalThis`
 // This is a workaround for named "sqlite3Worker1Promiser()" function not being recognized by webpack
 import "@sqlite.org/sqlite-wasm";
 
 import { Counter } from "./main.services.js";
-import { Effect } from "effect";
-
-/**
- * Checks if window and Worker are defined in the current scope
- */
-export function isBrowser() {
-    return typeof window !== "undefined" && typeof Worker !== "undefined";
-}
+import { promise } from "effect/Effect";
 
 type ArgsData = {
     params: Parameters<Worker1Promiser>;
@@ -29,9 +22,13 @@ type ArgsData = {
     messageType: BetterWorker1MessageType;
 };
 
+/**
+ * Argument validation
+ * @param args The medfetch function argumens
+ * @returns ArgData
+ */
 function checkArgs([arg0, arg1]: [any, any]): ArgsData {
-    if (!arg0)
-        throw new Error("better-worker1.main.worker1: you passed 0 args lol");
+    if (!arg0) throw new Error(".main.worker1: you passed 0 args lol");
     if (typeof arg0 === "string") {
         arg1 ||= {}; // need to pass in an object in arg1 even for 0 args
         return {
@@ -96,51 +93,43 @@ export type BetterWorker1Promiser = BetterWorker1PromiserFn & {
  * around a sync handle.
  *
  * You probably just want to use the {@link worker1} singleton make / get function...
- * @param trace Include debug logs? Defaults to false
+ * @param trace Include debug logs? (default=false)
  * @returns The extended Worker1 Promiser handle.
  */
-export function w1thread(trace = false) {
-    if (isBrowser()) {
-        const worker = new Worker(
-            new URL(
-                import.meta.env.DEV ? "worker1.js" : "worker1.mjs",
-                import.meta.url,
-            ),
-            { type: "module" },
-        );
+export function w1thread(trace = false): BetterWorker1Promiser {
+    const worker = new Worker(
+        new URL(
+            import.meta.env.DEV ? "worker1.js" : "worker1.mjs",
+            import.meta.url,
+        ),
+        { type: "module" },
+    );
 
-        /* For managing the transfers to postMessage */
-        const counter = new Counter();
+    /* For managing the transfers to postMessage */
+    const counter = new Counter();
 
-        const post = worker.postMessage.bind(worker);
-        worker.postMessage = (msg, transfer) => {
-            if (trace)
-                console.log(
-                    "better-worker1.main.w1thread: sending with ports:",
-                    transfer,
-                );
-            const messageTransfers = counter.get(counter.messageId(msg.type));
-            if (messageTransfers) {
-                return post(msg, messageTransfers);
-            }
-            return post(msg);
-        };
-        const promiser = (globalThis as any).sqlite3Worker1Promiser.v2({
-            worker,
-        });
-        let f = defer(promiser, counter);
-        (f as any).$worker = worker;
-        (f as any).lazy = (...args: Parameters<BetterWorker1PromiserFn>) =>
-            Effect.promise(() => f(...args));
-
-        return f as BetterWorker1Promiser;
-    } else {
+    const post = worker.postMessage.bind(worker);
+    worker.postMessage = (msg, transfer) => {
         if (trace)
-            console.warn(
-                "better-worker1.main.worker1Thread: non-browser environment detected, returning stub function...",
+            console.log(
+                "better-worker1.main.w1thread: sending with ports:",
+                transfer,
             );
-        return ((_: any, __: any) => void 0) as any as BetterWorker1Promiser;
-    }
+        const messageTransfers = counter.get(counter.messageId(msg.type));
+        if (messageTransfers) {
+            return post(msg, messageTransfers);
+        }
+        return post(msg);
+    };
+    const promiser = (globalThis as any).sqlite3Worker1Promiser.v2({
+        worker,
+    });
+    let f = defer(promiser, counter);
+    (f as any).$worker = worker;
+    (f as any).lazy = (...args: Parameters<BetterWorker1PromiserFn>) =>
+        promise(() => f(...args));
+
+    return f as BetterWorker1Promiser;
 }
 
 /* SINGLETON promiser handle */

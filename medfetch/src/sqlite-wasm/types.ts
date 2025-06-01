@@ -11,7 +11,29 @@ import type {
     Worker1ResponseError,
     sqlite3_module
 } from "@sqlite.org/sqlite-wasm";
-import { Effect } from "effect";
+import { runPromise, type Effect } from "effect/Effect";
+
+/**
+ * @internal
+ */
+export type AwaitableEffect<A, E, R> = Effect<A, E, R> & Promise<A>;
+
+/**
+ * @internal
+ */
+export function makeAwaitable<A, E, R>(
+    eff: Effect<A, E, R>,
+): AwaitableEffect<A, E, R> {
+    return Object.assign(eff, {
+        then(
+            onfulfilled: (val: unknown) => any,
+            onrejected?: (err: any) => any,
+        ) {
+            return runPromise(eff as any).then(onfulfilled, onrejected);
+        },
+    }) as any;
+}
+
 
 /* This is the types dumping file for "better" worker1 API */
 
@@ -178,17 +200,19 @@ export type BetterWorker1PromiserLazy = {
   <T extends BetterWorker1MessageType>(
     messageData: BetterWorker1Request<T>,
     transfer?: StructuredSerializeOptions | Transferable[],
-  ): Effect.Effect<
+  ): AwaitableEffect<
     BetterWorker1Response<T>,
-    BetterWorker1ResponseError<T>
+    BetterWorker1ResponseError<T>,
+    never
   >;
     
   <T extends BetterWorker1MessageType>(
     type: T,
     args?: BetterWorker1Request<T>["args"],
-  ): Effect.Effect<
+  ): AwaitableEffect<
     BetterWorker1Response<T>,
-    BetterWorker1ResponseError<T>
+    BetterWorker1ResponseError<T>,
+    never
   >;
 };
 

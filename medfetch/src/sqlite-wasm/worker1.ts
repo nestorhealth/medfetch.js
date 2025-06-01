@@ -7,9 +7,9 @@ import type {
 } from "@sqlite.org/sqlite-wasm";
 import { Effect, Match, pipe } from "effect";
 import {
-    MedfetchLoadModuleError,
     Sqlite3InitModule,
     Sqlite3InitModuleFunc,
+    Worker1Error,
     bootstrap,
     wrapSqlite3Module,
 } from "./worker1.services.js";
@@ -55,14 +55,16 @@ function checkRc(
     sqlite3: Sqlite3Static,
     db: WasmPointer | Database | number,
     rc: number,
+    operation: Worker1Error["operation"] = "load-module"
 ) {
     return Effect.try({
         try: (): Database | number | WasmPointer =>
             sqlite3.oo1.DB.checkRc(db, rc),
         catch: (e) => {
             if (e instanceof sqlite3.SQLite3Error) return e;
-            return new MedfetchLoadModuleError({
-                code: "UNKNOWN",
+            return new Worker1Error({
+                operation,
+                errorName: "UNKNOWN",
                 message: `better-worker1.main.checkRc: (rc=${rc}) unknown error thrown injecting the module:`,
             });
         },
@@ -123,15 +125,17 @@ const run = Effect.gen(function* () {
             onLoadModule: async ({ dbId, args, messageId }) =>
                 await Effect.gen(function* () {
                     if (!dbId) {
-                        return yield* new MedfetchLoadModuleError({
+                        return yield* new Worker1Error({
+                            operation: "load-module",
                             message: `you have no database opened lol`,
-                            code: "BAD_CALL",
+                            errorName: "BAD_CALL",
                         });
                     }
                     if (args === undefined) {
-                        return yield* new MedfetchLoadModuleError({
+                        return yield* new Worker1Error({
+                            operation: "load-module",
                             message: `"message.args" can't be undefined when invoking load-module`,
-                            code: "BAD_CALL",
+                            errorName: "BAD_CALL",
                         });
                     }
 
@@ -181,9 +185,10 @@ const run = Effect.gen(function* () {
                         );
                     } finally {
                         if (rc === -1) {
-                            return yield* new MedfetchLoadModuleError({
+                            return yield* new Worker1Error({
                                 message: `better-worker1.worker1: stack can't handle ${args.pAuxBytes?.byteLength} more bytes`,
-                                code: "NO_MEM",
+                                errorName: "NO_MEM",
+                                operation: "load-module"
                             });
                         }
                     }

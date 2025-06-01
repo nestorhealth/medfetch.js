@@ -16,10 +16,8 @@ export default defineConfig({
         browser: {
             enabled: true,
             provider: "preview",
-            instances: [
-                { browser: "chromium" }
-            ]
-        }
+            instances: [{ browser: "chromium" }],
+        },
     },
     server: {
         headers: {
@@ -29,11 +27,11 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            '~': path.resolve(__dirname, 'src'),
+            "~": path.resolve(__dirname, "src"),
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm", "effect", "fhirpath"]
+        exclude: ["@sqlite.org/sqlite-wasm", "effect", "fhirpath"],
     },
     build: {
         assetsInlineLimit: 0,
@@ -50,17 +48,19 @@ export default defineConfig({
                 index: "src/index.ts",
                 view: "src/view.ts",
                 sof: "src/sof.ts",
-                "fetch": "src/fetch.ts",
+                fetch: "src/fetch.ts",
                 "sqlite-wasm/index": "src/sqlite-wasm/index.ts",
                 "sqlite-wasm/main": "src/sqlite-wasm/main.ts",
                 "sqlite-wasm/medfetch": "src/sqlite-wasm/medfetch.ts",
                 "sqlite-wasm/types": "src/sqlite-wasm/types.ts",
-                "sqlite-wasm/worker1": "src/sqlite-wasm/worker1.ts"
+                "sqlite-wasm/worker1": "src/sqlite-wasm/worker1.ts",
             },
             name: "medfetch",
             formats: ["es"],
-            fileName: (format, name) => format === "esm" || format === "es" ? `${name}.mjs` : `${name}.js`,
-        },
-    }
+            fileName: (format, name) =>
+                format === "esm" || format === "es"
+                    ? `${name}.mjs`
+                    : `${name}.js`,
+        }
+    },
 });
-
