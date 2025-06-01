@@ -31,7 +31,7 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm", "effect", "fhirpath"],
+        exclude: ["@sqlite.org/sqlite-wasm", "fhirpath"],
     },
     build: {
         assetsInlineLimit: 0,
