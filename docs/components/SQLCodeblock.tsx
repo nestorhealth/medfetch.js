@@ -35,9 +35,9 @@ export function SQLCodeblock({ children, columns, dropTables, mode = "public" }:
       if (sqlText) {
         let result: any[];
         if (mode === "auth") // for auth demos
-          result = await sql2<any>`${sqlText}`.pipe(Effect.runPromise);
+          result = await sql2<any>`${sqlText}`;
         else
-          result = await sql<any>`${sqlText}`.pipe(Effect.runPromise);
+          result = await sql<any>`${sqlText}`;
         return result;
       }
     },

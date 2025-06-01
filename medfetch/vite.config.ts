@@ -38,7 +38,7 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["effect", "fhirpath", "@sqlite.org/sqlite-wasm"],
+            external: ["fhirpath", "@sqlite.org/sqlite-wasm"],
             output: {
                 entryFileNames: `[name].mjs`,
                 chunkFileNames: `[name]-[hash].mjs`,
