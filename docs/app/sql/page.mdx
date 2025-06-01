@@ -93,7 +93,7 @@ API being non-blocking inherently. While Medfetch.js could have used the older, 
 API, it instead opts to invoke `fetch` on a separate Worker thread and simulate blocking on the database thread with the
 [Atomics.wait](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics/wait) API.
 
-Here's are the relevant code snippets divided up by the code the database thread will run 
+Here are the relevant code snippets divided up by the code the database thread will run 
 and the code the thread running fetch would run (full source code can be found [here](https://github.com/nestorhealth/medfetch.js/blob/main/medfetch/src/fetch.ts)):
 <Tabs items={["Database Thread", "Fetch Thread"]}>
 <Tabs.Tab>

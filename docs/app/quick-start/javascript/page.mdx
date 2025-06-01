@@ -1,4 +1,5 @@
 import { Steps, Tabs } from 'nextra/components'
+import { DiPostgresql, DiSqllite } from "react-icons/di";
  
 # Javascript
 Pull and flatten FHIR data directly from your own Javascript code with Medfetch.js in-memory runner!
@@ -76,20 +77,20 @@ In either case, you pass your View Definition to the `flat` function:
 
 ```ts
 import { 
-    viewDefinition,
+    ViewDefinition,
     Column,
-    columnPath,
+    ColumnPath,
     flat
 } from "medfetch";
 import { getPatients } from "./my-data-fetchers";
 
-const patientView = viewDefinition({
+const patientView = ViewDefinition({
     status: "active",
     resource: "Patient",
     select: [
         Column({
             column: [
-                columnPath({
+                ColumnPath({
                     name: "id",
                     path: "id"
                 })

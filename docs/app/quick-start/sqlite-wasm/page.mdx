@@ -76,8 +76,8 @@ export const sql = medfetch("https://your-fhir-server.here", { dbId });
 ```
 
 `sql` here is a lazily executed template strings function. It's
-an [Effect](https://effect.website/) from `effect` since this library uses it internally.
-However, it can be executed independently of effect simply by awaiting it:
+an [Effect](https://effect.website/docs/getting-started/the-effect-type/) from [effect](https://effect.website) wrapped with a `then` method to make it awaitable.
+So queries can be executed independently of effect simply by awaiting it.
 
 ```ts
 // This is an effect with a .then attached to be awaitable
@@ -96,7 +96,7 @@ So when a user does some action, say from React code, you can wrap the query lik
 import { getPatients } from "./queries.js";
 import { useMutation } from "@tanstack/react-query";
 
-export function ExecuteOnClick() {
+export function GetPatientsButton() {
   const { mutate, isPending, data } = useMutation({
     mutationFn: getPatients
   });
