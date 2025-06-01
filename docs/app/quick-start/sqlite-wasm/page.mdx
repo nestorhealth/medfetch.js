@@ -1,21 +1,36 @@
 import { Callout, Steps, Tabs } from 'nextra/components'
  
 # sqlite-wasm
-How to spin up a sql-on-fhir View Runner directly on the browser with Medfetch.js and [sqlite-wasm](https://github.com/sqlite/sqlite-wasm)
+Spin up a sql-on-fhir View Runner on the browser with Medfetch.js and [sqlite-wasm](https://github.com/sqlite/sqlite-wasm)
 
 ## Installation
-[effect](https://effect.website/), [fhirpath](https://hl7.github.io/fhirpath.js/), and [@sqlite.org/sqlite-wasm](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) are peer dependencies.
+[fhirpath](https://hl7.github.io/fhirpath.js/), and [@sqlite.org/sqlite-wasm](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) are peer dependencies.
 
 <Tabs items={["pnpm", "npm"]}>
 <Tabs.Tab>
 ```bash copy
-pnpm add effect fhirpath @sqlite.org/sqlite-wasm medfetch
+pnpm add medfetch fhirpath @sqlite.org/sqlite-wasm
 ```
 </Tabs.Tab>
 
 <Tabs.Tab>
 ```bash copy
 npm install effect fhirpath @sqlite.org/sqlite-wasm medfetch
+```
+</Tabs.Tab>
+</Tabs>
+
+You will need to add [tsup](https://tsup.egoist.dev/) as a dev dependency in order to bundle the worker script:
+<Tabs items={["pnpm", "npm"]}>
+<Tabs.Tab>
+```bash copy
+pnpm add -D tsup
+```
+</Tabs.Tab>
+
+<Tabs.Tab>
+```bash copy
+npm install --save-dev tsup
 ```
 </Tabs.Tab>
 </Tabs>
@@ -49,7 +64,6 @@ from the package (this is to load the Virtual Table).
 ```ts
 import { medfetch, worker1 } from "medfetch/sqlite-wasm";
 
-
 // Create a worker1 thread, or get an existing one
 const w1 = worker1();
 const { dbId } = await w1("open", {
@@ -61,29 +75,22 @@ const { dbId } = await w1("open", {
 export const sql = medfetch("https://your-fhir-server.here", { dbId });
 ```
 
-`sql` here is a lazily executed template strings function.
-Meaning it won't take effect until you call the `Effect.runPromise` function on it.
-
-For example:
+`sql` here is a lazily executed template strings function. It's
+an [Effect](https://effect.website/) from `effect` since this library uses it internally.
+However, it can be executed independently of effect simply by awaiting it:
 
 ```ts
-// queries.ts
-import { Effect } from "effect";
-
-const patients_clean = sql<{
+// This is an effect with a .then attached to be awaitable
+const getPatients = async () => await sql<{
   id: string;
   name: HumanName[];
 }>`create table patients as 
    select json ->> 'id' as id,
    select json -> 'name' as name
    from medfetch('Patient');`;
-
-// This will execute your query async when called
-export const getPatients = async () => patients_clean.pipe(Effect.runPromise);
 ```
 
-Then when a user does some action, say from React code, you can wrap the query like 
-you would with any stateful async query.
+So when a user does some action, say from React code, you can wrap the query like you would with any stateful async query.
 
 ```ts
 import { getPatients } from "./queries.js";
