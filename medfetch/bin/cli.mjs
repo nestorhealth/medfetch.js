@@ -67,7 +67,7 @@ export async function resolveUserPeers({ failOnMissing = true } = {}) {
 }
 
 
-const entryFile = resolve(__dirname, "../src/sqlite-wasm/vtab.ts");
+const entryFile = resolve(__dirname, "../src/sqlite-wasm/virtual-table.ts");
 const cmd = argv[2];
 
 if (cmd === "bundle") {
@@ -80,7 +80,7 @@ if (cmd === "bundle") {
 
     await build({
         entry: {
-            "medfetch.vtab": entryFile
+            "medfetch.virtual-table": entryFile
         },
         noExternal: ["effect", "fhirpath"],
         format: ["esm"],
@@ -95,7 +95,7 @@ if (cmd === "bundle") {
         }
     });
 
-    console.log("medfetch: ✅ bundled extension to public/sqlite-ext/medfetch.vtab.mjs");
+    console.log("medfetch: ✅ bundled extension to public/sqlite-ext/medfetch.virtual-table.mjs");
 } else {
     console.error(
 `medfetch: unknown command "${cmd}"

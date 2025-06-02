@@ -11,15 +11,17 @@ import type {
 } from "@sqlite.org/sqlite-wasm";
 
 type CStructify<T> = {
-  [K in keyof T as `$${string & K}`]: T[K];
+    [K in keyof T as `$${string & K}`]: T[K];
 };
 
 interface FixedStructPtrMapper<T> extends StructPtrMapper<T> {
-  unget: (ptr: WasmPointer, val?: T) => void; // make arg1 optional
-};
+    unget: (ptr: WasmPointer, val?: T) => void; // make arg1 optional
+}
 
 type PointerLikeMethods<T> = {
-  [K in keyof T]?: T[K] extends (...args: any[]) => any ? T[K] | 0 | true: T[K];
+    [K in keyof T]?: T[K] extends (...args: any[]) => any
+        ? T[K] | 0 | true
+        : T[K];
 };
 
 type Sqlite3IndexConstraintUsage = CStructify<sqlite3_index_constraint_usage>;
@@ -47,11 +49,11 @@ declare module "@sqlite.org/sqlite-wasm" {
      * Since both incoming and outgoing messages to worker1
      */
     export type Worker1MessageType =
-    | "open"
-    | "close"
-    | "exec"
-    | "config-get"
-    | "export";
+        | "open"
+        | "close"
+        | "exec"
+        | "config-get"
+        | "export";
 
     /**
      * Let a "Request" be main thread --> worker thread
@@ -105,17 +107,17 @@ declare module "@sqlite.org/sqlite-wasm" {
      * @internal
      */
     type _Worker1Request =
-    | Worker1CloseRequest
-    | Worker1ConfigGetRequest
-    | Worker1ExecRequest
-    | Worker1ExportRequest
-    | Worker1OpenRequest;
+        | Worker1CloseRequest
+        | Worker1ConfigGetRequest
+        | Worker1ExecRequest
+        | Worker1ExportRequest
+        | Worker1OpenRequest;
 
     /**
      * An outgoing message from main thread to the worker1 thread
      */
     export type Worker1Request<
-    MessageType extends Worker1MessageType = Worker1MessageType,
+        MessageType extends Worker1MessageType = Worker1MessageType,
     > = Extract<_Worker1Request, { type: MessageType }>;
 
     interface Worker1CloseResponse extends Worker1ResponseBase {
@@ -168,8 +170,8 @@ declare module "@sqlite.org/sqlite-wasm" {
     };
 
     type Worker1ErrorResult<
-    TMessageType extends string,
-    TMessageUnion extends { type: string }
+        TMessageType extends string,
+        TMessageUnion extends { type: string },
     > = {
         operation: TMessageType;
         input: Extract<TMessageUnion, { type: TMessageType }>;
@@ -177,70 +179,71 @@ declare module "@sqlite.org/sqlite-wasm" {
 
     export interface _Worker1ResponseError<
         TMessageType extends string,
-        TMessageUnion extends { type: string }
-        > extends Worker1ErrorBase {
+        TMessageUnion extends { type: string },
+    > extends Worker1ErrorBase {
         result: Worker1ErrorResult<TMessageType, TMessageUnion>;
     }
-
 
     /**
      * To encode a recoverable failure that the Worker1 thread
      * is able to send back to the main thread (so it doesn't hang awaiting forever)
      */
-    export type Worker1ResponseError<T extends string> =
-    _Worker1ResponseError<T, Worker1Request>;
+    export type Worker1ResponseError<T extends string> = _Worker1ResponseError<
+        T,
+        Worker1Request
+    >;
 
     /**
      * @internal
      */
     type _Worker1Response =
-    | Worker1CloseResponse
-    | Worker1ConfigGetResponse
-    | Worker1ExecResponse
-    | Worker1ExportResponse
-    | Worker1OpenResponse;
+        | Worker1CloseResponse
+        | Worker1ConfigGetResponse
+        | Worker1ExecResponse
+        | Worker1ExportResponse
+        | Worker1OpenResponse;
 
     export type Worker1Response<
-    MessageType extends Worker1MessageType = Worker1MessageType,
+        MessageType extends Worker1MessageType = Worker1MessageType,
     > = Extract<_Worker1Response, { type: MessageType }>;
 
     export type TPromiser<
-    MsgType extends Worker1MessageType,
-    MsgRequest extends { type: MsgType; args?: any },
-    MsgResponse extends { type: MsgType; result: any },
+        MsgType extends Worker1MessageType,
+        MsgRequest extends { type: MsgType; args?: any },
+        MsgResponse extends { type: MsgType; result: any },
     > = {
         /**
          * 1-arg overload
          */
         <
-        MessageType extends MsgType,
-        MessageRequest extends Extract<MsgRequest, { type: MessageType }>,
+            MessageType extends MsgType,
+            MessageRequest extends Extract<MsgRequest, { type: MessageType }>,
         >(
             message: MessageRequest,
         ): Promise<
-        | Extract<MsgResponse, { type: MessageType }>
-        | Worker1ResponseError<MessageType>
+            | Extract<MsgResponse, { type: MessageType }>
+            | Worker1ResponseError<MessageType>
         >;
 
         /**
          * 2-arg overload (easy handle)
          */
         <
-        MessageType extends MsgType,
-        MessageRequest extends Extract<MsgRequest, { type: MessageType }>,
+            MessageType extends MsgType,
+            MessageRequest extends Extract<MsgRequest, { type: MessageType }>,
         >(
             messageType: MessageType,
             messageArguments?: MessageRequest["args"],
         ): Promise<
-        | Extract<MsgResponse, { type: MessageType }>
-        | Worker1ResponseError<MessageType>
+            | Extract<MsgResponse, { type: MessageType }>
+            | Worker1ResponseError<MessageType>
         >;
     };
 
     export type Worker1Promiser = TPromiser<
-    Worker1MessageType,
-    Worker1Request,
-    Worker1Response
+        Worker1MessageType,
+        Worker1Request,
+        Worker1Response
     >;
 
     export const sqlite3Worker1Promiser: {
@@ -262,5 +265,5 @@ declare module "@sqlite.org/sqlite-wasm" {
      */
     export interface Sqlite3 extends Omit<Sqlite3Static, "vtab"> {
         vtab: Sqlite3Vtab;
-    };
+    }
 }

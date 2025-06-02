@@ -1,6 +1,6 @@
 import { worker1 } from "./main.js";
 import { makeAwaitable, AwaitableEffect, BetterWorker1MessageType } from "./types.js";
-import { TokenMessage } from "~/sqlite-wasm/vtab.services.js";
+import { TokenMessage } from "~/sqlite-wasm/virtual-table.services.js";
 import { type Effect, fromNullable, gen, promise, } from "effect/Effect";
 import { TaggedError } from "effect/Data";
 
@@ -14,7 +14,7 @@ function ModuleURL(url?: URL) {
     else
         return new URL(
             // namespace for extension in static folder
-            DEV ? "medfetch.vtab.js" : "sqlite-ext/medfetch.vtab.mjs",
+            DEV ? "./virtual-table" : "sqlite-ext/medfetch.virtual-table.mjs",
             // relative to source  : relative to static root
             DEV ? import.meta.url : self.location.origin,
         );

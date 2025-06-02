@@ -11,30 +11,34 @@ const __READER_MAP__ = new Map<number, ReadableStreamDefaultReader>();
  */
 const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
     return FetchMessage.$match(e.data, {
-        request: async ({ sab, url, init, id }) => {
-            const signal = new Int32Array(sab, 0, 1);
-            const status = new Int32Array(sab, 4, 1);
+        /**
+         * onRequest
+         * @param param0 
+         */
+        async request(message) {
+            const signal = new Int32Array(message.sab, 0, 1);
+            const status = new Int32Array(message.sab, 4, 1);
 
-            const response = await fetch(url, init);
-            __RESPONSE_MAP__.set(id, response);
+            const response = await fetch(message.url, message.init);
+            __RESPONSE_MAP__.set(message.id, response);
             status[0] = response.status;
 
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
         },
-        readJson: async ({ sab, id }) => {
-            const signal = new Int32Array(sab, 0, 1);
-            const payloadMaxSize = sab.byteLength - 8;
-            const sizeView = new DataView(sab, 4, 4);
-            const dataBytes = new Uint8Array(sab, 8, payloadMaxSize);
+        async readJson(message) {
+            const signal = new Int32Array(message.sab, 0, 1);
+            const payloadMaxSize = message.sab.byteLength - 8;
+            const sizeView = new DataView(message.sab, 4, 4);
+            const dataBytes = new Uint8Array(message.sab, 8, payloadMaxSize);
 
-            const response = __RESPONSE_MAP__.get(id);
+            const response = __RESPONSE_MAP__.get(message.id);
             if (!response) {
                 Atomics.store(signal, 0, -1);
                 Atomics.notify(signal, 0);
                 return;
             }
-            __RESPONSE_MAP__.delete(id);
+            __RESPONSE_MAP__.delete(message.id);
 
             const payload = await response.json();
             const backToText = JSON.stringify(payload);
@@ -53,7 +57,7 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
         },
-        startStream: async ({ sab, id }) => {
+        async startStream({ sab, id }) {
             const signal = new Int32Array(sab, 0, 1);
             const response = __RESPONSE_MAP__.get(id);
             if (!response || !response.body) {
@@ -69,7 +73,7 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
         },
-        readChunk: async ({ sab, id }) => {
+        async readChunk({ sab, id }) {
             const signal = new Int32Array(sab, 0, 1);
             const sizeView = new DataView(sab, 4, 4);
             const payloadMaxSize = sab.byteLength - 8;

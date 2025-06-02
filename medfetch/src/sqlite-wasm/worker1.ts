@@ -99,9 +99,9 @@ function idToPointer(dbId: string): number {
 }
 
 /**
- * The main program as an Effect
+ * The onmessage handler for the worker1 function
  */
-const run = Effect.gen(function* () {
+const handleMessage = Effect.gen(function* () {
     const sqlite3InitModule = yield* Sqlite3InitModule;
     const sqlite3 = yield* bootstrap(sqlite3InitModule);
 
@@ -212,14 +212,14 @@ const run = Effect.gen(function* () {
                 }).pipe(Effect.runPromise),
         });
     };
-    return { onMessage };
+    return onMessage;
 });
 
 /* The worker's main routine — it performs a one-time WASM initialization.
  * There's no need for a manual loop here; the worker thread stays alive and
  * handles messages via its onmessage handler. */
-const main = run.pipe(
-    Effect.tap(({ onMessage }) => {
+const worker1 = handleMessage.pipe(
+    Effect.tap((onMessage) => {
         self.onmessage = onMessage;
     }),
 );
@@ -238,7 +238,7 @@ const sqlite3InitModule: Sqlite3InitModuleFunc = __ as unknown as Sqlite3InitMod
 
 // @ts-ignore
 const _ = Effect.provideService(
-    main,
+    worker1,
     Sqlite3InitModule,
     sqlite3InitModule,
 ).pipe(Effect.runPromiseExit);

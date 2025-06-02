@@ -2,6 +2,7 @@ import type { Sqlite3, Sqlite3Module } from "@sqlite.org/sqlite-wasm";
 import { Tag } from "effect/Context";
 import { TaggedError } from "effect/Data";
 import { andThen, type Effect, liftPredicate, provideService, tap, tryPromise } from "effect/Effect";
+import { ModuleContext } from "~/sqlite-wasm/virtual-table.services";
 
 /**
  * @internal
@@ -94,7 +95,20 @@ export interface VirtualTableUserConfig<AuxMap extends Record<string, any>> {
     /**
      * Any user defined aux
      */
-    aux: AuxMap;
+    vars: AuxMap;
+}
+
+export interface UserContext<Variables extends Record<string, any>> extends Tag.Service<ModuleContext> {
+    /**
+     * Any user defined aux in js-land
+     */
+    aux: Variables;
+
+    /**
+     * Any transferables sent from main thread that the
+     * vtable module needs the worker1 thread to take ownership of.
+     */
+    transfer: readonly MessagePort[];
 }
 
 /**
@@ -107,10 +121,10 @@ export interface VirtualTableUserConfig<AuxMap extends Record<string, any>> {
  * @returns vtab A `sqlite3_module` Promise
  */
 export type VirtualTableExtensionFn<
-    AuxMap extends Record<string, any> = Record<string, any>,
+    Vars extends Record<string, any> = Record<string, any>,
 > = (
     sqlite3: Sqlite3,
-    aux: VirtualTableUserConfig<AuxMap>,
+    context: UserContext<Vars>
 ) => Promise<Sqlite3Module>;
 
 const dynamicImport = (path: string) =>
@@ -197,7 +211,7 @@ function importUserModule(path: string) {
 export function wrapSqlite3Module(
     sqlite3: Sqlite3,
     moduleURL: string,
-    aux: VirtualTableUserConfig<any>,
+    aux: UserContext<any>,
 ): Effect<Sqlite3Module, Worker1Error> {
     return importUserModule(moduleURL).pipe(
         andThen((makeUserModule) =>

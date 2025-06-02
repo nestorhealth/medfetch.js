@@ -1,23 +1,29 @@
 import { pipe } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
-import { case as createCase, TaggedError } from "effect/Data";
-import { getOrNull, isNone, none, type Option, some, map as mapOption, flatMap as flatMapOption, isSome, getOrThrow, fromNullable } from "effect/Option";
-import { Service, andThen, flatMap, liftPredicate, provide, runPromise, runSync, tryPromise } from "effect/Effect";
+import { case as createCase } from "effect/Data";
+import {
+    getOrNull,
+    isNone,
+    none,
+    type Option,
+    some,
+    map as mapOption,
+    flatMap as flatMapOption,
+    isSome,
+    getOrThrow,
+    fromNullable,
+} from "effect/Option";
+import {
+    andThen,
+    flatMap,
+    liftPredicate,
+    runPromise,
+    tryPromise,
+} from "effect/Effect";
 import { Array as $Array, decodeUnknown, type Schema } from "effect/Schema";
 import { fromAsyncIterable } from "effect/Stream";
-
-class DataError extends TaggedError("medfetch/data")<{
-    readonly message: string;
-}> {
-    constructor(msg: string | { message: string } = "Unknown error") {
-        if (typeof msg === "string") {
-            super({ message: msg });
-        } else {
-            super({ message: msg.message });
-        }
-    }
-}
+import { DataError } from "~/data.error.js";
 
 /**
  * Unwrapped return type of calling the parser returned by {@link kdv}
@@ -55,10 +61,10 @@ type KDVParseFn<Value> = (chunk: string) => Option<KDVParseResult<Value>>;
  */
 export const kdv = <Value = unknown>(
     k: string,
-    d: number
+    d: number,
 ): KDVParseFn<Value> => {
     const parser = clarinet.parser();
-    
+
     let currentKey = "";
     let depth = 0;
 
@@ -77,7 +83,7 @@ export const kdv = <Value = unknown>(
     };
 
     parser.onopenobject = (key) => {
-        if ((depth + 1) === d && key === k) {
+        if (depth + 1 === d && key === k) {
             capturing = true;
             stack.push({});
         } else if (capturing) {
@@ -160,7 +166,7 @@ export const kdv = <Value = unknown>(
         if (!!v) {
             return some({
                 hd: v,
-                tl: null
+                tl: null,
             });
         } else if (stack.length > 0) {
             const hd = structuredClone(stack[0]);
@@ -168,7 +174,7 @@ export const kdv = <Value = unknown>(
                 const popped = hd.pop();
                 return some({
                     hd: hd as Value,
-                    tl: popped as any
+                    tl: popped as any,
                 });
             } else {
                 const keys = Object.keys(hd);
@@ -177,7 +183,7 @@ export const kdv = <Value = unknown>(
                 delete hd[last];
                 return some({
                     hd: hd as Value,
-                    tl: lastChild as any
+                    tl: lastChild as any,
                 });
             }
         } else {
@@ -190,106 +196,92 @@ export const kdv = <Value = unknown>(
  * Bundle stream utility functions
  * @template ResourceType the expected resource types the Bundle will return, defaulting to any string value
  */
-interface PageHandler<ResourceType extends string = string> {
+export interface Page<ResourceType extends string = string> {
     /**
      * Stateful next bundle url getter that only returns non-null if
      * 1. The {@link Link} property was able to be parsed at depth 1 and
      * 2. The {@link Link} array value has an element with key "relation" == "next".
-     * Call when {@link flush} returns `done` to check if a next URL exists or not.
+     * Call when {@link resources} returns `done` to check if a next URL exists or not.
      * @returns The next page URL if it exists, null otherwise.
      */
-    nexturl: () => string | null;
+    next: () => string | null;
 
     /**
      * Get back a generator wrapper over the Bundle text chunk generator provided
      * that flushes out resources one by one.
      * @returns {@link Resource} generator
      */
-    flush: () => Generator<Resource<ResourceType>, void>;
-};
+    resources: () => Generator<Resource<ResourceType>, void>;
+}
 
 /**
- * Ctor for {@link PageHandler}
- * @param args The required fields of a {@link PageHandler}
+ * Plain ctor for {@link Page}
+ * @param args The required fields of a {@link Page}
  * @returns {@link PageHandler}
  */
-const pageHandler = createCase<PageHandler>();
+const page = createCase<Page>();
 
 /**
- * Template for Bundle stream handling
+ * Stateful constructor-like function for {@link Page}
+ * @param bundleChunks Some Bundle chunks Generator
+ * @returns {@link Page}
  */
-export class page extends Service<page>()("data.Page", {
-    sync: () => ({
-        /**
-         * Parse text chunks of a FHIR bundle from a *synchronous* generator
-         * and get back a {@link Resource} generator + a next {@link Link} getter
-         * @param bundleChunks Bundle plaintext generator
-         * @returns A {@link PageHandler} for the given Bundle Page
-         */
-        handler(bundleChunks: Generator<string>): PageHandler {
-            let cursor = -1;
-            let nextURL = none<string>();
-            let isLinkParsed = false;
-            const parseLink = kdv<Link[]>("link", 1);
-            const parseEntry = kdv<Entry[]>("entry", 1);
-            const acc: Resource[] = [];
-            return pageHandler({
-                nexturl() {
-                    return getOrNull(nextURL);
-                },
-                *flush() {
-                while (true) {
-                    if (acc.length > 0) {
-                        yield acc.shift()!;
-                    }
-                    const { done, value } = bundleChunks.next();
-                    if (done || !value)
-                        break;
-                    if (isNone(nextURL) && !isLinkParsed) {
-                        parseLink(value).pipe(
-                            mapOption(
-                                ({ hd }) => {
-                                    isLinkParsed = true;
-                                    const searched = hd.find((link) => link.relation === "next")?.url;
-                                    if (searched)
-                                        nextURL = some(searched);
-                                } 
-                            ),
-                        )
-                    }
-                    const popped = parseEntry(value).pipe(
-                        flatMapOption(
-                            ({ hd }) => {
-                                if (hd.length > 0) {
-                                    const flushed = hd
-                                        .slice(cursor + 1)
-                                        .filter((entry): entry is Entry & { resource: Resource } => !!entry.resource)
-                                        .map(({ resource }) => resource);
-                                    cursor = hd.length - 1;
-                                    acc.push(...flushed);
-                                    return some(acc.shift()!);
-                                } else
-                                    return none();
-                            }
-                        )
-                    );
-                    if (isSome(popped)) {
-                        yield getOrThrow(popped);
-                    }
-                }
-                while (acc.length > 0)
+export function Page(bundleChunks: Generator<string>): Page {
+    let cursor = -1;
+    let nextURL = none<string>();
+    let isLinkParsed = false;
+    const parseLink = kdv<Link[]>("link", 1);
+    const parseEntry = kdv<Entry[]>("entry", 1);
+    const acc: Resource[] = [];
+    return page({
+        next() {
+            return getOrNull(nextURL);
+        },
+        *resources() {
+            while (true) {
+                if (acc.length > 0) {
                     yield acc.shift()!;
                 }
-            });
+                const { done, value } = bundleChunks.next();
+                if (done || !value) break;
+                if (isNone(nextURL) && !isLinkParsed) {
+                    parseLink(value).pipe(
+                        mapOption(({ hd }) => {
+                            isLinkParsed = true;
+                            const searched = hd.find(
+                                (link) => link.relation === "next",
+                            )?.url;
+                            if (searched) nextURL = some(searched);
+                        }),
+                    );
+                }
+                const popped = parseEntry(value).pipe(
+                    flatMapOption(({ hd }) => {
+                        if (hd.length > 0) {
+                            const flushed = hd
+                                .slice(cursor + 1)
+                                .filter(
+                                    (
+                                        entry,
+                                    ): entry is Entry & {
+                                        resource: Resource;
+                                    } => !!entry.resource,
+                                )
+                                .map(({ resource }) => resource);
+                            cursor = hd.length - 1;
+                            acc.push(...flushed);
+                            return some(acc.shift()!);
+                        } else return none();
+                    }),
+                );
+                if (isSome(popped)) {
+                    yield getOrThrow(popped);
+                }
+            }
+            while (acc.length > 0) yield acc.shift()!;
         },
-    }),
-    accessors: true
-}) {};
-
-/**
- * The default implementation of the {@link page} helper class.
- */
-export const Page = runSync(provide(page.Default)(page));
+    });
+}
 
 const Bundle = Resource("Bundle", {
     link: Link.pipe($Array),
@@ -305,11 +297,12 @@ const decodeBundle = decodeUnknown(Bundle);
  * @returns `Option.some` with the url if `'next' in Bundle.link.relation` exists. `Option.none` otherwise.
  *
  */
-const nextLink = (bundle: Bundle) => pipe(
-    bundle.link.find((link) => link.relation === "next"),
-    fromNullable,
-    mapOption((link) => link.url)
-);
+const nextLink = (bundle: Bundle) =>
+    pipe(
+        bundle.link.find((link) => link.relation === "next"),
+        fromNullable,
+        mapOption((link) => link.url),
+    );
 
 /**
  * `fetch()` wrapper over an HTTP GET call.
@@ -329,9 +322,7 @@ const get = (url: string) =>
                 response,
                 (res) => res.ok,
                 (res) =>
-                    new DataError({
-                        message: `Response not ok! Status: ${res.status} `,
-                    }),
+                    new DataError(`Response not ok! Status: ${res.status}`),
             ),
         ),
         andThen((response) => tryPromise(() => response.json())),
@@ -391,7 +382,7 @@ export const pages = (
 ) =>
     fromAsyncIterable(
         pageIterator(baseUrl, resourceType)(n, maxPageSize),
-        (e) => new DataError({ message: String(e) }),
+        (e) => new DataError(String(e)),
     );
 
 export { pkce } from "./data.auth.js";
