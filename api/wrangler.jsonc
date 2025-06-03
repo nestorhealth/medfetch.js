@@ -11,8 +11,9 @@
     "production": {
       "vars": {
         "ENVIRONMENT": "production",
-        "DOCS_HOST": "https://medfetchjs.pages.dev",
-      }
+        "DOCS_HOST": "https://medfetchjs.pages.dev"
+      },
+      "route": "api.medfetch.io"
     },
   },
   // "compatibility_flags": [

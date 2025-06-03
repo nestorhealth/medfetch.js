@@ -29,7 +29,7 @@ export default function ResearcherDemo() {
         // Create tables if they don't exist
         await medDb.db.exec(`
           CREATE TABLE IF NOT EXISTS Patient (
-            id TEXT PRIMARY KEY,
+            patient_id TEXT PRIMARY KEY,
             givenName TEXT,
             familyName TEXT,
             birthDate TEXT,
