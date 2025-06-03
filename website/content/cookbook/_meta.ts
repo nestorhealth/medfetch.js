@@ -1,10 +1,7 @@
 import { MetaRecord } from "nextra";
 
 const meta: MetaRecord = {
-  "google-sheets": "Google Sheets",
-  "_components": {
-    display: "hidden"
-  }
+  "google-sheets": "Google Sheets"
 }
 
 export default meta;

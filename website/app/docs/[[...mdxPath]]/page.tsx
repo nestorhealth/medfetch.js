@@ -18,7 +18,7 @@ export async function generateMetadata(props: PageProps) {
  
 const Wrapper = getMDXComponents().wrapper
  
-export default async function DocsIndex(props: PageProps) {
+export default async function DocsPage(props: PageProps) {
   const params = await props.params
   const result = await importPage(params.mdxPath)
   const { default: MDXContent, toc, metadata } = result
