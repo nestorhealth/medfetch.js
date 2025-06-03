@@ -1,15 +1,11 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { initMedfetchDB, type MedfetchClient } from "medfetch";
-import dynamic from 'next/dynamic';
-import { TableManager, type ColumnDefinition } from "../../utils/tableManager";
+import { initMedfetchDB, type MedfetchClient } from "@/lib/client";
+import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
+import AGGridTable from "@/components/AGGridTable";
 
-const AGGridTable = dynamic(() => import('../../components/AGGridTable'), {
-  ssr: false
-});
-
-export default function ResearcherClient() {
+export function ResearcherClient() {
   const [db, setDB] = useState<MedfetchClient | null>(null);
   const [currentResource, setCurrentResource] = useState<"Patient" | "Procedure">("Patient");
   const [rawData, setRawData] = useState<any[]>([]);
@@ -33,7 +29,7 @@ export default function ResearcherClient() {
         // Create tables if they don't exist
         await medDb.db.exec(`
           CREATE TABLE IF NOT EXISTS Patient (
-            patient_id TEXT PRIMARY KEY,
+            id TEXT PRIMARY KEY,
             givenName TEXT,
             familyName TEXT,
             birthDate TEXT,
@@ -58,7 +54,7 @@ export default function ResearcherClient() {
         const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
         if (patientCount[0].count === 0) {
           await medDb.db.exec(`
-            INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
+            INSERT INTO Patient (id, givenName, familyName, birthDate, gender, condition, status)
             VALUES ('p1', 'John', 'Doe', '1970-01-01', 'male', 'None', 'Active');
           `);
         }
