@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "types": ["node", "next"]
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/cookbook/page.mdx", "app/cookbook/google-sheets/glue-code/sqlite-wasm.mdx"],
   "exclude": ["node_modules"]

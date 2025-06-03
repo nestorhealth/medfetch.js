@@ -1,0 +1,24 @@
+{
+  "name": "@medfetch.js/api",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
+    "api-typegen": "curl -s -H \"Accept: application/json\" http://localhost:8787/openapi > ./dist/openapi.json && openapi-typescript ./dist/openapi.json -o ./dist/types.d.ts"
+  },
+  "exports": {
+    "./types": {
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^0.19.8",
+    "@hono/zod-validator": "^0.7.0",
+    "hono": "^4.7.11",
+    "openai": "^5.0.1"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.8.0",
+    "wrangler": "^4.4.0"
+  }
+}

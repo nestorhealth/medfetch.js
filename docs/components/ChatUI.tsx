@@ -1,0 +1,179 @@
+"use client";
+
+import React, { useState, useRef, useEffect } from 'react';
+import { MedfetchClient } from 'medfetch';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { api } from '@/lib/api';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  summary?: string;
+  sql?: string;
+  error?: string;
+}
+
+interface ChatUIProps {
+  db: MedfetchClient;
+  onQuery: (sql: string) => Promise<void>;
+}
+
+export default function ChatUI({ onQuery }: ChatUIProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      // Call the NL2SQL API
+      const response2 = await api.POST("/nl2sql", {
+        body: {
+          query: userMessage.content
+        }
+      });
+      if (response2.error) {
+        throw new Error(response2.error.error);
+      }
+      const data = response2.data;
+      
+      // Create assistant message
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.summary || '',
+        summary: data.summary,
+        sql: data.sql,
+        error: data.error
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // If we have SQL and no error, execute it
+      if (data.sql && !data.error) {
+        await onQuery(data.sql);
+      }
+    } catch (error) {
+      // Add error message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Error: Failed to process your request',
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-[#e2e8f0] text-white">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map(message => (
+          <div
+            key={message.id}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] rounded-lg p-4 border border-[#334155] ${
+                message.role === 'user'
+                  ? 'bg-[#0f172a] text-white'
+                  : 'bg-[#0f172a] text-white'
+              }`}
+            >
+              {/* Summary */}
+              {message.summary && (
+                <div className="mb-2 font-medium text-white">{message.summary}</div>
+              )}
+
+              {/* SQL Code */}
+              {message.sql && (
+                <div className="mt-2">
+                  <SyntaxHighlighter
+                    language="sql"
+                    style={tomorrow}
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: '0.375rem',
+                      fontSize: '0.875rem',
+                      background: '#1e293b'
+                    }}
+                  >
+                    {message.sql}
+                  </SyntaxHighlighter>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {message.error && (
+                <div className="mt-2 text-red-400">
+                  Error: {message.error}
+                </div>
+              )}
+
+              {/* Fallback Content */}
+              {!message.summary && !message.sql && !message.error && (
+                <div className="text-white">{message.content}</div>
+              )}
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} className="border-t border-[#334155] p-4 bg-[#e2e8f0]">
+        <div className="flex space-x-4">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask a question about the data..."
+            className="flex-1 rounded-lg border border-[#334155] bg-[#0f172a] text-white px-4 py-2 focus:border-white focus:outline-none focus:ring-1 focus:ring-white placeholder-[#94a3b8]"
+            disabled={isLoading}
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className={`rounded-lg px-6 py-2 font-medium ${
+              isLoading || !input.trim()
+                ? 'bg-[#334155] text-[#94a3b8] cursor-not-allowed'
+                : 'bg-[#0f172a] text-white hover:bg-[#1e293b] border border-[#334155]'
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                <span>Processing...</span>
+              </div>
+            ) : (
+              'Send'
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+} 

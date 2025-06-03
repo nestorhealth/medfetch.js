@@ -12,9 +12,6 @@ export default nextConfig({
     );
     return config;
   },
-  transpilePackages: [
-    "medfetch"
-  ],
   async headers() {
     return [
       {
