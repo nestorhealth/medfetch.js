@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MedfetchClient } from 'medfetch';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { api } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -19,7 +20,7 @@ interface ChatUIProps {
   onQuery: (sql: string) => Promise<void>;
 }
 
-export default function ChatUI({ db, onQuery }: ChatUIProps) {
+export default function ChatUI({ onQuery }: ChatUIProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,17 +47,15 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
 
     try {
       // Call the NL2SQL API
-      const response = await fetch('/api/nl2sql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userMessage.content })
+      const response2 = await api.POST("/nl2sql", {
+        body: {
+          query: userMessage.content
+        }
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to process query');
+      if (response2.error) {
+        throw new Error(response2.error.error);
       }
-
-      const data = await response.json();
+      const data = response2.data;
       
       // Create assistant message
       const assistantMessage: Message = {

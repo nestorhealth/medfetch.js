@@ -22,7 +22,7 @@ export default function ResearcherClient() {
     (async () => {
       try {
         // Initialize with a persisted database file
-        const medDb = await initMedfetchDB({
+        const medDb = initMedfetchDB({
           baseURL: "https://r4.smarthealthit.org",
           filename: 'medfetch.db',
           trace: true

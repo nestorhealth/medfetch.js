@@ -1,20 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import nl2sql from "./routes/nl2sql";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { cors } from "hono/cors";
+import OpenAI from "openai";
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const app = new OpenAPIHono<{
+  Bindings: Cloudflare.Env;
+}>();
+
+app.use("/*", (c, next) => {
+  const corsHandler = cors({
+    origin: [c.env.DOCS_HOST],
+  });
+  return corsHandler(c, next);
 });
 
-export async function POST(req: NextRequest) {
+app.openapi(nl2sql.POST, async (c) => {
   try {
-    const { query } = await req.json();
+    const openai = new OpenAI({
+      apiKey: c.env.OPENAI_API_KEY,
+    });
+    const { query } = c.req.valid("json");
 
     if (!query) {
-      return NextResponse.json(
-        { error: 'Query is required' },
-        { status: 400 }
-      );
+      return c.json({ error: "Query is required" }, 400);
     }
 
     // Prepare the system prompt with the specific instructions
@@ -22,6 +30,8 @@ export async function POST(req: NextRequest) {
 
 1. **Schema Reference**  
    You know the exact SQLite schema for two tables:
+   
+    Name: "Patient"
    ┌─────────────┬────────┐
    │ Column      │ Type   │
    ├─────────────┼────────┤
@@ -37,6 +47,7 @@ export async function POST(req: NextRequest) {
 
    and
 
+    Name: "Procedure"
    ┌──────────────────┬────────┐
    │ Column           │ Type   │
    ├──────────────────┼────────┤
@@ -51,7 +62,7 @@ export async function POST(req: NextRequest) {
 2. **Behavior**  
    - When you receive a researcher's natural-language request, you will output exactly two things:
      1. **A one-sentence summary**, prefixed with \`Summary: \`.  
-     2. **A fenced code block labeled \`sql\`**, containing only valid SQLite statements (UPDATE/INSERT/DELETE) that implement that intent.  
+     2. **A fenced code block labeled \`sql\`**, containing only valid SQLite statements (UPDATE/INSERT/DELETE) that implement that intent.
    - **Format example**:
      \`\`\`
      Summary: I will update the status field to 'Reviewed' for diabetic patients older than 50.
@@ -63,7 +74,17 @@ export async function POST(req: NextRequest) {
          AND ((julianday('now') - julianday(birthDate)) / 365.25) >= 50;
      \`\`\`
      \`\`\`
-   - **Important:** Do not output any other commentary, prose, or disclaimers. Only the summary line and the SQL code.  
+   - **Important:** 
+      Assume any NL queries that translate to migration-related statements (i.e. ALTER TABLE) are related to the "Patient"
+      table only and assume the querier can only read from the "Patient" table. Further, for any NL queries that translate
+      to adding any columns in the form of:
+      \`\`\`sql
+      ALTER TABLE Patient
+      ADD (...);
+      \`\`\`
+      Your available choices are any columns from the "Procedure" table and any "Patient" tables
+      the user has removed and is asking to be put back.
+      Do not output any other commentary, prose, or disclaimers. Only the summary line and the SQL code.  
 
 3. **Error Handling**  
    - If the request is **ambiguous** or if it references a column that does not exist, respond with exactly:
@@ -86,59 +107,76 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: "system",
-          content: systemPrompt
+          content: systemPrompt,
         },
         {
           role: "user",
-          content: query
-        }
+          content: query,
+        },
       ],
-      temperature: 0.1 // Low temperature for more deterministic results
+      temperature: 0.1, // Low temperature for more deterministic results
     });
 
     const response = completion.choices[0].message.content;
     if (!response) {
-      throw new Error('No response from OpenAI');
+      throw new Error("No response from OpenAI");
     }
 
     // Parse the response
-    const lines = response.split('\n');
-    let summary = '';
-    let sql = '';
-    let error = '';
+    const lines = response.split("\n");
+    let summary = "";
+    let sql = "";
+    let error = "";
 
     // Extract summary and SQL/error
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      if (line.startsWith('Summary:')) {
+      if (line.startsWith("Summary:")) {
         summary = line.substring(8).trim();
-      } else if (line.startsWith('ERROR:')) {
+      } else if (line.startsWith("ERROR:")) {
         error = line.substring(6).trim();
         break;
-      } else if (line.startsWith('```sql')) {
+      } else if (line.startsWith("```sql")) {
         // Collect all SQL lines until the closing ```
         let sqlLines = [];
         i++; // Skip the ```sql line
-        while (i < lines.length && !lines[i].trim().startsWith('```')) {
+        while (i < lines.length && !lines[i].trim().startsWith("```")) {
           sqlLines.push(lines[i]);
           i++;
         }
-        sql = sqlLines.join('\n').trim();
+        sql = sqlLines.join("\n").trim();
       }
     }
 
     // Return the parsed response
-    return NextResponse.json({
-      summary,
-      sql: sql || undefined,
-      error: error || undefined
-    });
-
+    return c.json(
+      {
+        summary,
+        sql: sql || undefined,
+        error: error || undefined,
+      },
+      200
+    );
   } catch (error) {
-    console.error('Error in nl2sql:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
+    return c.json(
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      500
     );
   }
-} 
+});
+
+app.get("/", (c) => {
+  return c.text("Hi mom!");
+});
+
+app.doc("/openapi", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Medfetch API",
+  },
+});
+
+export default app;

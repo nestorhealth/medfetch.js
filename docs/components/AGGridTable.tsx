@@ -4,13 +4,11 @@ import { AgGridReact } from "ag-grid-react";
 import { 
   ModuleRegistry, 
   AllCommunityModule, 
-  ColDef, 
   GridApi, 
   GridReadyEvent, 
   CellValueChangedEvent,
   CellClassParams,
   SelectionChangedEvent,
-  RowNode,
   ITooltipParams,
   IRowNode,
   ColDef as AgGridColDef
