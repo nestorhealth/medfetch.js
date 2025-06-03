@@ -7,7 +7,7 @@ const app = new OpenAPIHono<{
   Bindings: Cloudflare.Env;
 }>();
 
-app.use("/*", (c, next) => {
+app.use("*", (c, next) => {
   const corsHandler = cors({
     origin: [c.env.DOCS_HOST],
     allowMethods: ["GET", "POST", "OPTIONS"],
