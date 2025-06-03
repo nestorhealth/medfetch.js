@@ -1,4 +1,4 @@
-import { MedfetchClient } from "medfetch";
+import { MedfetchClient } from "@/lib/client";
 
 export interface ColumnDefinition {
   name: string;

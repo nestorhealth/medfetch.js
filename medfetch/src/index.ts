@@ -4,7 +4,6 @@ import { flat } from "./sof";
 import { ViewDefinition, Column } from "./view";
 
 export { flat };
-export { initMedfetchDB, type MedfetchClient, type MedfetchDB } from "./client";
 export { pkce } from "./data";
 export {
     normalize,

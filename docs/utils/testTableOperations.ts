@@ -1,7 +1,7 @@
-import { initMedfetchDB } from "medfetch";
+import { initMedfetchDB } from "@/lib/client";
 import { TableManager } from "./tableManager";
 import { TransactionManager, TransactionIsolationLevel } from "./transactionManager";
-import { generateTestData, verifyTableExists, getTableRowCount } from "./testUtils";
+import { generateTestData, verifyTableExists } from "./testUtils";
 
 async function runTests() {
   console.log("Initializing test database...");

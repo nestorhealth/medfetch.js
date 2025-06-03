@@ -1,4 +1,4 @@
-import type { MedfetchClient } from "medfetch";
+import type { MedfetchClient } from "@/lib/client";
 
 /**
  * Utility functions for database testing
