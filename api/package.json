@@ -3,12 +3,12 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
-    "api-typegen": "curl -s -H \"Accept: application/json\" http://localhost:8787/openapi > ./dist/openapi.json && openapi-typescript ./dist/openapi.json -o ./dist/types.d.ts"
+    "cf-typegen": "wrangler types ./exports/worker-configuration.d.ts --env-interface CloudflareBindings",
+    "api-typegen": "openapi-typescript ./exports/openapi.json -o ./dist/types.d.ts"
   },
   "exports": {
     "./types": {
-      "types": "./dist/types.d.ts"
+      "types": "./exports/types.d.ts"
     }
   },
   "dependencies": {
