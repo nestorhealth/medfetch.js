@@ -1,6 +1,8 @@
 import nextra from "nextra";
 
-const nextConfig = nextra({});
+const nextConfig = nextra({
+  contentDirBasePath: "/docs",
+});
 
 export default nextConfig({
   output: "export",

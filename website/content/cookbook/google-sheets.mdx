@@ -1,11 +1,11 @@
 import { Callout, FileTree, Tabs, Steps } from 'nextra/components';
-import SQLiteConditions from "./sqlite/conditions.mdx";
-import SQLiteTableFinal from "./sqlite/table-final.mdx";
-import { ExportDatasetToSheets } from "./sqlite/export-dataset-to-sheets";
+import SQLiteConditions from "./_components/sqlite.conditions.mdx";
+import SQLiteTableFinal from "./_components/sqlite.table-final.mdx";
+import { ExportDatasetToSheets } from "./_components/sqlite.export-dataset-to-sheets";
 
-import SQLiteWASMCode from "./glue-code/sqlite-wasm.mdx";
-import GoogleOAuth2Code from "./glue-code/google.oauth2.mdx";
-import ExportDatasetToSheetsCode from "./glue-code/export-dataset-to-sheets.mdx";
+import SQLiteWASMCode from "./_components/glue-code.sqlite-wasm.mdx";
+import GoogleOAuth2Code from "./_components/glue-code.google-oauth2.mdx";
+import ExportDatasetToSheetsCode from "./_components/glue-code.export-dataset-to-sheets.mdx";
 
 # Google Sheets Integration
 This example shows a potential sql-on-fhir integration with Google Sheets using Medfetch.js.
@@ -38,13 +38,12 @@ Here is how we can get all [Condition]() resources
 that have an entry in their `code` property that equals the SNOMED code for
 acute bronchitis (10509002).
 
-<Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
+<Tabs items={["sqlite", "postgresql", "in-memory"]}>
 
   <Tabs.Tab>
     <SQLiteConditions />
   </Tabs.Tab>
 
-  <Tabs.Tab></Tabs.Tab>
   <Tabs.Tab></Tabs.Tab>
   <Tabs.Tab></Tabs.Tab>
 </Tabs>
@@ -53,7 +52,7 @@ acute bronchitis (10509002).
 Then we'll get all [Procedure]() rows that reference any of our `ab_conditions` rows as 
 their `reasonReference`, and then `INNER JOIN` them so we can squash the relevant data into a single nice compact table.
 
-<Tabs items={["sqlite", "postgresql", "mysql", "in-memory"]}>
+<Tabs items={["sqlite", "postgresql", "in-memory"]}>
 
   <Tabs.Tab>
     <SQLiteTableFinal />

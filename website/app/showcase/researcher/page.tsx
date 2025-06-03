@@ -5,7 +5,7 @@ import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
 
-export function ResearcherClient() {
+export default function ResearcherDemo() {
   const [db, setDB] = useState<MedfetchClient | null>(null);
   const [currentResource, setCurrentResource] = useState<"Patient" | "Procedure">("Patient");
   const [rawData, setRawData] = useState<any[]>([]);

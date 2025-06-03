@@ -2,9 +2,9 @@ import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import { Banner, Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
 import { ReactNode } from "react";
-import "./globals.css";
+import "@/app/globals.css";
 import "nextra-theme-docs/style.css";
-import { Providers } from "./Providers";
+import { Providers } from "@/app/Providers";
 
 export const metadata = {};
 
@@ -19,7 +19,7 @@ const navbar = (
 );
 const footer = <Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>;
 
-export default async function RootLayout({
+export default async function DocsLayout({
   children,
 }: {
   children: ReactNode;
@@ -39,17 +39,15 @@ export default async function RootLayout({
         {/* Your additional tags should be passed as `children` of `<Head>` element */}
       </Head>
       <body suppressHydrationWarning>
-        <Providers>
-          <Layout
-            banner={banner}
-            navbar={navbar}
-            pageMap={await getPageMap()}
-            docsRepositoryBase="https://github.com/nestorhealth/medfetch.js/tree/main/docs"
-            footer={footer}
-          >
-            {children}
-          </Layout>
-        </Providers>
+        <Layout
+          banner={banner}
+          navbar={navbar}
+          pageMap={await getPageMap()}
+          docsRepositoryBase="https://github.com/nestorhealth/medfetch.js/tree/main/docs"
+          footer={footer}
+        >
+          <Providers>{children}</Providers>
+        </Layout>
       </body>
     </html>
   );
