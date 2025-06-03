@@ -10,6 +10,9 @@ const app = new OpenAPIHono<{
 app.use("/*", (c, next) => {
   const corsHandler = cors({
     origin: [c.env.DOCS_HOST],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
+    maxAge: 86400
   });
   return corsHandler(c, next);
 });

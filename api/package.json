@@ -2,7 +2,7 @@
   "name": "@medfetch.js/api",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
+    "deploy": "wrangler deploy --minify --env production",
     "cf-typegen": "wrangler types ./exports/worker-configuration.d.ts --env-interface CloudflareBindings",
     "api-typegen": "openapi-typescript ./exports/openapi.json -o ./dist/types.d.ts"
   },
