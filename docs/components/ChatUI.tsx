@@ -89,7 +89,7 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900 text-gray-100">
+    <div className="flex flex-col h-full bg-[#e2e8f0] text-white">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map(message => (
@@ -98,15 +98,15 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-4 ${
+              className={`max-w-[80%] rounded-lg p-4 border border-[#334155] ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-100'
+                  ? 'bg-[#0f172a] text-white'
+                  : 'bg-[#0f172a] text-white'
               }`}
             >
               {/* Summary */}
               {message.summary && (
-                <div className="mb-2 font-medium text-gray-200">{message.summary}</div>
+                <div className="mb-2 font-medium text-white">{message.summary}</div>
               )}
 
               {/* SQL Code */}
@@ -119,7 +119,7 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
                       margin: 0,
                       borderRadius: '0.375rem',
                       fontSize: '0.875rem',
-                      background: '#1f2937' // darker background for code blocks
+                      background: '#1e293b'
                     }}
                   >
                     {message.sql}
@@ -136,7 +136,7 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
 
               {/* Fallback Content */}
               {!message.summary && !message.sql && !message.error && (
-                <div className="text-gray-100">{message.content}</div>
+                <div className="text-white">{message.content}</div>
               )}
             </div>
           </div>
@@ -145,14 +145,14 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="border-t border-gray-700 p-4 bg-gray-900">
+      <form onSubmit={handleSubmit} className="border-t border-[#334155] p-4 bg-[#e2e8f0]">
         <div className="flex space-x-4">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a question about the data..."
-            className="flex-1 rounded-lg border border-gray-700 bg-gray-800 text-gray-100 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder-gray-400"
+            className="flex-1 rounded-lg border border-[#334155] bg-[#0f172a] text-white px-4 py-2 focus:border-white focus:outline-none focus:ring-1 focus:ring-white placeholder-[#94a3b8]"
             disabled={isLoading}
           />
           <button
@@ -160,8 +160,8 @@ export default function ChatUI({ db, onQuery }: ChatUIProps) {
             disabled={isLoading || !input.trim()}
             className={`rounded-lg px-6 py-2 font-medium ${
               isLoading || !input.trim()
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-[#334155] text-[#94a3b8] cursor-not-allowed'
+                : 'bg-[#0f172a] text-white hover:bg-[#1e293b] border border-[#334155]'
             }`}
           >
             {isLoading ? (

@@ -21,10 +21,16 @@ export default function ResearcherClient() {
   useEffect(() => {
     (async () => {
       try {
-        const medDb = await initMedfetchDB();
+        // Initialize with a persisted database file
+        const medDb = await initMedfetchDB({
+          baseURL: "https://r4.smarthealthit.org",
+          filename: 'medfetch.db',
+          trace: true
+        } as { baseURL?: string; trace?: boolean; filename?: string });
         setDB(medDb);
         tableManager.current = new TableManager(medDb);
-        // For demo, create a minimal Patient table if it doesn't exist and insert a dummy row.
+
+        // Create tables if they don't exist
         await medDb.db.exec(`
           CREATE TABLE IF NOT EXISTS Patient (
             patient_id TEXT PRIMARY KEY,
@@ -36,10 +42,27 @@ export default function ResearcherClient() {
             status TEXT
           );
         `);
+
         await medDb.db.exec(`
-          INSERT OR IGNORE INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
-          VALUES ('p1', 'John', 'Doe', '1970-01-01', 'male', 'None', 'Active');
+          CREATE TABLE IF NOT EXISTS Procedure (
+            procedure_id TEXT PRIMARY KEY,
+            patient_id TEXT,
+            code TEXT,
+            performedDate TEXT,
+            notes TEXT,
+            FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
+          );
         `);
+
+        // Only insert dummy data if the Patient table is empty
+        const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
+        if (patientCount[0].count === 0) {
+          await medDb.db.exec(`
+            INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
+            VALUES ('p1', 'John', 'Doe', '1970-01-01', 'male', 'None', 'Active');
+          `);
+        }
+
         // Determine primary key for the resource
         const schema = await tableManager.current.getTableSchema(currentResource);
         const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
@@ -68,33 +91,78 @@ export default function ResearcherClient() {
   };
 
   // Handle SQL query execution from chat
-  const handleQuery = useCallback(async (sql: string) => {
+  const handleQuery = useCallback(async (sql: string): Promise<void> => {
     if (!db) return;
 
     try {
       setError(null);
-      // Execute the query
-      const result = await db.db.prepare(sql).all();
       
-      // Update the current resource if the query affects a different table
-      const tableMatch = sql.match(/FROM\s+(\w+)/i) || sql.match(/UPDATE\s+(\w+)/i) || sql.match(/INSERT\s+INTO\s+(\w+)/i);
-      if (tableMatch && (tableMatch[1] === 'Patient' || tableMatch[1] === 'Procedure')) {
-        setCurrentResource(tableMatch[1] as "Patient" | "Procedure");
+      // Split multiple SQL statements if present
+      const statements = sql.split(';').filter(stmt => stmt.trim());
+      const isSelect = statements[0].trim().toLowerCase().startsWith('select');
+      
+      // Start transaction for non-SELECT queries
+      if (!isSelect) {
+        await db.db.exec('BEGIN TRANSACTION;');
       }
 
-      // Refresh the current view
-      const rows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
-      setRawData(rows);
+      try {
+        // Execute each statement
+        for (const statement of statements) {
+          if (statement.trim()) {
+            const result = await db.db.prepare(statement + ';').all();
+            console.log('Statement result:', result);
+          }
+        }
+
+        // Commit transaction for non-SELECT queries
+        if (!isSelect) {
+          await db.db.exec('COMMIT;');
+          console.log('Transaction committed');
+        }
+
+        // Determine which table was affected by looking at the first statement
+        let affectedTable: "Patient" | "Procedure" | null = null;
+        const firstStmt = statements[0].trim().toLowerCase();
+        if (firstStmt.startsWith('select')) {
+          const tableMatch = firstStmt.match(/from\s+(\w+)/i);
+          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
+        } else if (firstStmt.startsWith('insert')) {
+          const tableMatch = firstStmt.match(/into\s+(\w+)/i);
+          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
+        } else if (firstStmt.startsWith('update') || firstStmt.startsWith('delete')) {
+          const tableMatch = firstStmt.match(/(?:update|delete from)\s+(\w+)/i);
+          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
+        }
+
+        // Update the current resource if a different table was affected
+        if (affectedTable && affectedTable !== currentResource) {
+          setCurrentResource(affectedTable);
+        }
+
+        // Refresh the current view with all data
+        const rows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
+        console.log('Current table state after all operations:', rows);
+        setRawData(rows);
+      } catch (err) {
+        // Rollback transaction for non-SELECT queries
+        if (!isSelect) {
+          await db.db.exec('ROLLBACK;');
+          console.log('Transaction rolled back due to error:', err);
+        }
+        throw err;
+      }
     } catch (err) {
-      setError("Query failed: " + (err as Error).message);
-      throw err; // Re-throw to let ChatUI handle the error
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Query failed: ${errorMessage}`);
+      throw err;
     }
   }, [db, currentResource]);
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       {/* Data Grid Panel */}
-      <div style={{ flex: 3, padding: 24, display: "flex", flexDirection: "column" }}>
+      <div style={{ width: "60%", padding: 24, display: "flex", flexDirection: "column", minWidth: 0 }}>
         {error && (
           <div style={{
             background: "#fee2e2",
@@ -124,7 +192,7 @@ export default function ResearcherClient() {
       </div>
 
       {/* Chat Panel */}
-      <div style={{ flex: 2, borderLeft: "1px solid #e5e7eb", height: "100%" }}>
+      <div style={{ width: "40%", borderLeft: "1px solid #e5e7eb", height: "100%", minWidth: 0 }}>
         {db ? (
           <ChatUI db={db} onQuery={handleQuery} />
         ) : (

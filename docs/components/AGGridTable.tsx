@@ -109,6 +109,15 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
     })();
   }, [db, resource, bulkEditState.pendingChanges, bulkEditState.errors]);
 
+  // Force grid refresh when rowData changes
+  useEffect(() => {
+    if (gridApi) {
+      console.log('Refreshing grid with new data:', rowData);
+      gridApi.applyTransaction({ update: rowData });
+      gridApi.refreshCells({ force: true });
+    }
+  }, [rowData, gridApi]);
+
   const onGridReady = useCallback((params: GridReadyEvent) => {
     setGridApi(params.api);
     params.api.sizeColumnsToFit();
@@ -358,7 +367,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
             editable: true,
             cellClass: 'editable-cell'
           }}
-          getRowId={(params) => params.data.rowid?.toString() || params.data.id?.toString()}
+          getRowId={(params) => params.data.patient_id?.toString() || params.data.procedure_id?.toString()}
           onGridReady={onGridReady}
           onCellValueChanged={onCellValueChanged}
           onSelectionChanged={onSelectionChanged}
@@ -369,6 +378,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
           stopEditingWhenCellsLoseFocus={true}
           undoRedoCellEditing={true}
           undoRedoCellEditingLimit={20}
+          suppressModelUpdateAfterUpdateTransaction={true}
         />
       </div>
     </div>

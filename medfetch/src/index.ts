@@ -2,10 +2,10 @@ import { Chunk, Effect, pipe, Stream } from "effect";
 import { pages } from "./data";
 import { flat } from "./sof";
 import { ViewDefinition, Column } from "./view";
-import { initMedfetchDB, type MedfetchClient, type MedfetchDB } from "./client";
+import { initMedfetchDB, type MedfetchClient, type MedfetchDB, type MedfetchDBOptions } from "./client";
 
 export { flat };
-export { initMedfetchDB, type MedfetchClient, type MedfetchDB };
+export { initMedfetchDB, type MedfetchClient, type MedfetchDB, type MedfetchDBOptions };
 export { pkce } from "./data";
 export {
     normalize,
