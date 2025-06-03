@@ -54,7 +54,7 @@ export default function ResearcherDemo() {
         const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
         if (patientCount[0].count === 0) {
           await medDb.db.exec(`
-            INSERT INTO Patient (id, givenName, familyName, birthDate, gender, condition, status)
+            INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
             VALUES ('p1', 'John', 'Doe', '1970-01-01', 'male', 'None', 'Active');
           `);
         }
