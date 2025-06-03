@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { initMedfetchDB, type MedfetchClient } from "medfetch";
 import dynamic from 'next/dynamic';
 import { TableManager, type ColumnDefinition } from "../../utils/tableManager";
-import ChatUI from "../../components/ChatUI";
+import ChatUI from "@/components/ChatUI";
 
 const AGGridTable = dynamic(() => import('../../components/AGGridTable'), {
   ssr: false

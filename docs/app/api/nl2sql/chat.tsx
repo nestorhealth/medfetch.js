@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { MedfetchClient, initMedfetchDB } from 'medfetch';
-import ChatUI from '../components/ChatUI';
+import ChatUI from '@/components/ChatUI';
 import dynamic from 'next/dynamic';
 import type { ColDef, GridReadyEvent } from 'ag-grid-community';
 

@@ -1,28 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-// Define the fixed schema for Medfetch
-const MEDFETCH_SCHEMA = {
-  Patient: [
-    { name: 'rowid', type: 'INTEGER' },
-    { name: 'patient_id', type: 'TEXT' },
-    { name: 'givenName', type: 'TEXT' },
-    { name: 'familyName', type: 'TEXT' },
-    { name: 'birthDate', type: 'TEXT' },
-    { name: 'gender', type: 'TEXT' },
-    { name: 'condition', type: 'TEXT' },
-    { name: 'status', type: 'TEXT' }
-  ],
-  Procedure: [
-    { name: 'rowid', type: 'INTEGER' },
-    { name: 'procedure_id', type: 'TEXT' },
-    { name: 'patient_id', type: 'TEXT' },
-    { name: 'code', type: 'TEXT' },
-    { name: 'performedDate', type: 'TEXT' },
-    { name: 'notes', type: 'TEXT' }
-  ]
-};
-
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
