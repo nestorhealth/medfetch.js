@@ -323,7 +323,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
               <button
                 onClick={() => {
                   // Apply all pending changes
-                  for (const [rowId, changes] of bulkEditState.pendingChanges) {
+                  for (const [, changes] of bulkEditState.pendingChanges) {
                     for (const [field, value] of changes) {
                       handleBulkEdit(field, value);
                     }
