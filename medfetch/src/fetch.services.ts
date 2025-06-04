@@ -28,7 +28,7 @@ class FetchSyncError extends TaggedError("medfetch/fetch")<{
     message?: string;
 }> {}
 
-class ResponseProxySync {
+export class ResponseProxySync {
     readonly #sab: SharedArrayBuffer;
     readonly #port: MessagePort;
     readonly #id: number;
@@ -151,7 +151,9 @@ export class _FetchSync extends Tag("FetchSynchronous")<
     }
 }
 
-export async function FetchSync(): Promise<FetchSyncFn> {
+type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync
+
+export async function FetchSyncWorker(): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {
         const { port1, port2 } = new MessageChannel();
         const fetchWorker = new Worker(
@@ -207,7 +209,3 @@ export async function FetchSync(): Promise<FetchSyncFn> {
         return new ResponseProxySync(port, sab, id, statusCode);
     };
 }
-
-export type FetchSyncFn = (
-    ...args: Parameters<typeof fetch>
-) => ResponseProxySync;

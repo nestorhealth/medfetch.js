@@ -10,7 +10,7 @@ import {
     Sqlite3WebAssembly,
     TokenFetcher,
 } from "./virtual-table.services";
-import { _FetchSync } from "~/workers/fetch.services";
+import { _FetchSync } from "~/fetch.services";
 import {
     x_best_index,
     x_close,

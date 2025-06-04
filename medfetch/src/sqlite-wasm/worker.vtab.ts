@@ -4,13 +4,48 @@ import type {
     Sqlite3Module,
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
-import { Page } from "~/data";
+import { Page, __Page } from "~/data";
 import {
     type medfetch_vtab,
     type medfetch_vtab_cursor,
     type TokenFetcher,
 } from "~/sqlite-wasm/virtual-table.services";
-import { FetchSyncFn } from "~/workers/fetch.services";
+
+type GetPage = (resourceType: string) => Page;
+
+/**
+ * Allocate the medfetch_module object on the Web Assembly heap
+ * and get back its struct-like object
+ * @param getPage {@link FetchSync} handle closure over the FHIR data source
+ * @param _sqlite3 Sqlite3
+ * @param tokenFetcher Token fetcher for auth if needed
+ * @returns The struct-like {@link Sqlite3Module}
+ */
+export function medfetch_module_alloc(
+    getPage: GetPage,
+    _sqlite3: Sqlite3Static,
+    tokenFetcher?: TokenFetcher,
+): Sqlite3Module {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    const medfetch: sqlite3_module = (sqlite3.vtab as any).setupModule({
+        methods: {
+            xCreate: 0,
+            xConnect: x_connect(sqlite3),
+            xBestIndex: x_best_index(sqlite3),
+            xDisconnect: x_disconnect(sqlite3),
+            xOpen: x_open(sqlite3),
+            xClose: x_close(sqlite3),
+            xNext: x_next(sqlite3),
+            xColumn: x_column(sqlite3),
+            xEof: x_eof(sqlite3, tokenFetcher),
+            xFilter: x_filter(sqlite3, getPage, tokenFetcher),
+        },
+    });
+    if (!medfetch.pointer) {
+        throw new Error(`couldn't allocate the module`);
+    }
+    return medfetch;
+}
 
 type Params<Key extends keyof sqlite3_module> = Parameters<
     sqlite3_module[Key] extends (...args: any[]) => any
@@ -24,7 +59,7 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
  * @param args {@link Params<"xConnect">}
  * @returns The x_connect method
  */
-export function x_connect(_sqlite3: Sqlite3Static, baseURL: string) {
+export function x_connect(_sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3;
     return (...args: Params<"xConnect">) => {
         let [pdb, _paux, _argc, _argv, ppvtab] = args;
@@ -42,7 +77,6 @@ export function x_connect(_sqlite3: Sqlite3Static, baseURL: string) {
             let virtualTable = sqlite3.vtab.xVtab.create(
                 ppvtab,
             ) as medfetch_vtab;
-            virtualTable.baseURL = baseURL;
         }
         return rc;
     };
@@ -115,7 +149,7 @@ export function x_next(_sqlite3: Sqlite3Static) {
     return (...args: Params<"xClose">) => {
         let [pCursor] = args;
         let cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
-        cursor.peeked = cursor.rows.next();
+        cursor.peeked = cursor.page.rows.next();
         return sqlite3.capi.SQLITE_OK;
     };
 }
@@ -159,7 +193,6 @@ export function x_column(_sqlite3: Sqlite3Static) {
 
 export function x_eof(
     sqlite3: Sqlite3Static,
-    fetchSync: FetchSyncFn,
     tokenFetcher?: TokenFetcher,
 ) {
     return (...args: Params<"xEof">) => {
@@ -179,54 +212,22 @@ export function x_eof(
         const cursor = sqlite3.vtab.xCursor.get(
             pCursor,
         ) as medfetch_vtab_cursor;
-        if (!cursor.peeked)
-            // False on initial call
-            cursor.peeked = cursor.rows.next();
 
         if (cursor.peeked.done) {
-            const nextURL = cursor.pageNext();
-            if (nextURL) {
-                let response = fetchSync(nextURL, {
-                    headers: headers(),
-                });
-                if (response.status === 401) {
-                    response = fetchSync(nextURL, {
-                        headers: headers(true),
-                    });
-                    if (!response.ok) {
-                        console.error(
-                            `[medfetch/sqlite-wasm/vtab]: Bad response from server even after refreshing token, exiting now`,
-                        );
-                        return sqlite3.capi.SQLITE_ERROR;
-                    }
-                }
-                let stream = Page(response.stream);
-                cursor.rows = stream.resources();
-                cursor.pageNext = stream.next;
-                cursor.peeked = cursor.rows.next();
-                return cursor.peeked.done ? 1 : sqlite3.capi.SQLITE_OK;
-            } else return 1;
+            const nextPage = cursor.page.next;
+            if (!nextPage) {
+                return 1;
+            }
+            cursor.page = nextPage;
+            cursor.peeked = cursor.page.rows.next();
         }
         return sqlite3.capi.SQLITE_OK;
     };
 }
 
-/**
- * Appends {@link baseURL} with {@link resourceType}, handling
- * if {@link baseURL} was written with a trailing slash or not.
- * @param baseURL The base URL, can have one trailing slash or none
- * @param resourceType The resource type to fetch
- * @returns The initial search URL
- */
-function url(baseURL: string, resourceType: string) {
-    return baseURL[baseURL.length - 1] === "/"
-        ? `${baseURL}${resourceType}`
-        : `${baseURL}/${resourceType}`;
-}
-
 export function x_filter(
     _sqlite3: Sqlite3,
-    fetchSync: FetchSyncFn,
+    getPage: GetPage,
     tokenFetcher?: TokenFetcher,
 ) {
     let sqlite3 = _sqlite3 as Sqlite3;
@@ -235,7 +236,6 @@ export function x_filter(
     return (..._args: Params<"xFilter">) => {
         let [pCursor, _idxNum, _idxCStr, argc, argv] = _args;
         let args = capi.sqlite3_values_to_js(argc, argv);
-
         const headers = (expired = false): Record<string, string> => {
             const kvs: Record<string, string> = {
                 "Content-Type": "application/json+fhir",
@@ -254,59 +254,8 @@ export function x_filter(
 
         let [resourceType] = args;
         let cursor = vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
-        let { baseURL } = vtab.xVtab.get(cursor.pVtab);
-        let response = fetchSync(url(baseURL, resourceType), {
-            headers: headers(),
-        });
-        if (response.status === 401) {
-            response = fetchSync(url(baseURL, resourceType), {
-                headers: headers(true),
-            });
-            if (!response.ok) {
-                console.error(`Couldn't fetch access token on retry`);
-                return capi.SQLITE_ERROR;
-            }
-        }
-
-        let { resources, next } = Page(response.stream);
-        cursor.rows = resources();
-        cursor.pageNext = next;
+        cursor.page = getPage(resourceType);
+        cursor.peeked = cursor.page.rows.next();
         return capi.SQLITE_OK;
     };
-}
-
-/**
- * Allocate the medfetch_module object on the Web Assembly heap
- * and get back its struct-like object
- * @param baseURL the FHIR base URL
- * @param _sqlite3 Sqlite3
- * @param fetchSync FetchSync handle
- * @param tokenFetcher Token fetcher for auth if needed
- * @returns The struct-like {@link Sqlite3Module}
- */
-export function medfetch_module_alloc(
-    baseURL: string,
-    _sqlite3: Sqlite3Static,
-    fetchSync: FetchSyncFn,
-    tokenFetcher?: TokenFetcher,
-): Sqlite3Module {
-    let sqlite3 = _sqlite3 as Sqlite3;
-    const medfetch: sqlite3_module = (sqlite3.vtab as any).setupModule({
-        methods: {
-            xCreate: 0,
-            xConnect: x_connect(sqlite3, baseURL),
-            xBestIndex: x_best_index(sqlite3),
-            xDisconnect: x_disconnect(sqlite3),
-            xOpen: x_open(sqlite3),
-            xClose: x_close(sqlite3),
-            xNext: x_next(sqlite3),
-            xColumn: x_column(sqlite3),
-            xEof: x_eof(sqlite3, fetchSync, tokenFetcher),
-            xFilter: x_filter(sqlite3, fetchSync, tokenFetcher),
-        },
-    });
-    if (!medfetch.pointer) {
-        throw new Error(`couldn't allocate the module`);
-    }
-    return medfetch;
 }

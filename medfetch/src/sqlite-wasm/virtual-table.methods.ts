@@ -1,7 +1,7 @@
 import { Sqlite3, sqlite3_module } from "@sqlite.org/sqlite-wasm";
 import { Effect, gen, logError } from "effect/Effect";
-import { Page } from "~/data";
-import { _FetchSync } from "~/workers/fetch.services";
+import { __Page } from "~/data";
+import { _FetchSync } from "~/fetch.services";
 import { flat } from "~/sof";
 import {
     ModuleContext,
@@ -206,7 +206,7 @@ export function x_eof(...args: Params<"xEof">) {
                         return sqlite3.capi.SQLITE_ERROR;
                     }
                 }
-                let stream = Page(response.stream);
+                let stream = __Page(response.stream);
                 cursor.rows = stream.resources();
                 cursor.pageNext = stream.next;
                 cursor.peeked = cursor.rows.next();
@@ -268,7 +268,7 @@ export function x_filter(...args: Params<"xFilter">) {
             }
         }
         
-        let { resources, next } = Page(response.stream);
+        let { resources, next } = __Page(response.stream);
         cursor.rows = resources();
         cursor.pageNext = next;
         cursor.viewDefinition = generateViewDefinition(args);

@@ -1,7 +1,6 @@
 import { pipe } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
-import { case as createCase } from "effect/Data";
 import {
     getOrNull,
     isNone,
@@ -196,7 +195,7 @@ export const kdv = <Value = unknown>(
  * Bundle stream utility functions
  * @template ResourceType the expected resource types the Bundle will return, defaulting to any string value
  */
-export interface Page<ResourceType extends string = string> {
+export interface __Page<ResourceType extends string = string> {
     /**
      * Stateful next bundle url getter that only returns non-null if
      * 1. The {@link Link} property was able to be parsed at depth 1 and
@@ -214,26 +213,101 @@ export interface Page<ResourceType extends string = string> {
     resources: () => Generator<Resource<ResourceType>, void>;
 }
 
-/**
- * Plain ctor for {@link Page}
- * @param args The required fields of a {@link Page}
- * @returns {@link PageHandler}
- */
-const page = createCase<Page>();
+const parseLink = kdv<Link[]>("link", 1);
+const parseEntry = kdv<Entry[]>("entry", 1);
+
+export class Page {
+    #nextURL: string | null;
+    #isLinkParsed: boolean;
+    #cursor: number;
+    #acc: Resource[];
+    #chunks: Generator<string>;
+    #rows?: Generator<Resource>;
+    #fetcher: ((url: string) => Generator<string>) | undefined;
+
+    constructor(bundleChunks: Generator<string>, nextPage?: (nextURL: string) => Generator<string>) {
+        this.#nextURL = null;
+        this.#isLinkParsed = false;
+        this.#cursor = -1;
+        this.#acc = [];
+        this.#chunks = bundleChunks;
+        this.#fetcher = nextPage;
+    }
+
+    *#resources() {
+        while (true) {
+            if (this.#acc.length > 0) {
+                yield this.#acc.shift()!;
+            }
+            const { done, value } = this.#chunks.next();
+            if (done || !value) break;
+            if (!this.#nextURL && !this.#isLinkParsed) {
+                parseLink(value).pipe(
+                    mapOption(({ hd }) => {
+                        this.#isLinkParsed = true;
+                        const searched = hd.find(
+                            (link) => link.relation === "next",
+                        )?.url;
+                        if (searched) this.#nextURL = searched;
+                    }),
+                );
+            }
+            const popped = parseEntry(value).pipe(
+                flatMapOption(({ hd }) => {
+                    if (hd.length > 0) {
+                        const flushed = hd
+                            .slice(this.#cursor + 1)
+                            .filter(
+                                (
+                                    entry,
+                                ): entry is Entry & {
+                                    resource: Resource;
+                                } => !!entry.resource,
+                            )
+                            .map(({ resource }) => resource);
+                        this.#cursor = hd.length - 1;
+                        this.#acc.push(...flushed);
+                        return some(this.#acc.shift()!);
+                    } else return none();
+                }),
+            );
+            if (isSome(popped)) {
+                yield getOrThrow(popped);
+            }
+        }
+        while (this.#acc.length > 0) yield this.#acc.shift()!;
+    }
+    
+    get rows() {
+        if (!this.#rows) {
+            this.#rows = this.#resources();
+        }
+        return this.#rows;
+    }
+    
+    get next(): Page | null {
+        if (!this.#nextURL || !this.#fetcher) {
+            return null;
+        } else {
+            const nextChunks = this.#fetcher(this.#nextURL);
+            return new Page(nextChunks, this.#fetcher);
+        }
+    }
+}
 
 /**
- * Stateful constructor-like function for {@link Page}
+ * Stateful constructor-like function for {@link __Page}
  * @param bundleChunks Some Bundle chunks Generator
  * @returns {@link Page}
  */
-export function Page(bundleChunks: Generator<string>): Page {
+export function __Page(bundleChunks: Generator<string>): __Page {
     let cursor = -1;
     let nextURL = none<string>();
     let isLinkParsed = false;
     const parseLink = kdv<Link[]>("link", 1);
     const parseEntry = kdv<Entry[]>("entry", 1);
     const acc: Resource[] = [];
-    return page({
+    return {
         next() {
             return getOrNull(nextURL);
         },
@@ -280,7 +354,7 @@ export function Page(bundleChunks: Generator<string>): Page {
             }
             while (acc.length > 0) yield acc.shift()!;
         },
-    });
+    };
 }
 
 const Bundle = Resource("Bundle", {

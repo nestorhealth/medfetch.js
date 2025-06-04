@@ -15,6 +15,7 @@ import type {
 import { Column, ColumnPath, ViewDefinition } from "~/view";
 import { taggedEnum, TaggedEnum, TaggedError } from "effect/Data";
 import { Tag } from "effect/Context";
+import { Page, __Page } from "~/data";
 
 /**
  * JS version of the medfetch_vtab "struct". *Extends* the vtab struct
@@ -44,24 +45,10 @@ export class ModuleContext extends Tag("ModuleContext")<
  * rather than composing it, though this may change in the future
  */
 export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
-    /**
-     * The next URL to fetch the data from
-     */
-    next: string | null;
+    page: Page;
     
     /**
-     * Return resources one by one via the `flush()` generator returned by {@link Page.handler}
-     */
-    rows: Generator<Resource>;
-    
-    /**
-     * Get the next bundle page URL via the `nexturl()` function returned by {@link Page.handler}.
-     * @returns The next Bundle page's URL if it exists, otherwise null.
-     */
-    pageNext: () => string | null;
-    
-    /**
-     * The last resource popped by `flush()` from {@link Page.handler}
+     * The last resource popped by `flush()` from {@link __Page.handler}
      */
     peeked: IteratorResult<Resource>;
 
