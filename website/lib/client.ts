@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { medfetch } from "medfetch/sqlite-wasm";
 
 // Types
@@ -27,23 +28,28 @@ export interface MedfetchDBOptions {
 const DEFAULT_FHIR_SERVER = "https://r4.smarthealthit.org";
 
 // Initialize Medfetch database
-export function initMedfetchDB(options: MedfetchDBOptions = {}): MedfetchClient {
-  const { baseURL = DEFAULT_FHIR_SERVER, trace = true, filename } = options;
-  
+export function initMedfetchDB(
+  options: MedfetchDBOptions = {},
+): MedfetchClient {
+  const { baseURL = DEFAULT_FHIR_SERVER, filename } = options;
+
   // Initialize Medfetch with SQLite WASM
-  const sql = medfetch(baseURL, { trace, filename });
-  
+  const _db = medfetch(baseURL, { filename });
+
   // Create a database handle with common operations
   const db: MedfetchDB = {
     exec: async (sqlString: string) => {
-      await sql`${sqlString}`;
+      await sql`${sqlString}`.execute(_db);
     },
     prepare: (sqlString: string) => ({
-      all: async () => await sql`${sqlString}`,
+      all: async () => {
+        const result = await sql`${sqlString}`.execute(_db);
+        return result.rows;
+      },
       run: async () => {
-        await sql`${sqlString}`;
-      }
-    })
+        await sql`${sqlString}`.execute(_db);
+      },
+    }),
   };
 
   // Helper to load FHIR JSON into a virtual table
@@ -86,7 +92,7 @@ export function initMedfetchDB(options: MedfetchDBOptions = {}): MedfetchClient 
     db,
     loadFHIRJson,
     runSQL,
-    queryAll
+    queryAll,
   };
 }
 
@@ -95,4 +101,4 @@ export function initMedfetchDB(options: MedfetchDBOptions = {}): MedfetchClient 
 const client = await initMedfetchDB();
 await client.loadFHIRJson("Patient", samplePatientData);
 const patients = await client.queryAll("SELECT * FROM Patient;");
-*/ 
+*/

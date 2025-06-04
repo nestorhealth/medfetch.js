@@ -151,13 +151,16 @@ export class _FetchSync extends Tag("FetchSynchronous")<
     }
 }
 
-type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync
+type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync;
 
 export async function FetchSyncWorker(): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {
         const { port1, port2 } = new MessageChannel();
         const fetchWorker = new Worker(
-            new URL("./fetch.worker", import.meta.url),
+            new URL(
+                import.meta.env.DEV ? "./fetch.worker" : "./fetch.worker.mjs",
+                import.meta.url,
+            ),
             {
                 type: "module",
             },

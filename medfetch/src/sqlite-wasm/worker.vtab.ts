@@ -74,7 +74,7 @@ export function x_connect(_sqlite3: Sqlite3Static) {
             )`,
         );
         if (!rc) {
-            let virtualTable = sqlite3.vtab.xVtab.create(
+            sqlite3.vtab.xVtab.create(
                 ppvtab,
             ) as medfetch_vtab;
         }

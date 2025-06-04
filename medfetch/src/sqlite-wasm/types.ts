@@ -9,8 +9,7 @@ import type {
     Worker1Request,
     Worker1ResponseBase,
     Worker1ResponseError,
-    sqlite3_module,
-} from "@sqlite.org/sqlite-wasm";
+} from "./types.patch"
 import { runPromise, type Effect } from "effect/Effect";
 
 /**

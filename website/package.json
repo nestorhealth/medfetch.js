@@ -26,6 +26,7 @@
     "clsx": "^2.1.1",
     "effect": "^3.14.12",
     "fhirpath": "^4.0.0",
+    "kysely": "^0.28.2",
     "lucide-react": "^0.411.0",
     "medfetch": "workspace:^",
     "next": "15.3.0",

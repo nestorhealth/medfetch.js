@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation } from "@tanstack/react-query";
-import { Effect } from "effect";
 import { DataTable } from "@/components/ui/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { sql, sql2 } from "@/lib/sqlite-wasm";
+import { db, sql2 } from "@/lib/sqlite-wasm";
+import { sql } from "kysely";
 
 type Props = {
   children: React.ReactNode;
@@ -35,19 +35,19 @@ export function SQLCodeblock({ children, columns, dropTables, mode = "public" }:
       if (sqlText) {
         let result: any[];
         if (mode === "auth") // for auth demos
-          result = await sql2<any>`${sqlText}`;
+          result = await sql2`${sqlText}`;
         else
-          result = await sql<any>`${sqlText}`;
+          result = (await db.executeQuery(sql.raw(sqlText).compile(db))).rows;
         return result;
       }
     },
-    onError: (e) => console.error(`medfetch-docs error: ${e}`),
+    onError: (e) => console.error(`medfetch-docs error: ${JSON.stringify(e, null, 2)}`),
     onSuccess: (data) =>
       console.log(`medfetch-docs sof result ok: size ${data?.length}`),
     onSettled: async () => {
       if (dropTables && dropTables.length > 0) {
         for (const query of dropTables.map((table) => sql`drop table if exists${table};`)) {
-          await query.pipe(Effect.runPromise);
+          await query;
         }
       }
     }

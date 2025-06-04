@@ -1,12 +1,9 @@
 import { KeyCounter } from "~/sqlite-wasm/counter";
 import { BetterWorker1MessageType, BetterWorker1Response, BetterWorker1ResponseError } from "~/sqlite-wasm/types";
 import { Worker1Error } from "~/sqlite-wasm/worker1.error";
-import {
-    type Sqlite3CreateWorker1Promiser,
-    type Worker1Promiser,
-} from "@sqlite.org/sqlite-wasm";
 // Get the Sqlite3CreateWorker1Promiser in scope
 import "@sqlite.org/sqlite-wasm";
+import { Sqlite3CreateWorker1Promiser, Worker1Promiser } from "~/sqlite-wasm/types.patch";
 
 /**
  * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`

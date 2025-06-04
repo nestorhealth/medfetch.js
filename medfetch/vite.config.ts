@@ -36,8 +36,9 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["fhirpath", "@sqlite.org/sqlite-wasm"],
+            external: ["@sqlite.org/sqlite-wasm", "kysely"],
             output: {
+                manualChunks: undefined,
                 entryFileNames: `[name].mjs`,
                 chunkFileNames: `[name]-[hash].mjs`,
                 assetFileNames: `[name]-[hash].[ext]`,
@@ -45,8 +46,11 @@ export default defineConfig({
         },
         lib: {
             entry: {
-                workers: "src/workers/index.ts"
-/*                 index: "src/index.ts",
+                index: "src/index.ts",
+                "fetch.worker": "src/fetch.worker.ts",
+                "sqlite-wasm/index": "src/sqlite-wasm/index.ts",
+                "sqlite-wasm/worker": "src/sqlite-wasm/worker.ts"
+                /*                 index: "src/index.ts",
                 view: "src/view.ts",
                 sof: "src/sof.ts",
                 fetch: "src/fetch.ts",
@@ -62,6 +66,6 @@ export default defineConfig({
                 format === "esm" || format === "es"
                     ? `${name}.mjs`
                     : `${name}.js`,
-        }
+        },
     },
 });

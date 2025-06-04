@@ -1,5 +1,4 @@
-import { Worker1Promiser } from "@sqlite.org/sqlite-wasm";
-import { Kysely, QueryResult } from "kysely";
+import { QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -7,8 +6,8 @@ import {
     Promisable,
 } from "kysely-generic-sqlite";
 import { fromNullableOrThrow } from "~/data";
-import { check, promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
-import Sqlite3Worker from "./worker?worker";
+import { Worker1Promiser } from "~/sqlite-wasm/types.patch";
+import { check } from "~/sqlite-wasm/worker1.main";
 
 /* Its `db` field is a string */
 export type SqliteWasmDB = IGenericSqlite<string>;
@@ -107,25 +106,4 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
             };
         });
     }
-}
-
-interface MedfetchSqlite3WasmOptions {
-    worker?: Worker;
-}
-
-export function medfetch<DB = any>(
-    baseURL: string | File,
-    opts: MedfetchSqlite3WasmOptions = {},
-) {
-    let promiser: Worker1Promiser;
-    if (opts.worker) {
-        promiser = promiserSyncV2(opts.worker);
-    } else {
-        promiser = promiserSyncV2(new Sqlite3Worker());
-    }
-
-    const dialect = new Worker1PromiserDialect(baseURL, promiser);
-    return new Kysely<DB>({
-        dialect
-    });
 }
