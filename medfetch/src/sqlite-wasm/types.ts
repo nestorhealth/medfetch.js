@@ -9,7 +9,7 @@ import type {
     Worker1Request,
     Worker1ResponseBase,
     Worker1ResponseError,
-    sqlite3_module
+    sqlite3_module,
 } from "@sqlite.org/sqlite-wasm";
 import { runPromise, type Effect } from "effect/Effect";
 
@@ -142,11 +142,19 @@ type InferMessageType<TType extends BetterWorker1MessageType> = Extract<
 type Pascal<S extends string> = S extends `${infer Head}-${infer Tail}`
     ? `${Capitalize<Head>}${Pascal<Capitalize<Tail>>}`
     : Capitalize<S>;
+    
 export type MessageHandlers<O> = {
     [key in BetterWorker1Response["type"] as `on${Pascal<key>}`]: (
         msg: InferMessageType<key>,
     ) => O;
 };
+
+export type Worker1MessageHandlers<O> = {
+    [key in BetterWorker1Response["type"] as `on${Pascal<key>}`]: (
+        next: () => void,
+        msg: InferMessageType<key>,
+    ) => O;
+}
 
 /**
  * A Worker thread dispatched error message in response
@@ -171,7 +179,7 @@ export const MESSAGE_TYPES = [
     "load-module",
 ] as const satisfies BetterWorker1MessageType[];
 
-export type MessageTypeObjMap<V> = {
+export type MessageTypeRecord<V> = {
     [Type in BetterWorker1MessageType]: V;
 };
 

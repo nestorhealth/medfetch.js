@@ -1,10 +1,11 @@
 import "./sqlite3-wasm.d.ts";
 import type {
-    Sqlite3Worker1Promiser,
+    Sqlite3CreateWorker1Promiser,
     Worker1Promiser,
 } from "@sqlite.org/sqlite-wasm";
 
 import {
+    MESSAGE_TYPES,
     type BetterWorker1MessageType,
     type BetterWorker1PromiserFn,
     type BetterWorker1PromiserLazy,
@@ -13,7 +14,7 @@ import {
 // This is a workaround for named "sqlite3Worker1Promiser()" function not being recognized by webpack
 import "@sqlite.org/sqlite-wasm";
 
-import { Counter } from "./main.services.js";
+import { TransferCounter } from "./counter.ts";
 import { promise } from "effect/Effect";
 
 type ArgsData = {
@@ -57,9 +58,24 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
  */
 function defer(
     f: Promise<Worker1Promiser>,
-    counter: Counter,
+    counter: TransferCounter<BetterWorker1MessageType>,
 ): BetterWorker1PromiserFn {
     return async function betterWorker1Promiser(
+        arg0: any,
+        arg1?: any,
+    ): Promise<any> {
+        const { messageType, params, transfers } = checkArgs([arg0, arg1]);
+        const messageId = counter.increment(messageType);
+        if (transfers) counter.set(messageId, transfers);
+        return f.then((f) => f(...params));
+    };
+}
+
+function unwrap(
+    f: Promise<Worker1Promiser>,
+    counter: TransferCounter<BetterWorker1MessageType>,
+): Worker1Promiser { 
+    return async function worker1Promiser(
         arg0: any,
         arg1?: any,
     ): Promise<any> {
@@ -76,7 +92,7 @@ function defer(
 export type BetterWorker1Promiser = BetterWorker1PromiserFn & {
     /**
      * The worker instance that this promiser was bound to by
-     * {@link Sqlite3Worker1Promiser.v2} from the `@sqlite.org/sqlite-wasm`
+     * {@link Sqlite3CreateWorker1Promiser.v2} from the `@sqlite.org/sqlite-wasm`
      * library.
      */
     readonly $worker: Worker;
@@ -106,7 +122,10 @@ export function w1thread(trace = false): BetterWorker1Promiser {
     );
 
     /* For managing the transfers to postMessage */
-    const counter = new Counter();
+    const counter = new TransferCounter<BetterWorker1MessageType>(
+        MESSAGE_TYPES,
+        (id, count) => `${id}#${count}`,
+    );
 
     const post = worker.postMessage.bind(worker);
     worker.postMessage = (msg, transfer) => {
@@ -115,7 +134,7 @@ export function w1thread(trace = false): BetterWorker1Promiser {
                 "better-worker1.main.w1thread: sending with ports:",
                 transfer,
             );
-        const messageTransfers = counter.get(counter.messageId(msg.type));
+        const messageTransfers = counter.get(counter.tagKey(msg.type));
         if (messageTransfers) {
             return post(msg, messageTransfers);
         }
@@ -146,6 +165,22 @@ let __PROMISER__: BetterWorker1Promiser | null = null;
 export function worker1(trace = false): BetterWorker1Promiser {
     if (!__PROMISER__) __PROMISER__ = w1thread(trace);
     return __PROMISER__;
+}
+
+export function promiserV2(worker: Worker) {
+    const promiserPromise = (
+        globalThis as typeof globalThis & {
+            sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser;
+        }
+    ).sqlite3Worker1Promiser.v2({
+        worker,
+    });
+    const counter = new TransferCounter<BetterWorker1MessageType>(
+        MESSAGE_TYPES,
+        (id, count) => `${id}#${count}`,
+    );
+    const f = unwrap(promiserPromise, counter);
+    return f;
 }
 
 /**

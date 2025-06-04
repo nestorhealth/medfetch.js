@@ -40,7 +40,7 @@ function decodeBaseURL({ wasm }: Sqlite3, pAux: WasmPointer): string {
 /**
  * Based on the original C extension for native, but this time... with actual FHIRPath support !!
  */
-const medfetch_module: VirtualTableExtensionFn = async (sqlite3, context) => {
+const medfetch_module: VirtualTableExtensionFn = (sqlite3, context) => {
     const fetchPort = context.transfer[0];
     if (!fetchPort)
         throw new Error(

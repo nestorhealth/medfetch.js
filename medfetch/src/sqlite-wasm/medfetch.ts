@@ -218,6 +218,7 @@ export function medfetch(
                         moduleName: "medfetch",
                         aux: { baseURL },
                     },
+                    messageId: "load-module#1"
                 },
                 transfers,
             );

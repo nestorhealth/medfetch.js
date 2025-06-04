@@ -136,7 +136,9 @@ declare module "@sqlite.org/sqlite-wasm" {
     }
     interface Worker1ExecResponse extends Worker1ResponseBase {
         type: "exec";
-        result: any;
+        result: {
+            resultRows?: any[];
+        };
     }
     interface Worker1ExportResponse extends Worker1ResponseBase {
         type: "export";
@@ -247,7 +249,7 @@ declare module "@sqlite.org/sqlite-wasm" {
     >;
 
     export const sqlite3Worker1Promiser: {
-        v2: (config: any) => Promise<Worker1Promiser>;
+        v2: (config: { worker: Worker }) => Promise<Worker1Promiser>;
     };
 
     /**
@@ -256,7 +258,7 @@ declare module "@sqlite.org/sqlite-wasm" {
      *
      * This is, just to get that type, the Worker1 function type is [Worker1PromiserFunc]()
      */
-    export type Sqlite3Worker1Promiser = typeof sqlite3Worker1Promiser;
+    export type Sqlite3CreateWorker1Promiser = typeof sqlite3Worker1Promiser;
 
     export interface Sqlite3Module extends PointerLikeMethods<sqlite3_module> {}
 

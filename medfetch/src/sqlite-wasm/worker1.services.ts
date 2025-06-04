@@ -1,7 +1,7 @@
 import type { Sqlite3, Sqlite3Module } from "@sqlite.org/sqlite-wasm";
 import { Tag } from "effect/Context";
 import { TaggedError } from "effect/Data";
-import { andThen, type Effect, liftPredicate, provideService, tap, tryPromise } from "effect/Effect";
+import { andThen, type Effect, liftPredicate, provideService, tap, tryPromise, try as trySync } from "effect/Effect";
 import { ModuleContext } from "~/sqlite-wasm/virtual-table.services";
 
 /**
@@ -125,7 +125,7 @@ export type VirtualTableExtensionFn<
 > = (
     sqlite3: Sqlite3,
     context: UserContext<Vars>
-) => Promise<Sqlite3Module>;
+) => Sqlite3Module;
 
 const dynamicImport = (path: string) =>
     tryPromise({
@@ -215,7 +215,7 @@ export function wrapSqlite3Module(
 ): Effect<Sqlite3Module, Worker1Error> {
     return importUserModule(moduleURL).pipe(
         andThen((makeUserModule) =>
-            tryPromise({
+            trySync({
                 try: () => makeUserModule(sqlite3, aux),
                 catch: (e) =>
                     new Worker1Error({

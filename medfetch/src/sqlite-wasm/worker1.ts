@@ -4,6 +4,8 @@ import type {
     Sqlite3Static,
     WasmPointer,
     Database,
+    Worker1Request,
+    Sqlite3CreateWorker1Promiser,
 } from "@sqlite.org/sqlite-wasm";
 import { Effect, Match, pipe } from "effect";
 import {
@@ -20,7 +22,9 @@ function matchMessage<O>(
     handlers: MessageHandlers<O>,
 ) {
     return Match.value(message).pipe(
-        Match.when({ type: "open" }, handlers.onOpen),
+        Match.when({ type: "open" }, (open) => {
+            return handlers.onOpen(open);
+        }),
         Match.when({ type: "close" }, handlers.onClose),
         Match.when({ type: "exec" }, handlers.onExec),
         Match.when({ type: "export" }, handlers.onExport),
@@ -55,7 +59,7 @@ function checkRc(
     sqlite3: Sqlite3Static,
     db: WasmPointer | Database | number,
     rc: number,
-    operation: Worker1Error["operation"] = "load-module"
+    operation: Worker1Error["operation"] = "load-module",
 ) {
     return Effect.try({
         try: (): Database | number | WasmPointer =>
@@ -72,7 +76,7 @@ function checkRc(
 }
 
 /**
- * Hack to get the pointer from the dbId, despite the docs saying it's 
+ * Hack to get the pointer from the dbId, despite the docs saying it's
  * not guaranteed to mean anything...
  * Based on the dist code:
  * ```ts
@@ -98,6 +102,7 @@ function idToPointer(dbId: string): number {
     return pipe(dbId.split("@"), (split) => split[split.length - 1], Number);
 }
 
+
 /**
  * The onmessage handler for the worker1 function
  */
@@ -109,15 +114,19 @@ const handleMessage = Effect.gen(function* () {
     const tmp = yield* Effect.fromNullable(self.onmessage);
 
     // Wrap it
-    const onBaseMessage = (e: MessageEvent<BetterWorker1Request>) =>
+    const onBaseMessage = (e: MessageEvent<BetterWorker1Request>): void =>
         tmp.call(self, e);
 
     // New onMessage handler function
     const onMessage = (event: MessageEvent<BetterWorker1Request>) => {
         return matchMessage(event.data, {
-            onOpen: () => onBaseMessage(event),
+            onOpen: () => {
+                onBaseMessage(event);
+            },
             onClose: () => onBaseMessage(event),
-            onExec: () => onBaseMessage(event),
+            onExec: () => {
+                onBaseMessage(event);
+            },
             onConfigGet: () => onBaseMessage(event),
             onExport: () => onBaseMessage(event),
 
@@ -188,7 +197,7 @@ const handleMessage = Effect.gen(function* () {
                             return yield* new Worker1Error({
                                 message: `better-worker1.worker1: stack can't handle ${args.pAuxBytes?.byteLength} more bytes`,
                                 errorName: "NO_MEM",
-                                operation: "load-module"
+                                operation: "load-module",
                             });
                         }
                     }
@@ -218,27 +227,28 @@ const handleMessage = Effect.gen(function* () {
 /* The worker's main routine — it performs a one-time WASM initialization.
  * There's no need for a manual loop here; the worker thread stays alive and
  * handles messages via its onmessage handler. */
-const worker1 = handleMessage.pipe(
+const worker1Effect = handleMessage.pipe(
     Effect.tap((onMessage) => {
         self.onmessage = onMessage;
     }),
 );
 
-import type {
-    MessageHandlers,
-    BetterWorker1Request,
-    BetterWorker1Response,
-    BetterWorker1MessageType,
+import {
+    type MessageHandlers,
+    type BetterWorker1Request,
+    type BetterWorker1Response,
+    type BetterWorker1MessageType,
 } from "./types.js";
 
 /* put import here for clarity on when we actually need the initializer */
-import __ from "@sqlite.org/sqlite-wasm";
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 
-const sqlite3InitModule: Sqlite3InitModuleFunc = __ as unknown as Sqlite3InitModuleFunc;
+const init: Sqlite3InitModuleFunc =
+    sqlite3InitModule as unknown as Sqlite3InitModuleFunc;
 
 // @ts-ignore
 const _ = Effect.provideService(
-    worker1,
+    worker1Effect,
     Sqlite3InitModule,
-    sqlite3InitModule,
+    init,
 ).pipe(Effect.runPromiseExit);

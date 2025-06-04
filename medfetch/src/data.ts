@@ -386,3 +386,14 @@ export const pages = (
     );
 
 export { pkce } from "./data.auth.js";
+
+export function fromNullableOrThrow<T extends readonly unknown[]>(
+    ...args: T
+): { [K in keyof T]: NonNullable<T[K]> } {
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] == null) {
+            throw new Error(`unexpected nullable value at index ${i}`);
+        }
+    }
+    return args as { [K in keyof T]: NonNullable<T[K]> };
+}
