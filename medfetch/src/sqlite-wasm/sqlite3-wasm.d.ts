@@ -58,11 +58,12 @@ declare module "@sqlite.org/sqlite-wasm" {
     /**
      * Let a "Request" be main thread --> worker thread
      */
-    export type Worker1RequestBase = {
+    export type Worker1RequestBase<Aux extends Record<any, any> = Record<string, any>> = {
         type: string;
         messageId?: string;
         dbId?: string;
         args?: any;
+        aux?: Aux;
     };
 
     /**
@@ -210,43 +211,21 @@ declare module "@sqlite.org/sqlite-wasm" {
     > = Extract<_Worker1Response, { type: MessageType }>;
 
     export type TPromiser<
-        MsgType extends Worker1MessageType,
-        MsgRequest extends { type: MsgType; args?: any },
-        MsgResponse extends { type: MsgType; result: any },
+        AllRequest extends { type: string },
+        AllResponse extends { type: string; result: any },
     > = {
-        /**
-         * 1-arg overload
-         */
-        <
-            MessageType extends MsgType,
-            MessageRequest extends Extract<MsgRequest, { type: MessageType }>,
-        >(
-            message: MessageRequest,
-        ): Promise<
-            | Extract<MsgResponse, { type: MessageType }>
-            | Worker1ResponseError<MessageType>
-        >;
+        <T extends AllRequest["type"]>(
+            message: Extract<AllRequest, { type: T }>,
+            transfer?: StructuredSerializeOptions | Transferable[],
+        ): Promise<Extract<AllResponse, { type: T }> | Worker1ResponseError<T>>;
 
-        /**
-         * 2-arg overload (easy handle)
-         */
-        <
-            MessageType extends MsgType,
-            MessageRequest extends Extract<MsgRequest, { type: MessageType }>,
-        >(
-            messageType: MessageType,
-            messageArguments?: MessageRequest["args"],
-        ): Promise<
-            | Extract<MsgResponse, { type: MessageType }>
-            | Worker1ResponseError<MessageType>
-        >;
+        <T extends AllRequest["type"]>(
+            type: T,
+            args?: Extract<AllRequest, { type: T }>["args"],
+        ): Promise<Extract<AllResponse, { type: T }> | Worker1ResponseError<T>>;
     };
 
-    export type Worker1Promiser = TPromiser<
-        Worker1MessageType,
-        Worker1Request,
-        Worker1Response
-    >;
+    export type Worker1Promiser = TPromiser<Worker1Request, Worker1Response>;
 
     export const sqlite3Worker1Promiser: {
         v2: (config: { worker: Worker }) => Promise<Worker1Promiser>;
@@ -260,7 +239,9 @@ declare module "@sqlite.org/sqlite-wasm" {
      */
     export type Sqlite3CreateWorker1Promiser = typeof sqlite3Worker1Promiser;
 
-    export interface Sqlite3Module extends PointerLikeMethods<sqlite3_module> {}
+    export interface Sqlite3Module extends PointerLikeMethods<sqlite3_module> {
+        pointer: number;
+    }
 
     /**
      * "Fixed" Sqlite3Static type, which only modifies the `.vtab` type

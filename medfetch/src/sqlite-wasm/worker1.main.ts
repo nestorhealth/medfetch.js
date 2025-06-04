@@ -1,4 +1,4 @@
-import { Counter } from "~/sqlite-wasm/counter";
+import { KeyCounter } from "~/sqlite-wasm/counter";
 import { BetterWorker1MessageType, BetterWorker1Response, BetterWorker1ResponseError } from "~/sqlite-wasm/types";
 import { Worker1Error } from "~/sqlite-wasm/worker1.error";
 import {
@@ -8,19 +8,13 @@ import {
 // Get the Sqlite3CreateWorker1Promiser in scope
 import "@sqlite.org/sqlite-wasm";
 
-export function promiserSyncV2(_worker?: Worker) {
-    let worker = _worker;
-    if (!worker) {
-        worker = new Worker(
-            new URL(
-                "./worker",
-                import.meta.url
-            ),
-            {
-                type: "module"
-            }
-        )
-    }
+/**
+ * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`
+ * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser)
+ * @param worker The worker to wrap
+ * @returns The promiser-sync function
+ */
+export function promiserSyncV2(worker: Worker) {
     const promiserPromise = (
         globalThis as typeof globalThis & {
             sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser;
@@ -74,7 +68,7 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
 function unwrap(
     f: Promise<Worker1Promiser>,
 ): Worker1Promiser {
-    const messageCount = new Counter<BetterWorker1MessageType>();
+    const messageCount = new KeyCounter<BetterWorker1MessageType>();
     const transferMap = new Map<string, StructuredSerializeOptions>();
     
     return async function worker1Promiser(arg0: any, arg1?: any): Promise<any> {

@@ -201,7 +201,6 @@ export type BetterWorker1PromiserFn = {
   ): Promise<
     BetterWorker1Response<T> | BetterWorker1ResponseError<T>
   >;
-
 };
 
 export type BetterWorker1PromiserLazy = {

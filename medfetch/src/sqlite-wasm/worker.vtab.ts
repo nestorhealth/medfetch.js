@@ -11,34 +11,20 @@ import {
     type TokenFetcher,
 } from "~/sqlite-wasm/virtual-table.services";
 import { FetchSyncFn } from "~/workers/fetch.services";
-// import { Page } from "~/data";
-// import { type FetchSyncFn } from "~/workers/fetch.services";
-// import { flat } from "~/sof";
-// import type {
-//     medfetch_vtab,
-//     medfetch_vtab_cursor,
-//     TokenFetcher,
-// } from "~/sqlite-wasm/virtual-table.services";
-// import { generateViewDefinition } from "~/sqlite-wasm/virtual-table.services";
 
 type Params<Key extends keyof sqlite3_module> = Parameters<
     sqlite3_module[Key] extends (...args: any[]) => any
         ? sqlite3_module[Key]
         : never
 >;
-type ModuleContext = {
-    readonly transfer: ReadonlyArray<MessagePort>;
-    readonly aux: Record<string, any>;
-};
-
 /**
  * The xConnect method
  * @param sqlite3 The database instance
- * @param ctx The context
+ * @param baseURL Base URL of the FHIR server
  * @param args {@link Params<"xConnect">}
  * @returns The x_connect method
  */
-export function x_connect(_sqlite3: Sqlite3Static, ctx: ModuleContext) {
+export function x_connect(_sqlite3: Sqlite3Static, baseURL: string) {
     let sqlite3 = _sqlite3;
     return (...args: Params<"xConnect">) => {
         let [pdb, _paux, _argc, _argv, ppvtab] = args;
@@ -56,7 +42,7 @@ export function x_connect(_sqlite3: Sqlite3Static, ctx: ModuleContext) {
             let virtualTable = sqlite3.vtab.xVtab.create(
                 ppvtab,
             ) as medfetch_vtab;
-            virtualTable.baseURL = ctx.aux["baseURL"];
+            virtualTable.baseURL = baseURL;
         }
         return rc;
     };
@@ -290,24 +276,25 @@ export function x_filter(
 }
 
 /**
- * Get back the medfetch virtual table implementation
- * @param ctx
- * @param _sqlite3
- * @param fetchSync
- * @param tokenFetcher
- * @returns
+ * Allocate the medfetch_module object on the Web Assembly heap
+ * and get back its struct-like object
+ * @param baseURL the FHIR base URL
+ * @param _sqlite3 Sqlite3
+ * @param fetchSync FetchSync handle
+ * @param tokenFetcher Token fetcher for auth if needed
+ * @returns The struct-like {@link Sqlite3Module}
  */
-export function virtualTable(
-    ctx: ModuleContext,
+export function medfetch_module_alloc(
+    baseURL: string,
     _sqlite3: Sqlite3Static,
     fetchSync: FetchSyncFn,
     tokenFetcher?: TokenFetcher,
 ): Sqlite3Module {
     let sqlite3 = _sqlite3 as Sqlite3;
-    return (sqlite3.vtab as any).setupModule({
+    const medfetch: sqlite3_module = (sqlite3.vtab as any).setupModule({
         methods: {
             xCreate: 0,
-            xConnect: x_connect(sqlite3, ctx),
+            xConnect: x_connect(sqlite3, baseURL),
             xBestIndex: x_best_index(sqlite3),
             xDisconnect: x_disconnect(sqlite3),
             xOpen: x_open(sqlite3),
@@ -318,4 +305,8 @@ export function virtualTable(
             xFilter: x_filter(sqlite3, fetchSync, tokenFetcher),
         },
     });
+    if (!medfetch.pointer) {
+        throw new Error(`couldn't allocate the module`);
+    }
+    return medfetch;
 }

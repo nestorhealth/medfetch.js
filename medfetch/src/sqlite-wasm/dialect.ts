@@ -1,5 +1,5 @@
 import { Worker1Promiser } from "@sqlite.org/sqlite-wasm";
-import { QueryResult } from "kysely";
+import { Kysely, QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -7,24 +7,30 @@ import {
     Promisable,
 } from "kysely-generic-sqlite";
 import { fromNullableOrThrow } from "~/data";
-import { BetterWorker1PromiserFn } from "~/sqlite-wasm/types";
 import { check, promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
+import Sqlite3Worker from "./worker?worker";
 
 /* Its `db` field is a string */
 export type SqliteWasmDB = IGenericSqlite<string>;
 
 /**
  * Database interface
- * @param promiser
- * @returns
+ * @param promiser Main thread messenger for worker1 thread (sqlite3 calls their messenger interface the "Promiser")
+ * @returns {@link IGenericSqlite} implementation using promiser
  */
 export async function database(
-    promiser: BetterWorker1PromiserFn,
+    baseURL: string | File,
+    promiser: Worker1Promiser,
 ): Promise<SqliteWasmDB> {
-    const dbId = await promiser("open")
+    const dbId = await promiser({
+        type: "open",
+        aux: {
+            baseURL
+        },
+        args: {}
+    })
         .then(check)
         .then((res) => fromNullableOrThrow(res.dbId)[0]);
-    console.log("UH", dbId);
 
     return {
         db: dbId,
@@ -69,15 +75,10 @@ export async function database(
     };
 }
 
-export class SqliteWasmDialect extends GenericSqliteDialect {
-    constructor(_promiser?: Worker1Promiser) {
-        let promiser = _promiser;
-        if (!promiser) {
-            promiser = promiserSyncV2();
-        }
-
+export class Worker1PromiserDialect extends GenericSqliteDialect {
+    constructor(baseURL: string | File, promiser: Worker1Promiser) {
         super(async () => {
-            const db = await database(promiser);
+            const db = await database(baseURL, promiser);
             return {
                 db,
                 close: () => db.close(),
@@ -106,4 +107,25 @@ export class SqliteWasmDialect extends GenericSqliteDialect {
             };
         });
     }
+}
+
+interface MedfetchSqlite3WasmOptions {
+    worker?: Worker;
+}
+
+export function medfetch<DB = any>(
+    baseURL: string | File,
+    opts: MedfetchSqlite3WasmOptions = {},
+) {
+    let promiser: Worker1Promiser;
+    if (opts.worker) {
+        promiser = promiserSyncV2(opts.worker);
+    } else {
+        promiser = promiserSyncV2(new Sqlite3Worker());
+    }
+
+    const dialect = new Worker1PromiserDialect(baseURL, promiser);
+    return new Kysely<DB>({
+        dialect
+    });
 }

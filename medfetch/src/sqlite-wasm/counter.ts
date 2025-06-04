@@ -2,10 +2,32 @@ type CountMap<Tag extends string> = {
     [Key in Tag]: number;
 };
 
+export class Counter {
+    #count: number;
+    constructor() {
+        this.#count = 0;
+    }
+    
+    /**
+     * Increment / set the counter
+     * @param number What value to set count to. Defaults to incrementing
+     * @returns The last count value
+     */
+    set(number?: number): number {
+        let oldCount = this.#count;
+        this.#count = number ?? oldCount + 1;
+        return oldCount;
+    }
+    
+    get count() {
+        return this.#count;
+    }
+}
+
 /**
  * Generic class for counting up
  */
-export class Counter<Key extends string> extends Map<Key, number> {
+export class KeyCounter<Key extends string> extends Map<Key, number> {
     constructor(keys?: Iterable<Key>) {
         if (!keys) {
             super();

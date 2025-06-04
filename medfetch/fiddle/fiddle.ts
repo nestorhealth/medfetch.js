@@ -1,11 +1,7 @@
 import { sql } from "kysely";
-import { medfetch } from "~/browser";
-import { SqliteWasmDialect } from "~/sqlite-wasm/dialect";
+import { medfetch } from "~/sqlite-wasm/dialect";
 
-const dialect = new SqliteWasmDialect();
-const db = medfetch("", {
-  dialect
-});
+const db = medfetch("https://r4.smarthealthit.org");
 
 await db.schema.createTable("foo").addColumn("id", "text").execute();
 await db.insertInto("foo").values({id:"bar"}).returningAll().execute()
@@ -13,4 +9,7 @@ const result = await db.selectFrom("foo").selectAll("foo").execute();
 console.log("regular: ", result)
 
 const medfetchResult = await sql`select * from medfetch('Patient')`.execute(db);
-console.log("medfetch: ", medfetchResult)
+console.log("medfetch raw sql: ", medfetchResult)
+
+const result2 = await db.selectFrom("medfetch").where("type", "=", "Patient").selectAll("medfetch").execute();
+console.log("medfetch kysely orm: ", result2);
