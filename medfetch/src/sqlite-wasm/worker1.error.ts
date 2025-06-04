@@ -1,4 +1,6 @@
-
+/**
+ * Error on either worker or main thread side
+ */
 export class Worker1Error extends Error {
     readonly _tag = "Worker1Error";
     readonly thread: "main" | "worker";

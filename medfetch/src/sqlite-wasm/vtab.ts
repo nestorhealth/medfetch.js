@@ -1,37 +1,47 @@
-import { Sqlite3, sqlite3_module } from "@sqlite.org/sqlite-wasm";
-import { Effect, gen, logError } from "effect/Effect";
+import type {
+    Sqlite3,
+    sqlite3_module,
+    Sqlite3Module,
+    Sqlite3Static,
+} from "@sqlite.org/sqlite-wasm";
 import { Page } from "~/data";
-import { _FetchSync } from "~/workers/fetch.services";
-import { flat } from "~/sof";
 import {
-    ModuleContext,
-    medfetch_vtab,
-    Sqlite3WebAssembly,
-    medfetch_vtab_cursor,
-    TokenFetcher,
-    generateViewDefinition,
+    type medfetch_vtab,
+    type medfetch_vtab_cursor,
+    type TokenFetcher,
 } from "~/sqlite-wasm/virtual-table.services";
+import { FetchSyncFn } from "~/workers/fetch.services";
+// import { Page } from "~/data";
+// import { type FetchSyncFn } from "~/workers/fetch.services";
+// import { flat } from "~/sof";
+// import type {
+//     medfetch_vtab,
+//     medfetch_vtab_cursor,
+//     TokenFetcher,
+// } from "~/sqlite-wasm/virtual-table.services";
+// import { generateViewDefinition } from "~/sqlite-wasm/virtual-table.services";
 
 type Params<Key extends keyof sqlite3_module> = Parameters<
     sqlite3_module[Key] extends (...args: any[]) => any
         ? sqlite3_module[Key]
         : never
 >;
+type ModuleContext = {
+    readonly transfer: ReadonlyArray<MessagePort>;
+    readonly aux: Record<string, any>;
+};
 
 /**
  * The xConnect method
+ * @param sqlite3 The database instance
+ * @param ctx The context
  * @param args {@link Params<"xConnect">}
  * @returns The x_connect method
  */
-export function x_connect(
-    ...args: Params<"xConnect">
-): Effect<number, never, Sqlite3WebAssembly | ModuleContext> {
-    let [pdb, _paux, _argc, _argv, ppvtab] = args;
-
-    return gen(function* () {
-        let sqlite3 = yield* Sqlite3WebAssembly;
-        let ctx = yield* ModuleContext;
-
+export function x_connect(_sqlite3: Sqlite3Static, ctx: ModuleContext) {
+    let sqlite3 = _sqlite3;
+    return (...args: Params<"xConnect">) => {
+        let [pdb, _paux, _argc, _argv, ppvtab] = args;
         let rc = sqlite3.capi.SQLITE_OK;
         rc += sqlite3.capi.sqlite3_declare_vtab(
             pdb,
@@ -49,13 +59,13 @@ export function x_connect(
             virtualTable.baseURL = ctx.aux["baseURL"];
         }
         return rc;
-    });
+    };
 }
 
-export function x_best_index(...args: Params<"xBestIndex">) {
-    let [, pIdxInfo] = args;
-    return gen(function* () {
-        let sqlite3: Sqlite3 = (yield* Sqlite3WebAssembly) as Sqlite3;
+export function x_best_index(_sqlite3: Sqlite3Static) {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    return (...args: Params<"xBestIndex">) => {
+        let [, pIdxInfo] = args;
         const index = sqlite3.vtab.xIndexInfo(pIdxInfo);
         for (let i = 0; i < index.$nConstraint; i++) {
             const constraint = index.nthConstraint(i);
@@ -80,58 +90,58 @@ export function x_best_index(...args: Params<"xBestIndex">) {
 
         index.dispose();
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
-export function x_disconnect(...args: Params<"xDisconnect">) {
-    let [pVtab] = args;
-    return gen(function* () {
-        let sqlite3 = (yield* Sqlite3WebAssembly) as Sqlite3;
+export function x_disconnect(_sqlite3: Sqlite3Static) {
+    return (...args: Params<"xDisconnect">) => {
+        let [pVtab] = args;
+        let sqlite3 = _sqlite3 as Sqlite3;
         sqlite3.vtab.xVtab.unget(pVtab);
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
-export function x_open(...args: Params<"xOpen">) {
-    let [pVtab, ppCursor] = args;
-    return gen(function* () {
-        let sqlite3 = yield* Sqlite3WebAssembly;
+export function x_open(_sqlite3: Sqlite3Static) {
+    let sqlite3 = _sqlite3 as Sqlite3;
+
+    return (...args: Params<"xOpen">) => {
+        let [pVtab, ppCursor] = args;
         let cursor = sqlite3.vtab.xCursor.create(
             ppCursor,
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
-export function x_close(...args: Params<"xClose">) {
-    let [pCursor] = args;
-    return gen(function* () {
-        let sqlite3 = (yield* Sqlite3WebAssembly) as Sqlite3;
+export function x_close(_sqlite3: Sqlite3Static) {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    return (...args: Params<"xClose">) => {
+        let [pCursor] = args;
         sqlite3.vtab.xCursor.unget(pCursor);
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
-export function x_next(...args: Params<"xNext">) {
-    let [pCursor] = args;
-    return gen(function* () {
-        let sqlite3 = yield* Sqlite3WebAssembly;
+export function x_next(_sqlite3: Sqlite3Static) {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    return (...args: Params<"xClose">) => {
+        let [pCursor] = args;
         let cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
         cursor.peeked = cursor.rows.next();
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
-export function x_column(...args: Params<"xColumn">) {
-    let [pCursor, pCtx, iCol] = args;
-
-    return gen(function* () {
-        let sqlite3 = yield* Sqlite3WebAssembly;
+export function x_column(_sqlite3: Sqlite3Static) {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    return (...args: Params<"xColumn">) => {
+        let [pCursor, pCtx, iCol] = args;
         let cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
         let hd = cursor.peeked;
         if (hd.done || !hd.value) {
-            yield* logError(
+            console.error(
                 `xColumn called on cursor with empty last peeked resource!`,
             );
             return sqlite3.capi.SQLITE_ERROR;
@@ -147,12 +157,7 @@ export function x_column(...args: Params<"xColumn">) {
                 break;
             }
             case 1: {
-                let json: string;
-                if (cursor.viewDefinition)
-                    json = JSON.stringify(
-                        flat([hd.value], cursor.viewDefinition)[0],
-                    );
-                else json = JSON.stringify(hd.value);
+                const json = JSON.stringify(hd.value);
                 sqlite3.capi.sqlite3_result_text(
                     pCtx,
                     json,
@@ -163,20 +168,23 @@ export function x_column(...args: Params<"xColumn">) {
             }
         }
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
-export function x_eof(...args: Params<"xEof">) {
-    let [pCursor] = args;
-
-    return gen(function* () {
-        let sqlite3 = yield* Sqlite3WebAssembly;
-        let fetchSync = yield* _FetchSync;
-        let tokenFetcher = yield* TokenFetcher;
+export function x_eof(
+    sqlite3: Sqlite3Static,
+    fetchSync: FetchSyncFn,
+    tokenFetcher?: TokenFetcher,
+) {
+    return (...args: Params<"xEof">) => {
+        let [pCursor] = args;
         const headers = (expired = false): Record<string, string> => {
             const kvs: Record<string, string> = {
                 "Content-Type": "application/json+fhir",
             };
+            if (!tokenFetcher) {
+                return kvs;
+            }
             const token = tokenFetcher.get(expired);
             if (token) kvs["Authorization"] = `Bearer ${token}`;
             return kvs;
@@ -214,7 +222,7 @@ export function x_eof(...args: Params<"xEof">) {
             } else return 1;
         }
         return sqlite3.capi.SQLITE_OK;
-    });
+    };
 }
 
 /**
@@ -230,25 +238,31 @@ function url(baseURL: string, resourceType: string) {
         : `${baseURL}/${resourceType}`;
 }
 
-export function x_filter(...args: Params<"xFilter">) {
-    let [pCursor, _idxNum, _idxCStr, argc, argv] = args;
+export function x_filter(
+    _sqlite3: Sqlite3,
+    fetchSync: FetchSyncFn,
+    tokenFetcher?: TokenFetcher,
+) {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    let { capi, vtab } = sqlite3;
 
-    return gen(function* () {
-        let { capi, vtab } = (yield* Sqlite3WebAssembly) as Sqlite3;
-        let fetchSync = yield* _FetchSync;
-        let tokenFetcher = yield* TokenFetcher;
+    return (..._args: Params<"xFilter">) => {
+        let [pCursor, _idxNum, _idxCStr, argc, argv] = _args;
+        let args = capi.sqlite3_values_to_js(argc, argv);
 
         const headers = (expired = false): Record<string, string> => {
             const kvs: Record<string, string> = {
                 "Content-Type": "application/json+fhir",
             };
+            if (!tokenFetcher) {
+                return kvs;
+            }
             const token = tokenFetcher.get(expired);
             if (token) kvs["Authorization"] = `Bearer ${token}`;
             return kvs;
         };
-        let args = capi.sqlite3_values_to_js(argc, argv);
         if (args.length < 1 || typeof args[0] !== "string") {
-            yield* logError(`can't handle empty arguments`);
+            console.error(`can't handle empty arguments`);
             return capi.SQLITE_ERROR;
         }
 
@@ -260,18 +274,48 @@ export function x_filter(...args: Params<"xFilter">) {
         });
         if (response.status === 401) {
             response = fetchSync(url(baseURL, resourceType), {
-                headers: headers(true)
+                headers: headers(true),
             });
             if (!response.ok) {
-                yield *logError(`Couldn't fetch access token on retry`);
+                console.error(`Couldn't fetch access token on retry`);
                 return capi.SQLITE_ERROR;
             }
         }
-        
+
         let { resources, next } = Page(response.stream);
         cursor.rows = resources();
         cursor.pageNext = next;
-        cursor.viewDefinition = generateViewDefinition(args);
         return capi.SQLITE_OK;
+    };
+}
+
+/**
+ * Get back the medfetch virtual table implementation
+ * @param ctx
+ * @param _sqlite3
+ * @param fetchSync
+ * @param tokenFetcher
+ * @returns
+ */
+export function virtualTable(
+    ctx: ModuleContext,
+    _sqlite3: Sqlite3Static,
+    fetchSync: FetchSyncFn,
+    tokenFetcher?: TokenFetcher,
+): Sqlite3Module {
+    let sqlite3 = _sqlite3 as Sqlite3;
+    return (sqlite3.vtab as any).setupModule({
+        methods: {
+            xCreate: 0,
+            xConnect: x_connect(sqlite3, ctx),
+            xBestIndex: x_best_index(sqlite3),
+            xDisconnect: x_disconnect(sqlite3),
+            xOpen: x_open(sqlite3),
+            xClose: x_close(sqlite3),
+            xNext: x_next(sqlite3),
+            xColumn: x_column(sqlite3),
+            xEof: x_eof(sqlite3, fetchSync, tokenFetcher),
+            xFilter: x_filter(sqlite3, fetchSync, tokenFetcher),
+        },
     });
-};
+}

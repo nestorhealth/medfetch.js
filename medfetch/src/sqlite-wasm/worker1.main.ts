@@ -1,10 +1,36 @@
+import { Counter } from "~/sqlite-wasm/counter";
+import { BetterWorker1MessageType, BetterWorker1Response, BetterWorker1ResponseError } from "~/sqlite-wasm/types";
+import { Worker1Error } from "~/sqlite-wasm/worker1.error";
 import {
-    Sqlite3CreateWorker1Promiser,
-    Worker1Promiser,
+    type Sqlite3CreateWorker1Promiser,
+    type Worker1Promiser,
 } from "@sqlite.org/sqlite-wasm";
-import { TransferCounter } from "~/sqlite-wasm/counter";
-import { BetterWorker1MessageType, BetterWorker1Response, BetterWorker1ResponseError, MESSAGE_TYPES } from "~/sqlite-wasm/types";
-import { Worker1Error } from "~/sqlite-wasm/worker1/worker1.error";
+// Get the Sqlite3CreateWorker1Promiser in scope
+import "@sqlite.org/sqlite-wasm";
+
+export function promiserSyncV2(_worker?: Worker) {
+    let worker = _worker;
+    if (!worker) {
+        worker = new Worker(
+            new URL(
+                "./worker",
+                import.meta.url
+            ),
+            {
+                type: "module"
+            }
+        )
+    }
+    const promiserPromise = (
+        globalThis as typeof globalThis & {
+            sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser;
+        }
+    ).sqlite3Worker1Promiser.v2({
+        worker,
+    });
+    const f = unwrap(promiserPromise);
+    return f;
+}
 
 export function check<T extends BetterWorker1MessageType>(
   response: BetterWorker1Response<T> | BetterWorker1ResponseError<T>
@@ -13,23 +39,6 @@ export function check<T extends BetterWorker1MessageType>(
     throw new Worker1Error("main", "Unexpected response");
   }
   return response as any;
-}
-
-
-export function promiserV2(worker: Worker) {
-    const promiserPromise = (
-        globalThis as typeof globalThis & {
-            sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser;
-        }
-    ).sqlite3Worker1Promiser.v2({
-        worker,
-    });
-    const counter = new TransferCounter<BetterWorker1MessageType>(
-        MESSAGE_TYPES,
-        (id, count) => `${id}#${count}`,
-    );
-    const f = unwrap(promiserPromise, counter);
-    return f;
 }
 
 interface ArgsData {
@@ -64,12 +73,20 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
 
 function unwrap(
     f: Promise<Worker1Promiser>,
-    counter: TransferCounter<BetterWorker1MessageType>,
 ): Worker1Promiser {
+    const messageCount = new Counter<BetterWorker1MessageType>();
+    const transferMap = new Map<string, StructuredSerializeOptions>();
+    
     return async function worker1Promiser(arg0: any, arg1?: any): Promise<any> {
         const { messageType, params, transfers } = checkArgs([arg0, arg1]);
-        const messageId = counter.increment(messageType);
-        if (transfers) counter.set(messageId, transfers);
+        // START at 1
+        messageCount.set(messageType);
+        const currentCount = messageCount.get(messageType);
+        const messageId = `${messageType}#${currentCount}`;
+
+        if (transfers) {
+            transferMap.set(messageId, transfers)
+        }
         return f.then((f) => f(...params));
     };
 }

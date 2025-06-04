@@ -10,7 +10,7 @@ import {
     Sqlite3WebAssembly,
     TokenFetcher,
 } from "./virtual-table.services";
-import { FetchSync } from "~/fetch.services";
+import { _FetchSync } from "~/workers/fetch.services";
 import {
     x_best_index,
     x_close,
@@ -50,11 +50,11 @@ const medfetch_module: VirtualTableExtensionFn = (sqlite3, context) => {
     const tokenFetcher = TokenFetcher.make(tokenPort);
 
     // Blocking fetch function
-    const fetchSync = FetchSync.make(fetchPort);
+    const fetchSync = _FetchSync.make(fetchPort);
 
     let provideSqlite3 = provideService(Sqlite3WebAssembly, sqlite3);
     let provideModuleContext = provideService(ModuleContext, context);
-    let provideFetchSync = provideService(FetchSync, fetchSync);
+    let provideFetchSync = provideService(_FetchSync, fetchSync);
     let provideTokenFetcher = provideService(TokenFetcher, tokenFetcher);
 
     return {

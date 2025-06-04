@@ -11,7 +11,6 @@ import type {
     sqlite3_vtab,
     sqlite3_vtab_cursor,
     SqlValue,
-    Sqlite3,
 } from "@sqlite.org/sqlite-wasm";
 import { Column, ColumnPath, ViewDefinition } from "~/view";
 import { taggedEnum, TaggedEnum, TaggedError } from "effect/Data";
@@ -209,7 +208,7 @@ export type TokenMessage = TaggedEnum<{
 export const TokenMessage = taggedEnum<TokenMessage>();
 
 
-class __TokenFetcher {
+export class TokenFetcher {
     #port: MessagePort | undefined;
     #accessToken: string | undefined;
 
@@ -230,7 +229,7 @@ class __TokenFetcher {
             return undefined;
         }
 
-        const sab = new SharedArrayBuffer(__TokenFetcher.BUFFER_SIZE);
+        const sab = new SharedArrayBuffer(TokenFetcher.BUFFER_SIZE);
         const signal = new Int32Array(sab, 0, 1); // signal[0] = wake flag
         const status = new Int32Array(sab, 4, 1); // status[0] = success (1) or error (-1)
         const buffer = new Uint8Array(sab, 8); // token string as bytes
@@ -252,20 +251,3 @@ class __TokenFetcher {
         this.#accessToken = undefined;
     }
 }
-
-/**
- * @internal
- */
-export class Sqlite3WebAssembly extends Tag("Static")<
-    Sqlite3WebAssembly,
-    Sqlite3
->() {};
-
-export class TokenFetcher extends Tag("TokenFetcher")<
-    TokenFetcher,
-    __TokenFetcher
->() {
-    static make(port: MessagePort | undefined) {
-        return new __TokenFetcher(port);
-    }
-};

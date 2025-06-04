@@ -1,4 +1,4 @@
-import type { Sqlite3, Sqlite3Module } from "@sqlite.org/sqlite-wasm";
+import type { Sqlite3, Sqlite3Module, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { Tag } from "effect/Context";
 import { TaggedError } from "effect/Data";
 import { andThen, type Effect, liftPredicate, provideService, tap, tryPromise, try as trySync } from "effect/Effect";
@@ -123,7 +123,7 @@ export interface UserContext<Variables extends Record<string, any>> extends Tag.
 export type VirtualTableExtensionFn<
     Vars extends Record<string, any> = Record<string, any>,
 > = (
-    sqlite3: Sqlite3,
+    sqlite3: Sqlite3Static,
     context: UserContext<Vars>
 ) => Sqlite3Module;
 

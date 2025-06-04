@@ -31,7 +31,7 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm", "fhirpath"],
+        exclude: ["@sqlite.org/sqlite-wasm"],
     },
     build: {
         assetsInlineLimit: 0,
@@ -45,7 +45,8 @@ export default defineConfig({
         },
         lib: {
             entry: {
-                index: "src/index.ts",
+                workers: "src/workers/index.ts"
+/*                 index: "src/index.ts",
                 view: "src/view.ts",
                 sof: "src/sof.ts",
                 fetch: "src/fetch.ts",
@@ -53,7 +54,7 @@ export default defineConfig({
                 "sqlite-wasm/main": "src/sqlite-wasm/main.ts",
                 "sqlite-wasm/medfetch": "src/sqlite-wasm/medfetch.ts",
                 "sqlite-wasm/types": "src/sqlite-wasm/types.ts",
-                "sqlite-wasm/worker1": "src/sqlite-wasm/worker1.ts",
+                "sqlite-wasm/worker1": "src/sqlite-wasm/worker1.ts", */
             },
             name: "medfetch",
             formats: ["es"],

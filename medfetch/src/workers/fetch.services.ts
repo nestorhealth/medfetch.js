@@ -119,11 +119,11 @@ class ResponseProxySync {
     }
 }
 
-export class FetchSync extends Tag("FetchSynchronous")<
-    FetchSync,
+export class _FetchSync extends Tag("FetchSynchronous")<
+    _FetchSync,
     (...args: Parameters<typeof fetch>) => ResponseProxySync
 >() {
-    static make(port: MessagePort): Tag.Service<FetchSync> {
+    static make(port: MessagePort): Tag.Service<_FetchSync> {
         // 4B for size + 4B offset + 3 MB payload
         const sab = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
         let nextId = 1;
@@ -150,3 +150,64 @@ export class FetchSync extends Tag("FetchSynchronous")<
         };
     }
 }
+
+export async function FetchSync(): Promise<FetchSyncFn> {
+    const port = await new Promise<MessagePort>((resolve, reject) => {
+        const { port1, port2 } = new MessageChannel();
+        const fetchWorker = new Worker(
+            new URL("./fetch.worker", import.meta.url),
+            {
+                type: "module",
+            },
+        );
+        const onMessage = (e: MessageEvent) => {
+            if (
+                e.data === "fetch-sync-ready" ||
+                e.data?.type === "fetch-sync-ready"
+            ) {
+                port1.removeEventListener("message", onMessage);
+                resolve(port1);
+            } else {
+                port1.removeEventListener("message", onMessage);
+                reject(
+                    new Error(`Unexpected message: ${JSON.stringify(e.data)}`),
+                );
+            }
+        };
+        port1.addEventListener("message", onMessage);
+        port1.start();
+        fetchWorker.postMessage(
+            {
+                type: "init",
+            },
+            [port2],
+        );
+    });
+    const sab = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
+    let nextId = 1;
+    return function fetchSync(...args: Parameters<typeof fetch>) {
+        const signal = new Int32Array(sab, 0, 1);
+        const status = new Int32Array(sab, 4, 1);
+        signal[0] = 0;
+        let url = args[0];
+        if (typeof url !== "string") {
+            url = url.toString();
+        }
+        const id = nextId++;
+        const message = FetchMessage.request({
+            sab,
+            url,
+            init: args[1],
+            id,
+        });
+        port.postMessage(message);
+        // sleep until signal != 0
+        Atomics.wait(signal, 0, 0);
+        const statusCode = status[0];
+        return new ResponseProxySync(port, sab, id, statusCode);
+    };
+}
+
+export type FetchSyncFn = (
+    ...args: Parameters<typeof fetch>
+) => ResponseProxySync;

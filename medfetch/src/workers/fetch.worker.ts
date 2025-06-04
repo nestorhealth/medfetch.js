@@ -1,5 +1,4 @@
 import { FetchMessage } from "./fetch.services.js";
-import { fromNullable, runSync, tap } from "effect/Effect";
 
 const __RESPONSE_MAP__ = new Map<number, Response>();
 const __READER_MAP__ = new Map<number, ReadableStreamDefaultReader>();
@@ -13,7 +12,7 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
     return FetchMessage.$match(e.data, {
         /**
          * onRequest
-         * @param param0 
+         * @param param0
          */
         async request(message) {
             const signal = new Int32Array(message.sab, 0, 1);
@@ -46,7 +45,9 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
             const encoded = new TextEncoder().encode(backToText);
 
             if (encoded.length > payloadMaxSize) {
-                console.error(`Response too large for SharedArrayBuffer. Needed ${encoded.length}, got ${payloadMaxSize}`);
+                console.error(
+                    `Response too large for SharedArrayBuffer. Needed ${encoded.length}, got ${payloadMaxSize}`,
+                );
                 Atomics.store(signal, 0, -1);
                 Atomics.notify(signal, 0);
                 return;
@@ -107,17 +108,13 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
             dataBytes.set(value);
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
-        }
-
+        },
     });
-};
+}
 
-self.onmessage = (e) =>
-    fromNullable(e.ports[0])
-    .pipe(
-        tap((port) => {
-            port.onmessage = onMessage;
-            port.postMessage("fetch-ready");
-        }),
-    )
-    .pipe(runSync);
+self.onmessage = (e) => {
+    if (e.ports[0]) {
+        e.ports[0].onmessage = onMessage;
+        e.ports[0].postMessage("fetch-sync-ready");
+    }
+}

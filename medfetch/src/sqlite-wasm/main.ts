@@ -71,21 +71,6 @@ function defer(
     };
 }
 
-function unwrap(
-    f: Promise<Worker1Promiser>,
-    counter: TransferCounter<BetterWorker1MessageType>,
-): Worker1Promiser { 
-    return async function worker1Promiser(
-        arg0: any,
-        arg1?: any,
-    ): Promise<any> {
-        const { messageType, params, transfers } = checkArgs([arg0, arg1]);
-        const messageId = counter.increment(messageType);
-        if (transfers) counter.set(messageId, transfers);
-        return f.then((f) => f(...params));
-    };
-}
-
 /**
  * Main thread `Promiser` function / Web Worker handler.
  */
@@ -165,22 +150,6 @@ let __PROMISER__: BetterWorker1Promiser | null = null;
 export function worker1(trace = false): BetterWorker1Promiser {
     if (!__PROMISER__) __PROMISER__ = w1thread(trace);
     return __PROMISER__;
-}
-
-export function promiserV2(worker: Worker) {
-    const promiserPromise = (
-        globalThis as typeof globalThis & {
-            sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser;
-        }
-    ).sqlite3Worker1Promiser.v2({
-        worker,
-    });
-    const counter = new TransferCounter<BetterWorker1MessageType>(
-        MESSAGE_TYPES,
-        (id, count) => `${id}#${count}`,
-    );
-    const f = unwrap(promiserPromise, counter);
-    return f;
 }
 
 /**

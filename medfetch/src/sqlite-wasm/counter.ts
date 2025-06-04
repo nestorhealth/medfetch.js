@@ -3,6 +3,43 @@ type CountMap<Tag extends string> = {
 };
 
 /**
+ * Generic class for counting up
+ */
+export class Counter<Key extends string> extends Map<Key, number> {
+    constructor(keys?: Iterable<Key>) {
+        if (!keys) {
+            super();
+        } else {
+            const entries: [Key, number][] = [];
+            for (const key of keys) {
+                entries.push([key, 0]);
+            }
+            super(entries);
+        }
+    }
+
+    /**
+     * Increment the key by 1
+     * @override {@link Map.prototype.set}
+     * @param key The key to increment
+     */
+    override set(key: Key): this {
+        const count = super.get(key) ?? 0;
+        return super.set(key, count + 1);
+    }
+    
+    /**
+     * Override to get back a defined value no matter what.
+     * Default to 0.
+     * @param key The key you want the count of.
+     * @returns Its current count
+     */
+    override get(key: Key): number {
+        return super.get(key) ?? 0;
+    }
+}
+
+/**
  * @internal
  */
 export class TransferCounter<Tag extends string> {
@@ -41,7 +78,7 @@ export class TransferCounter<Tag extends string> {
     current(tag: Tag): number {
         return this.#counts[tag];
     }
-    
+
     tagKey(msgType: Tag) {
         return this.#key(msgType, this.#counts[msgType]);
     }
