@@ -143,109 +143,120 @@ export default function IndexPage() {
           </div>
           
           <div className="bg-gray-900/40 backdrop-blur-lg border border-gray-600/50 rounded-3xl p-8 md:p-12 shadow-2xl">
-            <div className="grid lg:grid-cols-2 gap-12 items-start">
-              <div>
+            <div className="lg:col-span-2 flex flex-col lg:flex-row items-stretch gap-8">
+              <div className="min-w-0 max-w-md w-full flex-shrink-0 flex flex-col">
                 <h3 className="text-2xl font-semibold text-white mb-6">
                   Chat with Your Data
                 </h3>
-                <div className="space-y-4">
-                  <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-gray-700">
+                <div className="flex-1 flex flex-col">
+                  <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 border border-gray-700 flex-1 flex flex-col">
                     <p className="text-gray-400 text-sm mb-2 flex items-center gap-2">
                       <MessageSquare className="h-4 w-4" />
                       You ask:
                     </p>
-                    <p className="text-white leading-relaxed">"Show me pediatric patients over 20 years old admitted in the US after 2015 with tibial shaft fractures."</p>
+                    <p className="text-white leading-relaxed text-sm flex-1">"Show me pediatric patients over 20 years old admitted in the US after 2015 with tibial shaft fractures."</p>
                   </div>
-                  <div className="bg-gray-900/60 backdrop-blur-sm rounded-2xl p-6 border border-gray-600/50">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse delay-300"></div>
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse delay-700"></div>
-                </div>
-                <div className="space-y-3">
-                  <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-white" />
-                      <span className="text-gray-300 text-sm">Patient Database Connected</span>
+                  <div className="bg-gray-900/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-600/50 mt-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse delay-300"></div>
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse delay-700"></div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-gray-800/80 rounded-lg p-2 border border-gray-700">
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4 text-white" />
+                          <span className="text-gray-300 text-xs">Patient Database Connected</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-700/60 rounded-lg p-1 text-xs text-gray-400 font-mono border border-gray-600">
+                        Loading 1,247 patient records...
+                      </div>
+                      <div className="bg-gray-700/60 rounded-lg p-1 text-xs text-green-400 font-mono border border-gray-600 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        ✓ Ready for natural language queries
+                      </div>
                     </div>
                   </div>
-                  <div className="bg-gray-700/60 rounded-lg p-2 text-xs text-gray-400 font-mono border border-gray-600">
-                    Loading 1,247 patient records...
-                  </div>
-                  <div className="bg-gray-700/60 rounded-lg p-2 text-xs text-green-400 font-mono border border-gray-600 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    ✓ Ready for natural language queries
-                  </div>
-                </div>
-              </div>
-                  
                 </div>
                 <Link 
                   href="/showcase/researcher"
-                  className="mt-8 bg-white text-gray-900 hover:bg-gray-100 px-6 py-3 rounded-lg font-medium transition-all duration-300 inline-flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="mt-8 bg-white text-gray-900 hover:bg-gray-100 px-4 py-3 rounded-lg font-medium transition-all duration-300 inline-flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 w-fit"
                 >
                   <span>Try It Now</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-            
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
-                      <Activity className="h-4 w-4" />
-                      Medfetch responds with data:
-                    </p>
-                    
-                    <div className="bg-gray-900/80 rounded-lg border border-gray-700 overflow-hidden">
-                      <div className="px-4 py-3 bg-gray-800/50 border-b border-gray-700">
-                        <h4 className="text-white font-medium text-sm">Patient Query Results (4 records found)</h4>
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-800/30">
-                            <tr>
-                              <th className="text-left p-3 text-gray-300 font-medium">ID</th>
-                              <th className="text-left p-3 text-gray-300 font-medium">Age</th>
-                              <th className="text-left p-3 text-gray-300 font-medium">Gender</th>
-                              <th className="text-left p-3 text-gray-300 font-medium">Admission</th>
-                              <th className="text-left p-3 text-gray-300 font-medium">Location</th>
-                              <th className="text-left p-3 text-gray-300 font-medium">Diagnosis</th>
-                              <th className="text-left p-3 text-gray-300 font-medium">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {mockPatientData.map((patient, index) => (
-                              <tr key={patient.id} className="border-t border-gray-700/50 hover:bg-gray-800/20 transition-colors">
-                                <td className="p-3 text-white font-mono text-xs">{patient.id}</td>
-                                <td className="p-3 text-gray-300">{patient.age}</td>
-                                <td className="p-3 text-gray-300">{patient.gender}</td>
-                                <td className="p-3 text-gray-300 flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {patient.admissionDate}
-                                </td>
-                                <td className="p-3 text-gray-300 flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {patient.location}
-                                </td>
-                                <td className="p-3 text-gray-300">{patient.diagnosis}</td>
-                                <td className="p-3">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    patient.status === 'Discharged' ? 'bg-green-900/30 text-green-300 border border-green-700/30' :
-                                    patient.status === 'Recovered' ? 'bg-blue-900/30 text-blue-300 border border-blue-700/30' :
-                                    'bg-yellow-900/30 text-yellow-300 border border-yellow-700/30'
-                                  }`}>
-                                    {patient.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div className="px-4 py-2 bg-gray-800/20 border-t border-gray-700 text-xs text-gray-400">
-                        Query executed in 0.023s • 4 rows returned
-                      </div>
+              
+              <div className="flex items-center justify-center lg:flex-col lg:justify-center">
+                <div className="relative">
+                  <div className="flex items-center lg:flex-col gap-2">
+                    <div className="w-2 h-0.5 lg:w-0.5 lg:h-2 bg-gradient-to-r lg:bg-gradient-to-b from-transparent to-white/40"></div>
+                    <div className="relative">
+                      <div className="w-3 h-3 border-t-2 border-l-2 border-white/60 transform -rotate-45 lg:rotate-45 animate-bounce"></div>
+                      <div className="absolute inset-0 w-3 h-3 border-t-2 border-l-2 border-white/20 transform -rotate-45 lg:rotate-45 animate-ping"></div>
+                    </div>
+                    <div className="w-8 h-0.5 lg:w-0.5 lg:h-8 bg-gradient-to-l lg:bg-gradient-to-t from-transparent via-white/40 to-transparent animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 flex-1 flex flex-col">
+                  <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Medfetch responds with data:
+                  </p>
+                  <div className="bg-gray-900/80 rounded-lg border border-gray-700 overflow-x-auto">
+                    <div className="px-3 py-2 bg-gray-800/50 border-b border-gray-700">
+                      <h4 className="text-white font-medium text-xs">Patient Query Results (4 records found)</h4>
+                    </div>
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-800/30">
+                        <tr>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">ID</th>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">Age</th>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">Gender</th>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">Admission</th>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">Location</th>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">Diagnosis</th>
+                          <th className="text-left px-4 py-1 text-gray-300 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockPatientData.map((patient, index) => (
+                          <tr key={patient.id} className="border-t border-gray-700/50 hover:bg-gray-800/20 transition-colors">
+                            <td className="px-4 py-1 text-white font-mono">{patient.id}</td>
+                            <td className="px-4 py-1 text-gray-300">{patient.age}</td>
+                            <td className="px-4 py-1 text-gray-300">{patient.gender}</td>
+                            <td className="px-4 py-1 text-gray-300 flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {patient.admissionDate}
+                            </td>
+                            <td className="px-4 py-1 text-gray-300 flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {patient.location}
+                            </td>
+                            <td className="px-4 py-1 text-gray-300">{patient.diagnosis}</td>
+                            <td className="px-4 py-1">
+                              <span className={`px-2 py-0.5 rounded-full text-2xs font-medium ${
+                                patient.status === 'Discharged' ? 'bg-green-900/30 text-green-300 border border-green-700/30' :
+                                patient.status === 'Recovered' ? 'bg-blue-900/30 text-blue-300 border border-blue-700/30' :
+                                'bg-yellow-900/30 text-yellow-300 border border-yellow-700/30'
+                              }`}>
+                                {patient.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="px-3 py-1 bg-gray-800/20 border-t border-gray-700 text-2xs text-gray-400">
+                      Query executed in 0.023s • 4 rows returned
                     </div>
                   </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
