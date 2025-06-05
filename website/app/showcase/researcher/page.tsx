@@ -21,7 +21,7 @@ export default function ResearcherDemo() {
         if (dbRef.current) return; // Skip if already initialized
 
         // Initialize with a persisted database file
-        const medDb = initMedfetchDB({
+        const medDb = await initMedfetchDB({
           baseURL: "https://r4.smarthealthit.org",
           filename: 'medfetch.db',
           trace: true
@@ -31,15 +31,16 @@ export default function ResearcherDemo() {
 
         // Create tables if they don't exist
         await medDb.db.exec(`
-          CREATE TABLE IF NOT EXISTS Patient (
-            patient_id TEXT PRIMARY KEY,
-            givenName TEXT,
-            familyName TEXT,
-            birthDate TEXT,
-            gender TEXT,
-            condition TEXT,
-            status TEXT
-          );
+          drop table if exists Patient;
+          create table if not exists Patient as select
+              id as patient_id,
+              json -> 'name' -> 0 -> 'given' ->> 0 as givenName,
+              json -> 'name' -> 0 ->> 'family' as familyName,
+              json ->> 'birthDate' as birthDate,
+              json ->> 'gender' as gender,
+              NULL as condition,
+              NULL as status
+          from medfetch where "type" = 'Patient';
         `);
 
         await medDb.db.exec(`
@@ -55,6 +56,7 @@ export default function ResearcherDemo() {
 
         // Only insert dummy data if the Patient table is empty
         const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
+        console.log('Patient count:', await medDb.db.prepare(`SELECT * FROM medfetch where "type" = 'Patient';`).all());
         if (patientCount[0].count === 0) {
           await medDb.db.exec(`
             INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
