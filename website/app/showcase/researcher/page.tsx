@@ -4,11 +4,21 @@ import { initMedfetchDB, type MedfetchClient } from "@/lib/client";
 import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
-import { Database, MessageSquare, Users, Activity, AlertCircle, RefreshCw, Settings } from "lucide-react";
+import {
+  Database,
+  MessageSquare,
+  Users,
+  Activity,
+  AlertCircle,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 
 export default function ResearcherDemo() {
   const [db, setDB] = useState<MedfetchClient | null>(null);
-  const [currentResource, setCurrentResource] = useState<"Patient" | "Procedure">("Patient");
+  const [currentResource, setCurrentResource] = useState<
+    "Patient" | "Procedure"
+  >("Patient");
   const [rawData, setRawData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -19,11 +29,11 @@ export default function ResearcherDemo() {
     (async () => {
       try {
         setIsInitializing(true);
-        
+
         const medDb = initMedfetchDB({
           baseURL: "https://r4.smarthealthit.org",
-          filename: 'medfetch.db',
-          trace: true
+          filename: "medfetch.db",
+          trace: true,
         } as { baseURL?: string; trace?: boolean; filename?: string });
         setDB(medDb);
         tableManager.current = new TableManager(medDb);
@@ -51,7 +61,9 @@ export default function ResearcherDemo() {
           );
         `);
 
-        const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
+        const patientCount = await medDb.db
+          .prepare("SELECT COUNT(*) as count FROM Patient;")
+          .all();
         if (patientCount[0].count === 0) {
           await medDb.db.exec(`
             INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
@@ -62,7 +74,7 @@ export default function ResearcherDemo() {
               ('p4', 'Alice', 'Brown', '1978-11-08', 'female', 'Diabetes', 'Active'),
               ('p5', 'Charlie', 'Wilson', '1955-09-30', 'male', 'COPD', 'Active');
           `);
-          
+
           await medDb.db.exec(`
             INSERT INTO Procedure (procedure_id, patient_id, code, performedDate, notes)
             VALUES 
@@ -74,10 +86,15 @@ export default function ResearcherDemo() {
           `);
         }
 
-        const schema = await tableManager.current.getTableSchema(currentResource);
-        const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
+        const schema =
+          await tableManager.current.getTableSchema(currentResource);
+        const pkCol =
+          schema.find((col: ColumnDefinition) => col.primaryKey)?.name ||
+          "patient_id";
         setPrimaryKey(pkCol);
-        const rows = await medDb.db.prepare(`SELECT * FROM ${currentResource};`).all();
+        const rows = await medDb.db
+          .prepare(`SELECT * FROM ${currentResource};`)
+          .all();
         setRawData(rows);
       } catch (err) {
         setError("Failed to initialize Medfetch DB: " + (err as Error).message);
@@ -95,84 +112,105 @@ export default function ResearcherDemo() {
       await db.db.exec("BEGIN TRANSACTION;");
       await db.db.exec(updateSQL);
       await db.db.exec("COMMIT;");
-      const newRows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
+      const newRows = await db.db
+        .prepare(`SELECT * FROM ${currentResource};`)
+        .all();
       setRawData(newRows);
     } catch (err) {
       setError("Edit failed: " + (err as Error).message);
     }
   };
 
-  const handleQuery = useCallback(async (sql: string): Promise<void> => {
-    if (!db) return;
-
-    try {
-      setError(null);
-      
-      // Split multiple SQL statements if present
-      const statements = sql.split(';').filter(stmt => stmt.trim());
-      const isSelect = statements[0].trim().toLowerCase().startsWith('select');
-      
-      // Start transaction for non-SELECT queries
-      if (!isSelect) {
-        await db.db.exec('BEGIN TRANSACTION;');
-      }
+  const handleQuery = useCallback(
+    async (sql: string): Promise<void> => {
+      if (!db) return;
 
       try {
-        // Execute each statement
-        for (const statement of statements) {
-          if (statement.trim()) {
-            const result = await db.db.prepare(statement + ';').all();
-            console.log('Statement result:', result);
+        setError(null);
+
+        // Split multiple SQL statements if present
+        const statements = sql.split(";").filter((stmt) => stmt.trim());
+        const isSelect = statements[0]
+          .trim()
+          .toLowerCase()
+          .startsWith("select");
+
+        // Start transaction for non-SELECT queries
+        if (!isSelect) {
+          await db.db.exec("BEGIN TRANSACTION;");
+        }
+
+        try {
+          // Execute each statement
+          for (const statement of statements) {
+            if (statement.trim()) {
+              const result = await db.db.prepare(statement + ";").all();
+              console.log("Statement result:", result);
+            }
           }
-        }
 
-        // Commit transaction for non-SELECT queries
-        if (!isSelect) {
-          await db.db.exec('COMMIT;');
-          console.log('Transaction committed');
-        }
+          // Commit transaction for non-SELECT queries
+          if (!isSelect) {
+            await db.db.exec("COMMIT;");
+            console.log("Transaction committed");
+          }
 
-        // Determine which table was affected by looking at the first statement
-        let affectedTable: "Patient" | "Procedure" | null = null;
-        const firstStmt = statements[0].trim().toLowerCase();
-        if (firstStmt.startsWith('select')) {
-          const tableMatch = firstStmt.match(/from\s+(\w+)/i);
-          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-        } else if (firstStmt.startsWith('insert')) {
-          const tableMatch = firstStmt.match(/into\s+(\w+)/i);
-          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-        } else if (firstStmt.startsWith('update') || firstStmt.startsWith('delete')) {
-          const tableMatch = firstStmt.match(/(?:update|delete from)\s+(\w+)/i);
-          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-        }
+          // Determine which table was affected by looking at the first statement
+          let affectedTable: "Patient" | "Procedure" | null = null;
+          const firstStmt = statements[0].trim().toLowerCase();
+          if (firstStmt.startsWith("select")) {
+            const tableMatch = firstStmt.match(/from\s+(\w+)/i);
+            if (tableMatch)
+              affectedTable = tableMatch[1] as "Patient" | "Procedure";
+          } else if (firstStmt.startsWith("insert")) {
+            const tableMatch = firstStmt.match(/into\s+(\w+)/i);
+            if (tableMatch)
+              affectedTable = tableMatch[1] as "Patient" | "Procedure";
+          } else if (
+            firstStmt.startsWith("update") ||
+            firstStmt.startsWith("delete")
+          ) {
+            const tableMatch = firstStmt.match(
+              /(?:update|delete from)\s+(\w+)/i,
+            );
+            if (tableMatch)
+              affectedTable = tableMatch[1] as "Patient" | "Procedure";
+          }
 
-        // Update the current resource if a different table was affected
-        if (affectedTable && affectedTable !== currentResource) {
-          setCurrentResource(affectedTable);
-        }
+          // Update the current resource if a different table was affected
+          if (affectedTable && affectedTable !== currentResource) {
+            setCurrentResource(affectedTable);
+          }
 
-        const rows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
-        console.log('Current table state after all operations:', rows);
-        setRawData(rows);
+          const rows = await db.db
+            .prepare(`SELECT * FROM ${currentResource};`)
+            .all();
+          console.log("Current table state after all operations:", rows);
+          setRawData(rows);
+        } catch (err) {
+          if (!isSelect) {
+            await db.db.exec("ROLLBACK;");
+            console.log("Transaction rolled back due to error:", err);
+          }
+          throw err;
+        }
       } catch (err) {
-        if (!isSelect) {
-          await db.db.exec('ROLLBACK;');
-          console.log('Transaction rolled back due to error:', err);
-        }
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error occurred";
+        setError(`Query failed: ${errorMessage}`);
         throw err;
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(`Query failed: ${errorMessage}`);
-      throw err;
-    }
-  }, [db, currentResource]);
+    },
+    [db, currentResource],
+  );
 
   const refreshData = async () => {
     if (!db) return;
     try {
       setError(null);
-      const rows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
+      const rows = await db.db
+        .prepare(`SELECT * FROM ${currentResource};`)
+        .all();
       setRawData(rows);
     } catch (err) {
       setError("Failed to refresh data: " + (err as Error).message);
@@ -182,7 +220,9 @@ export default function ResearcherDemo() {
   const getTableStats = () => {
     if (!rawData) return { total: 0, active: 0 };
     const total = rawData.length;
-    const active = rawData.filter(row => row.status === 'Active' || !row.status).length;
+    const active = rawData.filter(
+      (row) => row.status === "Active" || !row.status,
+    ).length;
     return { total, active };
   };
 
@@ -194,8 +234,12 @@ export default function ResearcherDemo() {
         <div className="text-center">
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold text-white mb-2">Initializing Database</h3>
-            <p className="text-slate-400">Setting up your medical data workspace...</p>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Initializing Database
+            </h3>
+            <p className="text-slate-400">
+              Setting up your medical data workspace...
+            </p>
           </div>
         </div>
       </div>
@@ -212,11 +256,15 @@ export default function ResearcherDemo() {
                 <Database className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Medical Data Explorer</h1>
-                <p className="text-slate-400 text-sm">Interactive database with natural language queries</p>
+                <h1 className="text-xl font-bold text-white">
+                  Medical Data Explorer
+                </h1>
+                <p className="text-slate-400 text-sm">
+                  Interactive database with natural language queries
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex bg-slate-800 rounded-lg p-1">
                 <button
@@ -256,17 +304,28 @@ export default function ResearcherDemo() {
           <div className="mt-4 flex items-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-slate-300">Total Records: <span className="text-white font-medium">{stats.total}</span></span>
+              <span className="text-slate-300">
+                Total Records:{" "}
+                <span className="text-white font-medium">{stats.total}</span>
+              </span>
             </div>
             {currentResource === "Patient" && (
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-slate-300">Active: <span className="text-white font-medium">{stats.active}</span></span>
+                <span className="text-slate-300">
+                  Active:{" "}
+                  <span className="text-white font-medium">{stats.active}</span>
+                </span>
               </div>
             )}
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span className="text-slate-300">Table: <span className="text-white font-medium">{currentResource}</span></span>
+              <span className="text-slate-300">
+                Table:{" "}
+                <span className="text-white font-medium">
+                  {currentResource}
+                </span>
+              </span>
             </div>
           </div>
         </div>
@@ -283,7 +342,9 @@ export default function ResearcherDemo() {
                   ) : (
                     <Activity className="h-5 w-5 text-purple-400" />
                   )}
-                  <h2 className="text-lg font-semibold text-white">{currentResource} Data</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    {currentResource} Data
+                  </h2>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
                   <Settings className="h-4 w-4" />

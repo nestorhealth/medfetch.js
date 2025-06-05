@@ -3,7 +3,7 @@ import { MetaRecord } from "nextra";
 const globalMeta: MetaRecord = {
   index: {
     type: "page",
-    display: "hidden"
+    display: "hidden",
   },
   docs: {
     type: "page",
@@ -12,7 +12,7 @@ const globalMeta: MetaRecord = {
   showcase: {
     type: "page",
     title: "Showcase",
-  }
+  },
 };
 
 export default globalMeta;
