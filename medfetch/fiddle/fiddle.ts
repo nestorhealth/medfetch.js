@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { medfetch } from "~/sqlite-wasm/dialect";
+import { medfetch } from "~/sqlite-wasm/index";
 
 const db = medfetch("https://r4.smarthealthit.org");
 
@@ -11,5 +11,5 @@ console.log("regular: ", result)
 const medfetchResult = await sql`select * from medfetch('Patient')`.execute(db);
 console.log("medfetch raw sql: ", medfetchResult)
 
-const result2 = await db.selectFrom("medfetch").where("type", "=", "Patient").selectAll("medfetch").execute();
-console.log("medfetch kysely orm: ", result2);
+const qbResult = await db.selectFrom("medfetch").where("type", "=", "Patient").selectAll("medfetch").execute();
+console.log("HERE", qbResult);

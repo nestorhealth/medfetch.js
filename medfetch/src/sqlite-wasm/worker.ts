@@ -1,18 +1,30 @@
 /// <reference lib="webworker" />
 import { worker1 } from "~/sqlite-wasm/worker1";
-import sqlite3InitModule, { type Sqlite3Module } from "@sqlite.org/sqlite-wasm";
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { medfetch_module_alloc } from "~/sqlite-wasm/worker.vtab";
 import { FetchSyncWorker } from "~/fetch.services";
 import { Counter } from "~/sqlite-wasm/counter";
-import { Page, __Page } from "~/data";
+import { Page } from "~/data";
+import { Sqlite3Module } from "~/sqlite-wasm/types.patch";
 
 // For logs
 const tag = "medfetch/sqlite-wasm::worker";
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
+    const fetchWorker = new Worker(
+        new URL(
+            import.meta.env.DEV ?
+            "../fetch.worker"
+            : "../fetch.worker.mjs",
+            import.meta.url
+        ),
+        {
+            type: "module"
+        }
+    );
     // Singular FetchSync handle for all databases
-    const fetchSync = await FetchSyncWorker();
+    const fetchSync = await FetchSyncWorker(fetchWorker);
 
     const dbCount = new Counter();
     const modules: Sqlite3Module[] = [];
@@ -86,6 +98,30 @@ function index(internalDbId: string): number {
     return parseInt(internalDbId.split("#")[1][0]) - 1;
 }
 
+
+/**
+ * Hack to get the pointer from the dbId, despite the docs saying it's
+ * not guaranteed to mean anything...
+ * Based on the dist code:
+ * ```ts
+ * // sqlite3.mjs line 11390
+ * const getDbId = function (db) {
+ *   let id = wState.idMap.get(db);
+ *   if (id) return id;
+ *   id = 'db#' + ++wState.idSeq + '@' + db.pointer;
+ *
+ *   wState.idMap.set(db, id);
+ *   return id;
+ * };
+ * ```
+ * A virtual table / any runtime loadable extension lives in memory only,
+ * so the lifetime of an extension should match that of a database
+ * on the heap, so this should (hopefully) be fine...
+ *
+ * @param internalDbId The database id assigned by the worker API
+ * @returns The pointer value as a raw js number
+ *
+ */
 function pointer(internalDbId: string): number {
     const split = internalDbId.split("@");
     return parseInt(split[split.length - 1]);

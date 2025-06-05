@@ -74,6 +74,9 @@ export async function database(
     };
 }
 
+/**
+ * {@link GenericSqliteDialect} implementation for the worker1promiser api
+ */
 export class Worker1PromiserDialect extends GenericSqliteDialect {
     constructor(baseURL: string | File, promiser: Worker1Promiser) {
         super(async () => {

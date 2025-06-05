@@ -211,7 +211,7 @@ export type Worker1Response<
     MessageType extends Worker1MessageType = Worker1MessageType,
 > = Extract<_Worker1Response, { type: MessageType }>;
 
-export type TPromiser<
+type TPromiser<
     AllRequest extends { type: string; args?: any },
     AllResponse extends { type: string; result: any },
 > = {

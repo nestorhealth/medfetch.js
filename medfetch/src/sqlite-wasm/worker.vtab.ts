@@ -1,15 +1,13 @@
 import type {
-    Sqlite3,
     sqlite3_module,
-    Sqlite3Module,
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
-import { Page, __Page } from "~/data";
+import { Page } from "~/data";
+import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/types.patch";
 import {
-    type medfetch_vtab,
     type medfetch_vtab_cursor,
     type TokenFetcher,
-} from "~/sqlite-wasm/virtual-table.services";
+} from "~/sqlite-wasm/worker1.services";
 
 type GetPage = (resourceType: string) => Page;
 
@@ -76,7 +74,7 @@ export function x_connect(_sqlite3: Sqlite3Static) {
         if (!rc) {
             sqlite3.vtab.xVtab.create(
                 ppvtab,
-            ) as medfetch_vtab;
+            );
         }
         return rc;
     };

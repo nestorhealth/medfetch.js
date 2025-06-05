@@ -2,8 +2,6 @@ import { pipe } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
 import {
-    getOrNull,
-    isNone,
     none,
     type Option,
     some,
@@ -191,28 +189,6 @@ export const kdv = <Value = unknown>(
     };
 };
 
-/**
- * Bundle stream utility functions
- * @template ResourceType the expected resource types the Bundle will return, defaulting to any string value
- */
-export interface __Page<ResourceType extends string = string> {
-    /**
-     * Stateful next bundle url getter that only returns non-null if
-     * 1. The {@link Link} property was able to be parsed at depth 1 and
-     * 2. The {@link Link} array value has an element with key "relation" == "next".
-     * Call when {@link resources} returns `done` to check if a next URL exists or not.
-     * @returns The next page URL if it exists, null otherwise.
-     */
-    next: () => string | null;
-
-    /**
-     * Get back a generator wrapper over the Bundle text chunk generator provided
-     * that flushes out resources one by one.
-     * @returns {@link Resource} generator
-     */
-    resources: () => Generator<Resource<ResourceType>, void>;
-}
-
 const parseLink = kdv<Link[]>("link", 1);
 const parseEntry = kdv<Entry[]>("entry", 1);
 
@@ -278,6 +254,11 @@ export class Page {
         while (this.#acc.length > 0) yield this.#acc.shift()!;
     }
     
+    /**
+     * Get back a generator wrapper over the Bundle text chunk generator provided
+     * that flushes out resources one by one.
+     * @returns {@link Resource} generator
+     */
     get rows() {
         if (!this.#rows) {
             this.#rows = this.#resources();
@@ -285,6 +266,13 @@ export class Page {
         return this.#rows;
     }
     
+    /**
+     * Stateful next bundle url getter that only returns non-null if
+     * 1. The {@link Link} property was able to be parsed at depth 1 and
+     * 2. The {@link Link} array value has an element with key "relation" == "next".
+     * Call when {@link resources} returns `done` to check if a next URL exists or not.
+     * @returns The next page URL if it exists, null otherwise.
+     */
     get next(): Page | null {
         if (!this.#nextURL || !this.#fetcher) {
             return null;
@@ -293,68 +281,6 @@ export class Page {
             return new Page(nextChunks, this.#fetcher);
         }
     }
-}
-
-/**
- * Stateful constructor-like function for {@link __Page}
- * @param bundleChunks Some Bundle chunks Generator
- * @returns {@link Page}
- */
-export function __Page(bundleChunks: Generator<string>): __Page {
-    let cursor = -1;
-    let nextURL = none<string>();
-    let isLinkParsed = false;
-    const parseLink = kdv<Link[]>("link", 1);
-    const parseEntry = kdv<Entry[]>("entry", 1);
-    const acc: Resource[] = [];
-    return {
-        next() {
-            return getOrNull(nextURL);
-        },
-        *resources() {
-            while (true) {
-                if (acc.length > 0) {
-                    yield acc.shift()!;
-                }
-                const { done, value } = bundleChunks.next();
-                if (done || !value) break;
-                if (isNone(nextURL) && !isLinkParsed) {
-                    parseLink(value).pipe(
-                        mapOption(({ hd }) => {
-                            isLinkParsed = true;
-                            const searched = hd.find(
-                                (link) => link.relation === "next",
-                            )?.url;
-                            if (searched) nextURL = some(searched);
-                        }),
-                    );
-                }
-                const popped = parseEntry(value).pipe(
-                    flatMapOption(({ hd }) => {
-                        if (hd.length > 0) {
-                            const flushed = hd
-                                .slice(cursor + 1)
-                                .filter(
-                                    (
-                                        entry,
-                                    ): entry is Entry & {
-                                        resource: Resource;
-                                    } => !!entry.resource,
-                                )
-                                .map(({ resource }) => resource);
-                            cursor = hd.length - 1;
-                            acc.push(...flushed);
-                            return some(acc.shift()!);
-                        } else return none();
-                    }),
-                );
-                if (isSome(popped)) {
-                    yield getOrThrow(popped);
-                }
-            }
-            while (acc.length > 0) yield acc.shift()!;
-        },
-    };
 }
 
 const Bundle = Resource("Bundle", {

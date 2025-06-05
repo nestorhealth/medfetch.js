@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "vite",
         "test": "vitest run --coverage",
-        "build": "rm -rf dist && npx vite build && npx concurrently \"npx tsc -p tsconfig.build.json\" \"cp src/sqlite-wasm/sqlite3-wasm.d.ts dist/sqlite-wasm\"",
+        "build": "rm -rf dist && npx vite build && npx concurrently \"npx tsc -p tsconfig.build.json\"",
         "unit": "vitest src",
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
     },

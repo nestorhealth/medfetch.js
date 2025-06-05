@@ -1,9 +1,8 @@
 import { KeyCounter } from "~/sqlite-wasm/counter";
-import { BetterWorker1MessageType, BetterWorker1Response, BetterWorker1ResponseError } from "~/sqlite-wasm/types";
 import { Worker1Error } from "~/sqlite-wasm/worker1.error";
 // Get the Sqlite3CreateWorker1Promiser in scope
 import "@sqlite.org/sqlite-wasm";
-import { Sqlite3CreateWorker1Promiser, Worker1Promiser } from "~/sqlite-wasm/types.patch";
+import { Sqlite3CreateWorker1Promiser, Worker1MessageType, Worker1Promiser, Worker1Response, Worker1ResponseError } from "~/sqlite-wasm/types.patch";
 
 /**
  * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`
@@ -23,9 +22,9 @@ export function promiserSyncV2(worker: Worker) {
     return f;
 }
 
-export function check<T extends BetterWorker1MessageType>(
-  response: BetterWorker1Response<T> | BetterWorker1ResponseError<T>
-): BetterWorker1Response<T> {
+export function check<T extends Worker1MessageType>(
+  response: Worker1Response<T> | Worker1ResponseError<T>
+): Worker1Response<T> {
   if (response.type === "error") {
     throw new Worker1Error("main", "Unexpected response");
   }
@@ -35,7 +34,7 @@ export function check<T extends BetterWorker1MessageType>(
 interface ArgsData {
     params: Parameters<Worker1Promiser>;
     transfers: StructuredSerializeOptions;
-    messageType: BetterWorker1MessageType;
+    messageType: Worker1MessageType;
 }
 
 function checkArgs([arg0, arg1]: [any, any]): ArgsData {
@@ -65,7 +64,7 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
 function unwrap(
     f: Promise<Worker1Promiser>,
 ): Worker1Promiser {
-    const messageCount = new KeyCounter<BetterWorker1MessageType>();
+    const messageCount = new KeyCounter<Worker1MessageType>();
     const transferMap = new Map<string, StructuredSerializeOptions>();
     
     return async function worker1Promiser(arg0: any, arg1?: any): Promise<any> {

@@ -3,9 +3,6 @@ import { sql as kyselySql } from "kysely";
 
 export const db = medfetch("https://r4.smarthealthit.org");
 
-const result = await db.selectFrom("medfetch").where("type", "=", "Patient").execute();
-console.log("HERE", result)
-
 export function sql(strings: TemplateStringsArray, ...rest: any[]) {
   return kyselySql(strings, ...rest).execute(db).then(result => result.rows);
 }

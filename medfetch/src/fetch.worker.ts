@@ -8,13 +8,10 @@ const __READER_MAP__ = new Map<number, ReadableStreamDefaultReader>();
  * @param e The incoming MessageEvent
  * @returns Promise<void 0>; writes the payload back to dataBytes from the sharedSignal
  */
-const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
-    return FetchMessage.$match(e.data, {
-        /**
-         * onRequest
-         * @param param0
-         */
-        async request(message) {
+const onMessage = async (e: MessageEvent<FetchMessage>): Promise<void> => {
+    switch (e.data._tag) {
+        case "request": {
+            const message = e.data;
             const signal = new Int32Array(message.sab, 0, 1);
             const status = new Int32Array(message.sab, 4, 1);
 
@@ -24,8 +21,11 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
 
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
-        },
-        async readJson(message) {
+            break;
+        }
+
+        case "readJson": {
+            const message = e.data;
             const signal = new Int32Array(message.sab, 0, 1);
             const payloadMaxSize = message.sab.byteLength - 8;
             const sizeView = new DataView(message.sab, 4, 4);
@@ -57,8 +57,11 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
             dataBytes.set(encoded);
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
-        },
-        async startStream({ sab, id }) {
+            break;
+        }
+
+        case "startStream": {
+            const { sab, id } = e.data;
             const signal = new Int32Array(sab, 0, 1);
             const response = __RESPONSE_MAP__.get(id);
             if (!response || !response.body) {
@@ -73,8 +76,11 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
 
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
-        },
-        async readChunk({ sab, id }) {
+            break;
+        }
+
+        case "readChunk": {
+            const { sab, id } = e.data;
             const signal = new Int32Array(sab, 0, 1);
             const sizeView = new DataView(sab, 4, 4);
             const payloadMaxSize = sab.byteLength - 8;
@@ -108,13 +114,14 @@ const onMessage = (e: MessageEvent<FetchMessage>): Promise<void> => {
             dataBytes.set(value);
             Atomics.store(signal, 0, 1);
             Atomics.notify(signal, 0);
-        },
-    });
-}
+            break;
+        }
+    }
+};
 
 self.onmessage = (e) => {
     if (e.ports[0]) {
         e.ports[0].onmessage = onMessage;
         e.ports[0].postMessage("fetch-sync-ready");
     }
-}
+};

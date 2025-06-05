@@ -1,32 +1,61 @@
-import { Tag } from "effect/Context";
-import { type TaggedEnum, taggedEnum, TaggedError } from "effect/Data";
+type RequestMessage = {
+    readonly _tag: "request";
+    readonly sab: SharedArrayBuffer;
+    readonly id: number;
+    readonly url: string;
+    readonly init: RequestInit | undefined;
+};
+type ReadJsonMessage = {
+    readonly _tag: "readJson";
+    readonly sab: SharedArrayBuffer;
+    readonly id: number;
+};
+type StartStreamMessage = {
+    readonly _tag: "startStream";
+    readonly sab: SharedArrayBuffer;
+    readonly id: number;
+};
 
-export type FetchMessage = TaggedEnum<{
-    readonly request: {
-        readonly sab: SharedArrayBuffer;
-        readonly id: number;
-        readonly url: string;
-        readonly init: RequestInit | undefined;
-    };
-    readonly readJson: {
-        readonly sab: SharedArrayBuffer;
-        readonly id: number;
-    };
-    readonly startStream: {
-        readonly sab: SharedArrayBuffer;
-        readonly id: number;
-    };
-    readonly readChunk: {
-        readonly sab: SharedArrayBuffer;
-        readonly id: number;
-    };
-}>;
+type ReadChunkMessage = {
+    readonly _tag: "readChunk";
+    readonly sab: SharedArrayBuffer;
+    readonly id: number;
+};
 
-export const FetchMessage = taggedEnum<FetchMessage>();
+export type FetchMessage =
+    | RequestMessage
+    | ReadJsonMessage
+    | StartStreamMessage
+    | ReadChunkMessage;
 
-class FetchSyncError extends TaggedError("medfetch/fetch")<{
-    message?: string;
-}> {}
+export const FetchMessage = {
+    request: (
+        args: Omit<RequestMessage, "_tag">
+    ): RequestMessage => ({
+        ...args,
+        _tag: "request",
+    }),
+    readJson: (
+        args: Omit<ReadJsonMessage, "_tag">,
+    ): ReadJsonMessage => ({
+        ...args,
+        _tag: "readJson",
+    }),
+    startStream: (
+        args: Omit<StartStreamMessage, "_tag">,
+    ): StartStreamMessage => ({
+        ...args,
+        _tag: "startStream",
+    }),
+    readChunk: (
+        args: Omit<ReadChunkMessage, "_tag">,
+    ): ReadChunkMessage => ({
+        ...args,
+        _tag: "readChunk",
+    }),
+};
+
+class FetchSyncError extends Error {}
 
 export class ResponseProxySync {
     readonly #sab: SharedArrayBuffer;
@@ -63,9 +92,7 @@ export class ResponseProxySync {
             Atomics.wait(signal, 0, 0);
             const result = Atomics.load(signal, 0);
             if (result < 0) {
-                throw new FetchSyncError({
-                    message: `Stream chunk fetch error`,
-                });
+                throw new FetchSyncError(`Stream chunk fetch error`);
             }
             const size = new DataView(this.#sab, 4, 4).getUint32(0, true);
             if (size === 0) {
@@ -91,9 +118,9 @@ export class ResponseProxySync {
         Atomics.wait(signal, 0, 0);
         const result = Atomics.load(signal, 0);
         if (result < 0) {
-            throw new FetchSyncError({
-                message: `FetchSync: something went wrong with parsing the json response, response id was: ${this.#id}`,
-            });
+            throw new FetchSyncError(
+                `FetchSync: something went wrong with parsing the json response, response id was: ${this.#id}`,
+            );
         }
         const size = new DataView(this.#sab, 4, 4).getUint32(0, true);
         const body = new Uint8Array(this.#sab, 8, size);
@@ -111,60 +138,19 @@ export class ResponseProxySync {
         Atomics.wait(signal, 0, 0);
         const result = Atomics.load(signal, 0);
         if (result < 0) {
-            throw new FetchSyncError({
-                message: `FetchSync: something went wrong with getting the Reader stream, response id was: ${this.#id}`,
-            });
+            throw new FetchSyncError(
+                `FetchSync: something went wrong with getting the Reader stream, response id was: ${this.#id}`,
+            );
         }
         return this.#bodyIt();
     }
 }
 
-export class _FetchSync extends Tag("FetchSynchronous")<
-    _FetchSync,
-    (...args: Parameters<typeof fetch>) => ResponseProxySync
->() {
-    static make(port: MessagePort): Tag.Service<_FetchSync> {
-        // 4B for size + 4B offset + 3 MB payload
-        const sab = new SharedArrayBuffer(4 + 4 + 3 * 1024 * 1024);
-        let nextId = 1;
-        return function fetchSync(...args: Parameters<typeof fetch>) {
-            const signal = new Int32Array(sab, 0, 1);
-            const status = new Int32Array(sab, 4, 1);
-            signal[0] = 0;
-            let url = args[0];
-            if (typeof url !== "string") {
-                url = url.toString();
-            }
-            const id = nextId++;
-            const message = FetchMessage.request({
-                sab,
-                url,
-                init: args[1],
-                id,
-            });
-            port.postMessage(message);
-            // sleep until signal != 0
-            Atomics.wait(signal, 0, 0);
-            const statusCode = status[0];
-            return new ResponseProxySync(port, sab, id, statusCode);
-        };
-    }
-}
-
 type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync;
 
-export async function FetchSyncWorker(): Promise<FetchSync> {
+export async function FetchSyncWorker(worker: Worker): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {
         const { port1, port2 } = new MessageChannel();
-        const fetchWorker = new Worker(
-            new URL(
-                import.meta.env.DEV ? "./fetch.worker" : "./fetch.worker.mjs",
-                import.meta.url,
-            ),
-            {
-                type: "module",
-            },
-        );
         const onMessage = (e: MessageEvent) => {
             if (
                 e.data === "fetch-sync-ready" ||
@@ -181,7 +167,7 @@ export async function FetchSyncWorker(): Promise<FetchSync> {
         };
         port1.addEventListener("message", onMessage);
         port1.start();
-        fetchWorker.postMessage(
+        worker.postMessage(
             {
                 type: "init",
             },
