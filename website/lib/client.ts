@@ -39,15 +39,15 @@ export function initMedfetchDB(
   // Create a database handle with common operations
   const db: MedfetchDB = {
     exec: async (sqlString: string) => {
-      await sql`${sqlString}`.execute(_db);
+      await sql.raw(sqlString).execute(_db);
     },
     prepare: (sqlString: string) => ({
       all: async () => {
-        const result = await sql`${sqlString}`.execute(_db);
+        const result = await sql.raw(sqlString).execute(_db);
         return result.rows;
       },
       run: async () => {
-        await sql`${sqlString}`.execute(_db);
+        await sql.raw(sqlString).execute(_db);
       },
     }),
   };
