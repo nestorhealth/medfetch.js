@@ -15,12 +15,14 @@ import {
     andThen,
     flatMap,
     liftPredicate,
+    map,
     runPromise,
     tryPromise,
 } from "effect/Effect";
 import { Array as $Array, decodeUnknown, type Schema } from "effect/Schema";
 import { fromAsyncIterable } from "effect/Stream";
 import { DataError } from "~/data.error.js";
+import { AnyBundle } from "~/fhir/Bundle.js";
 
 /**
  * Unwrapped return type of calling the parser returned by {@link kdv}
@@ -192,21 +194,24 @@ export const kdv = <Value = unknown>(
 const parseLink = kdv<Link[]>("link", 1);
 const parseEntry = kdv<Entry[]>("entry", 1);
 
+/**
+ * Somewhat abstract mapping of a grouping or "page" of related FHIR data
+ */
 export class Page {
     #nextURL: string | null;
     #isLinkParsed: boolean;
     #cursor: number;
     #acc: Resource[];
     #chunks: Generator<string>;
-    #rows?: Generator<Resource>;
+    #rows: Generator<Resource> | undefined = undefined;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
-    constructor(bundleChunks: Generator<string>, nextPage?: (nextURL: string) => Generator<string>) {
+    constructor(chunks: Generator<string>, nextPage?: (nextURL: string) => Generator<string>) {
         this.#nextURL = null;
         this.#isLinkParsed = false;
         this.#cursor = -1;
         this.#acc = [];
-        this.#chunks = bundleChunks;
+        this.#chunks = chunks;
         this.#fetcher = nextPage;
     }
 
@@ -283,13 +288,6 @@ export class Page {
     }
 }
 
-const Bundle = Resource("Bundle", {
-    link: Link.pipe($Array),
-    entry: Entry(Resource()).pipe($Array),
-});
-interface Bundle extends Schema.Type<typeof Bundle> {}
-const decodeBundle = decodeUnknown(Bundle);
-
 /**
  * Gets the link from the `Bundle.link`
  * element where `relation = 'next'`
@@ -297,9 +295,9 @@ const decodeBundle = decodeUnknown(Bundle);
  * @returns `Option.some` with the url if `'next' in Bundle.link.relation` exists. `Option.none` otherwise.
  *
  */
-const nextLink = (bundle: Bundle) =>
+const nextLink = (bundle: AnyBundle): Option<string> =>
     pipe(
-        bundle.link.find((link) => link.relation === "next"),
+        bundle.link?.find((link) => link.relation === "next"),
         fromNullable,
         mapOption((link) => link.url),
     );
@@ -315,7 +313,7 @@ const nextLink = (bundle: Bundle) =>
  * @param url - the server url
  * @returns a decoded Bundle
  */
-const get = (url: string) =>
+const getBundle = (url: string) =>
     tryPromise(() => fetch(url)).pipe(
         andThen((response) =>
             liftPredicate(
@@ -326,7 +324,7 @@ const get = (url: string) =>
             ),
         ),
         andThen((response) => tryPromise(() => response.json())),
-        flatMap(decodeBundle),
+        map(AnyBundle.parse),
     );
 
 /**
@@ -342,7 +340,7 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         let count = 0;
 
         const firstPage = await runPromise(
-            get(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
+            getBundle(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
         );
         yield firstPage;
         count += firstPage.entry!.length;
@@ -350,7 +348,7 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         let linkOption = nextLink(firstPage);
         while (isSome(linkOption) && count < upperLimit) {
             const link = getOrThrow(linkOption);
-            const page = await runPromise(get(link));
+            const page = await runPromise(getBundle(link));
             yield page;
 
             count++;

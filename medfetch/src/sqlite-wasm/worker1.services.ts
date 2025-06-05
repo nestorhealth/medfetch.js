@@ -50,21 +50,6 @@ class VtabError extends TaggedError("/sqlite-wasm/vtab")<{
     }
 }
 
-/** The bundle 'shape' aka the stuff we care about from a FHIR bundle
- */
-export type Bundle<TResource extends Resource = Resource> = Resource<
-    "Bundle",
-    {
-        readonly link: {
-            readonly relation: string;
-            readonly url: string;
-        }[];
-        readonly entry: {
-            readonly resource: TResource;
-        }[];
-    }
->;
-
 /**
  * `fp` hidden column accepted types once it is JSON parsed
  */

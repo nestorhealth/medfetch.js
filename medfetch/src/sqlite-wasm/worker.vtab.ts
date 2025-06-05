@@ -9,7 +9,7 @@ import {
     type TokenFetcher,
 } from "~/sqlite-wasm/worker1.services";
 
-type GetPage = (resourceType: string) => Page;
+export type GetPageFn = (resourceType: string) => Page;
 
 /**
  * Allocate the medfetch_module object on the Web Assembly heap
@@ -20,7 +20,7 @@ type GetPage = (resourceType: string) => Page;
  * @returns The struct-like {@link Sqlite3Module}
  */
 export function medfetch_module_alloc(
-    getPage: GetPage,
+    getPage: GetPageFn,
     _sqlite3: Sqlite3Static,
     tokenFetcher?: TokenFetcher,
 ): Sqlite3Module {
@@ -225,7 +225,7 @@ export function x_eof(
 
 export function x_filter(
     _sqlite3: Sqlite3,
-    getPage: GetPage,
+    getPage: GetPageFn,
     tokenFetcher?: TokenFetcher,
 ) {
     let sqlite3 = _sqlite3 as Sqlite3;

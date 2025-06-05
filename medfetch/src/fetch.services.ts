@@ -146,7 +146,7 @@ export class ResponseProxySync {
     }
 }
 
-type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync;
+export type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync;
 
 export async function FetchSyncWorker(worker: Worker): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {

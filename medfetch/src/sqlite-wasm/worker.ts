@@ -1,29 +1,41 @@
 /// <reference lib="webworker" />
+import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/worker.vtab";
 import { worker1 } from "~/sqlite-wasm/worker1";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
-import { medfetch_module_alloc } from "~/sqlite-wasm/worker.vtab";
-import { FetchSyncWorker } from "~/fetch.services";
+import { FetchSync, FetchSyncWorker } from "~/fetch.services";
 import { Counter } from "~/sqlite-wasm/counter";
 import { Page } from "~/data";
-import { Sqlite3Module } from "~/sqlite-wasm/types.patch";
+import type { Sqlite3Module } from "~/sqlite-wasm/types.patch";
+import { AnyBundle } from "~/fhir/Bundle";
+import { Resource } from "~/data.schema";
 
 // For logs
 const tag = "medfetch/sqlite-wasm::worker";
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    const FETCH_WORKER = new Worker(
-        new URL(
-            import.meta.env.DEV ? "../fetch.worker" : "../fetch.worker.mjs",
-            import.meta.url,
-        ),
-        {
+    const fetchWorker =
+        /* KEEP STATIC WORKER IMPORT FOR DEV. COMMENT OUT FOR BUILD */
+        new Worker(new URL("../fetch.worker", import.meta.url), {
             type: "module",
-        },
-    );
+        });
+    /* UNCOMMENT FOR BUILD */
+    // new Worker(
+    //       new URL(
+    //           // Workaround to make vite not bundle the worker as a static asset to make it compatible with other projects
+    //           // using bundlers
+    //           true
+    //               ? "../fetch.worker.mjs"
+    //               : "../fetch.worker.mjs",
+    //           import.meta.url,
+    //       ),
+    //       {
+    //           type: "module",
+    //       },
+    // );
 
     // Singular FetchSync handle for all databases
-    const fetchSync = await FetchSyncWorker(FETCH_WORKER);
+    const fetchSync = await FetchSyncWorker(fetchWorker);
 
     const dbCount = new Counter();
     const modules: Sqlite3Module[] = [];
@@ -38,6 +50,13 @@ sqlite3InitModule().then(async (sqlite3) => {
                     `[${tag}] > Need a base URL to open a medfetch database, but got nothing.`,
                 );
             }
+            if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
+                throw new Error(
+                    `[${tag}] > Can't handle that baseURL ${baseURL}`,
+                );
+            }
+            const getPage = await GetPage(baseURL, fetchSync);
+
             console.log(
                 `[${tag}] > Received init message with baseURL:`,
                 baseURL,
@@ -45,14 +64,6 @@ sqlite3InitModule().then(async (sqlite3) => {
 
             // Map database id to medfetch_module "instance"
             const dbIndex = dbCount.set();
-            const getPage = (resourceType: string) => {
-                const response = fetchSync(url(baseURL, resourceType));
-                const page = new Page(response.stream, (url) => {
-                    const response = fetchSync(url);
-                    return response.stream;
-                });
-                return page;
-            };
             modules[dbIndex] = medfetch_module_alloc(getPage, sqlite3);
         }
 
@@ -136,4 +147,37 @@ function url(baseURL: string, resourceType: string) {
     return baseURL[baseURL.length - 1] === "/"
         ? `${baseURL}${resourceType}`
         : `${baseURL}/${resourceType}`;
+}
+
+/**
+ * @param baseURL The baseURL of the fhir server or a File of a Bundle
+ * @param fetchSync The blocking fetch function
+ * @returns A getPage() function for the virtual table to get its FHIR data from
+ */
+async function GetPage(
+    baseURL: string | File,
+    fetchSync: FetchSync,
+): Promise<GetPageFn> {
+    if (typeof baseURL === "string") {
+        return (resourceType: string) => {
+            const response = fetchSync(url(baseURL, resourceType));
+            const page = new Page(response.stream, (url) => {
+                const response = fetchSync(url);
+                return response.stream;
+            });
+            return page;
+        };
+    } else {
+        // Load and parse the entire bundle
+        const buffer = await baseURL.text();
+
+        // Just pass it off once for now
+        const page = new Page(
+            (function* () {
+                yield* buffer;
+            })(),
+        );
+
+        return (_resourceType: string) => page;
+    }
 }

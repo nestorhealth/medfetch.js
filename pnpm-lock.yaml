@@ -16,10 +16,10 @@ importers:
     dependencies:
       '@hono/zod-openapi':
         specifier: ^0.19.8
-        version: 0.19.8(hono@4.7.11)(zod@3.25.49)
+        version: 0.19.8(hono@4.7.11)(zod@3.25.51)
       '@hono/zod-validator':
         specifier: ^0.7.0
-        version: 0.7.0(hono@4.7.11)(zod@3.25.49)
+        version: 0.7.0(hono@4.7.11)(zod@3.25.51)
       hono:
         specifier: ^4.7.11
         version: 4.7.11
@@ -28,7 +28,7 @@ importers:
         version: 0.28.2
       openai:
         specifier: ^5.0.1
-        version: 5.0.1(ws@8.18.1)(zod@3.25.49)
+        version: 5.0.1(ws@8.18.1)(zod@3.25.51)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250605.0
@@ -66,6 +66,9 @@ importers:
       oauth-pkce:
         specifier: ^0.0.7
         version: 0.0.7
+      zod:
+        specifier: ^3.25.51
+        version: 3.25.51
     devDependencies:
       '@types/clarinet':
         specifier: ^0.12.3
@@ -177,7 +180,7 @@ importers:
         version: 4.2.17(@types/react@19.1.2)(next@15.3.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(nextra@4.2.17(acorn@8.14.1)(next@15.3.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
       openai:
         specifier: ^5.0.1
-        version: 5.0.1(ws@8.18.1)(zod@3.25.49)
+        version: 5.0.1(ws@8.18.1)(zod@3.25.51)
       openapi-fetch:
         specifier: ^0.14.0
         version: 0.14.0
@@ -5609,8 +5612,8 @@ packages:
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
-  zod@3.25.49:
-    resolution: {integrity: sha512-JMMPMy9ZBk3XFEdbM3iL1brx4NUSejd6xr3ELrrGEfGb355gjhiAWtG3K5o+AViV/3ZfkIrCzXsZn6SbLwTR8Q==}
+  zod@3.25.51:
+    resolution: {integrity: sha512-TQSnBldh+XSGL+opiSIq0575wvDPqu09AqWe1F7JhUMKY+M91/aGlK4MhpVNO7MgYfHcVCB1ffwAUTJzllKJqg==}
 
   zustand@5.0.3:
     resolution: {integrity: sha512-14fwWQtU3pH4dE0dOpdMiWjddcH+QzKIgk1cl8epwSE7yag43k/AD/m4L6+K7DytAOr9gGBe3/EXj9g7cdostg==}
@@ -5649,10 +5652,10 @@ snapshots:
 
   '@antfu/utils@8.1.1': {}
 
-  '@asteasolutions/zod-to-openapi@7.3.2(zod@3.25.49)':
+  '@asteasolutions/zod-to-openapi@7.3.2(zod@3.25.51)':
     dependencies:
       openapi3-ts: 4.4.0
-      zod: 3.25.49
+      zod: 3.25.51
 
   '@babel/code-frame@7.26.2':
     dependencies:
@@ -5980,17 +5983,17 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
       use-sync-external-store: 1.5.0(react@19.1.0)
 
-  '@hono/zod-openapi@0.19.8(hono@4.7.11)(zod@3.25.49)':
+  '@hono/zod-openapi@0.19.8(hono@4.7.11)(zod@3.25.51)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 7.3.2(zod@3.25.49)
-      '@hono/zod-validator': 0.7.0(hono@4.7.11)(zod@3.25.49)
+      '@asteasolutions/zod-to-openapi': 7.3.2(zod@3.25.51)
+      '@hono/zod-validator': 0.7.0(hono@4.7.11)(zod@3.25.51)
       hono: 4.7.11
-      zod: 3.25.49
+      zod: 3.25.51
 
-  '@hono/zod-validator@0.7.0(hono@4.7.11)(zod@3.25.49)':
+  '@hono/zod-validator@0.7.0(hono@4.7.11)(zod@3.25.51)':
     dependencies:
       hono: 4.7.11
-      zod: 3.25.49
+      zod: 3.25.51
 
   '@humanfs/core@0.19.1': {}
 
@@ -10064,8 +10067,8 @@ snapshots:
       react-compiler-runtime: 0.0.0-experimental-22c6e49-20241219(react@19.1.0)
       react-dom: 19.1.0(react@19.1.0)
       scroll-into-view-if-needed: 3.1.0
-      zod: 3.25.49
-      zod-validation-error: 3.4.0(zod@3.25.49)
+      zod: 3.25.51
+      zod-validation-error: 3.4.0(zod@3.25.51)
       zustand: 5.0.3(@types/react@19.1.2)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0))
     transitivePeerDependencies:
       - '@types/react'
@@ -10113,8 +10116,8 @@ snapshots:
       unist-util-visit: 5.0.0
       unist-util-visit-children: 3.0.0
       yaml: 2.7.1
-      zod: 3.25.49
-      zod-validation-error: 3.4.0(zod@3.25.49)
+      zod: 3.25.51
+      zod-validation-error: 3.4.0(zod@3.25.51)
     transitivePeerDependencies:
       - acorn
       - supports-color
@@ -10186,10 +10189,10 @@ snapshots:
       regex: 6.0.1
       regex-recursion: 6.0.2
 
-  openai@5.0.1(ws@8.18.1)(zod@3.25.49):
+  openai@5.0.1(ws@8.18.1)(zod@3.25.51):
     optionalDependencies:
       ws: 8.18.1
-      zod: 3.25.49
+      zod: 3.25.51
 
   openapi-fetch@0.14.0:
     dependencies:
@@ -11739,13 +11742,13 @@ snapshots:
       mustache: 4.2.0
       stacktracey: 2.1.8
 
-  zod-validation-error@3.4.0(zod@3.25.49):
+  zod-validation-error@3.4.0(zod@3.25.51):
     dependencies:
-      zod: 3.25.49
+      zod: 3.25.51
 
   zod@3.22.3: {}
 
-  zod@3.25.49: {}
+  zod@3.25.51: {}
 
   zustand@5.0.3(@types/react@19.1.2)(react@19.1.0)(use-sync-external-store@1.5.0(react@19.1.0)):
     optionalDependencies:

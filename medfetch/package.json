@@ -61,6 +61,7 @@
         "kysely": "^0.28.2",
         "kysely-generic-sqlite": "^1.2.1",
         "kysely-wasm": "^1.2.1",
-        "oauth-pkce": "^0.0.7"
+        "oauth-pkce": "^0.0.7",
+        "zod": "^3.25.51"
     }
 }
