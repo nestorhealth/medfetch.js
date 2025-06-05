@@ -1,45 +1,24 @@
 import { Callout, Steps, Tabs } from 'nextra/components'
  
 # sqlite-wasm
-Spin up a sql-on-fhir View Runner on the browser with Medfetch.js and [sqlite-wasm](https://github.com/sqlite/sqlite-wasm)
+Spin up a sql-on-fhir query client on the browser with Medfetch.js and [sqlite-wasm](https://github.com/sqlite/sqlite-wasm)
 
 ## Installation
-[fhirpath](https://hl7.github.io/fhirpath.js/), and [@sqlite.org/sqlite-wasm](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) are peer dependencies.
+[@sqlite.org/sqlite-wasm](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) and [Kysely]() are peer dependencies.
 
 <Tabs items={["pnpm", "npm"]}>
 <Tabs.Tab>
 ```bash copy
-pnpm add medfetch fhirpath @sqlite.org/sqlite-wasm
+pnpm add medfetch @sqlite.org/sqlite-wasm kysely
 ```
 </Tabs.Tab>
 
 <Tabs.Tab>
 ```bash copy
-npm install effect fhirpath @sqlite.org/sqlite-wasm medfetch
+npm install medfetch @sqlite.org/sqlite-wasm kysely
 ```
 </Tabs.Tab>
 </Tabs>
-
-You will need to add [tsup](https://tsup.egoist.dev/) as a dev dependency in order to bundle the worker script:
-<Tabs items={["pnpm", "npm"]}>
-<Tabs.Tab>
-```bash copy
-pnpm add -D tsup
-```
-</Tabs.Tab>
-
-<Tabs.Tab>
-```bash copy
-npm install --save-dev tsup
-```
-</Tabs.Tab>
-</Tabs>
-
-Then compile/transpile the virtual table extension into your `/public` folder as `/public/sqlite-ext/medfetch.mjs`.
-
-```bash
-npx medfetch bundle
-```
 
 ## Usage
 If using as a new database:
@@ -48,49 +27,42 @@ If using as a new database:
 // sof.ts
 import { medfetch } from "medfetch/sqlite-wasm";
 
-// Can name this whatever of course
-export const sql = medfetch("https://your-fhir-server.here");
-
-// Or if you want to open a file in the OPFS VFS with medfetch attached to the database
-const sql2 = medfetch("...", {
-  filename: "my-db"
-});
+export const db = medfetch("https://your-fhir-server.here");
 ```
-
-Currently, if you want to mutate a SQLite database before
-attaching Medfetch onto it, you must use the [`worker1`]()
-from the package (this is to load the Virtual Table).
+The `db` object returned is a [Kysely](https://kysely.dev/) instance connected to the sqlite-wasm database,
+so you can query like so:
 
 ```ts
-import { medfetch, worker1 } from "medfetch/sqlite-wasm";
+import { db } from "./sof"
+import { sql } from "kysely";
 
-// Create a worker1 thread, or get an existing one
-const w1 = worker1();
-const { dbId } = await w1("open", {
-    vfs: "opfs",
-    filename: "my-db"
-});
+// Same query
+const patients = await db
+  .selectFrom("medfetch")
+  .where("type", "=", "Patient")
+  .selectAll("medfetch")
+  .execute();
 
-// Can name this whatever of course
-export const sql = medfetch("https://your-fhir-server.here", { dbId });
+const patients2 = await sql`select from medfetch('Patient')`.execute(db).then(result => result.rows);
 ```
 
-`sql` here is a lazily executed template strings function. It's
-an [Effect](https://effect.website/docs/getting-started/the-effect-type/) from [effect](https://effect.website) wrapped with a `then` method to make it awaitable.
-So queries can be executed independently of effect simply by awaiting it.
+The `medfetch` table is an [SQLite Virtual Table](https://sqlite.org/wasm/doc/trunk/vtab.md), where calling it as a function is syntactic sugar
+over a `WHERE` clause on its `type` column (see the [SQLite interface docs](../sql/sqlite.mdx) for detailed explanation.).
 
+You can compose specific data fetching routines with it:
 ```ts
-// This is an effect with a .then attached to be awaitable
-const getPatients = async () => await sql<{
+const getPatients = () => sql<{
   id: string;
   name: HumanName[];
 }>`create table patients as 
    select json ->> 'id' as id,
    select json -> 'name' as name
-   from medfetch('Patient');`;
+   from medfetch('Patient');`
+   .execute(db)
+   .then(res => res.rows);
 ```
 
-So when a user does some action, say from React code, you can wrap the query like you would with any stateful async query.
+So when a user does some action, say clicking a button, you can wrap the query like you would with any stateful async query.
 
 ```ts
 import { getPatients } from "./queries.js";
