@@ -9,7 +9,7 @@ import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 
 // Logs
 const tag = "medfetch/sqlite-wasm/worker.browser";
-const taggedMessage = (msg: string) => `[${tag}] > ${msg}`
+const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
@@ -36,7 +36,9 @@ sqlite3InitModule().then(async (sqlite3) => {
             const baseURL = msg.data.aux?.baseURL;
             if (!baseURL) {
                 throw new Error(
-                    taggedMessage(`Need a base URL to open a medfetch database, but got nothing.`),
+                    taggedMessage(
+                        `Need a base URL to open a medfetch database, but got nothing.`,
+                    ),
                 );
             }
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
@@ -47,7 +49,7 @@ sqlite3InitModule().then(async (sqlite3) => {
             const getPage = await createGetPageFn(baseURL, fetchSync);
 
             console.log(
-                taggedMessage(`Received init message with baseURL: ${baseURL}`)
+                taggedMessage(`Received init message with baseURL: ${baseURL}`),
             );
 
             // Map database index to medfetch_module "instance"
@@ -68,9 +70,7 @@ sqlite3InitModule().then(async (sqlite3) => {
 
             if (!moduleSet.has(pDb)) {
                 if (!extension) {
-                    throw new Error(
-                        `[${tag}] > `
-                    )
+                    throw new Error(`[${tag}] > `);
                 }
                 sqlite3.capi.sqlite3_create_module(
                     pDb,
@@ -145,7 +145,8 @@ async function createGetPageFn(
     baseURL: string | File,
     fetchSync: FetchSync,
 ): Promise<GetPageFn> {
-    if (typeof baseURL === "string") { // REST API
+    if (typeof baseURL === "string") {
+        // REST API
         return (resourceType: string) => {
             const response = fetchSync(url(baseURL, resourceType));
             const page = new Page(response.stream, (url) => {
@@ -154,7 +155,8 @@ async function createGetPageFn(
             });
             return page;
         };
-    } else { // File
+    } else {
+        // File
         const buffer = await baseURL.text();
 
         // Just provide the entire buffer for a File

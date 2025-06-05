@@ -8,7 +8,7 @@ import type {
     sqlite3_index_constraint,
     sqlite3_vtab_cursor,
     sqlite3_vtab,
-    ExecOptions
+    ExecOptions,
 } from "@sqlite.org/sqlite-wasm";
 
 type CStructify<T> = {
@@ -229,7 +229,6 @@ type TPromiser<
 
 export type Worker1Promiser = TPromiser<Worker1Request, Worker1Response>;
 
-
 /**
  * This is the name of the CTOR that brings in Sqlite3's
  * worker1 promiser function into main thread.
@@ -237,7 +236,7 @@ export type Worker1Promiser = TPromiser<Worker1Request, Worker1Response>;
  * This is, just to get that type, the Worker1 function type is [Worker1PromiserFunc]()
  */
 export type Sqlite3CreateWorker1Promiser = {
-  v2: (opts: { worker: Worker }) => Promise<Worker1Promiser>;
+    v2: (opts: { worker: Worker }) => Promise<Worker1Promiser>;
 };
 
 export interface Sqlite3Module extends PointerLikeMethods<sqlite3_module> {

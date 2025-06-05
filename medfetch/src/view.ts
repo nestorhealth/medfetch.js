@@ -1,6 +1,24 @@
 import { appendAll, filterMap } from "effect/Array";
 import { when, value, orElse, defined } from "effect/Match";
-import { Array as $Array, Boolean, Schema, Struct, String, Number, Union, is, decodeOption, suspend, optionalWith, TaggedStruct, typeSchema, transform, decodeSync, Literal, NonEmptyArray } from "effect/Schema";
+import {
+    Array as $Array,
+    Boolean,
+    Schema,
+    Struct,
+    String,
+    Number,
+    Union,
+    is,
+    decodeOption,
+    suspend,
+    optionalWith,
+    TaggedStruct,
+    typeSchema,
+    transform,
+    decodeSync,
+    Literal,
+    NonEmptyArray,
+} from "effect/Schema";
 import type { TaggedEnum } from "effect/Data";
 import { tagged, taggedEnum, case as createCase } from "effect/Data";
 
@@ -69,7 +87,6 @@ export interface ColumnPath<TName extends string = string>
 }
 export const ColumnPath = createCase<ColumnPath>();
 
-
 /**
  * "Typesafe" `ColumnPath` constructor function that binds
  * `ColumnPath.name` and `ColumnPath.type` to the string literals
@@ -94,20 +111,14 @@ const SelectJSON = Struct({
     column: ow($Array(_ColumnPath), {
         exact: true,
     }),
-    select: ow(
-        $Array(
-            suspend((): Schema<BaseSelect> => SelectJSON),
-        ),
-        { exact: true },
-    ),
+    select: ow($Array(suspend((): Schema<BaseSelect> => SelectJSON)), {
+        exact: true,
+    }),
     forEach: ow(String, { exact: true }),
     forEachOrNull: ow(String, { exact: true }),
-    unionAll: ow(
-        $Array(
-            suspend((): Schema<BaseSelect> => SelectJSON),
-        ),
-        { exact: true },
-    ),
+    unionAll: ow($Array(suspend((): Schema<BaseSelect> => SelectJSON)), {
+        exact: true,
+    }),
 });
 type SelectJSON = typeof SelectJSON.Type;
 
@@ -403,11 +414,15 @@ export function getColumns(
 ) {
     const aux = (acc: ColumnPath[], node: Node): ColumnPath[] => {
         return $match(node, {
-            ForEach: ({ select }) => select.flatMap((selectNode) => aux(acc, selectNode)),
-            ForEachOrNull: ({ select }) => select.flatMap((selectNode) => aux(acc, selectNode)),
-            Select: ({ select }) => select.flatMap((selectNode) => aux(acc, selectNode)),
-            UnionAll: ({ unionAll }) => unionAll.flatMap((selectNode) => aux(acc, selectNode)),
-            Column: ({ column }) => appendAll(acc, column)
+            ForEach: ({ select }) =>
+                select.flatMap((selectNode) => aux(acc, selectNode)),
+            ForEachOrNull: ({ select }) =>
+                select.flatMap((selectNode) => aux(acc, selectNode)),
+            Select: ({ select }) =>
+                select.flatMap((selectNode) => aux(acc, selectNode)),
+            UnionAll: ({ unionAll }) =>
+                unionAll.flatMap((selectNode) => aux(acc, selectNode)),
+            Column: ({ column }) => appendAll(acc, column),
         });
     };
 

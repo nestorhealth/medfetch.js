@@ -29,15 +29,11 @@ export type FetchMessage =
     | ReadChunkMessage;
 
 export const FetchMessage = {
-    request: (
-        args: Omit<RequestMessage, "_tag">
-    ): RequestMessage => ({
+    request: (args: Omit<RequestMessage, "_tag">): RequestMessage => ({
         ...args,
         _tag: "request",
     }),
-    readJson: (
-        args: Omit<ReadJsonMessage, "_tag">,
-    ): ReadJsonMessage => ({
+    readJson: (args: Omit<ReadJsonMessage, "_tag">): ReadJsonMessage => ({
         ...args,
         _tag: "readJson",
     }),
@@ -47,9 +43,7 @@ export const FetchMessage = {
         ...args,
         _tag: "startStream",
     }),
-    readChunk: (
-        args: Omit<ReadChunkMessage, "_tag">,
-    ): ReadChunkMessage => ({
+    readChunk: (args: Omit<ReadChunkMessage, "_tag">): ReadChunkMessage => ({
         ...args,
         _tag: "readChunk",
     }),
@@ -146,7 +140,9 @@ export class ResponseProxySync {
     }
 }
 
-export type FetchSync = (...args: Parameters<typeof fetch>) => ResponseProxySync;
+export type FetchSync = (
+    ...args: Parameters<typeof fetch>
+) => ResponseProxySync;
 
 export async function FetchSyncWorker(worker: Worker): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {

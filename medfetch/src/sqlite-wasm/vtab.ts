@@ -150,7 +150,9 @@ export function x_next(_sqlite3: Sqlite3Static) {
         let [pCursor] = args;
         let cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
         let next = cursor.page.rows.next();
-        log(`[xNext()] > Before: ${JSON.stringify(cursor.peeked.value, null, 2)?.slice(0, 50)}\nAfter: ${JSON.stringify(next.value, null, 2)?.slice(0, 50)}`)
+        log(
+            `[xNext()] > Before: ${JSON.stringify(cursor.peeked.value, null, 2)?.slice(0, 50)}\nAfter: ${JSON.stringify(next.value, null, 2)?.slice(0, 50)}`,
+        );
         cursor.peeked = next;
         return sqlite3.capi.SQLITE_OK;
     };

@@ -1,7 +1,13 @@
 import { KeyCounter } from "~/sqlite-wasm/_counter";
 import { Worker1Error } from "~/sqlite-wasm/_worker1.services";
 // Get the Sqlite3CreateWorker1Promiser in scope
-import { Sqlite3CreateWorker1Promiser, Worker1MessageType, Worker1Promiser, Worker1Response, Worker1ResponseError } from "~/sqlite-wasm/_types.patch";
+import {
+    Sqlite3CreateWorker1Promiser,
+    Worker1MessageType,
+    Worker1Promiser,
+    Worker1Response,
+    Worker1ResponseError,
+} from "~/sqlite-wasm/_types.patch";
 import "@sqlite.org/sqlite-wasm";
 
 /**
@@ -23,12 +29,12 @@ export function promiserSyncV2(worker: Worker) {
 }
 
 export function check<T extends Worker1MessageType>(
-  response: Worker1Response<T> | Worker1ResponseError<T>
+    response: Worker1Response<T> | Worker1ResponseError<T>,
 ): Worker1Response<T> {
-  if (response.type === "error") {
-    throw new Worker1Error("main", "Unexpected response");
-  }
-  return response as any;
+    if (response.type === "error") {
+        throw new Worker1Error("main", "Unexpected response");
+    }
+    return response as any;
 }
 
 interface ArgsData {
@@ -55,18 +61,13 @@ function checkArgs([arg0, arg1]: [any, any]): ArgsData {
             messageType: arg0.type,
         } as any;
     }
-    throw new Worker1Error(
-        "main",
-        `invalid arguments [${arg0}, ${arg1}]`,
-    );
+    throw new Worker1Error("main", `invalid arguments [${arg0}, ${arg1}]`);
 }
 
-function unwrap(
-    f: Promise<Worker1Promiser>,
-): Worker1Promiser {
+function unwrap(f: Promise<Worker1Promiser>): Worker1Promiser {
     const messageCount = new KeyCounter<Worker1MessageType>();
     const transferMap = new Map<string, StructuredSerializeOptions>();
-    
+
     return async function worker1Promiser(arg0: any, arg1?: any): Promise<any> {
         const { messageType, params, transfers } = checkArgs([arg0, arg1]);
         // START at 1
@@ -75,7 +76,7 @@ function unwrap(
         const messageId = `${messageType}#${currentCount}`;
 
         if (transfers) {
-            transferMap.set(messageId, transfers)
+            transferMap.set(messageId, transfers);
         }
         return f.then((f) => f(...params));
     };

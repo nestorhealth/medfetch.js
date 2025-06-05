@@ -3,7 +3,7 @@ export class Counter {
     constructor() {
         this.#count = 0;
     }
-    
+
     /**
      * Increment / set the counter
      * @param number What value to set count to. Defaults to incrementing
@@ -14,7 +14,7 @@ export class Counter {
         this.#count = number ?? oldCount + 1;
         return oldCount;
     }
-    
+
     get count() {
         return this.#count;
     }
@@ -45,7 +45,7 @@ export class KeyCounter<Key extends string> extends Map<Key, number> {
         const count = super.get(key) ?? 0;
         return super.set(key, count + 1);
     }
-    
+
     /**
      * Override to get back a defined value no matter what.
      * Default to 0.

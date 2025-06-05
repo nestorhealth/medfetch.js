@@ -7,10 +7,7 @@ import {
     parseJson,
     decodeSync,
 } from "effect/Schema";
-import type {
-    sqlite3_vtab_cursor,
-    SqlValue,
-} from "@sqlite.org/sqlite-wasm";
+import type { sqlite3_vtab_cursor, SqlValue } from "@sqlite.org/sqlite-wasm";
 import { Column, ColumnPath, ViewDefinition } from "~/view";
 import { taggedEnum, TaggedEnum } from "effect/Data";
 import { Page } from "~/data";
@@ -82,7 +79,10 @@ function getColumnName(path: string | [string, any]) {
 export function generateViewDefinition(args: SqlValue[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
-        throw new Worker1Error("worker", `unexpected invalid "type" column value (args[0])`);
+        throw new Worker1Error(
+            "worker",
+            `unexpected invalid "type" column value (args[0])`,
+        );
 
     if (!fp || typeof fp !== "string") {
         // no fhirpath map, then just return null and default to the whole object
@@ -234,8 +234,11 @@ function createTokenChannel(
 export class Worker1Error extends Error {
     readonly _tag = "Worker1Error";
     readonly thread: "main" | "worker";
-    
-    constructor(thread: "main" | "worker", ...args: ConstructorParameters<typeof Error>) {
+
+    constructor(
+        thread: "main" | "worker",
+        ...args: ConstructorParameters<typeof Error>
+    ) {
         super(...args);
         this.thread = thread;
     }

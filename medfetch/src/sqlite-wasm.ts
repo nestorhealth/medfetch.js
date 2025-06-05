@@ -1,5 +1,12 @@
 import { promiserSyncV2 } from "~/sqlite-wasm/_worker1.main.js";
-import { DummyDriver, Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler, type QueryResult } from "kysely";
+import {
+    DummyDriver,
+    Kysely,
+    SqliteAdapter,
+    SqliteIntrospector,
+    SqliteQueryCompiler,
+    type QueryResult,
+} from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -155,8 +162,8 @@ const empty = new Kysely<any>({
         createAdapter: () => new SqliteAdapter(),
         createDriver: () => new DummyDriver(),
         createIntrospector: (db) => new SqliteIntrospector(db),
-        createQueryCompiler: () => new SqliteQueryCompiler()
-    }
+        createQueryCompiler: () => new SqliteQueryCompiler(),
+    },
 });
 
 /**
@@ -170,7 +177,9 @@ export function medfetch<DB = any>(
     opts: MedfetchSqlite3WasmOptions = {},
 ): Kysely<DB> {
     if (!isBrowser()) {
-        console.warn(`Called medfetch/sqlite-wasm::medfetch() on the server, returning empty kysely instance.`)
+        console.warn(
+            `Called medfetch/sqlite-wasm::medfetch() on the server, returning empty kysely instance.`,
+        );
         return empty;
     }
 

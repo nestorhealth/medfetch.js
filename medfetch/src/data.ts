@@ -196,7 +196,10 @@ export class Page {
     #rows: Generator<Resource> | undefined = undefined;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
-    constructor(chunks: Generator<string>, nextPage?: (nextURL: string) => Generator<string>) {
+    constructor(
+        chunks: Generator<string>,
+        nextPage?: (nextURL: string) => Generator<string>,
+    ) {
         this.#nextURL = null;
         this.#isLinkParsed = false;
         this.#cursor = -1;
@@ -248,7 +251,7 @@ export class Page {
         }
         while (this.#acc.length > 0) yield this.#acc.shift()!;
     }
-    
+
     /**
      * Get back a generator wrapper over the Bundle text chunk generator provided
      * that flushes out resources one by one.
@@ -260,7 +263,7 @@ export class Page {
         }
         return this.#rows;
     }
-    
+
     /**
      * Stateful next bundle url getter that only returns non-null if
      * 1. The {@link Link} property was able to be parsed at depth 1 and
@@ -310,7 +313,7 @@ const getBundle = async (url: string) => {
     }
     const payload = await response.json();
     return AnyBundle.parse(payload);
-}
+};
 /**
  * Create an async iterator over
  * a Bundle and its links
@@ -323,7 +326,9 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         const upperLimit = n < 0 ? Infinity : n;
         let count = 0;
 
-        const firstPage = await getBundle(`${baseUrl}/${resourceType}?_count=${maxPageSize}`);
+        const firstPage = await getBundle(
+            `${baseUrl}/${resourceType}?_count=${maxPageSize}`,
+        );
         yield firstPage;
         count += firstPage.entry!.length;
 

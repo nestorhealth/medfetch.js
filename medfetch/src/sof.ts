@@ -96,14 +96,19 @@ export function project(nd: Node, data: any[]): any[] {
         ForEach: ({ forEach, select }) =>
             data.flatMap((resource) => {
                 const items = evaluateSync(resource, forEach);
-                return items.flatMap((item) => project(Select({ select }), [item]));
+                return items.flatMap((item) =>
+                    project(Select({ select }), [item]),
+                );
             }),
 
         ForEachOrNull: ({ forEachOrNull, select }) =>
             data.flatMap((resource) => {
                 const items = evaluateSync(resource, forEachOrNull);
-                if (items.length === 0) return project(Select({ select }), [{}]);
-                return items.flatMap((item) => project(Select({ select }), [item]));
+                if (items.length === 0)
+                    return project(Select({ select }), [{}]);
+                return items.flatMap((item) =>
+                    project(Select({ select }), [item]),
+                );
             }),
 
         Select: ({ select }) =>
@@ -150,12 +155,15 @@ export function project(nd: Node, data: any[]): any[] {
  * @returns the 'rowified' json resources
  */
 export function flat(data: any[], viewDefinition: ViewDefinition): any[] {
-    let matching = data.filter(data => data.resourceType === viewDefinition.resource);
-    if (matching.length === 0)
-        return matching;
+    let matching = data.filter(
+        (data) => data.resourceType === viewDefinition.resource,
+    );
+    if (matching.length === 0) return matching;
 
     for (const { path } of viewDefinition.where ?? [])
-        matching = matching.filter(data => evaluateSync(data, `where(${path})`).length > 0);
+        matching = matching.filter(
+            (data) => evaluateSync(data, `where(${path})`).length > 0,
+        );
 
     return project(viewDefinition, matching);
 }
