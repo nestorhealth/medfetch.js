@@ -12,19 +12,18 @@ const tag = "medfetch/sqlite-wasm::worker";
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    const fetchWorker = new Worker(
+    const FETCH_WORKER = new Worker(
         new URL(
-            import.meta.env.DEV ?
-            "../fetch.worker"
-            : "../fetch.worker.mjs",
-            import.meta.url
+            import.meta.env.DEV ? "../fetch.worker" : "../fetch.worker.mjs",
+            import.meta.url,
         ),
         {
-            type: "module"
-        }
+            type: "module",
+        },
     );
+
     // Singular FetchSync handle for all databases
-    const fetchSync = await FetchSyncWorker(fetchWorker);
+    const fetchSync = await FetchSyncWorker(FETCH_WORKER);
 
     const dbCount = new Counter();
     const modules: Sqlite3Module[] = [];
@@ -97,7 +96,6 @@ sqlite3InitModule().then(async (sqlite3) => {
 function index(internalDbId: string): number {
     return parseInt(internalDbId.split("#")[1][0]) - 1;
 }
-
 
 /**
  * Hack to get the pointer from the dbId, despite the docs saying it's
