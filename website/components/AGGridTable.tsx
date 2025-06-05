@@ -111,8 +111,8 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
   useEffect(() => {
     if (gridApi) {
       console.log('Refreshing grid with new data:', rowData);
-      gridApi.applyTransaction({ update: rowData });
-      gridApi.refreshCells({ force: true });
+      // Use setGridOption to update row data
+      gridApi.setGridOption('rowData', rowData);
     }
   }, [rowData, gridApi]);
 

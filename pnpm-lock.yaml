@@ -23,16 +23,22 @@ importers:
       hono:
         specifier: ^4.7.11
         version: 4.7.11
+      kysely:
+        specifier: ^0.28.2
+        version: 0.28.2
       openai:
         specifier: ^5.0.1
         version: 5.0.1(ws@8.18.1)(zod@3.25.49)
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20250605.0
+        version: 4.20250605.0
       openapi-typescript:
         specifier: ^7.8.0
         version: 7.8.0(typescript@5.8.3)
       wrangler:
         specifier: ^4.4.0
-        version: 4.18.0
+        version: 4.18.0(@cloudflare/workers-types@4.20250605.0)
 
   medfetch:
     dependencies:
@@ -133,6 +139,9 @@ importers:
       ag-grid-community:
         specifier: ^33.3.1
         version: 33.3.1
+      ag-grid-enterprise:
+        specifier: ^33.3.2
+        version: 33.3.2
       ag-grid-react:
         specifier: ^33.3.1
         version: 33.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -346,6 +355,9 @@ packages:
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
+
+  '@cloudflare/workers-types@4.20250605.0':
+    resolution: {integrity: sha512-e3/ZCXcpmk3jUNfq/2gyVYqeOqUhuQ0hsSdohSGscCgTkUI37QraVeCAOQtciKPDFXKOkaGGkmxg+RLYunbKuw==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2245,11 +2257,32 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  ag-charts-community@11.3.2:
+    resolution: {integrity: sha512-4ZshRqfeCoQKgJ8WNxLfgkKtLszIxEF9WWOSuT2Uvyyy3x0rUUPQbl98+kVh+sRyGGQ6Qj8uoStqHAhwPwgTOQ==}
+
+  ag-charts-core@11.3.2:
+    resolution: {integrity: sha512-D66lTBVXRDI6vFTcmL91KeBghOx63MmWrgDSJEEhsrK1ioWeYnFcRXStX0msx60D12i+Ba+uhM9xrxgRmqzM5w==}
+
+  ag-charts-enterprise@11.3.2:
+    resolution: {integrity: sha512-5HRfEI2w0IxfyWy6bpu9Db2UVPxPyxYihSHJdlJLmmCCgPNoyUqnghZqr7vnRSrh/mVSeSo2WBzxZuuphr+Wtg==}
+
+  ag-charts-locale@11.3.2:
+    resolution: {integrity: sha512-6DrHD53PfdVNqFAlmNkHTnlQ9QY9EzME0vvaiotUpO8boKflGivgqmfx/uNTp6AsvOrsnRBBZW4b4XSg0LKG2w==}
+
   ag-charts-types@11.3.1:
     resolution: {integrity: sha512-kUSSypwsmkQDT5Oqgcr3zYQShzQuhvYeHaT1l2ocUrz3hBzkIiYwzp9CVG3Vs//M9TUCJLTcR0CBIr9ADhPITw==}
 
+  ag-charts-types@11.3.2:
+    resolution: {integrity: sha512-trPGqgGYiTeLgtf9nLuztDYOPOFOLbqHn1g2D99phf7QowcwdX0TPx0wfWG8Hm90LjB8IH+G2s3AZe2vrdAtMQ==}
+
   ag-grid-community@33.3.1:
     resolution: {integrity: sha512-c3JXKY5K5V5KVZ6rhFc13hK/8UzaZNwTqL70YKkqUbqwOcogDVVeG4I25W6o5YOlFO6LFN/5xFnFPASWn4LwBw==}
+
+  ag-grid-community@33.3.2:
+    resolution: {integrity: sha512-9bx0e/+ykOyLvUxHqmdy0cRVANH6JAtv0yZdnBZEXYYqBAwN+G5a4NY+2I1KvoOCYzbk8SnStG7y4hCdVAAWOQ==}
+
+  ag-grid-enterprise@33.3.2:
+    resolution: {integrity: sha512-wf1JMDdAk9GhWbB0WF5RIOYp4p/y6h7zJoscFsymEeFV7325Zyx0ZBQ/kQQ9R9MqnhIYp5xjpjYJ4r2rpIXH+A==}
 
   ag-grid-react@33.3.1:
     resolution: {integrity: sha512-CHuuHxzuz2rsKuyxjuGnBadwm0/I2DCG4j1WgIa2wJkdlTUrcKjF6RD9qwfRLYKA4P40shG640emVuU6/qiZLA==}
@@ -5690,6 +5723,8 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20250525.0':
     optional: true
 
+  '@cloudflare/workers-types@4.20250605.0': {}
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -7404,11 +7439,45 @@ snapshots:
 
   acorn@8.14.1: {}
 
+  ag-charts-community@11.3.2:
+    dependencies:
+      ag-charts-core: 11.3.2
+      ag-charts-locale: 11.3.2
+      ag-charts-types: 11.3.2
+    optional: true
+
+  ag-charts-core@11.3.2:
+    dependencies:
+      ag-charts-types: 11.3.2
+    optional: true
+
+  ag-charts-enterprise@11.3.2:
+    dependencies:
+      ag-charts-community: 11.3.2
+      ag-charts-core: 11.3.2
+    optional: true
+
+  ag-charts-locale@11.3.2:
+    optional: true
+
   ag-charts-types@11.3.1: {}
+
+  ag-charts-types@11.3.2: {}
 
   ag-grid-community@33.3.1:
     dependencies:
       ag-charts-types: 11.3.1
+
+  ag-grid-community@33.3.2:
+    dependencies:
+      ag-charts-types: 11.3.2
+
+  ag-grid-enterprise@33.3.2:
+    dependencies:
+      ag-grid-community: 33.3.2
+    optionalDependencies:
+      ag-charts-community: 11.3.2
+      ag-charts-enterprise: 11.3.2
 
   ag-grid-react@33.3.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -11600,7 +11669,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20250525.0
       '@cloudflare/workerd-windows-64': 1.20250525.0
 
-  wrangler@4.18.0:
+  wrangler@4.18.0(@cloudflare/workers-types@4.20250605.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
       '@cloudflare/unenv-preset': 2.3.2(unenv@2.0.0-rc.17)(workerd@1.20250525.0)
@@ -11611,6 +11680,7 @@ snapshots:
       unenv: 2.0.0-rc.17
       workerd: 1.20250525.0
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20250605.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil
