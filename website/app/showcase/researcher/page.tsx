@@ -102,6 +102,15 @@ export default function ResearcherDemo() {
       const statements = sql.split(';').filter(stmt => stmt.trim());
       const isSelect = statements[0].trim().toLowerCase().startsWith('select');
       
+      // Extract sort information from the first SELECT statement if it exists
+      let sortClause = '';
+      if (isSelect) {
+        const orderByMatch = statements[0].match(/ORDER\s+BY\s+([^;]+)/i);
+        if (orderByMatch) {
+          sortClause = ` ORDER BY ${orderByMatch[1]}`;
+        }
+      }
+      
       // Start transaction for all queries to ensure atomicity
       await dbRef.current.db.exec('BEGIN TRANSACTION;');
 
@@ -133,8 +142,10 @@ export default function ResearcherDemo() {
           setCurrentResource(affectedTable);
         }
 
-        // Get the latest data for the current resource
-        const rows = await dbRef.current.db.prepare(`SELECT * FROM ${currentResource};`).all();
+        // Get the latest data for the current resource, preserving sort order if it was specified
+        const query = `SELECT * FROM ${currentResource}${sortClause};`;
+        console.log('Refreshing data with query:', query);
+        const rows = await dbRef.current.db.prepare(query).all();
         console.log('Current table state after all operations:', rows);
 
         // Commit the transaction
