@@ -2,7 +2,7 @@
 import {
     GetPageFn,
     medfetch_module_alloc,
-} from "~/sqlite-wasm/sqlite-wasm.vtab";
+} from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { FetchSync, FetchSyncWorker } from "~/fetch.services";

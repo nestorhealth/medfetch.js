@@ -46,10 +46,9 @@ export default defineConfig({
         },
         lib: {
             entry: {
-                index: "src/index.ts",
-                "fetch.worker": "src/fetch.worker.ts",
-                "sqlite-wasm/index": "src/sqlite-wasm/index.ts",
-                "sqlite-wasm/worker": "src/sqlite-wasm/worker.ts"
+                "sqlite-wasm": "src/sqlite-wasm.ts",
+                "sqlite-wasm/sqlite-wasm.worker": "src/sqlite-wasm/sqlite-wasm.worker.ts",
+                "fetch.worker": "src/fetch.worker.ts"
             },
             name: "medfetch",
             formats: ["es"],

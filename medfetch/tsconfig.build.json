@@ -30,8 +30,7 @@
         }
     },
     "include": [
-        "src/index.ts",
-        "src/sqlite-wasm/index.ts"
+        "src/sqlite-wasm.ts"
     ],
     "exclude": [
         "/**/*.test.ts",

@@ -11,15 +11,10 @@
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
     },
     "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs",
-            "default": "./dist/index.mjs"
-        },
         "./sqlite-wasm": {
-            "types": "./dist/sqlite-wasm/index.d.ts",
-            "import": "./dist/sqlite-wasm/index.mjs",
-            "default": "./dist/sqlite-wasm/index.mjs"
+            "types": "./dist/sqlite-wasm.d.ts",
+            "import": "./dist/sqlite-wasm.mjs",
+            "default": "./dist/sqlite-wasm.mjs"
         }
     },
     "bin": {
