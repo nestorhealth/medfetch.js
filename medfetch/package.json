@@ -1,6 +1,6 @@
 {
     "name": "medfetch",
-    "version": "0.0.19",
+    "version": "0.1.0",
     "type": "module",
     "description": "sql on fhir database runner implementation",
     "scripts": {
@@ -13,8 +13,8 @@
     "exports": {
         "./sqlite-wasm": {
             "types": "./dist/sqlite-wasm.d.ts",
-            "import": "./dist/sqlite-wasm.mjs",
-            "default": "./dist/sqlite-wasm.mjs"
+            "import": "./dist/sqlite-wasm.js",
+            "default": "./dist/sqlite-wasm.js"
         }
     },
     "bin": {

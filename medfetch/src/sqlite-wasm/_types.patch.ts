@@ -8,7 +8,7 @@ import type {
     sqlite3_index_constraint,
     sqlite3_vtab_cursor,
     sqlite3_vtab,
-    ExecOptions,
+    ExecOptions
 } from "@sqlite.org/sqlite-wasm";
 
 type CStructify<T> = {
@@ -42,6 +42,7 @@ type Sqlite3Vtab = Omit<Sqlite3Static["vtab"], "xVtab" | "xIndexInfo"> & {
     xCursor: FixedStructPtrMapper<sqlite3_vtab_cursor>;
     xIndexInfo: (ptr: WasmPointer) => Sqlite3IndexInfo;
 };
+
 /**
  * Enum string types -- the discriminator
  *

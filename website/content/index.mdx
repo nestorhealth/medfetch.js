@@ -17,20 +17,8 @@ import { GoogleCallback } from "@/lib/google.oauth2";
 Welcome to the medfetch.js docs!
 
 ## What is Medfetch.js?
-Medfetch.js is a Javascript implementation of a FHIR to SQL pipeline inspired by the [SQL-on-FHIR](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/index.html) v2 specs. 
-At a high level, Medfetch.js *fetches* FHIR JSON, *flattens* them, then *inserts* them into an SQL database.
-
-```mermaid
-flowchart LR
-    A[FHIR JSON] --> B[sql-on-fhir runner] --> C[Database]
-```
-
-The following table gives a summary on the databases and runtime Medfetch is currently supported on.
-
-| Runtime           | Javascript| SQLite | Postgres |
-|-------------------|-----------|--------|----------|
-| Browser           | ✅        | ✅     | ❌       |
-| Node.js / Native  | ✅        | ❌     | ❌       |
+Medfetch.js is an opinionated javascript [FHIR](https://hl7.org/fhir/) data fetcher built on top of
+modern [Web APIs](https://developer.mozilla.org/en-US/docs/Web/API).
 
 ## In Database vs In Memory runners
 Arguably speaking, Medfetch.js is *not* a faithful implementation of the specs, depending on

@@ -1,5 +1,5 @@
 import { promiserSyncV2 } from "~/sqlite-wasm/_worker1.main.js";
-import { Kysely, type QueryResult } from "kysely";
+import { DummyDriver, Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler, type QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -12,6 +12,7 @@ import type {
     Worker1Promiser,
 } from "~/sqlite-wasm/_types.patch";
 import { check } from "~/sqlite-wasm/_worker1.main";
+import { isBrowser } from "~/env";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
@@ -133,9 +134,9 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
         return promiserSyncV2(
             new Worker(
                 new URL(
-                    import.meta.env.DEV
-                        ? "./sqlite-wasm/sqlite-wasm.worker.ts"
-                        : "./sqlite-wasm/sqlite-wasm.worker.mjs",
+                    import.meta.env?.DEV
+                        ? "./sqlite-wasm/web-worker.js"
+                        : "./sqlite-wasm/web-worker.js",
                     import.meta.url,
                 ),
                 {
@@ -147,6 +148,18 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
 }
 
 /**
+ * "Empty" kysely orm instance
+ */
+const empty = new Kysely<any>({
+    dialect: {
+        createAdapter: () => new SqliteAdapter(),
+        createDriver: () => new DummyDriver(),
+        createIntrospector: (db) => new SqliteIntrospector(db),
+        createQueryCompiler: () => new SqliteQueryCompiler()
+    }
+});
+
+/**
  * Get back a Kysely database interface over the medfetch sql-on-fhir database
  * @param baseURL The data source, either a string to indicate REST or a Bundle {@link File}
  * @param opts
@@ -156,6 +169,11 @@ export function medfetch<DB = any>(
     baseURL: string | File,
     opts: MedfetchSqlite3WasmOptions = {},
 ): Kysely<DB> {
+    if (!isBrowser()) {
+        console.warn(`Called medfetch/sqlite-wasm::medfetch() on the server, returning empty kysely instance.`)
+        return empty;
+    }
+
     // Wrap the sqlite wasm worker with the promiser handle
     const promiser = wrapSqlite3Worker(opts.worker);
 

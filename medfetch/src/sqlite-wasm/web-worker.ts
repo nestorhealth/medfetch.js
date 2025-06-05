@@ -1,8 +1,5 @@
 /// <reference lib="webworker" />
-import {
-    GetPageFn,
-    medfetch_module_alloc,
-} from "~/sqlite-wasm/vtab";
+import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { FetchSync, FetchSyncWorker } from "~/fetch.services";
@@ -10,14 +7,15 @@ import { Counter } from "~/sqlite-wasm/_counter";
 import { Page } from "~/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 
-// For logs
-const tag = "medfetch/sqlite-wasm/worker";
+// Logs
+const tag = "medfetch/sqlite-wasm/worker.browser";
+const taggedMessage = (msg: string) => `[${tag}] > ${msg}`
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
     const fetchWorker = new Worker(
         new URL(
-            import.meta.env.DEV ? "../fetch.worker.ts" : "../fetch.worker.mjs",
+            import.meta.env?.DEV ? "../fetch.worker.js" : "../fetch.worker.js",
             import.meta.url,
         ),
         {
@@ -38,22 +36,21 @@ sqlite3InitModule().then(async (sqlite3) => {
             const baseURL = msg.data.aux?.baseURL;
             if (!baseURL) {
                 throw new Error(
-                    `[${tag}] > Need a base URL to open a medfetch database, but got nothing.`,
+                    taggedMessage(`Need a base URL to open a medfetch database, but got nothing.`),
                 );
             }
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
                 throw new Error(
-                    `[${tag}] > Can't handle that baseURL ${baseURL}`,
+                    taggedMessage(`Can't handle that baseURL ${baseURL}`),
                 );
             }
-            const getPage = await GetPage(baseURL, fetchSync);
+            const getPage = await createGetPageFn(baseURL, fetchSync);
 
             console.log(
-                `[${tag}] > Received init message with baseURL:`,
-                baseURL,
+                taggedMessage(`Received init message with baseURL: ${baseURL}`)
             );
 
-            // Map database id to medfetch_module "instance"
+            // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
             modules[dbIndex] = medfetch_module_alloc(getPage, sqlite3);
         }
@@ -71,10 +68,9 @@ sqlite3InitModule().then(async (sqlite3) => {
 
             if (!moduleSet.has(pDb)) {
                 if (!extension) {
-                    console.error(
-                        `[${tag}] > Tried to use medfetch module before init`,
-                    );
-                    return;
+                    throw new Error(
+                        `[${tag}] > `
+                    )
                 }
                 sqlite3.capi.sqlite3_create_module(
                     pDb,
@@ -104,7 +100,7 @@ function index(internalDbId: string): number {
  * not guaranteed to mean anything...
  * Based on the dist code:
  * ```ts
- * // sqlite3.mjs line 11390
+ * // sqlite3.mjs line 11390 (lol)
  * const getDbId = function (db) {
  *   let id = wState.idMap.get(db);
  *   if (id) return id;
@@ -145,11 +141,11 @@ function url(baseURL: string, resourceType: string) {
  * @param fetchSync The blocking fetch function
  * @returns A getPage() function for the virtual table to get its FHIR data from
  */
-async function GetPage(
+async function createGetPageFn(
     baseURL: string | File,
     fetchSync: FetchSync,
 ): Promise<GetPageFn> {
-    if (typeof baseURL === "string") {
+    if (typeof baseURL === "string") { // REST API
         return (resourceType: string) => {
             const response = fetchSync(url(baseURL, resourceType));
             const page = new Page(response.stream, (url) => {
@@ -158,17 +154,15 @@ async function GetPage(
             });
             return page;
         };
-    } else {
-        // Load and parse the entire bundle
+    } else { // File
         const buffer = await baseURL.text();
 
-        // Just pass it off once for now
-        const page = new Page(
-            (function* () {
-                yield* buffer;
-            })(),
-        );
-
-        return (_resourceType: string) => page;
+        // Just provide the entire buffer for a File
+        return (_resourceType: string) =>
+            new Page(
+                (function* () {
+                    yield buffer;
+                })(),
+            );
     }
 }

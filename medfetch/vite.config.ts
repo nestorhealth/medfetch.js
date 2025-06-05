@@ -39,15 +39,15 @@ export default defineConfig({
             external: ["@sqlite.org/sqlite-wasm", "kysely"],
             output: {
                 manualChunks: undefined,
-                entryFileNames: `[name].mjs`,
-                chunkFileNames: `[name]-[hash].mjs`,
+                entryFileNames: `[name].js`,
+                chunkFileNames: `[name]-[hash].js`,
                 assetFileNames: `[name]-[hash].[ext]`,
             },
         },
         lib: {
             entry: {
                 "sqlite-wasm": "src/sqlite-wasm.ts",
-                "sqlite-wasm/sqlite-wasm.worker": "src/sqlite-wasm/sqlite-wasm.worker.ts",
+                "sqlite-wasm/web-worker": "src/sqlite-wasm/web-worker.ts",
                 "fetch.worker": "src/fetch.worker.ts"
             },
             name: "medfetch",
