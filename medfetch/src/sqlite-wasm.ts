@@ -1,4 +1,5 @@
-import { QueryResult } from "kysely";
+import { promiserSyncV2 } from "~/sqlite-wasm/_worker1.main.js";
+import { Kysely, type QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -6,30 +7,34 @@ import {
     Promisable,
 } from "kysely-generic-sqlite";
 import { fromNullableOrThrow } from "~/data";
-import { Worker1Promiser } from "~/sqlite-wasm/_types.patch";
+import type {
+    Worker1OpenRequest,
+    Worker1Promiser,
+} from "~/sqlite-wasm/_types.patch";
 import { check } from "~/sqlite-wasm/_worker1.main";
 
 /* Its `db` field is a string */
-export type SqliteWasmDB = IGenericSqlite<string>;
+type Sqlite3WasmDB = IGenericSqlite<string>;
 
 /**
  * Database interface
  * @param promiser Main thread messenger for worker1 thread (sqlite3 calls their messenger interface the "Promiser")
  * @returns {@link IGenericSqlite} implementation using promiser
  */
-export async function database(
-    baseURL: string | File,
+async function database(
     promiser: Worker1Promiser,
-): Promise<SqliteWasmDB> {
-    const dbId = await promiser({
-        type: "open",
-        aux: {
-            baseURL
-        },
-        args: {}
-    })
-        .then(check)
-        .then((res) => fromNullableOrThrow(res.dbId)[0]);
+    openMessage?: Worker1OpenRequest,
+): Promise<Sqlite3WasmDB> {
+    let dbId: string;
+    if (openMessage) {
+        dbId = await promiser(openMessage)
+            .then(check)
+            .then((res) => fromNullableOrThrow(res.dbId)[0]);
+    } else {
+        dbId = await promiser("open")
+            .then(check)
+            .then((res) => fromNullableOrThrow(res.dbId)[0]);
+    }
 
     return {
         db: dbId,
@@ -78,9 +83,9 @@ export async function database(
  * {@link GenericSqliteDialect} implementation for the worker1promiser api
  */
 export class Worker1PromiserDialect extends GenericSqliteDialect {
-    constructor(baseURL: string | File, promiser: Worker1Promiser) {
+    constructor(promiser: Worker1Promiser, openMessage?: Worker1OpenRequest) {
         super(async () => {
-            const db = await database(baseURL, promiser);
+            const db = await database(promiser, openMessage);
             return {
                 db,
                 close: () => db.close(),
@@ -109,4 +114,75 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
             };
         });
     }
+}
+
+interface MedfetchSqlite3WasmOptions {
+    worker?: Worker;
+    filename?: string;
+}
+
+/**
+ * Provide the worker1 {@link Worker} to promiser v2
+ * @param worker The sqlite web worker
+ * @returns {@link Worker1Promiser}
+ */
+function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
+    if (worker) {
+        return promiserSyncV2(worker);
+    } else {
+        return promiserSyncV2(
+            new Worker(
+                new URL(
+                    import.meta.env.DEV
+                        ? "./sqlite-wasm/sqlite-wasm.worker.ts"
+                        : "./sqlite-wasm/sqlite-wasm.worker.mjs",
+                    import.meta.url,
+                ),
+                {
+                    type: "module",
+                },
+            ),
+        );
+    }
+}
+
+/**
+ * Get back a Kysely database interface over the medfetch sql-on-fhir database
+ * @param baseURL The data source, either a string to indicate REST or a Bundle {@link File}
+ * @param opts
+ * @returns A kysely orm interface over the sqlite-wasm database with the medfetch extension
+ */
+export function medfetch<DB = any>(
+    baseURL: string | File,
+    opts: MedfetchSqlite3WasmOptions = {},
+): Kysely<DB> {
+    // Wrap the sqlite wasm worker with the promiser handle
+    const promiser = wrapSqlite3Worker(opts.worker);
+
+    if (!opts.filename) {
+        // Use memory by default
+        return new Kysely<DB>({
+            dialect: new Worker1PromiserDialect(promiser, {
+                type: "open",
+                aux: {
+                    baseURL,
+                },
+            }),
+        });
+    }
+    // Otherwise attach it to opfs -- will enable other web file systems
+    // as needed in the future
+    const dialect = new Worker1PromiserDialect(promiser, {
+        type: "open",
+        aux: {
+            baseURL,
+        },
+        args: {
+            filename: opts.filename,
+            vfs: "opfs",
+        },
+    });
+    return new Kysely<DB>({
+        dialect,
+    });
 }

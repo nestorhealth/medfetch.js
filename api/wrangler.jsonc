@@ -5,7 +5,8 @@
   "compatibility_date": "2025-06-03",
   "vars": {
     "ENVIRONMENT": "dev",
-    "DOCS_HOST": "http://localhost:3000"
+    "DOCS_HOST": "http://localhost:3000",
+        "MEDFETCH_DEV_HOST": "http://localhost:5173"
   },
   "env": {
     "production": {

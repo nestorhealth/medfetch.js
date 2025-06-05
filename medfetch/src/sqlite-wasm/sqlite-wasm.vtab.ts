@@ -1,13 +1,16 @@
-import type {
-    sqlite3_module,
-    Sqlite3Static,
-} from "@sqlite.org/sqlite-wasm";
+import type { sqlite3_module, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { Page } from "~/data";
-import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/types.patch";
+import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 import {
     type medfetch_vtab_cursor,
     type TokenFetcher,
-} from "~/sqlite-wasm/worker1.services";
+} from "~/sqlite-wasm/_worker1.services";
+
+function log(...args: Parameters<typeof console.log>) {
+    if (import.meta.env.DEV) {
+        console.log(...args);
+    }
+}
 
 export type GetPageFn = (resourceType: string) => Page;
 
@@ -72,9 +75,7 @@ export function x_connect(_sqlite3: Sqlite3Static) {
             )`,
         );
         if (!rc) {
-            sqlite3.vtab.xVtab.create(
-                ppvtab,
-            );
+            sqlite3.vtab.xVtab.create(ppvtab);
         }
         return rc;
     };
@@ -83,6 +84,7 @@ export function x_connect(_sqlite3: Sqlite3Static) {
 export function x_best_index(_sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3 as Sqlite3;
     return (...args: Params<"xBestIndex">) => {
+        log("xConnect begin");
         let [, pIdxInfo] = args;
         const index = sqlite3.vtab.xIndexInfo(pIdxInfo);
         for (let i = 0; i < index.$nConstraint; i++) {
@@ -147,7 +149,9 @@ export function x_next(_sqlite3: Sqlite3Static) {
     return (...args: Params<"xClose">) => {
         let [pCursor] = args;
         let cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
-        cursor.peeked = cursor.page.rows.next();
+        let next = cursor.page.rows.next();
+        log(`[xNext()] > Before: ${JSON.stringify(cursor.peeked.value, null, 2)?.slice(0, 50)}\nAfter: ${JSON.stringify(next.value, null, 2)?.slice(0, 50)}`)
+        cursor.peeked = next;
         return sqlite3.capi.SQLITE_OK;
     };
 }
@@ -189,10 +193,7 @@ export function x_column(_sqlite3: Sqlite3Static) {
     };
 }
 
-export function x_eof(
-    sqlite3: Sqlite3Static,
-    tokenFetcher?: TokenFetcher,
-) {
+export function x_eof(sqlite3: Sqlite3Static, tokenFetcher?: TokenFetcher) {
     return (...args: Params<"xEof">) => {
         let [pCursor] = args;
         const headers = (expired = false): Record<string, string> => {
@@ -211,7 +212,7 @@ export function x_eof(
             pCursor,
         ) as medfetch_vtab_cursor;
 
-        if (cursor.peeked.done) {
+        if (cursor.peeked.done || !cursor.peeked.value) {
             const nextPage = cursor.page.next;
             if (!nextPage) {
                 return 1;

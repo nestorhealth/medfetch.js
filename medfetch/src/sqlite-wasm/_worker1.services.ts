@@ -12,7 +12,7 @@ import type {
     SqlValue,
 } from "@sqlite.org/sqlite-wasm";
 import { Column, ColumnPath, ViewDefinition } from "~/view";
-import { taggedEnum, TaggedEnum, TaggedError } from "effect/Data";
+import { taggedEnum, TaggedEnum } from "effect/Data";
 import { Page } from "~/data";
 
 /**
@@ -34,20 +34,6 @@ export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
      * The View Definition to apply to {@link peeked} if not null
      */
     viewDefinition: ViewDefinition | null;
-}
-
-/**
- * Namespaced error class
- *
- * @internal
- */
-class VtabError extends TaggedError("/sqlite-wasm/vtab")<{
-    message: string;
-}> {
-    constructor(args: { message: string } | string) {
-        if (typeof args === "string") super({ message: args });
-        else super(args);
-    }
 }
 
 /**
@@ -96,7 +82,7 @@ function getColumnName(path: string | [string, any]) {
 export function generateViewDefinition(args: SqlValue[]) {
     const [resourceType, fp] = args;
     if (!resourceType || typeof resourceType !== "string")
-        throw new VtabError(`unexpected invalid "type" column value (args[0])`);
+        throw new Worker1Error("worker", `unexpected invalid "type" column value (args[0])`);
 
     if (!fp || typeof fp !== "string") {
         // no fhirpath map, then just return null and default to the whole object
@@ -240,4 +226,17 @@ function createTokenChannel(
 
         resolve(port2); // port2 is for the sqlite3 worker
     });
+}
+
+/**
+ * Error on either worker or main thread side
+ */
+export class Worker1Error extends Error {
+    readonly _tag = "Worker1Error";
+    readonly thread: "main" | "worker";
+    
+    constructor(thread: "main" | "worker", ...args: ConstructorParameters<typeof Error>) {
+        super(...args);
+        this.thread = thread;
+    }
 }

@@ -77,27 +77,27 @@ export type Worker1ResponseBase = {
     result: any;
 };
 
-interface Worker1CloseRequest extends Worker1RequestBase {
+export interface Worker1CloseRequest extends Worker1RequestBase {
     type: "close";
     args?: { unlink: boolean };
 }
-interface Worker1ConfigGetRequest extends Worker1RequestBase {
+export interface Worker1ConfigGetRequest extends Worker1RequestBase {
     type: "config-get";
     args?: {};
 }
 
-interface Worker1ExecRequest extends Worker1RequestBase {
+export interface Worker1ExecRequest extends Worker1RequestBase {
     type: "exec";
     args: ExecOptions & {
         sql: string;
         rowMode?: "array" | "object" | "stmt" | `\$${string}` | number;
     };
 }
-interface Worker1ExportRequest extends Worker1RequestBase {
+export interface Worker1ExportRequest extends Worker1RequestBase {
     type: "export";
     args?: {};
 }
-interface Worker1OpenRequest extends Worker1RequestBase {
+export interface Worker1OpenRequest extends Worker1RequestBase {
     type: "open";
     args?: {
         filename?: string;

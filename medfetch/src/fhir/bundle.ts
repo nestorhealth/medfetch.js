@@ -1,5 +1,5 @@
 import { object, string, infer as zinfer } from "zod/v4";
-import { AnyResource } from "~/fhir/Base";
+import { AnyResource } from "~/fhir/base";
 
 const Link = object({
     relation: string(),

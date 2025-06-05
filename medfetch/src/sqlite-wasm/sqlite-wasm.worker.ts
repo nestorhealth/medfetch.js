@@ -1,38 +1,29 @@
 /// <reference lib="webworker" />
-import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/worker.vtab";
-import { worker1 } from "~/sqlite-wasm/worker1";
+import {
+    GetPageFn,
+    medfetch_module_alloc,
+} from "~/sqlite-wasm/sqlite-wasm.vtab";
+import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { FetchSync, FetchSyncWorker } from "~/fetch.services";
-import { Counter } from "~/sqlite-wasm/counter";
+import { Counter } from "~/sqlite-wasm/_counter";
 import { Page } from "~/data";
-import type { Sqlite3Module } from "~/sqlite-wasm/types.patch";
-import { AnyBundle } from "~/fhir/Bundle";
-import { Resource } from "~/data.schema";
+import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 
 // For logs
-const tag = "medfetch/sqlite-wasm::worker";
+const tag = "medfetch/sqlite-wasm/worker";
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    const fetchWorker =
-        /* KEEP STATIC WORKER IMPORT FOR DEV. COMMENT OUT FOR BUILD */
-        new Worker(new URL("../fetch.worker", import.meta.url), {
+    const fetchWorker = new Worker(
+        new URL(
+            import.meta.env.DEV ? "../fetch.worker.ts" : "../fetch.worker.mjs",
+            import.meta.url,
+        ),
+        {
             type: "module",
-        });
-    /* UNCOMMENT FOR BUILD */
-    // new Worker(
-    //       new URL(
-    //           // Workaround to make vite not bundle the worker as a static asset to make it compatible with other projects
-    //           // using bundlers
-    //           true
-    //               ? "../fetch.worker.mjs"
-    //               : "../fetch.worker.mjs",
-    //           import.meta.url,
-    //       ),
-    //       {
-    //           type: "module",
-    //       },
-    // );
+        },
+    );
 
     // Singular FetchSync handle for all databases
     const fetchSync = await FetchSyncWorker(fetchWorker);

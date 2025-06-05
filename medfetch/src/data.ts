@@ -11,18 +11,8 @@ import {
     getOrThrow,
     fromNullable,
 } from "effect/Option";
-import {
-    andThen,
-    flatMap,
-    liftPredicate,
-    map,
-    runPromise,
-    tryPromise,
-} from "effect/Effect";
-import { Array as $Array, decodeUnknown, type Schema } from "effect/Schema";
-import { fromAsyncIterable } from "effect/Stream";
 import { DataError } from "~/data.error.js";
-import { AnyBundle } from "~/fhir/Bundle.js";
+import { AnyBundle } from "~/fhir/bundle.js";
 
 /**
  * Unwrapped return type of calling the parser returned by {@link kdv}
@@ -313,20 +303,14 @@ const nextLink = (bundle: AnyBundle): Option<string> =>
  * @param url - the server url
  * @returns a decoded Bundle
  */
-const getBundle = (url: string) =>
-    tryPromise(() => fetch(url)).pipe(
-        andThen((response) =>
-            liftPredicate(
-                response,
-                (res) => res.ok,
-                (res) =>
-                    new DataError(`Response not ok! Status: ${res.status}`),
-            ),
-        ),
-        andThen((response) => tryPromise(() => response.json())),
-        map(AnyBundle.parse),
-    );
-
+const getBundle = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new DataError(`Response not ok! Status: ${response.status}`);
+    }
+    const payload = await response.json();
+    return AnyBundle.parse(payload);
+}
 /**
  * Create an async iterator over
  * a Bundle and its links
@@ -339,16 +323,14 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         const upperLimit = n < 0 ? Infinity : n;
         let count = 0;
 
-        const firstPage = await runPromise(
-            getBundle(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
-        );
+        const firstPage = await getBundle(`${baseUrl}/${resourceType}?_count=${maxPageSize}`);
         yield firstPage;
         count += firstPage.entry!.length;
 
         let linkOption = nextLink(firstPage);
         while (isSome(linkOption) && count < upperLimit) {
             const link = getOrThrow(linkOption);
-            const page = await runPromise(getBundle(link));
+            const page = await getBundle(link);
             yield page;
 
             count++;
@@ -377,11 +359,7 @@ export const pages = (
     resourceType: string,
     n = 100,
     maxPageSize = 250,
-) =>
-    fromAsyncIterable(
-        pageIterator(baseUrl, resourceType)(n, maxPageSize),
-        (e) => new DataError(String(e)),
-    );
+) => pageIterator(baseUrl, resourceType)(n, maxPageSize);
 
 export { pkce } from "./data.auth.js";
 

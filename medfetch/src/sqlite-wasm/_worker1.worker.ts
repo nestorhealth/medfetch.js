@@ -5,7 +5,7 @@ import { Promisable } from "kysely-generic-sqlite";
 import type {
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
-import { Worker1Request } from "~/sqlite-wasm/types.patch";
+import { Worker1Request } from "~/sqlite-wasm/_types.patch";
 
 type BeforeOnMessage = (event: MessageEvent<Worker1Request>, next: () => void) => Promisable<void>;
 
