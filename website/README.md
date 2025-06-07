@@ -16,13 +16,8 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Building
-You need a built version of the [medfetch](../medfetch/README.md) package:
-```bash
-pnpm run build:sof
-```
 Run the build script:
 ```bash
-pnpm run build
 pnpm run build:docs # Monorepo alias
 ```
 
@@ -30,3 +25,9 @@ You can preview it:
 ```bash
 pnpm run preview
 ```
+
+This depends on the [medfetch](../medfetch/README.md) sql on fhir library:
+```bash
+pnpm run build:sof
+```
+Which this build script takes care of.
