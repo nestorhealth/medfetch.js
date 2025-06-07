@@ -6,15 +6,15 @@
     "scripts": {
         "dev": "vite",
         "test": "vitest run --coverage",
-        "build": "rm -rf dist && npx concurrently \"npx vite build\" \"npx tsc -p tsconfig.build.json\"",
+        "build": "rm -rf dist && npx concurrently \"npx vite build\" \"npx tsc -p tsconfig.build.json && npx tsc-alias -p tsconfig.build.json\"",
         "unit": "vitest src",
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
     },
     "exports": {
-        "./static": {
-            "types": "./dist/static.d.ts",
-            "import": "./dist/static.js",
-            "default": "./dist/static.js"
+        "./json": {
+            "types": "./dist/json.d.ts",
+            "import": "./dist/json.js",
+            "default": "./dist/json.js"
         },
         "./sql": {
             "types": "./dist/sql.d.ts",
@@ -51,6 +51,7 @@
         "pagefind": "^1.3.0",
         "prettier": "^3.4.2",
         "ts-morph": "^25.0.0",
+        "tsc-alias": "^1.8.16",
         "tsup": "^8.4.0",
         "tsx": "^4.19.2",
         "typescript": "^5.7.3",

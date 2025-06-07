@@ -2,7 +2,7 @@ import { strFromU8, unzipSync } from "fflate";
 
 /**
  * Fetch the JSON schema and get back the parsed version from a zipfile
- * @param zipURL URL of the zip endpoint
+ * @param zipURL URL of the zip endpoint, defaults to the core fhir schema json zip file from the CI build
  * @param filename Optionally pass in filename
  * @returns The JSON parsed JSON schema object
  */

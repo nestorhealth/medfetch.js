@@ -47,7 +47,7 @@ export default defineConfig({
         lib: {
             entry: {
                 "sql": "src/sql.ts",
-                "static": "src/static.ts",
+                "json": "src/json.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
                 "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
                 "fetch.worker": "src/fetch.worker.ts"
