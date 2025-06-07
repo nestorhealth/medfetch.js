@@ -20,6 +20,7 @@ import type {
 } from "~/sqlite-wasm/_types.patch";
 import { check } from "~/sqlite-wasm/_worker1.main";
 import { isBrowser } from "~/core/env";
+import { kyselyDummy } from "~/sql.kysely";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
@@ -155,18 +156,6 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
 }
 
 /**
- * "Empty" kysely orm instance
- */
-const empty = new Kysely<any>({
-    dialect: {
-        createAdapter: () => new SqliteAdapter(),
-        createDriver: () => new DummyDriver(),
-        createIntrospector: (db) => new SqliteIntrospector(db),
-        createQueryCompiler: () => new SqliteQueryCompiler(),
-    },
-});
-
-/**
  * Get back a Kysely database interface over the medfetch sql-on-fhir database
  * @param baseURL The data source, either a string to indicate REST or a Bundle {@link File}
  * @param opts
@@ -180,7 +169,7 @@ export function medfetch<DB = any>(
         console.warn(
             `Called medfetch/sqlite-wasm::medfetch() on the server, returning empty kysely instance.`,
         );
-        return empty;
+        return kyselyDummy("sqlite");
     }
 
     // Wrap the sqlite wasm worker with the promiser handle

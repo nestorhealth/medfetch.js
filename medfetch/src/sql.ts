@@ -2,6 +2,7 @@ import {
     Kysely,
 } from "kysely";
 import { kyselyDummy } from "~/sql.kysely";
+import { SqlDialect } from "~/sql.types";
 
 /**
  * Get the "create table" migration text for the given resource type from the data
@@ -40,11 +41,11 @@ function tableMigration(
  * @returns The migration text if successful. Throws otherwise
  */
 export function migrations(
-    dialect: "sqlite" | "postgresql",
+    dialect: SqlDialect,
     jsonSchema: any,
     ...resourceTypes: string[]
 ): string {
-    const db = kyselyDummy[dialect];
+    const db = kyselyDummy(dialect);
     return resourceTypes.reduce(
         (acc, resourceType) => {
             return acc += tableMigration(
