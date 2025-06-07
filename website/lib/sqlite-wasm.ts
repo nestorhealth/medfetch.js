@@ -3,8 +3,14 @@ import { sql as kyselySql } from "kysely";
 
 export const db = medfetch("https://r4.smarthealthit.org");
 
-export function sql(strings: TemplateStringsArray, ...rest: any[]) {
-  return kyselySql(strings, ...rest).execute(db).then(result => result.rows);
+/**
+ * 
+ * @param strings 
+ * @param rest 
+ * @returns 
+ */
+export function sql<T>(strings: TemplateStringsArray, ...rest: any[]): Promise<T[]> {
+  return kyselySql<T>(strings, ...rest).execute(db).then(result => result.rows);
 }
 
 const BASE_URL =

@@ -1,10 +1,29 @@
-import type { sqlite3_module, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
+import type { sqlite3_module, sqlite3_vtab_cursor, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
+import type { Resource } from "fhir/r4";
 import { Page } from "~/data";
 import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/_types.patch";
-import {
-    type medfetch_vtab_cursor,
-    type TokenFetcher,
-} from "~/sqlite-wasm/_worker1.services";
+import { ViewDefinition } from "~/view";
+
+/**
+ * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
+ * rather than composing it, though this may change in the future
+ */
+export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
+    /**
+     * Current {@link Page}
+     */
+    page: Page;
+
+    /**
+     * The last resource yielded by {@link Page}
+     */
+    peeked: IteratorResult<Resource>;
+
+    /**
+     * The View Definition to apply to {@link peeked} if not null
+     */
+    viewDefinition: ViewDefinition | null;
+}
 
 function log(...args: Parameters<typeof console.log>) {
     if (import.meta.env.DEV) {
@@ -25,7 +44,6 @@ export type GetPageFn = (resourceType: string) => Page;
 export function medfetch_module_alloc(
     getPage: GetPageFn,
     _sqlite3: Sqlite3Static,
-    tokenFetcher?: TokenFetcher,
 ): Sqlite3Module {
     let sqlite3 = _sqlite3 as Sqlite3;
     const medfetch: sqlite3_module = (sqlite3.vtab as any).setupModule({
@@ -38,8 +56,8 @@ export function medfetch_module_alloc(
             xClose: x_close(sqlite3),
             xNext: x_next(sqlite3),
             xColumn: x_column(sqlite3),
-            xEof: x_eof(sqlite3, tokenFetcher),
-            xFilter: x_filter(sqlite3, getPage, tokenFetcher),
+            xEof: x_eof(sqlite3),
+            xFilter: x_filter(sqlite3, getPage),
         },
     });
     if (!medfetch.pointer) {
@@ -174,7 +192,7 @@ export function x_column(_sqlite3: Sqlite3Static) {
             case 0: {
                 sqlite3.capi.sqlite3_result_text(
                     pCtx,
-                    hd.value.id,
+                    hd.value.id!,
                     -1,
                     sqlite3.capi.SQLITE_TRANSIENT,
                 );
@@ -195,20 +213,9 @@ export function x_column(_sqlite3: Sqlite3Static) {
     };
 }
 
-export function x_eof(sqlite3: Sqlite3Static, tokenFetcher?: TokenFetcher) {
+export function x_eof(sqlite3: Sqlite3Static) {
     return (...args: Params<"xEof">) => {
         let [pCursor] = args;
-        const headers = (expired = false): Record<string, string> => {
-            const kvs: Record<string, string> = {
-                "Content-Type": "application/json+fhir",
-            };
-            if (!tokenFetcher) {
-                return kvs;
-            }
-            const token = tokenFetcher.get(expired);
-            if (token) kvs["Authorization"] = `Bearer ${token}`;
-            return kvs;
-        };
 
         const cursor = sqlite3.vtab.xCursor.get(
             pCursor,
@@ -229,7 +236,6 @@ export function x_eof(sqlite3: Sqlite3Static, tokenFetcher?: TokenFetcher) {
 export function x_filter(
     _sqlite3: Sqlite3,
     getPage: GetPageFn,
-    tokenFetcher?: TokenFetcher,
 ) {
     let sqlite3 = _sqlite3 as Sqlite3;
     let { capi, vtab } = sqlite3;
@@ -237,17 +243,6 @@ export function x_filter(
     return (..._args: Params<"xFilter">) => {
         let [pCursor, _idxNum, _idxCStr, argc, argv] = _args;
         let args = capi.sqlite3_values_to_js(argc, argv);
-        const headers = (expired = false): Record<string, string> => {
-            const kvs: Record<string, string> = {
-                "Content-Type": "application/json+fhir",
-            };
-            if (!tokenFetcher) {
-                return kvs;
-            }
-            const token = tokenFetcher.get(expired);
-            if (token) kvs["Authorization"] = `Bearer ${token}`;
-            return kvs;
-        };
         if (args.length < 1 || typeof args[0] !== "string") {
             console.error(`can't handle empty arguments`);
             return capi.SQLITE_ERROR;

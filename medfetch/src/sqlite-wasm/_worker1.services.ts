@@ -1,4 +1,3 @@
-import type { Resource } from "~/data.schema.js";
 import {
     Array,
     Union,
@@ -7,31 +6,9 @@ import {
     parseJson,
     decodeSync,
 } from "effect/Schema";
-import type { sqlite3_vtab_cursor, SqlValue } from "@sqlite.org/sqlite-wasm";
+import type { SqlValue } from "@sqlite.org/sqlite-wasm";
 import { Column, ColumnPath, ViewDefinition } from "~/view";
 import { taggedEnum, TaggedEnum } from "effect/Data";
-import { Page } from "~/data";
-
-/**
- * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
- * rather than composing it, though this may change in the future
- */
-export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
-    /**
-     * Current {@link Page}
-     */
-    page: Page;
-
-    /**
-     * The last resource yielded by {@link Page}
-     */
-    peeked: IteratorResult<Resource>;
-
-    /**
-     * The View Definition to apply to {@link peeked} if not null
-     */
-    viewDefinition: ViewDefinition | null;
-}
 
 /**
  * `fp` hidden column accepted types once it is JSON parsed

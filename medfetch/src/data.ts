@@ -1,21 +1,10 @@
-import { pipe } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
-import {
-    none,
-    type Option,
-    some,
-    map as mapOption,
-    flatMap as flatMapOption,
-    isSome,
-    getOrThrow,
-    fromNullable,
-} from "effect/Option";
 import { DataError } from "~/data.error.js";
-import { AnyBundle } from "~/fhir/bundle.js";
+import type { Bundle } from "fhir/r4.js";
 
 /**
- * Unwrapped return type of calling the parser returned by {@link kdv}
+ * Unwrapped return type of calling the parser returned by {@link keyDepthValue}
  * @template Value The expected type of value at key `k`. This is *NOT* a runtime type:
  * you must validate the payload yourself if you're unsure about type at key `k`.
  */
@@ -33,13 +22,15 @@ interface KDVParseResult<Value> {
     tl: Value[keyof Value] | null;
 }
 
+export type KeyDepthValueResult<Value> = KDVParseResult<Value> | null;
+
 /**
- * The key-depth-value {@link clarinet} parser returned by {@link kdv}.
- * @template Value The expected type of the value from the key provided to {@link kdv} ctor.
+ * The key-depth-value {@link clarinet} parser returned by {@link keyDepthValue}.
+ * @template Value The expected type of the value from the key provided to {@link keyDepthValue} ctor.
  * @param chunk The next available chunk of the Bundle to send to {@link clarinet.CParser.write}
  * @returns Some {@link KDVParseResult} if it exists. None otherwise.
  */
-type KDVParseFn<Value> = (chunk: string) => Option<KDVParseResult<Value>>;
+type KeyDepthValueFn<Value> = (chunk: string) => KeyDepthValueResult<Value>;
 
 /**
  * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
@@ -48,10 +39,10 @@ type KDVParseFn<Value> = (chunk: string) => Option<KDVParseResult<Value>>;
  * @param d The depth (first key is depth 1)
  * @returns Some value if it exists, None otherwise.
  */
-export const kdv = <Value = unknown>(
+export const keyDepthValue = <Value = unknown>(
     k: string,
     d: number,
-): KDVParseFn<Value> => {
+): KeyDepthValueFn<Value> => {
     const parser = clarinet.parser();
 
     let currentKey = "";
@@ -150,39 +141,39 @@ export const kdv = <Value = unknown>(
         }
     };
 
-    return (chunk: string): Option<KDVParseResult<Value>> => {
+    return (chunk: string): KeyDepthValueResult<Value> => {
         parser.write(chunk);
         if (!!v) {
-            return some({
+            return {
                 hd: v,
                 tl: null,
-            });
+            };
         } else if (stack.length > 0) {
             const hd = structuredClone(stack[0]);
             if (Array.isArray(hd)) {
                 const popped = hd.pop();
-                return some({
+                return {
                     hd: hd as Value,
                     tl: popped as any,
-                });
+                };
             } else {
                 const keys = Object.keys(hd);
                 const last = keys[keys.length - 1];
                 const lastChild = hd[last];
                 delete hd[last];
-                return some({
+                return {
                     hd: hd as Value,
                     tl: lastChild as any,
-                });
+                };
             }
         } else {
-            return none();
+            return null;
         }
     };
 };
 
-const parseLink = kdv<Link[]>("link", 1);
-const parseEntry = kdv<Entry[]>("entry", 1);
+const parseLink = keyDepthValue<Link[]>("link", 1);
+const parseEntry = keyDepthValue<Entry[]>("entry", 1);
 
 /**
  * Somewhat abstract mapping of a grouping or "page" of related FHIR data
@@ -216,37 +207,37 @@ export class Page {
             const { done, value } = this.#chunks.next();
             if (done || !value) break;
             if (!this.#nextURL && !this.#isLinkParsed) {
-                parseLink(value).pipe(
-                    mapOption(({ hd }) => {
-                        this.#isLinkParsed = true;
-                        const searched = hd.find(
-                            (link) => link.relation === "next",
-                        )?.url;
-                        if (searched) this.#nextURL = searched;
-                    }),
-                );
+                const link = parseLink(value);
+                if (link) {
+                    this.#isLinkParsed = true;
+                    const nextLink = link.hd.find(
+                        (link) => link.relation === "next",
+                    )?.url;
+                    if (nextLink) {
+                        this.#nextURL = nextLink;
+                    }
+                }
             }
-            const popped = parseEntry(value).pipe(
-                flatMapOption(({ hd }) => {
-                    if (hd.length > 0) {
-                        const flushed = hd
-                            .slice(this.#cursor + 1)
-                            .filter(
-                                (
-                                    entry,
-                                ): entry is Entry & {
-                                    resource: Resource;
-                                } => !!entry.resource,
-                            )
-                            .map(({ resource }) => resource);
-                        this.#cursor = hd.length - 1;
-                        this.#acc.push(...flushed);
-                        return some(this.#acc.shift()!);
-                    } else return none();
-                }),
-            );
-            if (isSome(popped)) {
-                yield getOrThrow(popped);
+            const popped = parseEntry(value);
+            if (popped) {
+                if (popped.hd.length > 0) {
+                    const hd = popped.hd
+                        .slice(this.#cursor + 1)
+                        .filter(
+                            (
+                                entry,
+                            ): entry is Entry & {
+                                resource: Resource;
+                            } => !!entry.resource,
+                        )
+                        .map(({ resource }) => resource);
+                    this.#cursor = hd.length - 1;
+                    this.#acc.push(...hd);
+                    let front = this.#acc.shift();
+                    if (front) {
+                        yield front;
+                    }
+                }
             }
         }
         while (this.#acc.length > 0) yield this.#acc.shift()!;
@@ -288,12 +279,9 @@ export class Page {
  * @returns `Option.some` with the url if `'next' in Bundle.link.relation` exists. `Option.none` otherwise.
  *
  */
-const nextLink = (bundle: AnyBundle): Option<string> =>
-    pipe(
-        bundle.link?.find((link) => link.relation === "next"),
-        fromNullable,
-        mapOption((link) => link.url),
-    );
+const nextLink = (bundle: Bundle): string | null => {
+    return bundle.link?.find((link) => link.relation === "next")?.url ?? null;
+};
 
 /**
  * `fetch()` wrapper over an HTTP GET call.
@@ -311,8 +299,8 @@ const getBundle = async (url: string) => {
     if (!response.ok) {
         throw new DataError(`Response not ok! Status: ${response.status}`);
     }
-    const payload = await response.json();
-    return AnyBundle.parse(payload);
+    const payload: Bundle = await response.json();
+    return payload;
 };
 /**
  * Create an async iterator over
@@ -332,14 +320,13 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         yield firstPage;
         count += firstPage.entry!.length;
 
-        let linkOption = nextLink(firstPage);
-        while (isSome(linkOption) && count < upperLimit) {
-            const link = getOrThrow(linkOption);
+        let link = nextLink(firstPage);
+        while (link && count < upperLimit) {
             const page = await getBundle(link);
             yield page;
 
             count++;
-            linkOption = nextLink(page);
+            link = nextLink(page);
         }
     };
 
