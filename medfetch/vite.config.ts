@@ -46,11 +46,12 @@ export default defineConfig({
         },
         lib: {
             entry: {
+                "sql": "src/sql.ts",
+                "static": "src/static.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
-                "sqlite-wasm/web-worker": "src/sqlite-wasm/web-worker.ts",
+                "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
                 "fetch.worker": "src/fetch.worker.ts"
             },
-            name: "medfetch",
             formats: ["es"],
             fileName: (format, name) =>
                 format === "esm" || format === "es"

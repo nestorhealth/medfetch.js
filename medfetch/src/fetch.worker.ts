@@ -1,4 +1,4 @@
-import { FetchMessage } from "./fetch.services.js";
+import { FetchMessage } from "./fetch.js";
 
 const __RESPONSE_MAP__ = new Map<number, Response>();
 const __READER_MAP__ = new Map<number, ReadableStreamDefaultReader>();

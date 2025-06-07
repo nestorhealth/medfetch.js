@@ -2,20 +2,20 @@
 import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
-import { FetchSync, FetchSyncWorker } from "~/fetch.services";
+import { FetchSync, FetchSyncWorker } from "~/fetch";
 import { Counter } from "~/sqlite-wasm/_counter";
-import { Page } from "~/data";
+import { Page } from "~/core/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 
 // Logs
-const tag = "medfetch/sqlite-wasm/worker.browser";
+const tag = "medfetch/sqlite-wasm.worker";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
     const fetchWorker = new Worker(
         new URL(
-            import.meta.env?.DEV ? "../fetch.worker.js" : "../fetch.worker.js",
+            import.meta.env?.DEV ? "./fetch.worker.js" : "./fetch.worker.js",
             import.meta.url,
         ),
         {

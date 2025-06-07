@@ -1,6 +1,6 @@
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
-import { DataError } from "~/data.error.js";
+import { DataError } from "~/core/data.error.js";
 import type { Bundle } from "fhir/r4.js";
 
 /**

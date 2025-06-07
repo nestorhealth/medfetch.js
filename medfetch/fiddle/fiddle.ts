@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { pages } from "~/data";
+import { pages } from "~/core/data";
 import { medfetch } from "~/sqlite-wasm";
 
 const response = await pages("http://localhost:8787/fhir", "Patient").next();

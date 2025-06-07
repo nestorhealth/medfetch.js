@@ -13,13 +13,13 @@ import {
     IGenericSqlite,
     Promisable,
 } from "kysely-generic-sqlite";
-import { fromNullableOrThrow } from "~/data";
+import { fromNullableOrThrow } from "~/core/data";
 import type {
     Worker1OpenRequest,
     Worker1Promiser,
 } from "~/sqlite-wasm/_types.patch";
 import { check } from "~/sqlite-wasm/_worker1.main";
-import { isBrowser } from "~/env";
+import { isBrowser } from "~/core/env";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
@@ -141,9 +141,9 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
         return promiserSyncV2(
             new Worker(
                 new URL(
-                    import.meta.env?.DEV
-                        ? "./sqlite-wasm/web-worker.js"
-                        : "./sqlite-wasm/web-worker.js",
+                    import.meta.env.DEV
+                        ? "./sqlite-wasm.worker.js"
+                        : "./sqlite-wasm.worker.js",
                     import.meta.url,
                 ),
                 {

@@ -1,8 +1,8 @@
 import type { sqlite3_module, sqlite3_vtab_cursor, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import type { Resource } from "fhir/r4";
-import { Page } from "~/data";
+import { Page } from "~/core/data";
 import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/_types.patch";
-import { ViewDefinition } from "~/view";
+import { ViewDefinition } from "~/core/view";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor

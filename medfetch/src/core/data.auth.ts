@@ -1,6 +1,6 @@
 import { Effect, Schema } from "effect";
 import getPkce from "oauth-pkce";
-import { DataError } from "~/data.error";
+import { DataError } from "~/core/data.error";
 
 type AuthErrorReason =
     | "BAD_SMART_CONFIG_RESPONSE"

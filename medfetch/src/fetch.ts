@@ -144,6 +144,12 @@ export type FetchSync = (
     ...args: Parameters<typeof fetch>
 ) => ResponseProxySync;
 
+/**
+ * Await the worker to init and send back ready message and
+ * get the sync fetch handle
+ * @param worker The fetch-sync worker
+ * @returns A {@link FetchSync} proxy function
+ */
 export async function FetchSyncWorker(worker: Worker): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {
         const { port1, port2 } = new MessageChannel();
