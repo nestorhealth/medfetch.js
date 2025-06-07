@@ -28,6 +28,11 @@ export function promiserSyncV2(worker: Worker) {
     return f;
 }
 
+/**
+ * Throw if response.type === "error"
+ * @param response The worker1 response
+ * @returns The response type narrowed
+ */
 export function check<T extends Worker1MessageType>(
     response: Worker1Response<T> | Worker1ResponseError<T>,
 ): Worker1Response<T> {

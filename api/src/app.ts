@@ -1,26 +1,28 @@
 import db from "./routes/db";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
-import hapi from "../public/hapi-patients.json";
 import { D1Database } from "@cloudflare/workers-types";
 import { showRoutes } from "hono/dev";
+import { logger } from "hono/logger";
 import nl2sql from "./routes/nl2sql";
 import fhir from "./routes/fhir";
+import { customLogger } from "~/lib/context";
+import { HTTPException } from "hono/http-exception";
 
 // Extend the Env type to include DB
 declare global {
-  interface Env {
-    OPENAI_API_KEY: string;
-    DOCS_HOST: string;
-    MEDFETCH_DEV_HOST: string;
-    DB: D1Database;
+  type Env = Cloudflare.Env & { DB: D1Database };
+  type Vars = {
+    setError: <ErrorObject extends Error>(err: ErrorObject) => never;
   }
 }
 
 const app = new OpenAPIHono<{
   Bindings: Env;
+  Variables: Vars;
 }>();
 
+// Cors
 app.use("*", (c, next) => {
   const corsHandler = cors({
     origin: [c.env.DOCS_HOST, c.env.MEDFETCH_DEV_HOST],
@@ -30,6 +32,25 @@ app.use("*", (c, next) => {
   });
   return corsHandler(c, next);
 });
+
+// Attach logger middleware
+app.use(logger(customLogger));
+
+// For server side errors, return 500
+app.use(
+  (c, next) => {
+    c.set("setError",
+      (err) => {
+        customLogger(`Internal server error: ${err.message}`);
+        throw new HTTPException(500, {
+          message: err.message,
+          cause: err.cause,
+        })
+      }
+    );
+    return next();
+  }
+)
 
 // Helper function to build WHERE clause from filters
 function buildWhereClause(filters: { field: string; operator: string; value: any }[] | undefined) {
@@ -331,9 +352,7 @@ app.openapi(db.schemaOperation, async (c) => {
 app.route("/", nl2sql);
 app.route("/", fhir);
 
-// Existing nl2sql route
-
-
+// openapi reference
 app.doc("/openapi", {
   openapi: "3.0.0",
   info: {
