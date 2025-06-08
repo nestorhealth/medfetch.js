@@ -17,6 +17,14 @@ import {
   Play
 } from "lucide-react";
 
+export default function ResearcherDemo() {
+  const dbRef = useRef<MedfetchClient | null>(null);
+  const [currentResource, setCurrentResource] = useState<"Patient" | "Procedure">("Patient");
+  const [rawData, setRawData] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const tableManager = useRef<TableManager | null>(null);
+  const [primaryKey, setPrimaryKey] = useState<string>("patient_id");
+  const [isLoading, setIsLoading] = useState(true);
 export default function ConnectionSetupPage() {
   const router = useRouter();
   const [isConnecting, setIsConnecting] = useState(false);

@@ -11,12 +11,9 @@ export {
     ForEach,
     ForEachOrNull,
     UnionAll,
-    ColumnPath
+    ColumnPath,
 } from "./view";
-export type {
-    Node,
-    Constant,
-} from "./view";
+export type { Node, Constant } from "./view";
 export { ViewDefinition, Column };
 
 type Last<Path extends string> = Path extends `${infer _}.${infer Rest}`
@@ -43,18 +40,19 @@ function keysToViewDefinition<Keys extends readonly string[]>(
         status: "active",
         select: [
             Column({
-                column: keys.map((key) =>
-                    ({
-                        path: key,
-                        name: last(key),
-                    }),
-                ),
+                column: keys.map((key) => ({
+                    path: key,
+                    name: last(key),
+                })),
             }),
         ],
     });
 }
 
-export type SofFn = <ResourceType extends string, Keys extends readonly string[]>(
+export type SofFn = <
+    ResourceType extends string,
+    Keys extends readonly string[],
+>(
     resourceType: ResourceType,
     keys: readonly [...Keys],
 ) => Promise<Flattened<Keys>[]>;

@@ -8,7 +8,6 @@ import {
   googleRedirectURI,
   writeToSpreadsheet,
 } from "@/lib/google.oauth2";
-import { Effect } from "effect";
 
 export function ExportDatasetToSheets() {
   const [token, setToken] = useState<string | null>(null);
@@ -50,7 +49,7 @@ export function ExportDatasetToSheets() {
         condition_duration: string;
         procedure_code: string;
         procedure_display: string;
-      }>`select * from ab_dataset;`.pipe(Effect.runPromise);
+      }>`select * from ab_dataset;`;
 
       if (!rows.length) {
         alert("No data to export.");

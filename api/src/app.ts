@@ -1,15 +1,29 @@
-import nl2sql from "./routes/nl2sql";
+import db from "./routes/db";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
-import OpenAI from "openai";
+import hapi from "../public/hapi-patients.json";
+import { D1Database } from "@cloudflare/workers-types";
+import { showRoutes } from "hono/dev";
+import nl2sql from "./routes/nl2sql";
+import fhir from "./routes/fhir";
+
+// Extend the Env type to include DB
+declare global {
+  interface Env {
+    OPENAI_API_KEY: string;
+    DOCS_HOST: string;
+    MEDFETCH_DEV_HOST: string;
+    DB: D1Database;
+  }
+}
 
 const app = new OpenAPIHono<{
-  Bindings: Cloudflare.Env;
+  Bindings: Env;
 }>();
 
 app.use("*", (c, next) => {
   const corsHandler = cors({
-    origin: [c.env.DOCS_HOST],
+    origin: [c.env.DOCS_HOST, c.env.MEDFETCH_DEV_HOST],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400
@@ -17,162 +31,308 @@ app.use("*", (c, next) => {
   return corsHandler(c, next);
 });
 
-app.openapi(nl2sql.POST, async (c) => {
+// Helper function to build WHERE clause from filters
+function buildWhereClause(filters: { field: string; operator: string; value: any }[] | undefined) {
+  if (!filters || filters.length === 0) return '';
+  
+  const conditions = filters.map(filter => {
+    const { field, operator, value } = filter;
+    switch (operator) {
+      case 'equals':
+        return `${field} = '${value}'`;
+      case 'contains':
+        return `${field} LIKE '%${value}%'`;
+      case 'greaterThan':
+        return `${field} > ${value}`;
+      case 'lessThan':
+        return `${field} < ${value}`;
+      case 'between':
+        const [min, max] = value as [number, number];
+        return `${field} BETWEEN ${min} AND ${max}`;
+      default:
+        throw new Error(`Unsupported operator: ${operator}`);
+    }
+  });
+  
+  return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+}
+
+// Helper function to build ORDER BY clause from sort
+function buildOrderByClause(sort: { field: string; direction: 'asc' | 'desc' }[] | undefined) {
+  if (!sort || sort.length === 0) return '';
+  
+  const orders = sort.map(s => `${s.field} ${s.direction.toUpperCase()}`);
+  return orders.length > 0 ? `ORDER BY ${orders.join(', ')}` : '';
+}
+
+// Helper function to build pagination
+function buildPagination(pagination: any) {
+  if (!pagination) return '';
+  const { page, pageSize } = pagination;
+  const offset = (page - 1) * pageSize;
+  return `LIMIT ${pageSize} OFFSET ${offset}`;
+}
+
+// Table operations handler
+app.openapi(db.tableOperation, async (c) => {
   try {
-    const openai = new OpenAI({
-      apiKey: c.env.OPENAI_API_KEY,
-    });
-    const { query } = c.req.valid("json");
-
-    if (!query) {
-      return c.json({ error: "Query is required" }, 400);
-    }
-
-    // Prepare the system prompt with the specific instructions
-    const systemPrompt = `You are the Medfetch NL→SQL Translator. Your job is simple and precise:
-
-1. **Schema Reference**  
-   You know the exact SQLite schema for two tables:
-   
-    Name: "Patient"
-   ┌─────────────┬────────┐
-   │ Column      │ Type   │
-   ├─────────────┼────────┤
-   │ rowid       │ INTEGER│
-   │ patient_id  │ TEXT   │
-   │ givenName   │ TEXT   │
-   │ familyName  │ TEXT   │
-   │ birthDate   │ TEXT   │
-   │ gender      │ TEXT   │
-   │ condition   │ TEXT   │
-   │ status      │ TEXT   │
-   └─────────────┴────────┘
-
-   and
-
-    Name: "Procedure"
-   ┌──────────────────┬────────┐
-   │ Column           │ Type   │
-   ├──────────────────┼────────┤
-   │ rowid            │ INTEGER│
-   │ procedure_id     │ TEXT   │
-   │ patient_id       │ TEXT   │
-   │ code             │ TEXT   │
-   │ performedDate    │ TEXT   │
-   │ notes            │ TEXT   │
-   └──────────────────┴────────┘
-
-2. **Behavior**  
-   - When you receive a researcher's natural-language request, you will output exactly two things:
-     1. **A one-sentence summary**, prefixed with \`Summary: \`.  
-     2. **A fenced code block labeled \`sql\`**, containing only valid SQLite statements (UPDATE/INSERT/DELETE) that implement that intent.
-   - **Format example**:
-     \`\`\`
-     Summary: I will update the status field to 'Reviewed' for diabetic patients older than 50.
-
-     \`\`\`sql
-     UPDATE Patient
-       SET status = 'Reviewed'
-       WHERE condition = 'Diabetes'
-         AND ((julianday('now') - julianday(birthDate)) / 365.25) >= 50;
-     \`\`\`
-     \`\`\`
-   - **Important:** 
-      Assume any NL queries that translate to migration-related statements (i.e. ALTER TABLE) are related to the "Patient"
-      table only and assume the querier can only read from the "Patient" table. Further, for any NL queries that translate
-      to adding any columns in the form of:
-      \`\`\`sql
-      ALTER TABLE Patient
-      ADD (...);
-      \`\`\`
-      Your available choices are any columns from the "Procedure" table and any "Patient" tables
-      the user has removed and is asking to be put back.
-      Do not output any other commentary, prose, or disclaimers. Only the summary line and the SQL code.  
-
-3. **Error Handling**  
-   - If the request is **ambiguous** or if it references a column that does not exist, respond with exactly:
-     \`\`\`
-     ERROR: <brief explanation>
-     \`\`\`
-     and do not emit any SQL code.  
-
-4. **Edge Cases**  
-   - If the user wants to **INSERT** a new record, generate a valid \`INSERT INTO Patient (...) VALUES (...)\` statement.  
-   - If the request implies multiple SQL statements, you may output multiple statements inside the same fenced block, separated by semicolons and each ending with a semicolon.  
-
-5. **No Extra Output**  
-   - Under no circumstances should you output anything besides (1) a one-sentence summary and (2) a \`\`\`sql fenced block\`\`\`, or an \`ERROR:\` line.  
-   - Do not give a numbered list, do not add commentary on best practices, do not apologize—only follow this exact format.`;
-
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: query,
-        },
-      ],
-      temperature: 0.1, // Low temperature for more deterministic results
-    });
-
-    const response = completion.choices[0].message.content;
-    if (!response) {
-      throw new Error("No response from OpenAI");
-    }
-
-    // Parse the response
-    const lines = response.split("\n");
-    let summary = "";
-    let sql = "";
-    let error = "";
-
-    // Extract summary and SQL/error
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line.startsWith("Summary:")) {
-        summary = line.substring(8).trim();
-      } else if (line.startsWith("ERROR:")) {
-        error = line.substring(6).trim();
-        break;
-      } else if (line.startsWith("```sql")) {
-        // Collect all SQL lines until the closing ```
-        let sqlLines = [];
-        i++; // Skip the ```sql line
-        while (i < lines.length && !lines[i].trim().startsWith("```")) {
-          sqlLines.push(lines[i]);
-          i++;
-        }
-        sql = sqlLines.join("\n").trim();
+    const { table, operation, filters, sort, pagination, data } = c.req.valid('json');
+    
+    switch (operation) {
+      case 'select': {
+        const whereClause = buildWhereClause(filters || []);
+        const orderByClause = buildOrderByClause(sort || []);
+        const paginationClause = buildPagination(pagination);
+        
+        // Get total count
+        const countQuery = `SELECT COUNT(*) as total FROM ${table} ${whereClause}`;
+        const countResult = await c.env.DB.prepare(countQuery).first();
+        const total = Number(countResult?.total || 0);
+        
+        // Get data
+        const query = `
+          SELECT * FROM ${table}
+          ${whereClause}
+          ${orderByClause}
+          ${paginationClause}
+        `;
+        const result = await c.env.DB.prepare(query).all();
+        
+        return c.json({
+          page: pagination?.page || 1,
+          pageSize: pagination?.pageSize || 20,
+          data: [...(result.results || [])],
+          total,
+          error: undefined
+        }, 200);
       }
+      
+      case 'insert': {
+        if (!data) {
+          return c.json({
+            page: 1,
+            pageSize: 1,
+            data: [],
+            total: 0,
+            error: 'Data is required for insert operation'
+          }, 400);
+        }
+        
+        const columns = Object.keys(data).join(', ');
+        const values = Object.values(data).map(v => `'${v}'`).join(', ');
+        const query = `INSERT INTO ${table} (${columns}) VALUES (${values})`;
+        
+        await c.env.DB.prepare(query).run();
+        return c.json({
+          page: 1,
+          pageSize: 1,
+          data: [],
+          total: 1,
+          error: undefined
+        }, 200);
+      }
+      
+      case 'update': {
+        if (!data) {
+          return c.json({
+            page: 1,
+            pageSize: 1,
+            data: [],
+            total: 0,
+            error: 'Data is required for update operation'
+          }, 400);
+        }
+        
+        const whereClause = buildWhereClause(filters || []);
+        const setClause = Object.entries(data)
+          .map(([key, value]) => `${key} = '${value}'`)
+          .join(', ');
+        
+        const query = `UPDATE ${table} SET ${setClause} ${whereClause}`;
+        await c.env.DB.prepare(query).run();
+        return c.json({
+          page: 1,
+          pageSize: 1,
+          data: [],
+          total: 1,
+          error: undefined
+        }, 200);
+      }
+      
+      case 'delete': {
+        const whereClause = buildWhereClause(filters || []);
+        const query = `DELETE FROM ${table} ${whereClause}`;
+        await c.env.DB.prepare(query).run();
+        return c.json({
+          page: 1,
+          pageSize: 1,
+          data: [],
+          total: 1,
+          error: undefined
+        }, 200);
+      }
+      
+      default:
+        return c.json({
+          page: 1,
+          pageSize: 1,
+          data: [],
+          total: 0,
+          error: `Unsupported operation: ${operation}`
+        }, 400);
     }
-
-    // Return the parsed response
-    return c.json(
-      {
-        summary,
-        sql: sql || undefined,
-        error: error || undefined,
-      },
-      200
-    );
   } catch (error) {
-    return c.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      500
-    );
+    return c.json({
+      page: 1,
+      pageSize: 1,
+      data: [],
+      total: 0,
+      error: error instanceof Error ? error.message : 'Internal server error'
+    }, 500);
   }
 });
 
-app.get("/", (c) => {
-  return c.text("Hi mom!");
+// Bulk operations handler
+app.openapi(db.bulkOperation, async (c) => {
+  try {
+    const { table, operation, filters, data } = c.req.valid('json');
+    const whereClause = buildWhereClause(filters || []);
+    
+    switch (operation) {
+      case 'update': {
+        if (!data) {
+          return c.json({
+            affectedRows: 0,
+            error: 'Data is required for update operation'
+          }, 400);
+        }
+        
+        const setClause = Object.entries(data)
+          .map(([key, value]) => `${key} = '${value}'`)
+          .join(', ');
+        
+        const query = `UPDATE ${table} SET ${setClause} ${whereClause}`;
+        const result = await c.env.DB.prepare(query).run();
+        return c.json({
+          affectedRows: result.meta?.changes || 0,
+          error: undefined
+        }, 200);
+      }
+      
+      case 'delete': {
+        const query = `DELETE FROM ${table} ${whereClause}`;
+        const result = await c.env.DB.prepare(query).run();
+        return c.json({
+          affectedRows: result.meta?.changes || 0,
+          error: undefined
+        }, 200);
+      }
+      
+      default:
+        return c.json({
+          affectedRows: 0,
+          error: `Unsupported operation: ${operation}`
+        }, 400);
+    }
+  } catch (error) {
+    return c.json({
+      affectedRows: 0,
+      error: error instanceof Error ? error.message : 'Internal server error'
+    }, 500);
+  }
 });
+
+// Schema operations handler
+app.openapi(db.schemaOperation, async (c) => {
+  try {
+    const { table, operation, column } = c.req.valid('json');
+    
+    switch (operation) {
+      case 'get': {
+        const query = `PRAGMA table_info(${table})`;
+        const result = await c.env.DB.prepare(query).all();
+        return c.json({
+          schema: [...(result.results || [])].map((col: any) => ({
+            name: col.name,
+            type: col.type,
+            nullable: !col.notnull
+          })),
+          error: undefined
+        }, 200);
+      }
+      
+      case 'addColumn': {
+        if (!column) {
+          return c.json({
+            schema: [],
+            error: 'Column definition is required for addColumn operation'
+          }, 400);
+        }
+        const { name, type, nullable } = column;
+        const query = `ALTER TABLE ${table} ADD COLUMN ${name} ${type} ${nullable ? '' : 'NOT NULL'}`;
+        await c.env.DB.prepare(query).run();
+        return c.json({
+          schema: [],
+          error: undefined
+        }, 200);
+      }
+      
+      case 'removeColumn': {
+        if (!column) {
+          return c.json({
+            schema: [],
+            error: 'Column definition is required for removeColumn operation'
+          }, 400);
+        }
+        
+        // Get current schema
+        const schemaQuery = `PRAGMA table_info(${table})`;
+        const schemaResult = await c.env.DB.prepare(schemaQuery).all();
+        const columns = [...(schemaResult.results || [])]
+          .filter((col: any) => col.name !== column.name)
+          .map((col: any) => `${col.name} ${col.type} ${col.notnull ? 'NOT NULL' : ''}`)
+          .join(', ');
+        
+        // Create new table and copy data
+        const queries = [
+          `CREATE TABLE ${table}_new (${columns})`,
+          `INSERT INTO ${table}_new SELECT ${[...(schemaResult.results || [])]
+            .filter((col: any) => col.name !== column.name)
+            .map((col: any) => col.name)
+            .join(', ')} FROM ${table}`,
+          `DROP TABLE ${table}`,
+          `ALTER TABLE ${table}_new RENAME TO ${table}`
+        ];
+        
+        for (const query of queries) {
+          await c.env.DB.prepare(query).run();
+        }
+        
+        return c.json({
+          schema: [],
+          error: undefined
+        }, 200);
+      }
+      
+      default:
+        return c.json({
+          schema: [],
+          error: `Unsupported operation: ${operation}`
+        }, 400);
+    }
+  } catch (error) {
+    return c.json({
+      schema: [],
+      error: error instanceof Error ? error.message : 'Internal server error'
+    }, 500);
+  }
+});
+
+app.route("/", nl2sql);
+app.route("/", fhir);
+
+// Existing nl2sql route
+
 
 app.doc("/openapi", {
   openapi: "3.0.0",
@@ -181,5 +341,11 @@ app.doc("/openapi", {
     title: "Medfetch API",
   },
 });
+
+app.get("/", (c) => {
+  return c.text("Hi mom!");
+});
+
+showRoutes(app);
 
 export default app;

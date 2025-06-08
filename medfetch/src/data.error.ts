@@ -10,12 +10,7 @@ interface __DataError {
  * For errors from the data module
  */
 export class DataError extends TaggedError("medfetch/data")<__DataError> {
-    constructor(
-        msg:
-            | string
-            | __DataError,
-        type: DataModule = "main"
-    ) {
+    constructor(msg: string | __DataError, type: DataModule = "main") {
         if (typeof msg === "string") {
             super({ message: msg, module: type });
         } else {

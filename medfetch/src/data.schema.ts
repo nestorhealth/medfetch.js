@@ -1,4 +1,13 @@
-import { Any, Array as $Array, Struct, String, type Schema, tag, declare, optionalWith } from "effect/Schema";
+import {
+    Any,
+    Array as $Array,
+    Struct,
+    String,
+    type Schema,
+    tag,
+    declare,
+    optionalWith,
+} from "effect/Schema";
 import { decodeUnknown, encodeUnknown } from "effect/ParseResult";
 
 /**
@@ -96,10 +105,7 @@ export function Entry<
     Entry<Schema.Encoded<typeof resource>>
 > {
     return Struct({
-        link: String.pipe(
-            $Array,
-            optionalWith({ exact: true }),
-        ),
+        link: String.pipe($Array, optionalWith({ exact: true })),
         fullUrl: String.pipe(optionalWith({ exact: true })),
         resource: resource.pipe(optionalWith({ exact: true })),
     });

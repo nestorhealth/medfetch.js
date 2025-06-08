@@ -30,7 +30,7 @@
         }
     },
     "include": [
-        "src/**/*.ts"
+        "src/sqlite-wasm.ts"
     ],
     "exclude": [
         "/**/*.test.ts",

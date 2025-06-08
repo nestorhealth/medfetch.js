@@ -9,7 +9,7 @@ import { Providers } from "@/app/Providers";
 export const metadata = {};
 
 const banner = (
-  <Banner storageKey="some-key">medfetch 0.0.1 is released 🎉</Banner>
+  <Banner storageKey="some-key">medfetch 0.1.0 is released 🎉</Banner>
 );
 const navbar = (
   <Navbar

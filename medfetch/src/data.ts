@@ -1,32 +1,10 @@
-import { pipe } from "effect";
 import { Resource, Link, Entry } from "./data.schema.js";
 import clarinet from "clarinet";
-import { case as createCase } from "effect/Data";
-import {
-    getOrNull,
-    isNone,
-    none,
-    type Option,
-    some,
-    map as mapOption,
-    flatMap as flatMapOption,
-    isSome,
-    getOrThrow,
-    fromNullable,
-} from "effect/Option";
-import {
-    andThen,
-    flatMap,
-    liftPredicate,
-    runPromise,
-    tryPromise,
-} from "effect/Effect";
-import { Array as $Array, decodeUnknown, type Schema } from "effect/Schema";
-import { fromAsyncIterable } from "effect/Stream";
 import { DataError } from "~/data.error.js";
+import type { Bundle } from "fhir/r4.js";
 
 /**
- * Unwrapped return type of calling the parser returned by {@link kdv}
+ * Unwrapped return type of calling the parser returned by {@link keyDepthValue}
  * @template Value The expected type of value at key `k`. This is *NOT* a runtime type:
  * you must validate the payload yourself if you're unsure about type at key `k`.
  */
@@ -44,13 +22,15 @@ interface KDVParseResult<Value> {
     tl: Value[keyof Value] | null;
 }
 
+export type KeyDepthValueResult<Value> = KDVParseResult<Value> | null;
+
 /**
- * The key-depth-value {@link clarinet} parser returned by {@link kdv}.
- * @template Value The expected type of the value from the key provided to {@link kdv} ctor.
+ * The key-depth-value {@link clarinet} parser returned by {@link keyDepthValue}.
+ * @template Value The expected type of the value from the key provided to {@link keyDepthValue} ctor.
  * @param chunk The next available chunk of the Bundle to send to {@link clarinet.CParser.write}
  * @returns Some {@link KDVParseResult} if it exists. None otherwise.
  */
-type KDVParseFn<Value> = (chunk: string) => Option<KDVParseResult<Value>>;
+type KeyDepthValueFn<Value> = (chunk: string) => KeyDepthValueResult<Value>;
 
 /**
  * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
@@ -59,10 +39,10 @@ type KDVParseFn<Value> = (chunk: string) => Option<KDVParseResult<Value>>;
  * @param d The depth (first key is depth 1)
  * @returns Some value if it exists, None otherwise.
  */
-export const kdv = <Value = unknown>(
+export const keyDepthValue = <Value = unknown>(
     k: string,
     d: number,
-): KDVParseFn<Value> => {
+): KeyDepthValueFn<Value> => {
     const parser = clarinet.parser();
 
     let currentKey = "";
@@ -161,42 +141,120 @@ export const kdv = <Value = unknown>(
         }
     };
 
-    return (chunk: string): Option<KDVParseResult<Value>> => {
+    return (chunk: string): KeyDepthValueResult<Value> => {
         parser.write(chunk);
         if (!!v) {
-            return some({
+            return {
                 hd: v,
                 tl: null,
-            });
+            };
         } else if (stack.length > 0) {
             const hd = structuredClone(stack[0]);
             if (Array.isArray(hd)) {
                 const popped = hd.pop();
-                return some({
+                return {
                     hd: hd as Value,
                     tl: popped as any,
-                });
+                };
             } else {
                 const keys = Object.keys(hd);
                 const last = keys[keys.length - 1];
                 const lastChild = hd[last];
                 delete hd[last];
-                return some({
+                return {
                     hd: hd as Value,
                     tl: lastChild as any,
-                });
+                };
             }
         } else {
-            return none();
+            return null;
         }
     };
 };
 
+const parseLink = keyDepthValue<Link[]>("link", 1);
+const parseEntry = keyDepthValue<Entry[]>("entry", 1);
+
 /**
- * Bundle stream utility functions
- * @template ResourceType the expected resource types the Bundle will return, defaulting to any string value
+ * Somewhat abstract mapping of a grouping or "page" of related FHIR data
  */
-export interface Page<ResourceType extends string = string> {
+export class Page {
+    #nextURL: string | null;
+    #isLinkParsed: boolean;
+    #cursor: number;
+    #acc: Resource[];
+    #chunks: Generator<string>;
+    #rows: Generator<Resource> | undefined = undefined;
+    #fetcher: ((url: string) => Generator<string>) | undefined;
+
+    constructor(
+        chunks: Generator<string>,
+        nextPage?: (nextURL: string) => Generator<string>,
+    ) {
+        this.#nextURL = null;
+        this.#isLinkParsed = false;
+        this.#cursor = -1;
+        this.#acc = [];
+        this.#chunks = chunks;
+        this.#fetcher = nextPage;
+    }
+
+    *#resources() {
+        while (true) {
+            if (this.#acc.length > 0) {
+                yield this.#acc.shift()!;
+            }
+            const { done, value } = this.#chunks.next();
+            if (done || !value) break;
+            if (!this.#nextURL && !this.#isLinkParsed) {
+                const link = parseLink(value);
+                if (link) {
+                    this.#isLinkParsed = true;
+                    const nextLink = link.hd.find(
+                        (link) => link.relation === "next",
+                    )?.url;
+                    if (nextLink) {
+                        this.#nextURL = nextLink;
+                    }
+                }
+            }
+            const popped = parseEntry(value);
+            if (popped) {
+                if (popped.hd.length > 0) {
+                    const hd = popped.hd
+                        .slice(this.#cursor + 1)
+                        .filter(
+                            (
+                                entry,
+                            ): entry is Entry & {
+                                resource: Resource;
+                            } => !!entry.resource,
+                        )
+                        .map(({ resource }) => resource);
+                    this.#cursor = hd.length - 1;
+                    this.#acc.push(...hd);
+                    let front = this.#acc.shift();
+                    if (front) {
+                        yield front;
+                    }
+                }
+            }
+        }
+        while (this.#acc.length > 0) yield this.#acc.shift()!;
+    }
+
+    /**
+     * Get back a generator wrapper over the Bundle text chunk generator provided
+     * that flushes out resources one by one.
+     * @returns {@link Resource} generator
+     */
+    get rows() {
+        if (!this.#rows) {
+            this.#rows = this.#resources();
+        }
+        return this.#rows;
+    }
+
     /**
      * Stateful next bundle url getter that only returns non-null if
      * 1. The {@link Link} property was able to be parsed at depth 1 and
@@ -204,91 +262,15 @@ export interface Page<ResourceType extends string = string> {
      * Call when {@link resources} returns `done` to check if a next URL exists or not.
      * @returns The next page URL if it exists, null otherwise.
      */
-    next: () => string | null;
-
-    /**
-     * Get back a generator wrapper over the Bundle text chunk generator provided
-     * that flushes out resources one by one.
-     * @returns {@link Resource} generator
-     */
-    resources: () => Generator<Resource<ResourceType>, void>;
+    get next(): Page | null {
+        if (!this.#nextURL || !this.#fetcher) {
+            return null;
+        } else {
+            const nextChunks = this.#fetcher(this.#nextURL);
+            return new Page(nextChunks, this.#fetcher);
+        }
+    }
 }
-
-/**
- * Plain ctor for {@link Page}
- * @param args The required fields of a {@link Page}
- * @returns {@link PageHandler}
- */
-const page = createCase<Page>();
-
-/**
- * Stateful constructor-like function for {@link Page}
- * @param bundleChunks Some Bundle chunks Generator
- * @returns {@link Page}
- */
-export function Page(bundleChunks: Generator<string>): Page {
-    let cursor = -1;
-    let nextURL = none<string>();
-    let isLinkParsed = false;
-    const parseLink = kdv<Link[]>("link", 1);
-    const parseEntry = kdv<Entry[]>("entry", 1);
-    const acc: Resource[] = [];
-    return page({
-        next() {
-            return getOrNull(nextURL);
-        },
-        *resources() {
-            while (true) {
-                if (acc.length > 0) {
-                    yield acc.shift()!;
-                }
-                const { done, value } = bundleChunks.next();
-                if (done || !value) break;
-                if (isNone(nextURL) && !isLinkParsed) {
-                    parseLink(value).pipe(
-                        mapOption(({ hd }) => {
-                            isLinkParsed = true;
-                            const searched = hd.find(
-                                (link) => link.relation === "next",
-                            )?.url;
-                            if (searched) nextURL = some(searched);
-                        }),
-                    );
-                }
-                const popped = parseEntry(value).pipe(
-                    flatMapOption(({ hd }) => {
-                        if (hd.length > 0) {
-                            const flushed = hd
-                                .slice(cursor + 1)
-                                .filter(
-                                    (
-                                        entry,
-                                    ): entry is Entry & {
-                                        resource: Resource;
-                                    } => !!entry.resource,
-                                )
-                                .map(({ resource }) => resource);
-                            cursor = hd.length - 1;
-                            acc.push(...flushed);
-                            return some(acc.shift()!);
-                        } else return none();
-                    }),
-                );
-                if (isSome(popped)) {
-                    yield getOrThrow(popped);
-                }
-            }
-            while (acc.length > 0) yield acc.shift()!;
-        },
-    });
-}
-
-const Bundle = Resource("Bundle", {
-    link: Link.pipe($Array),
-    entry: Entry(Resource()).pipe($Array),
-});
-interface Bundle extends Schema.Type<typeof Bundle> {}
-const decodeBundle = decodeUnknown(Bundle);
 
 /**
  * Gets the link from the `Bundle.link`
@@ -297,12 +279,9 @@ const decodeBundle = decodeUnknown(Bundle);
  * @returns `Option.some` with the url if `'next' in Bundle.link.relation` exists. `Option.none` otherwise.
  *
  */
-const nextLink = (bundle: Bundle) =>
-    pipe(
-        bundle.link.find((link) => link.relation === "next"),
-        fromNullable,
-        mapOption((link) => link.url),
-    );
+const nextLink = (bundle: Bundle): string | null => {
+    return bundle.link?.find((link) => link.relation === "next")?.url ?? null;
+};
 
 /**
  * `fetch()` wrapper over an HTTP GET call.
@@ -315,20 +294,14 @@ const nextLink = (bundle: Bundle) =>
  * @param url - the server url
  * @returns a decoded Bundle
  */
-const get = (url: string) =>
-    tryPromise(() => fetch(url)).pipe(
-        andThen((response) =>
-            liftPredicate(
-                response,
-                (res) => res.ok,
-                (res) =>
-                    new DataError(`Response not ok! Status: ${res.status}`),
-            ),
-        ),
-        andThen((response) => tryPromise(() => response.json())),
-        flatMap(decodeBundle),
-    );
-
+const getBundle = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new DataError(`Response not ok! Status: ${response.status}`);
+    }
+    const payload: Bundle = await response.json();
+    return payload;
+};
 /**
  * Create an async iterator over
  * a Bundle and its links
@@ -341,20 +314,19 @@ const pageIterator = (baseUrl: string, resourceType: string) =>
         const upperLimit = n < 0 ? Infinity : n;
         let count = 0;
 
-        const firstPage = await runPromise(
-            get(`${baseUrl}/${resourceType}?_count=${maxPageSize}`),
+        const firstPage = await getBundle(
+            `${baseUrl}/${resourceType}?_count=${maxPageSize}`,
         );
         yield firstPage;
         count += firstPage.entry!.length;
 
-        let linkOption = nextLink(firstPage);
-        while (isSome(linkOption) && count < upperLimit) {
-            const link = getOrThrow(linkOption);
-            const page = await runPromise(get(link));
+        let link = nextLink(firstPage);
+        while (link && count < upperLimit) {
+            const page = await getBundle(link);
             yield page;
 
             count++;
-            linkOption = nextLink(page);
+            link = nextLink(page);
         }
     };
 
@@ -379,10 +351,17 @@ export const pages = (
     resourceType: string,
     n = 100,
     maxPageSize = 250,
-) =>
-    fromAsyncIterable(
-        pageIterator(baseUrl, resourceType)(n, maxPageSize),
-        (e) => new DataError(String(e)),
-    );
+) => pageIterator(baseUrl, resourceType)(n, maxPageSize);
 
 export { pkce } from "./data.auth.js";
+
+export function fromNullableOrThrow<T extends readonly unknown[]>(
+    ...args: T
+): { [K in keyof T]: NonNullable<T[K]> } {
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] == null) {
+            throw new Error(`unexpected nullable value at index ${i}`);
+        }
+    }
+    return args as { [K in keyof T]: NonNullable<T[K]> };
+}

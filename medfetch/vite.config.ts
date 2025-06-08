@@ -31,29 +31,24 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm", "fhirpath"],
+        exclude: ["@sqlite.org/sqlite-wasm"],
     },
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["fhirpath", "@sqlite.org/sqlite-wasm"],
+            external: ["@sqlite.org/sqlite-wasm", "kysely"],
             output: {
-                entryFileNames: `[name].mjs`,
-                chunkFileNames: `[name]-[hash].mjs`,
+                manualChunks: undefined,
+                entryFileNames: `[name].js`,
+                chunkFileNames: `[name]-[hash].js`,
                 assetFileNames: `[name]-[hash].[ext]`,
             },
         },
         lib: {
             entry: {
-                index: "src/index.ts",
-                view: "src/view.ts",
-                sof: "src/sof.ts",
-                fetch: "src/fetch.ts",
-                "sqlite-wasm/index": "src/sqlite-wasm/index.ts",
-                "sqlite-wasm/main": "src/sqlite-wasm/main.ts",
-                "sqlite-wasm/medfetch": "src/sqlite-wasm/medfetch.ts",
-                "sqlite-wasm/types": "src/sqlite-wasm/types.ts",
-                "sqlite-wasm/worker1": "src/sqlite-wasm/worker1.ts",
+                "sqlite-wasm": "src/sqlite-wasm.ts",
+                "sqlite-wasm/web-worker": "src/sqlite-wasm/web-worker.ts",
+                "fetch.worker": "src/fetch.worker.ts"
             },
             name: "medfetch",
             formats: ["es"],
@@ -61,6 +56,6 @@ export default defineConfig({
                 format === "esm" || format === "es"
                     ? `${name}.mjs`
                     : `${name}.js`,
-        }
+        },
     },
 });
