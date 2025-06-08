@@ -1,6 +1,6 @@
 import { FastCheck, Schema } from "effect";
 import * as fc from "effect/FastCheck";
-import { Resource } from "~/core/data.schema";
+import { Resource } from "~/fhir/data.schema";
 
 const REQUIRED = {
     id: fc.string(),

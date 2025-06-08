@@ -11,10 +11,10 @@
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
     },
     "exports": {
-        "./json": {
-            "types": "./dist/json.d.ts",
-            "import": "./dist/json.js",
-            "default": "./dist/json.js"
+        "./core": {
+            "types": "./dist/core/index.d.ts",
+            "import": "./dist/core/index.js",
+            "default": "./dist/core/index.js"
         },
         "./sql": {
             "types": "./dist/sql.d.ts",
@@ -44,6 +44,7 @@
     "devDependencies": {
         "@types/clarinet": "^0.12.3",
         "@types/fhir": "^0.0.41",
+        "@types/json-schema": "^7.0.15",
         "@types/node": "^22.13.1",
         "@vitest/browser": "^3.1.2",
         "@vitest/coverage-v8": "2.1.9",

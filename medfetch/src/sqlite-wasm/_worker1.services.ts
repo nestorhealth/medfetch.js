@@ -7,7 +7,7 @@ import {
     decodeSync,
 } from "effect/Schema";
 import type { SqlValue } from "@sqlite.org/sqlite-wasm";
-import { Column, ColumnPath, ViewDefinition } from "~/core/view";
+import { Column, ColumnPath, ViewDefinition } from "~/fhir/view";
 import { taggedEnum, TaggedEnum } from "effect/Data";
 
 /**

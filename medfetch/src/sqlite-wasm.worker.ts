@@ -2,9 +2,9 @@
 import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
-import { FetchSync, FetchSyncWorker } from "~/fetch";
+import { type FetchSync, blockingFetchFactory } from "~/fetch";
 import { Counter } from "~/sqlite-wasm/_counter";
-import { Page } from "~/core/data";
+import { Page } from "~/fhir/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 
 // Logs
@@ -13,18 +13,8 @@ const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    const fetchWorker = new Worker(
-        new URL(
-            import.meta.env?.DEV ? "./fetch.worker.js" : "./fetch.worker.js",
-            import.meta.url,
-        ),
-        {
-            type: "module",
-        },
-    );
-
-    // Singular FetchSync handle for all databases
-    const fetchSync = await FetchSyncWorker(fetchWorker);
+    // Singular blockingFetch handle for all databases
+    const fetchSync = await blockingFetchFactory();
 
     const dbCount = new Counter();
     const modules: Sqlite3Module[] = [];

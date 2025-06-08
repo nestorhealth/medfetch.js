@@ -6,7 +6,7 @@
     "deploy": "wrangler deploy --minify --env production",
     "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
     "api-typegen": "tsx bin/openapi-doc.ts && openapi-typescript ./dist/openapi.json -o ./dist/types.d.ts",
-    "fhir-codegen": "tsx bin/fhir-zod.ts"
+    "fhir-codegen": "tsx bin/fhir.zod.ts"
   },
   "exports": {
     "./types": {
@@ -14,6 +14,7 @@
     }
   },
   "dependencies": {
+    "@faker-js/faker": "^9.8.0",
     "@hono/node-server": "^1.14.4",
     "@hono/zod-openapi": "^0.19.8",
     "@hono/zod-validator": "^0.7.0",
@@ -22,12 +23,16 @@
     "json-refs": "^3.0.15",
     "json-schema-to-zod": "^2.6.1",
     "kysely": "^0.28.2",
+    "kysely-d1": "^0.4.0",
+    "medfetch": "workspace:^",
     "openai": "^5.0.1",
+    "xml2js": "^0.6.2",
     "zod": "^3.25.51"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250605.0",
     "@types/node": "^22.15.30",
+    "@types/xml2js": "^0.4.14",
     "openapi-typescript": "^7.8.0",
     "wrangler": "^4.4.0"
   }

@@ -150,7 +150,7 @@ export type FetchSync = (
  * @param worker The fetch-sync worker
  * @returns A {@link FetchSync} proxy function
  */
-export async function FetchSyncWorker(worker: Worker): Promise<FetchSync> {
+async function syncProxy(worker: Worker): Promise<FetchSync> {
     const port = await new Promise<MessagePort>((resolve, reject) => {
         const { port1, port2 } = new MessageChannel();
         const onMessage = (e: MessageEvent) => {
@@ -199,4 +199,21 @@ export async function FetchSyncWorker(worker: Worker): Promise<FetchSync> {
         const statusCode = status[0];
         return new ResponseProxySync(port, sab, id, statusCode);
     };
+}
+
+export async function blockingFetchFactory(worker?: Worker) {
+    let fetchWorker = worker;
+    if (!fetchWorker) {
+        fetchWorker = new Worker(
+            new URL(
+                import.meta.env?.DEV ? "./fetch.worker.js" : "./fetch.worker.js",
+                import.meta.url,
+            ),
+            {
+                type: "module",
+                name: "fetch.worker"
+            }
+        )
+    }
+    return await syncProxy(fetchWorker);
 }

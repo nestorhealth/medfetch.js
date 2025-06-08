@@ -9,13 +9,13 @@ import {
     IGenericSqlite,
     Promisable,
 } from "kysely-generic-sqlite";
-import { fromNullableOrThrow } from "~/core/data";
+import { fromNullableOrThrow } from "~/fhir/data";
 import type {
     Worker1OpenRequest,
     Worker1Promiser,
 } from "~/sqlite-wasm/_types.patch";
 import { check } from "~/sqlite-wasm/_worker1.main";
-import { isBrowser } from "~/core/env";
+import { isBrowser } from "~/fhir/env";
 import { kyselyDummy } from "~/sql.kysely";
 
 /* Its `db` field is a string */

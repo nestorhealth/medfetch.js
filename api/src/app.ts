@@ -5,15 +5,17 @@ import { D1Database } from "@cloudflare/workers-types";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
 import nl2sql from "./routes/nl2sql";
-import fhir from "./routes/fhir";
+import fhir, { DB } from "./routes/fhir";
 import { customLogger } from "~/lib/context";
 import { HTTPException } from "hono/http-exception";
+import { Kysely } from "kysely";
 
 // Extend the Env type to include DB
 declare global {
   type Env = Cloudflare.Env & { DB: D1Database };
   type Vars = {
     setError: <ErrorObject extends Error>(err: ErrorObject) => never;
+    db: Kysely<DB>;
   }
 }
 

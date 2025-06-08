@@ -30,9 +30,8 @@
         }
     },
     "include": [
-        /* Entry points are top level src/ folders with no '.' separator */
+        /* Every entry point is a top level src/ file with no '.' separator */
         "src/sqlite-wasm.ts",
-        "src/json.ts",
         "src/sql.ts",
     ],
     "exclude": [

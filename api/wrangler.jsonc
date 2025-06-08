@@ -21,6 +21,13 @@
       "binding": "FHIR_SCHEMA",
       "id": "7a1bae0ec86c455cb799358e91c6c740"
     }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "prod-d1-fhir",
+      "database_id": "f623445a-90b7-4dc5-97eb-15b8b4e1a896"
+    }
   ]
   // "compatibility_flags": [
   //   "nodejs_compat"
