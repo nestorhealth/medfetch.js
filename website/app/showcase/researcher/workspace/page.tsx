@@ -22,11 +22,11 @@ export default function WorkspacePage() {
       try {
         setIsInitializing(true);
         
-        const medDb = initMedfetchDB({
+        const medDb = await initMedfetchDB({
           baseURL: "https://r4.smarthealthit.org",
           filename: 'medfetch.db',
           trace: true
-        } as { baseURL?: string; trace?: boolean; filename?: string });
+        });
         setDB(medDb);
         tableManager.current = new TableManager(medDb);
 
