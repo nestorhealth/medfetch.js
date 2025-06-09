@@ -9,7 +9,7 @@ export type Block<Args extends any[], Result> = [
     (...args: Args) => Result,
         
     /* The message handler the async handler thread needs to call to carry out the deferred promise */
-    (worker: Worker) => void,
+    (workerFn: (name: string) => Worker) => Worker,
 ];
 
 /**
@@ -19,15 +19,18 @@ export type Block<Args extends any[], Result> = [
  * @template Result The awaited return type of the deferred async function
  */
 export interface MessageConfig<Result> {
+
     /**
-     * How to serialize the return type into a plaintext string?
+     * How to serialize the return type into a plaintext string? Defaults to
+     * {@link JSON.stringify}
      * @param result The awaited return type
      * @returns Its string serialization.
      */
     encode: (result: Result) => string;
     
     /**
-     * How to deserialize the text value back into an object?
+     * How to deserialize the text value back into an object? Defaults to
+     * {@link JSON.parse}
      * @param text The plaintext of the value
      * @returns The result parsed
      */
@@ -41,6 +44,9 @@ export interface MessageConfig<Result> {
      * ```ts
      * const sab = new SharedArrayBuffer(8 + byteSize)
      * ```
+     * 
+     * Defaults to 500,000
      */
     byteSize: number;
+    
 }
