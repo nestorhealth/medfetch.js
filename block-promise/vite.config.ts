@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-import path from "node:path";
 
 export default defineConfig({
     // @ts-ignore
@@ -23,13 +22,6 @@ export default defineConfig({
         headers: {
             "Cross-Origin-Opener-Policy": "same-origin",
             "Cross-Origin-Embedder-Policy": "require-corp",
-        },
-    },
-    build: {
-        lib: {
-            entry: "src/block-promise.ts",
-            formats: ["es"],
-            fileName: "block-promise"
         },
     },
 });

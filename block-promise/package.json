@@ -1,15 +1,26 @@
 {
   "name": "block-promise",
-  "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build && tsc -p tsconfig.build.json", 
-    "preview": "vite preview"
+    "dev": "vite"
+  },
+  "exports": {
+    ".": {
+      "browser": {
+        "import": "./dist/block.browser.js",
+        "require": "./dist/block.browser.cjs"
+      },
+      "node": {
+        "import": "./dist/block.node.js",
+        "require": "./dist/block.node.cjs"
+      },
+      "default": "./dist/block.browser.js",
+      "types": "./dist/block.d.ts"
+    }
   },
   "devDependencies": {
-    "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "@types/node": "^22.15.30",
+    "tsup": "^8.4.0",
+    "vite": "^6.2.2"
   }
 }
