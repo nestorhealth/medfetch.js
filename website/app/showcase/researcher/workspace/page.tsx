@@ -9,103 +9,138 @@ import { useRouter } from "next/navigation";
 
 export default function WorkspacePage() {
   const router = useRouter();
-  const [db, setDB] = useState<MedfetchClient | null>(null);
+  const dbRef = useRef<MedfetchClient | null>(null);
+  const tableManagerRef = useRef<TableManager | null>(null);
+  const isInitializedRef = useRef(false);
+  
   const [currentResource, setCurrentResource] = useState<"Patient" | "Procedure">("Patient");
   const [rawData, setRawData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const tableManager = useRef<TableManager | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [primaryKey, setPrimaryKey] = useState<string>("patient_id");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setIsInitializing(true);
+  const initializeDatabase = useCallback(async () => {
+    if (isInitializedRef.current || dbRef.current) return;
+    
+    try {
+      setIsLoading(true);
+      isInitializedRef.current = true;
+      
+      const medDb = await initMedfetchDB({
+        baseURL: "https://r4.smarthealthit.org",
+        filename: 'medfetch.db',
+        trace: true
+      });
+      
+      dbRef.current = medDb;
+      tableManagerRef.current = new TableManager(medDb);
+
+      await medDb.db.exec(`
+        BEGIN TRANSACTION;
         
-        const medDb = await initMedfetchDB({
-          baseURL: "https://r4.smarthealthit.org",
-          filename: 'medfetch.db',
-          trace: true
-        });
-        setDB(medDb);
-        tableManager.current = new TableManager(medDb);
+        CREATE TABLE IF NOT EXISTS Patient (
+          patient_id TEXT PRIMARY KEY,
+          givenName TEXT,
+          familyName TEXT,
+          birthDate TEXT,
+          gender TEXT,
+          condition TEXT,
+          status TEXT
+        );
 
+        CREATE TABLE IF NOT EXISTS Procedure (
+          procedure_id TEXT PRIMARY KEY,
+          patient_id TEXT,
+          code TEXT,
+          performedDate TEXT,
+          notes TEXT,
+          FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
+        );
+        
+        COMMIT;
+      `);
+
+      const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
+      if (patientCount[0].count === 0) {
         await medDb.db.exec(`
-          CREATE TABLE IF NOT EXISTS Patient (
-            patient_id TEXT PRIMARY KEY,
-            givenName TEXT,
-            familyName TEXT,
-            birthDate TEXT,
-            gender TEXT,
-            condition TEXT,
-            status TEXT
-          );
-        `);
-
-        await medDb.db.exec(`
-          CREATE TABLE IF NOT EXISTS Procedure (
-            procedure_id TEXT PRIMARY KEY,
-            patient_id TEXT,
-            code TEXT,
-            performedDate TEXT,
-            notes TEXT,
-            FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
-          );
-        `);
-
-        const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
-        if (patientCount[0].count === 0) {
-          await medDb.db.exec(`
-            INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
-            VALUES 
-              ('p1', 'John', 'Doe', '1970-01-01', 'male', 'Diabetes', 'Active'),
-              ('p2', 'Jane', 'Smith', '1985-03-15', 'female', 'Hypertension', 'Active'),
-              ('p3', 'Bob', 'Johnson', '1962-07-22', 'male', 'Heart Disease', 'Inactive'),
-              ('p4', 'Alice', 'Brown', '1978-11-08', 'female', 'Diabetes', 'Active'),
-              ('p5', 'Charlie', 'Wilson', '1955-09-30', 'male', 'COPD', 'Active');
-          `);
+          BEGIN TRANSACTION;
           
-          await medDb.db.exec(`
-            INSERT INTO Procedure (procedure_id, patient_id, code, performedDate, notes)
-            VALUES 
-              ('pr1', 'p1', 'Blood Test', '2024-01-15', 'Routine glucose check'),
-              ('pr2', 'p2', 'BP Monitoring', '2024-01-20', 'Weekly blood pressure check'),
-              ('pr3', 'p1', 'HbA1c Test', '2024-02-01', 'Diabetes monitoring'),
-              ('pr4', 'p3', 'ECG', '2024-01-25', 'Heart rhythm check'),
-              ('pr5', 'p4', 'Blood Test', '2024-02-10', 'Routine glucose check');
-          `);
-        }
-
-        const schema = await tableManager.current.getTableSchema(currentResource);
-        const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
-        setPrimaryKey(pkCol);
-        const rows = await medDb.db.prepare(`SELECT * FROM ${currentResource};`).all();
-        setRawData(rows);
-      } catch (err) {
-        setError("Failed to initialize Medfetch DB: " + (err as Error).message);
-      } finally {
-        setIsInitializing(false);
+          INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
+          VALUES 
+            ('p1', 'John', 'Doe', '1970-01-01', 'male', 'Diabetes', 'Active'),
+            ('p2', 'Jane', 'Smith', '1985-03-15', 'female', 'Hypertension', 'Active'),
+            ('p3', 'Bob', 'Johnson', '1962-07-22', 'male', 'Heart Disease', 'Inactive'),
+            ('p4', 'Alice', 'Brown', '1978-11-08', 'female', 'Diabetes', 'Active'),
+            ('p5', 'Charlie', 'Wilson', '1955-09-30', 'male', 'COPD', 'Active');
+          
+          INSERT INTO Procedure (procedure_id, patient_id, code, performedDate, notes)
+          VALUES 
+            ('pr1', 'p1', 'Blood Test', '2024-01-15', 'Routine glucose check'),
+            ('pr2', 'p2', 'BP Monitoring', '2024-01-20', 'Weekly blood pressure check'),
+            ('pr3', 'p1', 'HbA1c Test', '2024-02-01', 'Diabetes monitoring'),
+            ('pr4', 'p3', 'ECG', '2024-01-25', 'Heart rhythm check'),
+            ('pr5', 'p4', 'Blood Test', '2024-02-10', 'Routine glucose check');
+          
+          COMMIT;
+        `);
       }
-    })();
-  }, [currentResource]);
 
-  const handleCellEdit = async (rowId: any, col: string, newValue: any) => {
-    if (!db || !primaryKey) return;
+    } catch (err) {
+      setError("Failed to initialize Medfetch DB: " + (err as Error).message);
+      isInitializedRef.current = false;
+      dbRef.current = null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const loadResourceData = useCallback(async (resource: "Patient" | "Procedure") => {
+    if (!dbRef.current || !tableManagerRef.current) return;
+    
+    try {
+      setError(null);
+      const schema = await tableManagerRef.current.getTableSchema(resource);
+      const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
+      setPrimaryKey(pkCol);
+      
+      const rows = await dbRef.current.db.prepare(`SELECT * FROM ${resource};`).all();
+      setRawData(rows);
+    } catch (err) {
+      setError("Failed to load data: " + (err as Error).message);
+    }
+  }, []);
+
+  useEffect(() => {
+    initializeDatabase();
+  }, [initializeDatabase]);
+
+  useEffect(() => {
+    if (dbRef.current && !isLoading) {
+      loadResourceData(currentResource);
+    }
+  }, [currentResource, isLoading, loadResourceData]);
+
+  const handleCellEdit = useCallback(async (rowId: any, col: string, newValue: any) => {
+    if (!dbRef.current || !primaryKey) return;
+    
     try {
       setError(null);
       const updateSQL = `UPDATE ${currentResource} SET ${col} = ${typeof newValue === "string" ? `'${newValue}'` : newValue} WHERE ${primaryKey} = '${rowId}';`;
-      await db.db.exec("BEGIN TRANSACTION;");
-      await db.db.exec(updateSQL);
-      await db.db.exec("COMMIT;");
-      const newRows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
-      setRawData(newRows);
+      
+      await dbRef.current.db.exec(`
+        BEGIN TRANSACTION;
+        ${updateSQL}
+        COMMIT;
+      `);
+      
+      await loadResourceData(currentResource);
     } catch (err) {
       setError("Edit failed: " + (err as Error).message);
     }
-  };
+  }, [currentResource, primaryKey, loadResourceData]);
 
   const handleQuery = useCallback(async (sql: string): Promise<void> => {
-    if (!db) return;
+    if (!dbRef.current) return;
 
     try {
       setError(null);
@@ -113,78 +148,62 @@ export default function WorkspacePage() {
       const statements = sql.split(';').filter(stmt => stmt.trim());
       const isSelect = statements[0].trim().toLowerCase().startsWith('select');
       
-      if (!isSelect) {
-        await db.db.exec('BEGIN TRANSACTION;');
-      }
-
-      try {
+      if (isSelect) {
         for (const statement of statements) {
           if (statement.trim()) {
-            const result = await db.db.prepare(statement + ';').all();
-            console.log('Statement result:', result);
+            await dbRef.current.db.prepare(statement + ';').all();
           }
         }
+      } else {
+        const transactionSQL = `
+          BEGIN TRANSACTION;
+          ${statements.join(';')};
+          COMMIT;
+        `;
+        await dbRef.current.db.exec(transactionSQL);
+      }
 
-        if (!isSelect) {
-          await db.db.exec('COMMIT;');
-          console.log('Transaction committed');
-        }
+      let affectedTable: "Patient" | "Procedure" | null = null;
+      const firstStmt = statements[0].trim().toLowerCase();
+      
+      if (firstStmt.startsWith('select')) {
+        const tableMatch = firstStmt.match(/from\s+(\w+)/i);
+        if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
+      } else if (firstStmt.startsWith('insert')) {
+        const tableMatch = firstStmt.match(/into\s+(\w+)/i);
+        if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
+      } else if (firstStmt.startsWith('update') || firstStmt.startsWith('delete')) {
+        const tableMatch = firstStmt.match(/(?:update|delete from)\s+(\w+)/i);
+        if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
+      }
 
-        let affectedTable: "Patient" | "Procedure" | null = null;
-        const firstStmt = statements[0].trim().toLowerCase();
-        if (firstStmt.startsWith('select')) {
-          const tableMatch = firstStmt.match(/from\s+(\w+)/i);
-          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-        } else if (firstStmt.startsWith('insert')) {
-          const tableMatch = firstStmt.match(/into\s+(\w+)/i);
-          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-        } else if (firstStmt.startsWith('update') || firstStmt.startsWith('delete')) {
-          const tableMatch = firstStmt.match(/(?:update|delete from)\s+(\w+)/i);
-          if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-        }
-
-        if (affectedTable && affectedTable !== currentResource) {
-          setCurrentResource(affectedTable);
-        }
-
-        const rows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
-        console.log('Current table state after all operations:', rows);
-        setRawData(rows);
-      } catch (err) {
-        if (!isSelect) {
-          await db.db.exec('ROLLBACK;');
-          console.log('Transaction rolled back due to error:', err);
-        }
-        throw err;
+      if (affectedTable && affectedTable !== currentResource) {
+        setCurrentResource(affectedTable);
+      } else {
+        await loadResourceData(currentResource);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(`Query failed: ${errorMessage}`);
       throw err;
     }
-  }, [db, currentResource]);
+  }, [currentResource, loadResourceData]);
 
-  const refreshData = async () => {
-    if (!db) return;
-    try {
-      setError(null);
-      const rows = await db.db.prepare(`SELECT * FROM ${currentResource};`).all();
-      setRawData(rows);
-    } catch (err) {
-      setError("Failed to refresh data: " + (err as Error).message);
-    }
-  };
+  const refreshData = useCallback(async () => {
+    if (!dbRef.current) return;
+    await loadResourceData(currentResource);
+  }, [currentResource, loadResourceData]);
 
-  const getTableStats = () => {
+  const getTableStats = useCallback(() => {
     if (!rawData) return { total: 0, active: 0 };
     const total = rawData.length;
     const active = rawData.filter(row => row.status === 'Active' || !row.status).length;
     return { total, active };
-  };
+  }, [rawData]);
 
   const stats = getTableStats();
 
-  if (isInitializing) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
         <div className="text-center">
@@ -312,9 +331,9 @@ export default function WorkspacePage() {
             )}
 
             <div className="flex-1 p-6">
-              {db ? (
+              {dbRef.current ? (
                 <AGGridTable
-                  db={db}
+                  db={dbRef.current}
                   resource={currentResource}
                   rowData={rawData}
                   onCellEdit={handleCellEdit}
@@ -333,8 +352,8 @@ export default function WorkspacePage() {
         </div>
 
         <div className="w-96 border-l border-slate-700">
-          {db ? (
-            <ChatUI db={db} onQuery={handleQuery} />
+          {dbRef.current ? (
+            <ChatUI db={dbRef.current} onQuery={handleQuery} />
           ) : (
             <div className="flex items-center justify-center h-full bg-slate-900">
               <div className="text-center">

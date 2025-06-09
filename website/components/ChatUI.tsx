@@ -123,8 +123,9 @@ export default function ChatUI({ onQuery }: ChatUIProps) {
                 Ask me anything about your data. I'll help you generate SQL queries and analyze your results.
               </p>
               <div className="mt-6 space-y-2 text-xs text-slate-500">
-                <p>• "Show me all patients with diabetes"</p>
-                <p>• "Count procedures by type"</p>
+                <p>• "Show me pediatric patients over 18 years old admitted in the US after 2015 with
+                tibial shaft fractures"</p>
+                <p>• "Add age group breakdowns: 0-5, 6-12, 13-18. Include race, gender, and ethnicity"</p>
                 <p>• "Find patients older than 65"</p>
               </div>
             </div>
