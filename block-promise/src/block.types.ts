@@ -19,8 +19,6 @@ export type Ping = (
     worker: Worker | ((names: WorkerNameMap) => Worker),
 ) => Promise<Worker>;
     
-export type Pong = () => void;
-    
 /**
  * The 2-tuple returned by [block()](./block.browser.ts)
  *
@@ -30,7 +28,6 @@ export type Pong = () => void;
 export type Block<Args extends any[], Result> = readonly [
     (...args: Args) => Result,
     Ping,
-    Pong
 ];
 
 /**

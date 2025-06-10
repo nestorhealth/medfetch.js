@@ -1,16 +1,5 @@
 import type { Block, MessageConfig, Ping } from "./block.types";
 
-const isBrowserWorkerThread =
-  // Running outside the main thread (no window)
-  typeof window === "undefined" &&
-  // Running inside a dedicated worker context
-  (typeof self !== "undefined" && (
-    // Covers Webpack (no importScripts in module workers sometimes)
-    typeof WorkerGlobalScope !== "undefined" &&
-    self instanceof WorkerGlobalScope
-  ));
-
-
 /**
  * Returns a plain 2-tuple {@link Array} "view" of a given SharedArrayBuffer
  * where bytes 0-7 are the signal bytes and bytes 8 - N are allocated for the
@@ -142,7 +131,6 @@ export default function block<Args extends any[], Result>(
     };
     
     const pong = () => {
-        console.log("righttttt", self.name, isBrowserWorkerThread)
         /**
         * Only useful if the deferring worker is the owner of the
         * task handler thread.
@@ -159,8 +147,11 @@ export default function block<Args extends any[], Result>(
             };
         }
     }
+    if (self.name === asyncWorkerName) {
+        pong();
+    }
 
-    return [blockFn, ping, pong];
+    return [blockFn, ping];
 }
 
 async function handshakePing(worker: Worker) {
