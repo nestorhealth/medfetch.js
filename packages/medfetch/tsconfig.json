@@ -26,5 +26,6 @@
             "~/*": ["src/*"]
         }
     },
-    "include": ["src", "fiddle", "sql-on-fhir/fhir", "sql-on-fhir/examples"]
+    "include": ["src", "fiddle", "sql-on-fhir/fhir", "sql-on-fhir/examples"],
+    "exclude": ["dist"]
 }

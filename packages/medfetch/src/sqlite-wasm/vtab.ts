@@ -4,7 +4,7 @@ import type {
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
 import type { Resource } from "fhir/r4";
-import { Page } from "~/data";
+import { Page } from "~/json";
 import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/worker1.types";
 import { ResolveColumn } from "~/sql";
 

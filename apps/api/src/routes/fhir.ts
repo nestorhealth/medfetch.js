@@ -31,24 +31,6 @@ fhir.use((c, next) => {
   return next();
 });
 
-fhir.use(async (c, next) => {
-  const db = c.var.db;
-  await db.schema.dropTable("Patient").execute();
-  await db.schema.dropTable("Condition").execute();
-  const tables = await db
-    .selectFrom("sqlite_master")
-    .selectAll("sqlite_master")
-    .execute();
-  const hasResourceTables =
-    tables.some((table) => table.name === "Patient") &&
-    tables.some((table) => table.name === "Condition");
-  if (!hasResourceTables) {
-    const script = await migrations("sqlite", ["Patient", "Condition"]);
-    await sql.raw(script.sql).execute(db);
-  }
-  return next();
-});
-
 fhir.openapi(schema.Patient.GET, async (c) => {
   return c.json(hapiPatients as z.infer<typeof Bundle>, 200);
 });

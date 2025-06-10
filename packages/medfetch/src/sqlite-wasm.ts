@@ -1,5 +1,5 @@
 import type { FhirResource } from "fhir/r4";
-import { isBrowser } from "~/data";
+import { isBrowser } from "~/json";
 import { type SqlOnFhirDialect, Worker1PromiserDialect } from "~/dialects";
 import { kyselyDummy } from "~/sql";
 import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";

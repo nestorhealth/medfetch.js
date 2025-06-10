@@ -1,5 +1,5 @@
 import type { Extension, FhirResource } from "fhir/r4";
-import type { kdvParser } from "./data.parse";
+import type { kdvParser } from "./json.parse";
 
 /**
  * Utility type that turns every optional field as non-optional

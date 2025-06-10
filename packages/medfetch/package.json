@@ -16,6 +16,16 @@
             "import": "./dist/dialects.js",
             "default": "./dist/dialects.js"
         },
+        "./sql": {
+            "types": "./dist/sql.d.ts",
+            "import": "./dist/sql.js",
+            "default": "./dist/sql.js"
+        },
+        "./json": {
+            "types": "./dist/json.d.ts",
+            "import": "./dist/json.js",
+            "default": "./dist/json.js"
+        },
         "./sqlite-wasm": {
             "types": "./dist/sqlite-wasm.d.ts",
             "import": "./dist/sqlite-wasm.js",

@@ -30,9 +30,10 @@
         }
     },
     "include": [
-        /* Every entry point is a top level src/ file with no '.' separator */
         "src/sqlite-wasm.ts",
-        "src/dialects.ts"
+        "src/dialects.ts",
+        "src/json.ts",
+        "src/sql.ts"
     ],
     "exclude": [
         "/**/*.test.ts",

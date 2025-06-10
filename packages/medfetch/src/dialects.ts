@@ -5,7 +5,7 @@ import {
     type IGenericSqlite,
     type Promisable,
 } from "kysely-generic-sqlite";
-import { fromNullableOrThrow } from "~/data.types";
+import { fromNullableOrThrow } from "~/json.types";
 import type {
     Worker1OpenRequest,
     Worker1Promiser,

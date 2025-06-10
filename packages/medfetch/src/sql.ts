@@ -12,8 +12,8 @@ import {
     SqliteQueryCompiler,
     Dialect,
 } from "kysely";
-import type { FhirDataType, PrimitiveKey } from "~/data.types";
-import { unzipJSONSchema } from "~/data";
+import type { FhirDataType, PrimitiveKey } from "~/json.types";
+import { unzipJSONSchema } from "~/json";
 
 /**
  * Static dummy kysely orm object

@@ -3,7 +3,7 @@ import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/worker1";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/counter";
-import { Page } from "~/data";
+import { Page } from "~/json";
 import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
 import { pingSqliteWasmBlock, syncFetch } from "~/sqlite-wasm.block";
 import { sqlOnFhir } from "~/sql";

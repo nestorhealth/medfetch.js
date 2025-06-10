@@ -1,14 +1,12 @@
-import { Bundle } from "+/zod-fhir/Bundle";
-import { Condition } from "+/zod-fhir/Condition";
-import { Patient } from "+/zod-fhir/Patient";
 import { faker } from "@faker-js/faker";
 import z from "zod";
+
 
 type MapValues<RecordLike, V> = {
   [Key in keyof RecordLike]: V;
 };
 
-function makeFactory<T extends z.ZodObject<any>, Output = z.infer<T>>(
+export function makeFactory<T extends z.ZodObject<any>, Output = z.infer<T>>(
   schema: T
 ): (overrides: Partial<MapValues<Output, () => any>>) => Output {
   const shape = schema.shape;
@@ -37,26 +35,3 @@ function makeFactory<T extends z.ZodObject<any>, Output = z.infer<T>>(
     return result;
   };
 }
-
-// Constructor functions that return random mock values for each field based on zod schema
-export const bundle = makeFactory(Bundle);
-export const patient = makeFactory(Patient);
-export const condition = makeFactory(Condition);
-
-// Set of all fkeyable ids
-const FAKE_PATIENT_IDS = ["p1", "p2"];
-
-// Override condition constructor with a random ICD code
-const randomConditions = Array(5)
-  .fill(null)
-  .map((_) =>
-    condition({
-      subject: () => Math.random() < 0.5 ? FAKE_PATIENT_IDS[0] : FAKE_PATIENT_IDS[1],
-      code: () => {
-        const entries = Object.entries(ICD);
-        const randomIndex = Math.floor(Math.random() * entries.length);
-        return entries[randomIndex][1];
-      },
-    })
-  );
-  
