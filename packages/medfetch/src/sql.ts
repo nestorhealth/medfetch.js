@@ -10,49 +10,32 @@ import {
     SqliteAdapter,
     SqliteIntrospector,
     SqliteQueryCompiler,
+    Dialect,
 } from "kysely";
 import type { FhirDataType, PrimitiveKey } from "~/data.types";
 import { unzipJSONSchema } from "~/data";
-
-interface SqliteMaster {
-    type: string;
-    name: string;
-    tbl_name: string;
-    rootpage: number;
-    sql: string | null;
-}
-
-interface SqliteDBGeneric extends SqliteMaster, Record<string, any> {
-    sqlite_master: SqliteMaster;
-}
 
 /**
  * Static dummy kysely orm object
  * @param sqlFlavor The dialect enum
  */
-export function kyselyDummy<DB = SqliteDBGeneric>(
-    sqlFlavor: "sqlite" | "postgresql",
-) {
+export function kyselyDummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
     switch (sqlFlavor) {
         case "sqlite": {
-            return new Kysely<DB>({
-                dialect: {
-                    createAdapter: () => new SqliteAdapter(),
-                    createDriver: () => new DummyDriver(),
-                    createIntrospector: (db) => new SqliteIntrospector(db),
-                    createQueryCompiler: () => new SqliteQueryCompiler(),
-                },
-            });
+            return {
+                createAdapter: () => new SqliteAdapter(),
+                createDriver: () => new DummyDriver(),
+                createIntrospector: (db) => new SqliteIntrospector(db),
+                createQueryCompiler: () => new SqliteQueryCompiler(),
+            } satisfies Dialect;
         }
         case "postgresql": {
-            return new Kysely<DB>({
-                dialect: {
-                    createAdapter: () => new PostgresAdapter(),
-                    createDriver: () => new DummyDriver(),
-                    createIntrospector: (db) => new PostgresIntrospector(db),
-                    createQueryCompiler: () => new PostgresQueryCompiler(),
-                },
-            });
+            return {
+                createAdapter: () => new PostgresAdapter(),
+                createDriver: () => new DummyDriver(),
+                createIntrospector: (db) => new PostgresIntrospector(db),
+                createQueryCompiler: () => new PostgresQueryCompiler(),
+            };
         }
     }
 }
@@ -246,7 +229,9 @@ export function migrations(
         ...DEFAULT_COLUMN_MAP[sqlFlavor],
         ...override,
     };
-    const db = kyselyDummy(sqlFlavor);
+    const db = new Kysely<any>({
+        dialect: kyselyDummy(sqlFlavor)
+    });
     const columnMap = new Map<string, Array<ColumnKey>>();
     const schemaEntries = resourceTypes.map((resourceType) => {
         const migration = generateFhirTableMigration(
@@ -303,7 +288,9 @@ export async function sqlOnFhir(
     resourceTypes: string[],
     overridePrimitives: Partial<Record<PrimitiveKey, ColumnDataType>> = {},
 ) {
-    return unzipJSONSchema().then(schema => migrations(sqlFlavor, schema, resourceTypes, overridePrimitives));
+    return unzipJSONSchema().then((schema) =>
+        migrations(sqlFlavor, schema, resourceTypes, overridePrimitives),
+    );
 }
 
 // Utility: Determine if a type is a primitive (objects → string)

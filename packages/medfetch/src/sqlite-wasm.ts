@@ -1,5 +1,7 @@
 import type { FhirResource } from "fhir/r4";
+import { isBrowser } from "~/data";
 import { type SqlOnFhirDialect, Worker1PromiserDialect } from "~/dialects";
+import { kyselyDummy } from "~/sql";
 import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
 
 /**
@@ -19,6 +21,10 @@ export function sqliteWasmOnFhir<
     baseURL: string | File,
     resources: Resources,
 ): SqlOnFhirDialect<Resources> {
+    if (!isBrowser()) {
+        console.warn(`[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`);
+        return kyselyDummy("sqlite") as any as SqlOnFhirDialect<Resources>;
+    }
     return new Worker1PromiserDialect(
         {
             type: "open",
