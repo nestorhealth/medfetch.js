@@ -1,4 +1,4 @@
-import block from "../../src/block.browser";
+import block from "../../src/block";
 
 export const [getNthTodo, handleGetNthTodo] = block(
     "worker-thread-resolver",

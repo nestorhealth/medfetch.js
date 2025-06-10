@@ -2,20 +2,13 @@
   "name": "block-promise",
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "tsup"
   },
   "exports": {
     ".": {
-      "browser": {
-        "import": "./dist/block.browser.js",
-        "require": "./dist/block.browser.cjs"
-      },
-      "node": {
-        "import": "./dist/block.node.js",
-        "require": "./dist/block.node.cjs"
-      },
-      "default": "./dist/block.browser.js",
-      "types": "./dist/block.d.ts"
+      "types": "./dist/block.d.ts",
+      "default": "./dist/block.js"
     }
   },
   "devDependencies": {
