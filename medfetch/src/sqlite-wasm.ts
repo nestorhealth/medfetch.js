@@ -1,8 +1,5 @@
 import { promiserSyncV2 } from "~/sqlite-wasm/_worker1.main.js";
-import {
-    Kysely,
-    type QueryResult,
-} from "kysely";
+import { Kysely, type QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -16,7 +13,8 @@ import type {
 } from "~/sqlite-wasm/_types.patch";
 import { check } from "~/sqlite-wasm/_worker1.main";
 import { isBrowser } from "~/fhir/env";
-import { kyselyDummy } from "~/sql.kysely";
+import { type FhirResource } from "fhir/r4";
+import { type InferKyselyFhirDB, kyselyDummy } from "~/sql";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
@@ -121,10 +119,12 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
     }
 }
 
+/**
+ * Extra configuration
+ */
 interface MedfetchSqlite3WasmConfig {
     worker: Worker;
     filename: string;
-    resources: string[];
 }
 
 /**
@@ -146,7 +146,7 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
                 ),
                 {
                     type: "module",
-                    name: "sqlite-wasm.worker"
+                    name: "sqlite-wasm.worker",
                 },
             ),
         );
@@ -156,16 +156,25 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
 /**
  * Get back a Kysely database interface over the medfetch sql-on-fhir database
  * @param baseURL The data source, either a string to indicate REST or a Bundle {@link File}
- * @param opts
+ * @param resources What resources to include. Defaults to `Patient`, `Procedure`, and `Condition`
+ * @param opts Optional config (see {@link MedfetchSqlite3WasmConfig})
  * @returns A kysely orm interface over the sqlite-wasm database with the medfetch extension
+ * 
+ * @template DB The rest of the database, if you need those types
+ * @template Resources The resource types the medfetch extension should fetch from the baseURL
  */
-export function medfetch<DB = any>(
+export function medfetch<
+    DB = {},
+    const Resources extends [FhirResource["resourceType"], ...FhirResource["resourceType"][]] = [
+        "Patient",
+        "Condition",
+        "Procedure"
+    ]
+>(
     baseURL: string | File,
-    {
-        resources = ["Patient", "Procedure", "Condition"],
-        ...opts
-    }: Partial<MedfetchSqlite3WasmConfig> = {},
-): Kysely<DB> {
+    resources: Resources = ["Patient", "Condition", "Procedure"] as any,
+    opts: Partial<MedfetchSqlite3WasmConfig> = {},
+): Kysely<InferKyselyFhirDB<Resources> & DB> {
     if (!isBrowser()) {
         console.warn(
             `Called medfetch/sqlite-wasm::medfetch() on the server, returning empty kysely instance.`,
@@ -178,12 +187,12 @@ export function medfetch<DB = any>(
 
     if (!opts.filename) {
         // Use memory by default
-        return new Kysely<DB>({
+        return new Kysely<InferKyselyFhirDB<Resources> & DB>({
             dialect: new Worker1PromiserDialect(promiser, {
                 type: "open",
                 aux: {
                     baseURL,
-                    resources
+                    resources,
                 },
             }),
         });
@@ -194,14 +203,14 @@ export function medfetch<DB = any>(
         type: "open",
         aux: {
             baseURL,
-            resources
+            resources,
         },
         args: {
             filename: opts.filename,
             vfs: "opfs",
         },
     });
-    return new Kysely<DB>({
+    return new Kysely<InferKyselyFhirDB<Resources> & DB>({
         dialect,
     });
 }

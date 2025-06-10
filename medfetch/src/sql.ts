@@ -1,7 +1,60 @@
 import { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import { ColumnDataType, Kysely } from "kysely";
-import { kyselyDummy } from "~/sql.kysely";
 import { strFromU8, unzipSync } from "fflate";
+import type { FhirResource } from "fhir/r4";
+import {
+    DummyDriver,
+    ColumnDataType,
+    Kysely,
+    PostgresAdapter,
+    PostgresIntrospector,
+    PostgresQueryCompiler,
+    SqliteAdapter,
+    SqliteIntrospector,
+    SqliteQueryCompiler,
+} from "kysely";
+
+interface SqliteMaster {
+    type: string;
+    name: string;
+    tbl_name: string;
+    rootpage: number;
+    sql: string | null;
+}
+
+interface SqliteDBGeneric extends SqliteMaster, Record<string, any> {
+    sqlite_master: SqliteMaster;
+}
+
+/**
+ * Static dummy kysely orm object
+ * @param dialect The dialect enum
+ */
+export function kyselyDummy<DB = SqliteDBGeneric>(
+    dialect: "sqlite" | "postgresql",
+) {
+    switch (dialect) {
+        case "sqlite": {
+            return new Kysely<DB>({
+                dialect: {
+                    createAdapter: () => new SqliteAdapter(),
+                    createDriver: () => new DummyDriver(),
+                    createIntrospector: (db) => new SqliteIntrospector(db),
+                    createQueryCompiler: () => new SqliteQueryCompiler(),
+                },
+            });
+        }
+        case "postgresql": {
+            return new Kysely<DB>({
+                dialect: {
+                    createAdapter: () => new PostgresAdapter(),
+                    createDriver: () => new DummyDriver(),
+                    createIntrospector: (db) => new PostgresIntrospector(db),
+                    createQueryCompiler: () => new PostgresQueryCompiler(),
+                },
+            });
+        }
+    }
+}
 
 /**
  * Fetch the JSON schema and get back the parsed version from a zipfile
@@ -96,7 +149,7 @@ function tableMigration(
     },
     primitiveMap: Record<string, ColumnDataType>,
     keyFilter: (key: string) => boolean = (key) =>
-        !key.startsWith("_") && key !== "resourceType" && key !== "id",
+        !key.startsWith("_") && key !== "id",
 ): { sql: string; columns: Array<ColumnMeta> } {
     if (!jsonSchemaDefinitions[resourceType]) {
         throw new Error(`That key doesn't exist: "${resourceType}"`);
@@ -251,3 +304,36 @@ export async function sqliteOnFhir(
         sqliteMigrationsSync(schema, resourceTypes, map),
     );
 }
+
+// Utility: Determine if a type is a primitive
+type IsPrimitive<T> = T extends string | number | boolean | null | undefined
+    ? T
+    : string;
+
+// 2. Flatten FHIR fields, require only `id`, exclude `_` keys
+type FlattenFHIRFields<T> = {
+    id: string;
+} & {
+    [K in keyof T as K extends "id"
+        ? never
+        : K extends `_${string}`
+          ? never
+          : K]?: IsPrimitive<T[K]>;
+};
+
+/**
+ * This is just a key value record of resources to their javascript runtimes returned by the database driver,
+ * so it isn't really specific to Kysely
+ *
+ * @template Resources The resource types to include
+ */
+export type InferKyselyFhirDB<
+    Resources extends readonly [
+        FhirResource["resourceType"],
+        ...FhirResource["resourceType"][],
+    ],
+> = {
+    [R in Resources[number]]: FlattenFHIRFields<
+        Extract<FhirResource, { resourceType: R }>
+    >;
+};

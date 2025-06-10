@@ -1,12 +1,12 @@
 /// <reference lib="webworker" />
-import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab2";
+import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/_counter";
 import { Page } from "~/fhir/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 import { pingSqliteWasmBlock, syncFetch } from "~/sqlite-wasm.block";
-import { sqliteOnFhir, unzipJSONSchema } from "~/sql";
+import { sqliteOnFhir } from "~/sql";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
@@ -149,17 +149,4 @@ function index(internalDbId: string): number {
 function pointer(internalDbId: string): number {
     const split = internalDbId.split("@");
     return parseInt(split[split.length - 1]);
-}
-
-/**
- * Appends {@link baseURL} with {@link resourceType}, handling
- * if {@link baseURL} was written with a trailing slash or not.
- * @param baseURL The base URL, can have one trailing slash or none
- * @param resourceType The resource type to fetch
- * @returns The initial search URL
- */
-function url(baseURL: string, resourceType: string) {
-    return baseURL[baseURL.length - 1] === "/"
-        ? `${baseURL}${resourceType}`
-        : `${baseURL}/${resourceType}`;
 }

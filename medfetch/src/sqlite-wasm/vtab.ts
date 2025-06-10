@@ -1,8 +1,13 @@
-import type { sqlite3_module, sqlite3_vtab_cursor, Sqlite3Static } from "@sqlite.org/sqlite-wasm";
+import type {
+    sqlite3_module,
+    sqlite3_vtab_cursor,
+    Sqlite3Static,
+} from "@sqlite.org/sqlite-wasm";
 import type { Resource } from "fhir/r4";
 import { Page } from "~/fhir/data";
 import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 import { ViewDefinition } from "~/fhir/view";
+import { ResolveColumn } from "~/sql";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -37,27 +42,34 @@ export type GetPageFn = (resourceType: string) => Page;
  */
 export function medfetch_module_alloc(
     getPage: GetPageFn,
-    _sqlite3: Sqlite3Static,
-): Sqlite3Module {
-    let sqlite3 = _sqlite3 as Sqlite3;
-    const medfetch: sqlite3_module = (sqlite3.vtab as any).setupModule({
-        methods: {
-            xCreate: 0,
-            xConnect: x_connect(sqlite3),
-            xBestIndex: x_best_index(sqlite3),
-            xDisconnect: x_disconnect(sqlite3),
-            xOpen: x_open(sqlite3),
-            xClose: x_close(sqlite3),
-            xNext: x_next(sqlite3),
-            xColumn: x_column(sqlite3),
-            xEof: x_eof(sqlite3),
-            xFilter: x_filter(sqlite3, getPage),
-        },
-    });
-    if (!medfetch.pointer) {
-        throw new Error(`couldn't allocate the module`);
+    sqlite3: Sqlite3Static,
+    schemaMap: Record<string, string>,
+    column: ResolveColumn,
+): Record<string, Sqlite3Module> {
+    const modules: Record<string, Sqlite3Module> = {};
+
+    for (const [resourceType, migrationText] of Object.entries(schemaMap)) {
+        const mod: sqlite3_module = (sqlite3.vtab as any).setupModule({
+            methods: {
+                xCreate: 0,
+                xConnect: x_connect(sqlite3, migrationText, resourceType),
+                xBestIndex: x_best_index(sqlite3),
+                xDisconnect: x_disconnect(sqlite3),
+                xOpen: x_open(sqlite3),
+                xClose: x_close(sqlite3),
+                xNext: x_next(sqlite3),
+                xColumn: x_column(sqlite3, column),
+                xEof: x_eof(sqlite3),
+                xFilter: x_filter(sqlite3, getPage, resourceType), // pass resourceType
+            },
+        });
+
+        if (!mod.pointer)
+            throw new Error(`failed to allocate module for ${resourceType}`);
+        modules[resourceType] = mod;
     }
-    return medfetch;
+
+    return modules;
 }
 
 type Params<Key extends keyof sqlite3_module> = Parameters<
@@ -72,21 +84,19 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
  * @param args {@link Params<"xConnect">}
  * @returns The x_connect method
  */
-export function x_connect(_sqlite3: Sqlite3Static) {
+export function x_connect(
+    _sqlite3: Sqlite3Static,
+    migrationText: string,
+    tableName: string,
+) {
     let sqlite3 = _sqlite3;
     return (...args: Params<"xConnect">) => {
-        console.log(`[medfetch/sqlite-wasm.vtab] > medfetch virtual table connected`)
+        console.log(
+            `[medfetch/sqlite-wasm.vtab] > medfetch virtual table ${tableName} connected`,
+        );
         let [pdb, _paux, _argc, _argv, ppvtab] = args;
         let rc = sqlite3.capi.SQLITE_OK;
-        rc += sqlite3.capi.sqlite3_declare_vtab(
-            pdb,
-            `CREATE TABLE resource(
-                id TEXT,
-                json TEXT,
-                type HIDDEN,
-                fp   HIDDEN
-            )`,
-        );
+        rc += sqlite3.capi.sqlite3_declare_vtab(pdb, migrationText);
         if (!rc) {
             sqlite3.vtab.xVtab.create(ppvtab);
         }
@@ -167,7 +177,10 @@ export function x_next(_sqlite3: Sqlite3Static) {
     };
 }
 
-export function x_column(_sqlite3: Sqlite3Static) {
+export function x_column(
+    _sqlite3: Sqlite3Static,
+    resolveColumn: ResolveColumn,
+) {
     let sqlite3 = _sqlite3 as Sqlite3;
     return (...args: Params<"xColumn">) => {
         let [pCursor, pCtx, iCol] = args;
@@ -179,25 +192,33 @@ export function x_column(_sqlite3: Sqlite3Static) {
             );
             return sqlite3.capi.SQLITE_ERROR;
         }
-        switch (iCol) {
-            case 0: {
-                sqlite3.capi.sqlite3_result_text(
-                    pCtx,
-                    hd.value.id!,
-                    -1,
-                    sqlite3.capi.SQLITE_TRANSIENT,
-                );
-                break;
-            }
-            case 1: {
-                const json = JSON.stringify(hd.value);
-                sqlite3.capi.sqlite3_result_text(
-                    pCtx,
-                    json,
-                    -1,
-                    sqlite3.capi.SQLITE_TRANSIENT,
-                );
-                break;
+        const { value, dataType } = resolveColumn(hd.value, iCol);
+        if (value === null) {
+            sqlite3.capi.sqlite3_result_null(pCtx);
+        } else {
+            switch (dataType) {
+                case "blob":
+                case "text": {
+                    sqlite3.capi.sqlite3_result_text(
+                        pCtx,
+                        value,
+                        -1,
+                        sqlite3.capi.SQLITE_TRANSIENT,
+                    );
+                    break;
+                }
+                case "integer": {
+                    sqlite3.capi.sqlite3_result_int(
+                        pCtx,
+                        value,
+                    );
+                    break;
+                }
+                case "boolean": {
+                    const asInt = Number(!!value);
+                    sqlite3.capi.sqlite3_result_int(pCtx, asInt);
+                    break;
+                }
             }
         }
         return sqlite3.capi.SQLITE_OK;
@@ -225,21 +246,16 @@ export function x_eof(sqlite3: Sqlite3Static) {
 }
 
 export function x_filter(
-    _sqlite3: Sqlite3,
+    _sqlite3: Sqlite3Static,
     getPage: GetPageFn,
+    resourceType: string,
 ) {
     let sqlite3 = _sqlite3 as Sqlite3;
     let { capi, vtab } = sqlite3;
 
     return (..._args: Params<"xFilter">) => {
-        let [pCursor, _idxNum, _idxCStr, argc, argv] = _args;
-        let args = capi.sqlite3_values_to_js(argc, argv);
-        if (args.length < 1 || typeof args[0] !== "string") {
-            console.error(`can't handle empty arguments`);
-            return capi.SQLITE_ERROR;
-        }
+        let [pCursor, _idxNum, _idxCStr] = _args;
 
-        let [resourceType] = args;
         let cursor = vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
         cursor.page = getPage(resourceType);
         cursor.peeked = cursor.page.rows.next();
