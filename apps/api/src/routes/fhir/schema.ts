@@ -23,6 +23,9 @@ const schema = {
   },
   Condition: {
     GET: search("Condition")
+  },
+  Procedure: {
+    GET: search("Procedure")
   }
 }
 

@@ -6,7 +6,8 @@
     "deploy": "wrangler deploy --minify --env production",
     "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
     "api-typegen": "tsx bin/openapi-doc.ts && openapi-typescript ./dist/openapi.json -o ./dist/types.d.ts",
-    "fhir-codegen": "tsx bin/fhir.zod.ts"
+    "zod-fhir-codegen": "tsx bin/fhir.zod.ts",
+    "demo-data-codegen": "tsx bin/researcher-demo.ts 200"
   },
   "exports": {
     "./types": {

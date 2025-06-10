@@ -3,7 +3,7 @@
 import { faker } from "@faker-js/faker";
 import { Condition } from "+/zod-fhir/Condition";
 import { ICD } from "../static/codes.static";
-import { makeFactory } from "./utils";
+import { makeFactory } from "~/lib/mock"
 
 const condition = makeFactory(Condition);
 

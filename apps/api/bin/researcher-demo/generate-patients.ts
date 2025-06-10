@@ -2,7 +2,7 @@
 
 import { Patient } from "+/zod-fhir/Patient";
 import { faker } from "@faker-js/faker";
-import { makeFactory } from "./utils";
+import { makeFactory } from "~/lib/mock"
 import type { HumanName } from "fhir/r4";
 
 const patient = makeFactory(Patient);
