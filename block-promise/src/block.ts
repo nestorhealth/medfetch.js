@@ -1,9 +1,15 @@
 import type { Block, MessageConfig, Ping } from "./block.types";
 
 const isBrowserWorkerThread =
-    typeof window === "undefined" &&
-    typeof self !== "undefined" &&
-    typeof importScripts === "function";
+  // Running outside the main thread (no window)
+  typeof window === "undefined" &&
+  // Running inside a dedicated worker context
+  (typeof self !== "undefined" && (
+    // Covers Webpack (no importScripts in module workers sometimes)
+    typeof WorkerGlobalScope !== "undefined" &&
+    self instanceof WorkerGlobalScope
+  ));
+
 
 /**
  * Returns a plain 2-tuple {@link Array} "view" of a given SharedArrayBuffer
@@ -65,7 +71,7 @@ export default function block<Args extends any[], Result>(
     let workerPort: Worker | MessagePort | undefined = undefined;
 
     const blockFn = (...args: Args): Result => {
-        if (isBrowserWorkerThread && self.name === syncWorkerName) {
+        if (self.name === syncWorkerName) {
             const sab = new SharedArrayBuffer(8 + byteSize);
             const [signal, buffer] = viewSab(sab);
             if (!self) {
@@ -86,7 +92,7 @@ export default function block<Args extends any[], Result>(
             const text = new TextDecoder().decode(buffer.slice(0, len));
             return decode(text);
         } else {
-            if (isBrowserWorkerThread) {
+            if (self.name === asyncWorkerName) {
                 console.warn(
                     `[block-promise::${syncWorkerName}] > From async worker: ${asyncWorkerName}: "I can't block for that worker: ${self.name}"`,
                 );
@@ -121,7 +127,10 @@ export default function block<Args extends any[], Result>(
     const ping: Ping = async (workerFn) => {
         const worker =
             typeof workerFn === "function"
-                ? workerFn(syncWorkerName)
+                ? workerFn({
+                      syncWorker: syncWorkerName,
+                      asyncWorker: asyncWorkerName,
+                  })
                 : workerFn;
         if (self.name === syncWorkerName) {
             // Case 1. The worker is providing the async handler
@@ -131,23 +140,27 @@ export default function block<Args extends any[], Result>(
         }
         return worker;
     };
-
-    /**
-     * Only useful if the deferring worker is the owner of the
-     * task handler thread.
-     * @param e The message event
-     */
-    if (isBrowserWorkerThread && self.name === asyncWorkerName) {
-        self.onmessage = (e: MessageEvent) => {
-            if (e.ports && e.ports[0]) {
-                const port = e.ports[0];
-                port.postMessage(0);
-                port.onmessage = resolveBlockingPromise;
-            }
-        };
+    
+    const pong = () => {
+        console.log("righttttt", self.name, isBrowserWorkerThread)
+        /**
+        * Only useful if the deferring worker is the owner of the
+        * task handler thread.
+        * @param e The message event
+        */
+        if (self.name === asyncWorkerName) {
+            console.log("[block-promise] > Registering \"forward \" async worker thread", asyncWorkerName);
+            self.onmessage = (e: MessageEvent) => {
+                if (e.ports && e.ports[0]) {
+                    const port = e.ports[0];
+                    port.postMessage(0);
+                    port.onmessage = resolveBlockingPromise;
+                }
+            };
+        }
     }
 
-    return [blockFn, ping];
+    return [blockFn, ping, pong];
 }
 
 async function handshakePing(worker: Worker) {

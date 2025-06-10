@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { medfetch } from "medfetch/sqlite-wasm";
+import { db as sqliteDB } from "@/lib/sqlite-wasm";
 
 // Types
 export interface MedfetchDB {
@@ -37,12 +37,8 @@ const getFile = (fileName: string) => fetch("http://localhost:8787/fhir/Patient"
 export async function initMedfetchDB(
   options: MedfetchDBOptions = {},
 ): Promise<MedfetchClient> {
-  const { baseURL = DEFAULT_FHIR_SERVER, filename } = options;
-
-  const file = await getFile(filename || "bundle.json");
-  
   // Initialize Medfetch with SQLite WASM
-  const _db = medfetch(file, { filename: file.name});
+  const _db = sqliteDB;
 
   // Create a database handle with common operations
   const db: MedfetchDB = {

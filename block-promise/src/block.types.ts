@@ -1,3 +1,8 @@
+interface WorkerNameMap {
+    readonly asyncWorker: string | null;
+    readonly syncWorker: string;
+}
+
 /**
  * Pass in the worker or a callback that returns the worker of either the
  * async handler or the sync handler, depending on who is in charge of pinging
@@ -11,7 +16,7 @@
  * Then the 
  */
 export type Ping = (
-    worker: Worker | ((name: string) => Worker),
+    worker: Worker | ((names: WorkerNameMap) => Worker),
 ) => Promise<Worker>;
     
 export type Pong = () => void;
@@ -25,6 +30,7 @@ export type Pong = () => void;
 export type Block<Args extends any[], Result> = readonly [
     (...args: Args) => Result,
     Ping,
+    Pong
 ];
 
 /**

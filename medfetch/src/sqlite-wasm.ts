@@ -17,7 +17,6 @@ import type {
 import { check } from "~/sqlite-wasm/_worker1.main";
 import { isBrowser } from "~/fhir/env";
 import { kyselyDummy } from "~/sql.kysely";
-import { SQLITE_WASM_BLOCK } from "~/sqlite-wasm.block";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
@@ -146,7 +145,7 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
                 ),
                 {
                     type: "module",
-                    name: "medfetch/sqlite-wasm.worker"
+                    name: "sqlite-wasm.worker"
                 },
             ),
         );

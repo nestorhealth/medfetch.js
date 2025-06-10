@@ -5,22 +5,28 @@ import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/_counter";
 import { Page } from "~/fhir/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
-import { syncFetch, pingSqliteWasmBlock } from "~/sqlite-wasm.block.js";
+import { pingSqliteWasmBlock, syncFetch } from "~/sqlite-wasm.block";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
+const blockingWorker = new Worker(
+    new URL(
+        import.meta.env.DEV
+            ? "./sqlite-wasm.block.js"
+            : "./sqlite-wasm.block.js",
+        import.meta.url,
+    ),
+    {
+        type: "module",
+        name: "sqlite-wasm.block",
+    },
+);
+
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    const fetchWorker = new Worker(
-        new URL("./sqlite-wasm.block", import.meta.url),
-        {
-            type: "module",
-            name: `${tag}.block`
-        },
-    );
-    await pingSqliteWasmBlock(fetchWorker);
+    await pingSqliteWasmBlock(blockingWorker);
 
     const dbCount = new Counter();
     const modules: Sqlite3Module[] = [];
@@ -42,15 +48,21 @@ sqlite3InitModule().then(async (sqlite3) => {
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
                 );
             }
-            const getPage: GetPageFn = (resourceType) => new Page(function* () {
-                const responseText = syncFetch(`${baseURL}/${resourceType}`);
-                yield responseText;
-            }(), (nextURL) => {
-                return function* () {
-                    const responseText = syncFetch(nextURL);
-                    yield responseText;
-                }()
-            })
+            const getPage: GetPageFn = (resourceType) =>
+                new Page(
+                    (function* () {
+                        const responseText = syncFetch(
+                            `${baseURL}/${resourceType}`,
+                        );
+                        yield responseText;
+                    })(),
+                    (nextURL) => {
+                        return (function* () {
+                            const responseText = syncFetch(nextURL);
+                            yield responseText;
+                        })();
+                    },
+                );
 
             console.log(
                 taggedMessage(`Received init message with baseURL: ${baseURL}`),
