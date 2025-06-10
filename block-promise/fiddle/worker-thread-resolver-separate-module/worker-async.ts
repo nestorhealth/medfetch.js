@@ -1,6 +1,6 @@
-import { handleGetNthTodo } from "./get-nth-todo";
+import { ping } from "./get-nth-todo";
 
-handleGetNthTodo(name => new Worker(
+ping(name => new Worker(
     new URL(
         "./worker-sync",
         import.meta.url

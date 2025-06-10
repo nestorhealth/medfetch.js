@@ -1,6 +1,6 @@
-import { handleGetNthTodo } from "./worker";
+import { pingSyncWorker } from "./worker";
 
-handleGetNthTodo(name => {
+pingSyncWorker(name => {
     return new Worker(
         new URL(
             "./worker",

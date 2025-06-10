@@ -1,12 +1,14 @@
-import { handleGetNthTodo } from "./worker-sync";
+import { ping } from "./worker-sync";
 
-handleGetNthTodo(name => new Worker(
-    new URL(
-        "./worker-sync",
-        import.meta.url
-    ),
-    {
-        type: 'module',
-        name
-    }
-));
+ping(name => {
+    return new Worker(
+        new URL(
+            "./worker-sync",
+            import.meta.url
+        ),
+        {
+            type: 'module',
+            name: name
+        }
+    );
+});

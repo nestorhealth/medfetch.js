@@ -1,27 +1,30 @@
 /**
- * The message handler the async handler thread needs to call to carry out the deferred promise.
+ * Pass in the worker or a callback that returns the worker of either the
+ * async handler or the sync handler, depending on who is in charge of pinging
+ * that handler
  * 
- * It can also be called by the deferrer worker, but then it needs to await
- * this situation is probably rare
+ * Case 1. Sync handler is Pinger
+ * Then the sync handler thread needs to (ironically) `await` the ping to the async handler thread because
+ * it needs to pass in a {@link MessagePort}
+ * 
+ * Case 2. Async handler is Pinger
+ * Then the 
  */
-export type WorkerHandle = (
+export type Ping = (
     worker: Worker | ((name: string) => Worker),
 ) => Promise<Worker>;
     
+export type Pong = () => void;
+    
 /**
- * The 3-tuple returned by [block()](./block.browser.ts)
+ * The 2-tuple returned by [block()](./block.browser.ts)
  *
  * @template Args the arguments the original function takes
  * @template Result the awaited return type of the original function
  */
-export type Block<Args extends any[], Result> = [
-    /* The "sync" blocking version signature */
+export type Block<Args extends any[], Result> = readonly [
     (...args: Args) => Result,
-        
-    WorkerHandle,
-
-    /* The onMessage handler for the child */
-    (e: MessageEvent) => void
+    Ping,
 ];
 
 /**
