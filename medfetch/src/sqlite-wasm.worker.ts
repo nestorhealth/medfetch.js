@@ -1,11 +1,12 @@
 /// <reference lib="webworker" />
-import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
+import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab2";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/_counter";
 import { Page } from "~/fhir/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
 import { pingSqliteWasmBlock, syncFetch } from "~/sqlite-wasm.block";
+import { sqliteOnFhir, unzipJSONSchema } from "~/sql";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
@@ -29,7 +30,7 @@ sqlite3InitModule().then(async (sqlite3) => {
     await pingSqliteWasmBlock(blockingWorker);
 
     const dbCount = new Counter();
-    const modules: Sqlite3Module[] = [];
+    const modules: Record<string, Sqlite3Module>[] = [];
     const moduleSet = new Set<number>();
 
     const rc = worker1(sqlite3, async (msg, next) => {
@@ -43,6 +44,9 @@ sqlite3InitModule().then(async (sqlite3) => {
                     ),
                 );
             }
+
+            const resources = msg.data.aux?.resources;
+            const schema = await sqliteOnFhir(resources);
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
                 throw new Error(
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
@@ -70,7 +74,8 @@ sqlite3InitModule().then(async (sqlite3) => {
 
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
-            modules[dbIndex] = medfetch_module_alloc(getPage, sqlite3);
+            const asMap = Object.fromEntries(schema.schemaEntries);
+            modules[dbIndex] = medfetch_module_alloc(getPage, sqlite3, asMap, schema.resolveColumn);
         }
 
         // We don't get the dbId until after "open"
@@ -81,19 +86,26 @@ sqlite3InitModule().then(async (sqlite3) => {
                 );
             }
 
-            const extension = modules[index(msg.data.dbId)];
+            const extensions = modules[index(msg.data.dbId)];
             const pDb = pointer(msg.data.dbId);
 
             if (!moduleSet.has(pDb)) {
-                if (!extension) {
+                if (!extensions) {
                     throw new Error(`[${tag}] > `);
                 }
-                sqlite3.capi.sqlite3_create_module(
-                    pDb,
-                    "medfetch",
-                    extension.pointer,
-                    0,
-                );
+                for (const [key, value] of Object.entries(extensions)) {
+                    const _rc = sqlite3.capi.sqlite3_create_module(
+                        pDb,
+                        key,
+                        value.pointer,
+                        0,
+                    );
+                    if (import.meta.env.DEV) {
+                        console.log(
+                            `[medfetch/sqlite-wasm] > ${key} rc = ${_rc}`,
+                        );
+                    }
+                }
                 moduleSet.add(pDb);
             }
         }

@@ -15,11 +15,11 @@ export async function unzipJSONSchema(
 ): Promise<Exclude<JSONSchema7, boolean>> {
     const response = await fetch(zipURL).catch((error) => {
         console.error(`Couldn't handle "fetch" request: ${error}`);
-        process.exit(1);
+        throw new Error();
     });
     if (!response.ok) {
         console.error(`Bad response from endpoint: ${zipURL}`, response.status);
-        process.exit(1);
+        throw new Error();
     }
 
     const entries = unzipSync(new Uint8Array(await response.arrayBuffer()));
@@ -28,14 +28,14 @@ export async function unzipJSONSchema(
         console.error(
             `Schema file ${filename} not found in unzipped. Keys are: ${Object.keys(entries)}`,
         );
-        process.exit(1);
+        throw new Error();
     }
 
     try {
         return JSON.parse(strFromU8(schemaFile));
     } catch (error) {
         console.error(`Couldn't parse the JSON file ${filename}: ${error}`);
-        process.exit(1);
+        throw new Error("", { cause: error });
     }
 }
 
@@ -67,6 +67,18 @@ function typenameFromRef($ref: string) {
     return $ref.split("/").pop()!;
 }
 
+interface ColumnMeta {
+    name: string;
+    dataType: ColumnDataType;
+}
+
+type ColumnMapping = {
+    dataType: ColumnDataType;
+    value: any | null;
+};
+
+export type ResolveColumn = (resource: any, index: number) => ColumnMapping;
+
 /**
  * Get the "create table" migration text for the given resource type from the data
  * in the json schema
@@ -85,22 +97,24 @@ function tableMigration(
     primitiveMap: Record<string, ColumnDataType>,
     keyFilter: (key: string) => boolean = (key) =>
         !key.startsWith("_") && key !== "resourceType" && key !== "id",
-): { sql: string; columns: Set<string> } {
+): { sql: string; columns: Array<ColumnMeta> } {
     if (!jsonSchemaDefinitions[resourceType]) {
         throw new Error(`That key doesn't exist: "${resourceType}"`);
     }
     if (!jsonSchemaDefinitions[resourceType]["properties"]) {
         throw new Error(`That key isn't a Resource: "${resourceType}"`);
     }
-    const columns = Object.entries(
+    const columnEntries = Object.entries(
         jsonSchemaDefinitions[resourceType]["properties"],
     );
     const tb = db.schema
         .createTable(resourceType)
         .ifNotExists()
         .addColumn("id", "text", (col) => col.primaryKey());
-    const columnSet = new Set<string>(["id"]);
-    const finalTb = columns.reduce((tb, [key, value]) => {
+
+    const columns = new Array<ColumnMeta>();
+    columns.push({ name: "id", dataType: "text" });
+    const finalTb = columnEntries.reduce((tb, [key, value]) => {
         if (typeof value === "boolean") {
             throw new Error();
         }
@@ -113,12 +127,16 @@ function tableMigration(
             const typename = typenameFromRef(value.$ref);
             columnDataType = primitiveMap[typename] ?? "text";
         }
-        columnSet.add(key);
+
+        columns.push({
+            name: key,
+            dataType: columnDataType,
+        });
         return tb.addColumn(key, columnDataType);
     }, tb);
     return {
         sql: finalTb.compile().sql + ";\n",
-        columns: columnSet,
+        columns: columns,
     };
 }
 
@@ -184,42 +202,52 @@ export function sqliteMigrationsSync(
         ...map,
     };
     const db = kyselyDummy("sqlite");
-    const columnMap = new Map<string, Set<string>>();
-    const sql = resourceTypes.reduce((acc, resourceType) => {
-        const { sql, columns } = tableMigration(
+    const columnMap = new Map<string, Array<ColumnMeta>>();
+    const schemaEntries = resourceTypes.map((resourceType) => {
+        const migration = tableMigration(
             db,
             resourceType,
             definitions,
             primitives,
         );
-        columnMap.set(resourceType, columns);
-        return (acc += sql);
-    }, "");
-
-    const preprocess = (resource: any): object | null => {
+        columnMap.set(resourceType, migration.columns);
+        return [resourceType, migration.sql] as const;
+    });
+    const resolveColumn = (resource: any, index: number): ColumnMapping => {
         checkResource(resource);
         if (!columnMap.has(resource["resourceType"])) {
-            return null;
+            return { value: null, dataType: "text" };
         }
-        const columnSet = columnMap.get(resource["resourceType"])!;
-        return Object.fromEntries(
-            Object.entries(resource)
-                .filter(([key]) => columnSet.has(key))
-                .map(([key, value]) => [key, value]),
-        );
+        const columns = columnMap.get(resource["resourceType"])!;
+        const orderedRecord = columns.map((column) => {
+            let value = resource[column.name];
+            if (value) {
+                if (typeof value === "object") {
+                    value = JSON.stringify(value);
+                }
+            }
+            return { value: value ?? null, dataType: column.dataType };
+        });
+        return orderedRecord[index];
     };
 
     return {
-        sql,
-        preprocess,
+        schemaEntries,
+        resolveColumn,
     };
 }
 
-export async function sqliteMigrations(
+/**
+ *
+ * @param resourceTypes
+ * @param map
+ * @returns
+ */
+export async function sqliteOnFhir(
     resourceTypes: string[],
     map: Partial<Record<primitive_t, ColumnDataType>> = {},
 ) {
-    return unzipJSONSchema().then(
-        (schema) => sqliteMigrationsSync(schema, resourceTypes, map)
-    )
+    return unzipJSONSchema().then((schema) =>
+        sqliteMigrationsSync(schema, resourceTypes, map),
+    );
 }

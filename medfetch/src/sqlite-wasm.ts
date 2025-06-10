@@ -121,9 +121,10 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
     }
 }
 
-interface MedfetchSqlite3WasmOptions {
-    worker?: Worker;
-    filename?: string;
+interface MedfetchSqlite3WasmConfig {
+    worker: Worker;
+    filename: string;
+    resources: string[];
 }
 
 /**
@@ -160,7 +161,10 @@ function wrapSqlite3Worker(worker: Worker | undefined): Worker1Promiser {
  */
 export function medfetch<DB = any>(
     baseURL: string | File,
-    opts: MedfetchSqlite3WasmOptions = {},
+    {
+        resources = ["Patient", "Procedure", "Condition"],
+        ...opts
+    }: Partial<MedfetchSqlite3WasmConfig> = {},
 ): Kysely<DB> {
     if (!isBrowser()) {
         console.warn(
@@ -179,6 +183,7 @@ export function medfetch<DB = any>(
                 type: "open",
                 aux: {
                     baseURL,
+                    resources
                 },
             }),
         });
@@ -189,6 +194,7 @@ export function medfetch<DB = any>(
         type: "open",
         aux: {
             baseURL,
+            resources
         },
         args: {
             filename: opts.filename,
