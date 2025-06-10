@@ -49,7 +49,7 @@ export default defineConfig({
                 "sql": "src/sql.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
                 "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
-                "fetch.worker": "src/fetch.worker.ts"
+                "sqlite-wasm.block": "src/sqlite-wasm.block.ts"
             },
             formats: ["es"],
             fileName: (format, name) =>

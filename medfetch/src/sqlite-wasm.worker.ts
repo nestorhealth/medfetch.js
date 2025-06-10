@@ -2,19 +2,25 @@
 import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { worker1 } from "~/sqlite-wasm/_worker1.worker";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
-import { type FetchSync, blockingFetchFactory } from "~/fetch";
 import { Counter } from "~/sqlite-wasm/_counter";
 import { Page } from "~/fhir/data";
 import type { Sqlite3Module } from "~/sqlite-wasm/_types.patch";
+import { syncFetch, pingSqliteWasmBlock } from "~/sqlite-wasm.block.js";
 
 // Logs
-const tag = "medfetch/sqlite-wasm.worker";
+const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    // Singular blockingFetch handle for all databases
-    const fetchSync = await blockingFetchFactory();
+    const fetchWorker = new Worker(
+        new URL("./sqlite-wasm.block", import.meta.url),
+        {
+            type: "module",
+            name: `${tag}.block`
+        },
+    );
+    await pingSqliteWasmBlock(fetchWorker);
 
     const dbCount = new Counter();
     const modules: Sqlite3Module[] = [];
@@ -36,7 +42,15 @@ sqlite3InitModule().then(async (sqlite3) => {
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
                 );
             }
-            const getPage = await createGetPageFn(baseURL, fetchSync);
+            const getPage: GetPageFn = (resourceType) => new Page(function* () {
+                const responseText = syncFetch(`${baseURL}/${resourceType}`);
+                yield responseText;
+            }(), (nextURL) => {
+                return function* () {
+                    const responseText = syncFetch(nextURL);
+                    yield responseText;
+                }()
+            })
 
             console.log(
                 taggedMessage(`Received init message with baseURL: ${baseURL}`),
@@ -124,37 +138,4 @@ function url(baseURL: string, resourceType: string) {
     return baseURL[baseURL.length - 1] === "/"
         ? `${baseURL}${resourceType}`
         : `${baseURL}/${resourceType}`;
-}
-
-/**
- * @param baseURL The baseURL of the fhir server or a File of a Bundle
- * @param fetchSync The blocking fetch function
- * @returns A getPage() function for the virtual table to get its FHIR data from
- */
-async function createGetPageFn(
-    baseURL: string | File,
-    fetchSync: FetchSync,
-): Promise<GetPageFn> {
-    if (typeof baseURL === "string") {
-        // REST API
-        return (resourceType: string) => {
-            const response = fetchSync(url(baseURL, resourceType));
-            const page = new Page(response.stream, (url) => {
-                const response = fetchSync(url);
-                return response.stream;
-            });
-            return page;
-        };
-    } else {
-        // File
-        const buffer = await baseURL.text();
-
-        // Just provide the entire buffer for a File
-        return (_resourceType: string) =>
-            new Page(
-                (function* () {
-                    yield buffer;
-                })(),
-            );
-    }
 }

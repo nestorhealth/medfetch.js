@@ -25,12 +25,6 @@ export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     viewDefinition: ViewDefinition | null;
 }
 
-function log(...args: Parameters<typeof console.log>) {
-    if (import.meta.env.DEV) {
-        console.log(...args);
-    }
-}
-
 export type GetPageFn = (resourceType: string) => Page;
 
 /**
@@ -81,6 +75,7 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
 export function x_connect(_sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3;
     return (...args: Params<"xConnect">) => {
+        console.log(`[medfetch/sqlite-wasm.vtab] > medfetch virtual table connected`)
         let [pdb, _paux, _argc, _argv, ppvtab] = args;
         let rc = sqlite3.capi.SQLITE_OK;
         rc += sqlite3.capi.sqlite3_declare_vtab(
@@ -102,7 +97,6 @@ export function x_connect(_sqlite3: Sqlite3Static) {
 export function x_best_index(_sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3 as Sqlite3;
     return (...args: Params<"xBestIndex">) => {
-        log("xConnect begin");
         let [, pIdxInfo] = args;
         const index = sqlite3.vtab.xIndexInfo(pIdxInfo);
         for (let i = 0; i < index.$nConstraint; i++) {
@@ -168,9 +162,6 @@ export function x_next(_sqlite3: Sqlite3Static) {
         let [pCursor] = args;
         let cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
         let next = cursor.page.rows.next();
-        log(
-            `[xNext()] > Before: ${JSON.stringify(cursor.peeked.value, null, 2)?.slice(0, 50)}\nAfter: ${JSON.stringify(next.value, null, 2)?.slice(0, 50)}`,
-        );
         cursor.peeked = next;
         return sqlite3.capi.SQLITE_OK;
     };
