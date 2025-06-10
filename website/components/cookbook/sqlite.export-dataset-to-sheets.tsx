@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { sql } from "@/lib/sqlite-wasm";
+import { sql2 } from "@/lib/sqlite-wasm";
 import {
   createSpreadsheet,
   googleRedirectURI,
@@ -44,7 +44,7 @@ export function ExportDatasetToSheets() {
     }
 
     try {
-      const rows = await sql<{
+      const rows = await sql2<{
         condition_id: string;
         condition_duration: string;
         procedure_code: string;

@@ -17,7 +17,7 @@ type Props = {
   dropTables?: string[];
 };
 
-export function SQLCodeblock({ children, columns, dropTables, mode = "public" }: Props) {
+export function SQLCodeblock({ children, columns, dropTables }: Props) {
   const ref = useRef<HTMLPreElement>(null);
   const [sqlText, setSqlText] = useState<string | null>(null);
 
@@ -79,7 +79,7 @@ export function SQLCodeblock({ children, columns, dropTables, mode = "public" }:
         </div>
       ) : (
           <DataTable
-            data={data ?? []}
+            data={data ?? [] as any[]}
             columns={columns?.map((columnName) => ({
               accessorKey: columnName,
               header: ({ column }) => (

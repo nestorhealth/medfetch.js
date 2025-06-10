@@ -305,20 +305,20 @@ export async function sqliteOnFhir(
     );
 }
 
-// Utility: Determine if a type is a primitive
+// Utility: Determine if a type is a primitive (objects → string)
 type IsPrimitive<T> = T extends string | number | boolean | null | undefined
-    ? T
-    : string;
+  ? T
+  : string;
 
-// 2. Flatten FHIR fields, require only `id`, exclude `_` keys
+// 1. Flatten fields: require `id`, drop `_` keys, no optional props, undefined → null
 type FlattenFHIRFields<T> = {
-    id: string;
+  id: string;
 } & {
-    [K in keyof T as K extends "id"
-        ? never
-        : K extends `_${string}`
-          ? never
-          : K]?: IsPrimitive<T[K]>;
+  [K in keyof T as
+    K extends "id" ? never :
+    K extends `_${string}` ? never :
+    K
+  ]-?: IsPrimitive<T[K]> extends undefined ? null : Exclude<IsPrimitive<T[K]>, undefined> | null;
 };
 
 /**

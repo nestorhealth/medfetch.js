@@ -1,4 +1,4 @@
-import { sql } from "@/lib/sqlite-wasm";
+import { sql2 } from "@/lib/sqlite-wasm";
 
 const name = (as = "name") => `
   (json -> 'name' -> 0 -> 'given' ->> 0) 
@@ -6,7 +6,7 @@ const name = (as = "name") => `
   || (json -> 'name' -> 0 ->> 'family') as ${as}
 `;
 
-const patient_migration = sql`
+const patient_migration = sql2`
   create table if not exists patient (
     id text primary key,
     birth_date text,
