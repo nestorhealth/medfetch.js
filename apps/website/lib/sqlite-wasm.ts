@@ -1,16 +1,22 @@
 import { sqliteWasmOnFhir } from "medfetch/sqlite-wasm";
 import { Kysely, sql } from "kysely";
 
-const dialect = sqliteWasmOnFhir(":memory:", "https://r4.smarthealthit.org", [
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+
+const dialect = sqliteWasmOnFhir(":memory:", `${API_URL}/fhir`, [
   "Patient",
-  "Practitioner",
-  "Procedure",
-  "Condition"
+  "Condition",
+  "Procedure"
 ]);
 
 export const db = new Kysely<typeof dialect.$db>({
   dialect,
 });
+
+const result = await db.selectFrom("Patient").select([
+  "Patient.id", "Patient.name"
+]).executeTakeFirstOrThrow();
+console.log(result)
 
 /**
  *

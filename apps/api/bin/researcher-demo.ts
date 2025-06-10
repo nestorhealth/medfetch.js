@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { generatePatients } from "./researcher-demo/generate-patients";
 import { fileURLToPath } from "url";
+import { generateProcedures } from "bin/researcher-demo/generate-procedures";
 
 const program = new Command();
 
@@ -28,9 +29,12 @@ program
       process.exit(1);
     }
     const patients = generatePatients(n);
-    const conditions = generateConditions(patients.map(p => p.id));
+    const pids = patients.map(p => p.id);
+    const conditions = generateConditions(pids);
+    const procedures = generateProcedures(pids);
     writeFile("Patient", patients);
     writeFile("Condition", conditions)
+    writeFile("Procedure", procedures)
   });
   
 program.parse();

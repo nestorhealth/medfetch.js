@@ -1,76 +1,112 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { initMedfetchDB, type MedfetchClient } from "@/lib/client";
-import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
+import React, { useState, useRef, useCallback } from "react";
+import { type MedfetchClient } from "@/lib/client";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
 import { db } from "@/lib/sqlite-wasm";
-import { sql } from "kysely";
+import { Kysely, sql } from "kysely";
 import { useQuery } from "@tanstack/react-query";
 
-async function hasViews() {
-  const result = await sql<{
-    name: string;
-    sql: string;
-  }>`select * from sqlite_master`.execute(db);
-  return result.rows.length === 2;
+interface PatientView {
+  patient_id: string;
+  given_name: string | null;
+  family_name: string | null;
+  birthDate: string | null;
+  gender: string | null;
+  condition: string | null;
+  status: string | null;
+}
+
+async function initialTableState() {
+  await db.schema
+    .createTable("conditions")
+    .ifNotExists()
+    .as(
+      db
+        .selectFrom("Condition")
+        .select([
+          "Condition.id as id",
+          "Condition.subject as subject",
+          sql`Condition.code ->> 'display'`.as("display"),
+        ]),
+    )
+    .execute();
+
+  await db.schema
+    .createTable("patients")
+    .ifNotExists()
+    .as(
+      (db as Kysely<any>)
+        .selectFrom("Patient")
+        .select([
+          "Patient.id as id",
+          sql<string | null>`Patient.name -> 0 -> 'given' ->> 0`.as(
+            "given_name",
+          ),
+          sql<string | null>`Patient.name -> 0 ->> 'family'`.as("family_name"),
+          "Patient.birthDate as birth_date",
+          "Patient.gender as gender",
+          sql<string | null>`NULL`.as("condition"),
+          sql<string | null>`NULL`.as("status"),
+        ]),
+    )
+    .execute();
+
+  await db.schema
+    .createTable("procedures")
+    .ifNotExists()
+    .as(
+      db
+        .selectFrom("Procedure")
+        .select(["id as procedure_id", "subject as patient_id", "code"]),
+    )
+    .execute();
+
+  db.schema
+    .createTable("patient_view")
+    .ifNotExists()
+    .as(
+      (db as Kysely<any>)
+        .selectFrom("patients")
+        .select([
+          "patients.id as patient_id",
+          "conditions.display as condition",
+        ])
+        .innerJoin("conditions", "conditions.subject", "patients.id"),
+    )
+    .execute();
+
+  const patientView = await (db as Kysely<any>)
+    .selectFrom("patient_view")
+    .selectAll("patient_view")
+    .execute();
+  console.log("DONE", patientView);
+}
+
+async function syncPatientView() {
+  await initialTableState();
+  const patientView =
+    await sql<PatientView>`select * from patient_view`.execute(db);
+  console.log("received", patientView);
+  return patientView.rows;
 }
 
 export default function ResearcherPage() {
-  useQuery({
+  const { data, error: syncQueryError } = useQuery({
     queryKey: ["researcher-demo"],
     queryFn: async () => {
-      const alreadyInserted = await hasViews();
-      console.log("UH", alreadyInserted)
-      if (!alreadyInserted) {
-        await db.schema
-          .createTable("patient_view")
-          .ifNotExists()
-          .as(
-            db
-              .selectFrom("Patient")
-              .select([
-                "id as patient_id",
-                sql<string | null>`name -> 0 -> 'given' ->> 0`.as("given_name"),
-                sql<string | null>`name -> 0 ->> 'family'`.as("family_name"),
-                "birthDate as birth_date",
-                "gender as gender",
-                sql<null>`NULL`.as("condition"),
-                sql<null>`NULL`.as("status"),
-              ]),
-          )
-          .execute();
-
-        await db.schema
-          .createTable("procedure_view")
-          .ifNotExists()
-          .as(
-            db
-              .selectFrom("Procedure")
-              .select(["id as procedure_id", "subject as patient_id", "code"]),
-          )
-          .execute();
-      } else {
-        console.log("Persisted!")
-      }
-
-      const result = await sql`select * from patient_view`.execute(db);
-      const procedureResult = await sql`select * from procedure_view`.execute(
-        db,
-      );
-      console.log(procedureResult.rows);
-      return result.rows;
+      const result = await syncPatientView();
+      return result;
     },
   });
   const dbRef = useRef<MedfetchClient | null>(null);
   const [currentResource, setCurrentResource] = useState<
     "Patient" | "Procedure"
   >("Patient");
-  const [rawData, setRawData] = useState<any[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const tableManager = useRef<TableManager | null>(null);
-  const [primaryKey, setPrimaryKey] = useState<string>("patient_id");
-  const [isLoading, setIsLoading] = useState(true);
+  const [rawData, setRawData] = useState<any[]>(data ?? ["asdf"]);
+  const [error, setError] = useState<string | null>(
+    syncQueryError?.message ?? null,
+  );
 
   // Initialize database and load initial data
   // useEffect(() => {
@@ -137,17 +173,22 @@ export default function ResearcherPage() {
   // }, [currentResource]);
 
   const handleCellEdit = async (rowId: any, col: string, newValue: any) => {
-    if (!dbRef.current || !primaryKey) return;
+    if (!dbRef.current) return;
     try {
       setError(null);
-      const updateSQL = `UPDATE ${currentResource} SET ${col} = ${typeof newValue === "string" ? `'${newValue}'` : newValue} WHERE ${primaryKey} = '${rowId}';`;
-      await dbRef.current.db.exec("BEGIN TRANSACTION;");
-      await dbRef.current.db.exec(updateSQL);
-      await dbRef.current.db.exec("COMMIT;");
-      const newRows = await dbRef.current.db
-        .prepare(`SELECT * FROM ${currentResource};`)
-        .all();
-      setRawData(newRows);
+      const result = await db.transaction().execute(async (trx) => {
+        const tx = trx as Kysely<any>;
+        await tx
+          .updateTable("patient_view")
+          .set(col, newValue)
+          .where("patient_id", "=", rowId)
+          .execute();
+        return await tx
+          .selectFrom("patient_view")
+          .selectAll("patient_view")
+          .execute();
+      });
+      setRawData(result);
     } catch (err) {
       setError("Edit failed: " + (err as Error).message);
     }
@@ -155,14 +196,14 @@ export default function ResearcherPage() {
 
   // Handle SQL query execution from chat
   const handleQuery = useCallback(
-    async (sql: string): Promise<void> => {
+    async (rawSqlText: string): Promise<void> => {
       if (!dbRef.current) return;
 
       try {
         setError(null);
 
         // Split multiple SQL statements if present
-        const statements = sql.split(";").filter((stmt) => stmt.trim());
+        const statements = rawSqlText.split(";").filter((stmt) => stmt.trim());
         const isSelect = statements[0]
           .trim()
           .toLowerCase()
@@ -178,8 +219,23 @@ export default function ResearcherPage() {
         }
 
         // Start transaction for all queries to ensure atomicity
-        await dbRef.current.db.exec("BEGIN TRANSACTION;");
-
+        const tx = await (db as Kysely<any>).startTransaction().execute();
+        try {
+          for (const statement of statements) {
+            const trimmed = statement.trim();
+            if (trimmed) {
+              await tx.executeQuery(
+                sql
+                  .raw(trimmed.endsWith(";") ? trimmed : trimmed + ";")
+                  .compile(db),
+              );
+            }
+          }
+          await tx.commit().execute();
+        } catch (err) {
+          await tx.rollback().execute();
+          setError((err as any).message ?? "Unknown error with callback");
+        }
         try {
           // Execute each statement
           for (const statement of statements) {
@@ -272,9 +328,9 @@ export default function ResearcherPage() {
             {error}
           </div>
         )}
-        {!isLoading ? (
+        {rawData.length > 0 ? (
           <AGGridTable
-            db={dbRef.current!}
+            db={{}}
             resource={currentResource}
             rowData={rawData}
             onCellEdit={handleCellEdit}
@@ -299,7 +355,7 @@ export default function ResearcherPage() {
           minWidth: 0,
         }}
       >
-        {!isLoading ? (
+        {rawData.length > 0 ? (
           <ChatUI db={dbRef.current!} onQuery={handleQuery} />
         ) : (
           <div className="flex items-center justify-center h-full">
