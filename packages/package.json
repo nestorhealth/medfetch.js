@@ -1,0 +1,8 @@
+{
+    "name": "packages",
+    "private": true,
+    "scripts": {
+        "build:block-promise": "pnpm --filter=block-promise build",
+        "build:kysely-on-fhir": "pnpm --filter=kysely-on-fhir build"
+    }
+}

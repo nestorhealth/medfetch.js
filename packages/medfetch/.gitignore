@@ -1,0 +1,12 @@
+/definitions/
+/generated/
+/synthea-data/
+/_defs/
+**/build
+.env
+*.db
+.next
+*.tgz
+/package/
+/coverage/
+/.vscode
