@@ -24,10 +24,8 @@ export interface MedfetchDBOptions {
   filename?: string;
 }
 
-// Constants
-const DEFAULT_FHIR_SERVER = "https://r4.smarthealthit.org";
 
-const getFile = (fileName: string) => fetch(process.env.NEXT_PUBLIC_API_URL).then(
+const getFile = (fileName: string) => fetch(process.env.NEXT_PUBLIC_API_URL!).then(
   (res) => res.json()
 ).then(JSON.stringify).then(
   (buffer) => new File([buffer], fileName)
@@ -37,7 +35,7 @@ const getFile = (fileName: string) => fetch(process.env.NEXT_PUBLIC_API_URL).the
 export async function initMedfetchDB(
   options: MedfetchDBOptions = {},
 ): Promise<MedfetchClient> {
-  const { baseURL = DEFAULT_FHIR_SERVER, filename } = options;
+  const { filename } = options;
 
   const file = await getFile(filename || "bundle.json");
   
