@@ -2,7 +2,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { type MedfetchClient } from "@/lib/client";
 import ChatUI from "@/components/ChatUI";
-import AGGridTable from "@/components/AGGridTable";
+import AgGridDataTable from "@/components/AgGridDataTable";
 import { db } from "@/lib/sqlite-wasm";
 import { Kysely, sql } from "kysely";
 import { useQuery } from "@tanstack/react-query";
@@ -36,7 +36,7 @@ async function initialTableState() {
     .createTable("patients")
     .ifNotExists()
     .as(
-      (db as Kysely<any>)
+      db
         .selectFrom("Patient")
         .select([
           "Patient.id as id",
@@ -80,7 +80,13 @@ async function initialTableState() {
     .selectFrom("patient_view")
     .selectAll("patient_view")
     .execute();
-  console.log("DONE", patientView);
+    
+  const schema = await db.introspection.getTables()
+  const patientViewTable = schema.find(
+    (tbl) => tbl.name === "patient_view"
+  );
+  console.log("GOT", patientViewTable)
+  return patientView;
 }
 
 async function syncPatientView() {
@@ -239,6 +245,7 @@ export default function ResearcherPage() {
         try {
           // Execute each statement
           for (const statement of statements) {
+            console.log("STATEMENT", statement)
             if (statement.trim()) {
               const result = await dbRef.current.db
                 .prepare(statement + ";")
@@ -329,7 +336,7 @@ export default function ResearcherPage() {
           </div>
         )}
         {rawData.length > 0 ? (
-          <AGGridTable
+          <AgGridDataTable
             db={{}}
             resource={currentResource}
             rowData={rawData}
