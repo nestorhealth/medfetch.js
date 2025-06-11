@@ -25,7 +25,7 @@ export interface MedfetchDBOptions {
 }
 
 
-const getFile = (fileName: string) => fetch(`${process.env.NEXT_PUBLIC_API_URL}/fhir/Patient`!).then(
+const getFile = (fileName: string) => fetch(`https://r4.smarthealthit.org/Patient`).then(
   (res) => res.json()
 ).then(JSON.stringify).then(
   (buffer) => new File([buffer], fileName)
