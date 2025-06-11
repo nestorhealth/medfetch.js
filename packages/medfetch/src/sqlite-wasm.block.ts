@@ -1,6 +1,6 @@
 import block from "block-promise";
 
-export const [syncFetch, pingSqliteWasmBlock] = block(
+export const [syncFetch, pingSqliteBlocker] = block(
     ["sqlite-wasm.worker", "sqlite-wasm.block"],
     async (...args: Parameters<typeof fetch>) => {
         const response = await fetch(...args);

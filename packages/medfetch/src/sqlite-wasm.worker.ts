@@ -5,8 +5,11 @@ import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/counter";
 import { Page } from "~/json";
 import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
-import { pingSqliteWasmBlock, syncFetch } from "~/sqlite-wasm.block";
+import { pingSqliteBlocker, syncFetch } from "~/sqlite-wasm.block";
 import { sqlOnFhir } from "~/sql";
+import { Kysely } from "kysely";
+import { sqliteDummy } from "~/sql.static";
+import { DEFAULT_SQLITE_FROM_FHIR } from "~/sql.types";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
@@ -27,7 +30,7 @@ const blockingWorker = new Worker(
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    await pingSqliteWasmBlock(blockingWorker);
+    await pingSqliteBlocker(blockingWorker);
 
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];
@@ -45,8 +48,8 @@ sqlite3InitModule().then(async (sqlite3) => {
                 );
             }
 
-            const resources = msg.data.aux?.resources;
-            const schema = await sqlOnFhir("sqlite", resources);
+            const qb = new Kysely({ dialect: sqliteDummy });
+            const schema = await sqlOnFhir(qb, DEFAULT_SQLITE_FROM_FHIR);
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
                 throw new Error(
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
@@ -74,12 +77,10 @@ sqlite3InitModule().then(async (sqlite3) => {
 
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
-            const asMap = Object.fromEntries(schema.schemaEntries);
             modules[dbIndex] = medfetch_module_alloc(
                 getPage,
                 sqlite3,
-                asMap,
-                schema.resolveColumn,
+                schema
             );
         }
 
@@ -105,6 +106,9 @@ sqlite3InitModule().then(async (sqlite3) => {
                         value.pointer,
                         0,
                     );
+                    if (rc) {
+                        console.error(`[medfetch/sqlite-wasm] > ${key} returned error code ${rc}`);
+                    }
                     if (import.meta.env.DEV) {
                         console.log(
                             `[medfetch/sqlite-wasm] > ${key} rc = ${_rc}`,

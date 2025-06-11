@@ -1,5 +1,5 @@
-import { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import type { FhirResource, Reference } from "fhir/r4";
+import type { JSONSchema7, JSONSchema7Definition } from "json-schema";
+import type { Reference } from "fhir/r4";
 import {
     DummyDriver,
     ColumnDataType,
@@ -12,8 +12,13 @@ import {
     SqliteQueryCompiler,
     Dialect,
 } from "kysely";
-import type { FhirDataType, PrimitiveKey } from "~/json.types";
+import type {
+    FhirDataType,
+    PrimitiveKey,
+    ResourceType,
+} from "~/json.types";
 import { unzipJSONSchema } from "~/json";
+import { type RowResolver } from "~/sql.types";
 
 /**
  * Static dummy kysely orm object
@@ -63,7 +68,7 @@ interface ColumnValue {
 
 interface FhirTableMigration {
     sql: string;
-    columns: Array<ColumnKey>;
+    columnKeys: Array<ColumnKey>;
 }
 
 /**
@@ -71,68 +76,6 @@ interface FhirTableMigration {
  */
 export type ResolveColumn = (resource: any, index: number) => ColumnValue;
 
-/**
- * Get the "create table" migration text for the given resource type from the data
- * in the json schema
- * @param db The kysely database
- * @param resourceType The resourceType, this will be the name of the table
- * @param jsonSchemaDefinitions The definitions object map
- * @param keyFilter What keys to take out? Default to extended fields (start with "_") and filters out "resourceType"
- * @returns The table migration text
- */
-function generateFhirTableMigration(
-    db: Kysely<any>,
-    resourceType: string,
-    jsonSchemaDefinitions: {
-        [x in string]: Exclude<JSONSchema7Definition, boolean>;
-    },
-    primitiveMap: Record<string, ColumnDataType>,
-    keyFilter: (key: string) => boolean = (key) =>
-        !key.startsWith("_") && key !== "id",
-): FhirTableMigration {
-    if (!jsonSchemaDefinitions[resourceType]) {
-        throw new Error(`That key doesn't exist: "${resourceType}"`);
-    }
-    if (!jsonSchemaDefinitions[resourceType]["properties"]) {
-        throw new Error(`That key isn't a Resource: "${resourceType}"`);
-    }
-    const columnEntries = Object.entries(
-        jsonSchemaDefinitions[resourceType]["properties"],
-    );
-    const tb = db.schema
-        .createTable(resourceType)
-        .ifNotExists()
-        .addColumn("id", "text", (col) => col.primaryKey());
-
-    const columns = new Array<ColumnKey>();
-    columns.push({ name: "id", dataType: "text", fhirType: "string" });
-    const finalTb = columnEntries.reduce((tb, [key, value]) => {
-        if (typeof value === "boolean") {
-            throw new Error();
-        }
-        if (!keyFilter(key)) {
-            return tb;
-        }
-
-        let columnDataType: ColumnDataType = "text";
-        let typename: FhirDataType = "string";
-        if (value.$ref) {
-            typename = typenameFromRef(value.$ref);
-            columnDataType = primitiveMap[typename] ?? "text";
-        }
-
-        columns.push({
-            name: key,
-            dataType: columnDataType,
-            fhirType: typename,
-        });
-        return tb.addColumn(key, columnDataType);
-    }, tb);
-    return {
-        sql: finalTb.compile().sql + ";\n",
-        columns: columns,
-    };
-}
 
 /**
  * Checks an arbitrary object and asserts that "id" in resource and "resourceType" in resource. That's it.
@@ -154,70 +97,63 @@ function checkResource(
     }
     return resource;
 }
+/**
+ * Get the "create table" migration text for the given resource type from the data
+ * in the json schema
+ * @param db The kysely database
+ * @param resourceType The resourceType, this will be the name of the table
+ * @param jsonSchemaDefinitions The definitions object map
+ * @param keyFilter What keys to take out? Default to extended fields (start with "_") and filters out "resourceType"
+ * @returns The table migration text
+ */
+function generateFhirTableMigration(
+    resourceType: string,
+    columns: [string, JSONSchema7Definition][],
+    db: Kysely<any>,
+    sqlColumnMap: Record<string, ColumnDataType>,
+    keyFilter: (key: string) => boolean = (key) =>
+        !key.startsWith("_") && key !== "id",
+): FhirTableMigration {
+    const tb = db.schema
+        .createTable(resourceType)
+        .ifNotExists()
+        .addColumn("id", "text", (col) => col.primaryKey());
 
-type SqlFlavor = "sqlite" | "postgresql";
+    const columnKeys = new Array<ColumnKey>();
+    columnKeys.push({ name: "id", dataType: "text", fhirType: "string" });
+    const finalTb = columns.reduce((tb, [key, value]) => {
+        if (typeof value === "boolean") {
+            throw new Error();
+        }
+        if (!keyFilter(key)) {
+            return tb;
+        }
 
-const DEFAULT_COLUMN_MAP: Record<
-    SqlFlavor,
-    Record<PrimitiveKey, ColumnDataType>
-> = {
-    sqlite: {
-        boolean: "integer", // SQLite has no native boolean; use 0/1
-        base64Binary: "blob", // binary content
-        canonical: "text", // like a URI
-        code: "text", // constrained string
-        id: "text", // short string, but still text
-        oid: "text", // e.g., "urn:oid:1.2.3"
-        string: "text",
-        url: "text",
-        uri: "text",
-        uuid: "text", // SQLite has no native UUID type
+        let columnDataType: ColumnDataType = "text";
+        let typename: FhirDataType = "string";
+        if (value.$ref) {
+            typename = typenameFromRef(value.$ref);
+            columnDataType = sqlColumnMap[typename] ?? "text";
+        }
 
-        date: "text", // stored as ISO 8601 string
-        dateTime: "text",
-        instant: "text", // precise ISO timestamp
-        time: "text",
-
-        decimal: "real", // SQLite uses REAL for float-like values
-        integer: "integer",
-        positiveInt: "integer",
-        unsignedInt: "integer",
-    },
-    postgresql: {
-        // Binary and string-like
-        base64Binary: "bytea", // PostgreSQL binary
-        canonical: "text", // FHIR URI-like string
-        code: "text", // Enumerated string
-        id: "text", // Short string
-        oid: "text", // FHIR OID (not PG OID type)
-        string: "text",
-        uri: "text",
-        url: "text",
-        uuid: "uuid", // PostgreSQL has native UUID type
-
-        // Boolean and integer types
-        boolean: "boolean",
-        integer: "integer",
-        positiveInt: "integer", // PostgreSQL doesn't distinguish unsigned
-        unsignedInt: "integer",
-
-        // Decimal (floating point)
-        decimal: "numeric", // Arbitrary precision decimal (better than float)
-
-        // Temporal types
-        date: "date", // Calendar date
-        dateTime: "timestamptz", // Timestamp with time zone
-        instant: "timestamptz", // FHIR Instant → PostgreSQL timestamp
-        time: "time", // Time without date
-    },
-};
+        columnKeys.push({
+            name: key,
+            dataType: columnDataType,
+            fhirType: typename,
+        });
+        return tb.addColumn(key, columnDataType);
+    }, tb);
+    return {
+        sql: finalTb.compile().sql + ";\n",
+        columnKeys: columnKeys
+    };
+}
 
 export function migrations(
-    sqlFlavor: SqlFlavor,
+    db: Kysely<any>,
     jsonSchema: JSONSchema7,
-    resourceTypes: string[],
-    override: Partial<Record<PrimitiveKey, ColumnDataType>> = {},
-) {
+    sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
+): RowResolver<ResourceType> {
     const definitions = jsonSchema["definitions"] as Record<
         string,
         Exclude<JSONSchema7Definition, boolean>
@@ -225,22 +161,22 @@ export function migrations(
     if (!definitions) {
         throw new Error("Bad json schema");
     }
-    const primitives: Record<PrimitiveKey, ColumnDataType> = {
-        ...DEFAULT_COLUMN_MAP[sqlFlavor],
-        ...override,
-    };
-    const db = new Kysely<any>({
-        dialect: kyselyDummy(sqlFlavor)
-    });
+    const resources = (jsonSchema as any)["discriminator"]["mapping"];
+
     const columnMap = new Map<string, Array<ColumnKey>>();
-    const schemaEntries = resourceTypes.map((resourceType) => {
+    const schemaEntries = Object.keys(resources).map((resourceType) => {
+        const resourceDefinition = definitions[resourceType];
+        if (!resourceDefinition || !resourceDefinition["properties"]) {
+            throw new Error(`That resource key doesn't exist: "${resourceType}"`);
+        }
+        const resourceProperties = resourceDefinition["properties"];
         const migration = generateFhirTableMigration(
-            db,
             resourceType,
-            definitions,
-            primitives,
+            Object.entries(resourceProperties),
+            db,
+            sqlColumnMap,
         );
-        columnMap.set(resourceType, migration.columns);
+        columnMap.set(resourceType, migration.columnKeys);
         return [resourceType, migration.sql] as const;
     });
 
@@ -249,8 +185,8 @@ export function migrations(
         if (!columnMap.has(resource["resourceType"])) {
             return { value: null, dataType: "text" };
         }
-        const columns = columnMap.get(resource["resourceType"])!;
-        const orderedRecord = columns.map((column) => {
+        const columnKeys = columnMap.get(resource["resourceType"])!;
+        const orderedRecord = columnKeys.map((column) => {
             let value = resource[column.name];
             if (value) {
                 if (typeof value === "object") {
@@ -271,8 +207,8 @@ export function migrations(
     };
 
     return {
-        schemaEntries,
-        resolveColumn,
+        migrations: schemaEntries as any,
+        index: resolveColumn,
     };
 }
 
@@ -280,55 +216,14 @@ export function migrations(
  * Get the default FHIR to SQL database schema
  * @param sqlFlavor The sql text dialect
  * @param resourceTypes The resource types to include
- * @param overridePrimitives Any primitive element -> sql column included here will be overriden
+ * @param sqlColumnMap Any primitive element -> sql column included here will be overriden
  * @returns A SQL on FHIR view for the given schema
  */
 export async function sqlOnFhir(
-    sqlFlavor: SqlFlavor,
-    resourceTypes: string[],
-    overridePrimitives: Partial<Record<PrimitiveKey, ColumnDataType>> = {},
-) {
+    db: Kysely<any>,
+    sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
+): Promise<RowResolver<ResourceType>> {
     return unzipJSONSchema().then((schema) =>
-        migrations(sqlFlavor, schema, resourceTypes, overridePrimitives),
+        migrations(db, schema, sqlColumnMap),
     );
 }
-
-// Utility: Determine if a type is a primitive (objects → string)
-type IsPrimitiveValue<T> = T extends
-    | string
-    | number
-    | boolean
-    | null
-    | undefined
-    ? T
-    : string;
-
-// 1. Flatten fields: require `id`, drop `_` keys, no optional props, undefined → null
-type FlattenFHIRFields<T> = {
-    id: string;
-} & {
-    [K in keyof T as K extends "id"
-        ? never
-        : K extends `_${string}`
-          ? never
-          : K]-?: IsPrimitiveValue<T[K]> extends undefined
-        ? null
-        : Exclude<IsPrimitiveValue<T[K]>, undefined> | null;
-};
-
-/**
- * This is just a key value record of resources to their javascript runtimes returned by the database driver,
- * so it isn't really specific to Kysely
- *
- * @template Resources The resource types to include
- */
-export type InferKyselyFhir<
-    Resources extends readonly [
-        FhirResource["resourceType"],
-        ...FhirResource["resourceType"][],
-    ],
-> = {
-    [R in Resources[number]]: FlattenFHIRFields<
-        Extract<FhirResource, { resourceType: R }>
-    >;
-};

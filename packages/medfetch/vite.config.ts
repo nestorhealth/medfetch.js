@@ -49,7 +49,7 @@ export default defineConfig({
                 "json": "src/json.ts",
                 "dialects": "src/dialects.ts",
                 "sql": "src/sql.ts",
-                "sqlite-wasm": "src/sqlite-wasm.ts",
+                "sqlite.browser": "src/sqlite.browser.ts",
                 "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
                 "sqlite-wasm.block": "src/sqlite-wasm.block.ts",
             },

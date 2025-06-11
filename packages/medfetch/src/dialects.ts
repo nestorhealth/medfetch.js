@@ -1,4 +1,4 @@
-import type { Dialect, QueryResult } from "kysely";
+import type { QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -11,8 +11,6 @@ import type {
     Worker1Promiser,
 } from "~/sqlite-wasm/worker1.types";
 import { check } from "~/sqlite-wasm/worker1.main";
-import type { FhirResource } from "fhir/r4";
-import type { InferKyselyFhir } from "~/sql";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
@@ -119,19 +117,4 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
             };
         });
     }
-}
-
-/**
- * Attaches a type-only `$db` field for extracting
- * the static type of the rows from a sql-on-fhir mapping
- *
- * @template Resources The resources this FhirDialect includes
- */
-export interface SqlOnFhirDialect<
-    Resources extends [
-        FhirResource["resourceType"],
-        ...FhirResource["resourceType"][],
-    ],
-> extends Dialect {
-    readonly $db: InferKyselyFhir<Resources>;
 }

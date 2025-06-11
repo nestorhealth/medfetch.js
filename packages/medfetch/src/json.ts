@@ -5,8 +5,8 @@ import type { JSONSchema7 } from "json-schema";
 import { strFromU8, unzipSync } from "fflate";
 
 /// Implementation level types
-type Link = PathValue<"Bundle">["link"]
-type Entry = PathValue<"Bundle">["entry"]
+type Link = PathValue<"Bundle">["link"];
+type Entry = PathValue<"Bundle">["entry"];
 
 /// Their parse functions
 const parseLink = kdvParser<Link[]>("link", 1);
@@ -133,7 +133,7 @@ export function isBrowser(): boolean {
 export async function unzipJSONSchema(
     zipURL: string = "https://build.fhir.org/fhir.schema.json.zip",
     filename = "fhir.schema.json",
-): Promise<Exclude<JSONSchema7, boolean>> {
+): Promise<JSONSchema7> {
     const response = await fetch(zipURL).catch((error) => {
         console.error(`Couldn't handle "fetch" request: ${error}`);
         throw new Error();
@@ -153,7 +153,13 @@ export async function unzipJSONSchema(
     }
 
     try {
-        return JSON.parse(strFromU8(schemaFile));
+        const parsed: JSONSchema7 = JSON.parse(strFromU8(schemaFile));
+        parsed.definitions = Object.fromEntries(
+            Object.entries(parsed.definitions!).filter(
+                ([key]) => !key.includes("_"),
+            ),
+        );
+        return parsed;
     } catch (error) {
         console.error(`Couldn't parse the JSON file ${filename}: ${error}`);
         throw new Error("", { cause: error });

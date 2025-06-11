@@ -7,6 +7,8 @@ import type { Resource } from "fhir/r4";
 import { Page } from "~/json";
 import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/worker1.types";
 import { ResolveColumn } from "~/sql";
+import { RowResolver } from "~/sql.types";
+import { ResourceType } from "~/json.types";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -37,12 +39,11 @@ export type GetPageFn = (resourceType: string) => Page;
 export function medfetch_module_alloc(
     getPage: GetPageFn,
     sqlite3: Sqlite3Static,
-    schemaMap: Record<string, string>,
-    column: ResolveColumn,
+    sof: RowResolver<ResourceType>
 ): Record<string, Sqlite3Module> {
     const modules: Record<string, Sqlite3Module> = {};
 
-    for (const [resourceType, migrationText] of Object.entries(schemaMap)) {
+    for (const [resourceType, migrationText] of sof.migrations) {
         const mod: sqlite3_module = (sqlite3.vtab as any).setupModule({
             methods: {
                 xCreate: 0,
@@ -52,7 +53,7 @@ export function medfetch_module_alloc(
                 xOpen: x_open(sqlite3),
                 xClose: x_close(sqlite3),
                 xNext: x_next(sqlite3),
-                xColumn: x_column(sqlite3, column),
+                xColumn: x_column(sqlite3, sof.index),
                 xEof: x_eof(sqlite3),
                 xFilter: x_filter(sqlite3, getPage, resourceType), // pass resourceType
             },

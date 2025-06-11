@@ -1,17 +1,12 @@
 import { Kysely } from "kysely";
-import { sqliteWasmOnFhir } from "~/sqlite-wasm";
+import { sqliteOnFhir } from "~/sqlite.browser";
 
-const dialect = sqliteWasmOnFhir(":memory:", "https://r4.smarthealthit.org", [
-    "Practitioner"
-]);
+const dialect = sqliteOnFhir<{
+}>(
+    ":memory:",
+    "https://r4.smarthealthit.org",
+);
 
 const db = new Kysely<typeof dialect.$db>({
-    dialect
+    dialect,
 });
-
-const practitioners = await db
-    .selectFrom("Practitioner")
-    .select("Practitioner.gender")
-    .execute();
-    
-console.log("OK", practitioners)
