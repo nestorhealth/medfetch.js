@@ -4,6 +4,7 @@ import { faker } from "@faker-js/faker";
 import { Condition } from "+/zod-fhir/Condition";
 import { ICD } from "../static/codes.static";
 import { makeFactory } from "~/lib/mock"
+import { CodeableConcept } from "fhir/r4";
 
 const condition = makeFactory(Condition);
 
@@ -24,10 +25,15 @@ export function generateConditions(pids: string[]) {
           reference: pids[i++]
         };
       },
-      code: () => {
+      code: (): CodeableConcept => {
         const entries = Object.entries(ICD);
         const randomIndex = Math.floor(Math.random() * entries.length);
-        return entries[randomIndex][1];
+        return {
+          coding: [
+            entries[randomIndex][1]
+          ],
+          text: entries[randomIndex][1].display
+        }
       },
     })
   );

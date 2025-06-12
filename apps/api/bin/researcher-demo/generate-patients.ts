@@ -2,7 +2,7 @@
 
 import { Patient } from "+/zod-fhir/Patient";
 import { faker } from "@faker-js/faker";
-import { makeFactory } from "~/lib/mock"
+import { makeFactory } from "~/lib/mock";
 import type { HumanName } from "fhir/r4";
 
 const patient = makeFactory(Patient);
@@ -15,10 +15,11 @@ export function generatePatients(count: number) {
       name: (): Partial<HumanName>[] => [
         {
           family: faker.person.lastName(),
-          given: [faker.person.firstName()]
+          given: [faker.person.firstName()],
         },
       ],
-      birthDate: () => faker.date.birthdate().toISOString().slice(0, 10)
+      birthDate: () => faker.date.birthdate().toISOString().slice(0, 10),
+      gender: () => (Math.random() < 0.5 ? "male" : "female"),
     });
   });
   return patients;

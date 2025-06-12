@@ -1,4 +1,4 @@
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import schema from "./fhir/schema";
 import { bundle } from "~/lib/mock";
 import patients from "~/../public/researcher-demo/Patient.json";

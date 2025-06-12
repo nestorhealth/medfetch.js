@@ -2,7 +2,6 @@ import { Bundle } from "+/zod-fhir/Bundle";
 import { faker } from "@faker-js/faker";
 import z from "zod";
 
-
 type MapValues<RecordLike, V> = {
   [Key in keyof RecordLike]: V;
 };
