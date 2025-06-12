@@ -39,7 +39,7 @@ export type GetPageFn = (resourceType: string) => Page;
 export function medfetch_module_alloc(
     getPage: GetPageFn,
     sqlite3: Sqlite3Static,
-    sof: RowResolver<ResourceType>
+    sof: RowResolver<ResourceType>,
 ): Record<string, Sqlite3Module> {
     const modules: Record<string, Sqlite3Module> = {};
 
@@ -98,33 +98,39 @@ export function x_connect(
         return rc;
     };
 }
-
 export function x_best_index(_sqlite3: Sqlite3Static) {
-    let sqlite3 = _sqlite3 as Sqlite3;
+    const sqlite3 = _sqlite3 as Sqlite3;
+
     return (...args: Params<"xBestIndex">) => {
-        let [, pIdxInfo] = args;
+        const [, pIdxInfo] = args;
         const index = sqlite3.vtab.xIndexInfo(pIdxInfo);
+
         for (let i = 0; i < index.$nConstraint; i++) {
             const constraint = index.nthConstraint(i);
             const usage = index.nthConstraintUsage(i);
+
+            if (!constraint.$usable) continue;
+
             switch (constraint.$op) {
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LIMIT: {
-                    usage.$argvIndex = i + 1;
-                    usage.$omit = 1;
-                    break;
-                }
+                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_EQ:
+                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_GT:
+                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_GE:
+                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LT:
+                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LE:
+                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LIMIT:
                 case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_OFFSET: {
                     usage.$argvIndex = i + 1;
-                    usage.$omit = 1;
+                    usage.$omit = 0; // Don't omit unless you're filtering manually
                     break;
                 }
-                default: {
-                    usage.$argvIndex = i + 1;
-                    usage.$omit = 1;
-                }
+                default:
+                    // unsupported constraint
+                    break;
             }
         }
 
+        (index as any).$idxNum = 1;
+        (index as any).$estimatedCost = 10;
         index.dispose();
         return sqlite3.capi.SQLITE_OK;
     };

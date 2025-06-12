@@ -40,6 +40,7 @@ sqlite3InitModule().then(async (sqlite3) => {
         if (msg.data?.type === "open") {
             // Get baseURL
             const baseURL = msg.data.aux?.baseURL;
+            const scope = msg.data.aux?.scope ?? null;
             if (!baseURL) {
                 throw new Error(
                     taggedMessage(
@@ -49,7 +50,7 @@ sqlite3InitModule().then(async (sqlite3) => {
             }
 
             const qb = new Kysely({ dialect: sqliteDummy });
-            const schema = await sqlOnFhir(qb, DEFAULT_SQLITE_FROM_FHIR);
+            const schema = await sqlOnFhir(qb, DEFAULT_SQLITE_FROM_FHIR, scope);
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
                 throw new Error(
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
@@ -80,7 +81,7 @@ sqlite3InitModule().then(async (sqlite3) => {
             modules[dbIndex] = medfetch_module_alloc(
                 getPage,
                 sqlite3,
-                schema
+                schema,
             );
         }
 

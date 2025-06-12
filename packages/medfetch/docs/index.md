@@ -18,34 +18,10 @@ hero:
       link: https://github.com/nestorhealth/medfetch.js/tree/main/medfetch
 
 features:
-  - title: Run real SQL queries
-    details: Query your FHIR resources over a real SQL database. Now we got "INNER JOIN"'s in javascript
+  - title: Native SQL Queries
+    details: Run plain SQL queries over your FHIR data. Now we got "INNER JOIN"'s for FHIR
   - title: 
     details: 
   - title: 
     details: 
 ---
-
-<script setup>
-import { ref } from "vue";
-import { sqliteOnFhir } from "~/sqlite.browser";
-
-const dialect = sqliteOnFhir<{
-  Patient: {}
-}>(":memory:", "http://localhost:8787/fhir", ["Patient"]);
-
-const count = ref(0)
-</script>
-
-## Markdown Content
-
-The count is: {{ count }}
-
-<button :class="$style.button" @click="count++">Increment</button>
-
-<style module>
-.button {
-  color: red;
-  font-weight: bold;
-}
-</style>

@@ -12,22 +12,16 @@ const db = new Kysely<typeof dialect.$db>({
 
 // "Show me pediatric patients under 18 years old admitted in the US after 2015 with 
 // tibial shaft fractures."
+// 
 
-const init = await db
+const sanityCheck = await db.selectFrom("Condition").selectAll("Condition").execute();
+console.log("OK?", sanityCheck)
+
+const initialQuery = await db
   .selectFrom("Patient")
   .innerJoin("Condition", "Condition.subject", "Patient.id")
   .selectAll("Patient")
-  .where("Patient.birthDate", ">=", sql<string>`date('now', '-18 years')`)
-  .where((eb) =>
-    eb.or([
-      eb("Patient.address", "like", sql<string>`'%United States%'`),
-      eb("Patient.address", "like", sql<string>`'%USA%'`),
-    ])
-  )
-  .where("Condition.recordedDate", ">=", "2015-01-01")
-  .where((eb) =>
-    eb.or([
-      eb(sql<string>`Condition.code -> 'coding' -> 0 ->> code`, "like", "%S82.20%"),
-    ])
-  )
+  .where("Patient.birthDate", "<", "date('now', '-18 years')")
   .execute();
+  
+console.log("HERE", initialQuery)
