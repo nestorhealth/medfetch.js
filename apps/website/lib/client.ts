@@ -27,12 +27,6 @@ export interface MedfetchDBOptions {
 // Constants
 const DEFAULT_FHIR_SERVER = "https://r4.smarthealthit.org";
 
-const getFile = (fileName: string) => fetch("http://localhost:8787/fhir/Patient").then(
-  (res) => res.json()
-).then(JSON.stringify).then(
-  (buffer) => new File([buffer], fileName)
-)
-
 // Initialize Medfetch database
 export async function initMedfetchDB(
   options: MedfetchDBOptions = {},

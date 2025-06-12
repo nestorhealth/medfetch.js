@@ -18,83 +18,16 @@ interface PatientView {
 }
 
 async function initialTableState() {
-  await db.schema
-    .createTable("conditions")
-    .ifNotExists()
-    .as(
-      db
-        .selectFrom("Condition")
-        .select([
-          "Condition.id as id",
-          "Condition.subject as subject",
-          sql`Condition.code ->> 'display'`.as("display"),
-        ]),
-    )
+const sanityCheck = await db
+    .selectFrom("Condition")
+    .selectAll("Condition")
     .execute();
-
-  await db.schema
-    .createTable("patients")
-    .ifNotExists()
-    .as(
-      db
-        .selectFrom("Patient")
-        .select([
-          "Patient.id as id",
-          sql<string | null>`Patient.name -> 0 -> 'given' ->> 0`.as(
-            "given_name",
-          ),
-          sql<string | null>`Patient.name -> 0 ->> 'family'`.as("family_name"),
-          "Patient.birthDate as birth_date",
-          "Patient.gender as gender",
-          sql<string | null>`NULL`.as("condition"),
-          sql<string | null>`NULL`.as("status"),
-        ]),
-    )
-    .execute();
-
-  await db.schema
-    .createTable("procedures")
-    .ifNotExists()
-    .as(
-      db
-        .selectFrom("Procedure")
-        .select(["id as procedure_id", "subject as patient_id", "code"]),
-    )
-    .execute();
-
-  db.schema
-    .createTable("patient_view")
-    .ifNotExists()
-    .as(
-      (db as Kysely<any>)
-        .selectFrom("patients")
-        .select([
-          "patients.id as patient_id",
-          "conditions.display as condition",
-        ])
-        .innerJoin("conditions", "conditions.subject", "patients.id"),
-    )
-    .execute();
-
-  const patientView = await (db as Kysely<any>)
-    .selectFrom("patient_view")
-    .selectAll("patient_view")
-    .execute();
-    
-  const schema = await db.introspection.getTables()
-  const patientViewTable = schema.find(
-    (tbl) => tbl.name === "patient_view"
-  );
-  console.log("GOT", patientViewTable)
-  return patientView;
+  console.log("Sanity Check results:", sanityCheck);
 }
 
 async function syncPatientView() {
   await initialTableState();
-  const patientView =
-    await sql<PatientView>`select * from patient_view`.execute(db);
-  console.log("received", patientView);
-  return patientView.rows;
+  return [];
 }
 
 export default function ResearcherPage() {
