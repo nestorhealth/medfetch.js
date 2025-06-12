@@ -1,11 +1,8 @@
 import type { ColumnDataType, Dialect } from "kysely";
-import {
-    Merge,
-    Normalize,
+import type {
     PrimitiveKey,
     ResourceFromType,
     ResourceType,
-    Scalar,
 } from "~/json.types";
 
 export const DEFAULT_SQLITE_FROM_FHIR = {
@@ -32,55 +29,64 @@ export const DEFAULT_SQLITE_FROM_FHIR = {
 } satisfies Record<PrimitiveKey, ColumnDataType>;
 
 export const DEFAULT_POSTGRESQL_FROM_FHIR = {
-        base64Binary: "bytea", // PostgreSQL binary
-        canonical: "text", // FHIR URI-like string
-        code: "text", // Enumerated string
-        id: "text", // Short string
-        oid: "text", // FHIR OID (not PG OID type)
-        string: "text",
-        uri: "text",
-        url: "text",
-        uuid: "uuid", // PostgreSQL has native UUID type
+    base64Binary: "bytea", // PostgreSQL binary
+    canonical: "text", // FHIR URI-like string
+    code: "text", // Enumerated string
+    id: "text", // Short string
+    oid: "text", // FHIR OID (not PG OID type)
+    string: "text",
+    uri: "text",
+    url: "text",
+    uuid: "uuid", // PostgreSQL has native UUID type
 
-        // Boolean and integer types
-        boolean: "boolean",
-        integer: "integer",
-        positiveInt: "integer", // PostgreSQL doesn't distinguish unsigned
-        unsignedInt: "integer",
+    // Boolean and integer types
+    boolean: "boolean",
+    integer: "integer",
+    positiveInt: "integer", // PostgreSQL doesn't distinguish unsigned
+    unsignedInt: "integer",
 
-        // Decimal (floating point)
-        decimal: "numeric", // Arbitrary precision decimal (better than float)
+    // Decimal (floating point)
+    decimal: "numeric", // Arbitrary precision decimal (better than float)
 
-        // Temporal types
-        date: "date", // Calendar date
-        dateTime: "timestamptz", // Timestamp with time zone
-        instant: "timestamptz", // FHIR Instant → PostgreSQL timestamp
-        time: "time", // Time without date
+    // Temporal types
+    date: "date", // Calendar date
+    dateTime: "timestamptz", // Timestamp with time zone
+    instant: "timestamptz", // FHIR Instant → PostgreSQL timestamp
+    time: "time", // Time without date
 } satisfies Record<PrimitiveKey, ColumnDataType>;
 
-export const FHIR_TO_SQL = {
-    sqlite: DEFAULT_SQLITE_FROM_FHIR,
-    postgresql: DEFAULT_POSTGRESQL_FROM_FHIR
-} satisfies Record<SqlFlavor, Record<PrimitiveKey, ColumnDataType>>;
+type Scalar<Obj> = {
+    [K in keyof Obj]: ScalarColumnFrom<Obj[K]> | null;
+};
 
 /**
  * The sql text syntaxes the fetcher works with
- *
- * So yummy - karl anthony towns
- * I'm (not) sorry mysql 💔
  */
 export type SqlFlavor = "sqlite" | "postgresql";
-// 1. Flatten fields: require `id`, drop `_` keys, no optional props, undefined → null
 
-export interface SqlOnFhirDialect<
-    Fallback,
-    Override extends {
-        [K in keyof Fallback]?: {
-            [Leaf in keyof Fallback[K]]?: any;
-        };
-    },
-> extends Dialect {
-    readonly $db: Merge<Fallback, Override>;
+type ScalarColumnFrom<T> =
+    Exclude<T, undefined> extends string | number | boolean
+        ? Exclude<T, undefined>
+        : string;
+
+/**
+ * Turn some type T into something that looks like a row
+ * (a 1-level record with objects / arrays turned into strings)
+ */
+type Rowify<T> = {
+    [K in keyof T]-?: undefined extends T[K]
+        ? NonNullable<ScalarColumnFrom<T[K]>> | null
+        : ScalarColumnFrom<T[K]>;
+};
+
+/**
+ * Generic for a sql on fhir "dialect"
+ */
+export interface SqlOnFhirDialect<Resources extends ResourceType[]>
+    extends Dialect {
+    readonly $db: {
+        [R in Resources[number]]: Rowify<ResourceFromType<R>> & { id: string };
+    };
 }
 
 /**
@@ -88,9 +94,7 @@ export interface SqlOnFhirDialect<
  * runtime unvalidated
  */
 export type DefaultPathMap = {
-    [R in ResourceType]: Scalar<
-        Normalize<ResourceFromType<R>>
-    >
+    [R in ResourceType]: Scalar<ResourceFromType<R>>;
 };
 
 /**
@@ -122,23 +126,3 @@ export interface RowResolver<ResourceKey extends ResourceType> {
      */
     index: (resource: unknown, index: number) => ColumnValue;
 }
-
-/**
- * Generic
- * @internal
- */
-export interface SqlOnFhirView {
-    /**
-     * Get back the sql column type name from the primitive
-     * @param primitive A primitive typename
-     * @returns A column data type
-     */
-    scalar: (primitive: PrimitiveKey) => ColumnDataType;
-}
-
-/**
- * For the primitive types that can be mapped to non text/blob columns
- */
-export type Fhir2SqlScalar = {
-    [Key in PrimitiveKey]: ColumnDataType;
-};

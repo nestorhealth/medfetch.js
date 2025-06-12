@@ -23,9 +23,19 @@
         /* custom */
         "baseUrl": ".",
         "paths": {
-            "~/*": ["src/*"]
+            "~/*": ["src/*"],
+            "@sqlite": ["src/sqlite.browser.ts"]
         }
     },
-    "include": ["src", "fiddle", "sql-on-fhir/fhir", "sql-on-fhir/examples"],
-    "exclude": ["dist"]
+    "include": [
+        "src",
+        "fiddle",
+        "sql-on-fhir/fhir",
+        "sql-on-fhir/examples",
+        "docs"
+    ],
+    "exclude": ["dist"],
+    "vueCompilerOptions": {
+        "vitePressExtensions": [".md"]
+    }
 }

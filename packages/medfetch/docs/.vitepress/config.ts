@@ -1,9 +1,17 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Medfetch.js Documentation",
-  description: "Docs site",
+  vite: {
+    resolve: {
+      alias: {
+        "~": fileURLToPath(new URL("../../src", import.meta.url)),
+      }
+    }
+  },
+  title: "Medfetch.js",
+  description: "SQL on FHIR on javascript!",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [

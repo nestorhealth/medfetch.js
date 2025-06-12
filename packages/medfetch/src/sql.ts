@@ -153,6 +153,7 @@ export function migrations(
     db: Kysely<any>,
     jsonSchema: JSONSchema7,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
+    resources?: string[]
 ): RowResolver<ResourceType> {
     const definitions = jsonSchema["definitions"] as Record<
         string,
@@ -161,10 +162,12 @@ export function migrations(
     if (!definitions) {
         throw new Error("Bad json schema");
     }
-    const resources = (jsonSchema as any)["discriminator"]["mapping"];
+    if (!resources) {
+        resources = Object.keys((jsonSchema as any)["discriminator"]["mapping"]);
+    }
 
     const columnMap = new Map<string, Array<ColumnKey>>();
-    const schemaEntries = Object.keys(resources).map((resourceType) => {
+    const schemaEntries = resources.map((resourceType) => {
         const resourceDefinition = definitions[resourceType];
         if (!resourceDefinition || !resourceDefinition["properties"]) {
             throw new Error(`That resource key doesn't exist: "${resourceType}"`);
@@ -222,8 +225,9 @@ export function migrations(
 export async function sqlOnFhir(
     db: Kysely<any>,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
+    resources?: string[]
 ): Promise<RowResolver<ResourceType>> {
     return unzipJSONSchema().then((schema) =>
-        migrations(db, schema, sqlColumnMap),
+        migrations(db, schema, sqlColumnMap, resources),
     );
 }

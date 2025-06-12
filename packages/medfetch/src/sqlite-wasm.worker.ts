@@ -5,7 +5,7 @@ import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/counter";
 import { Page } from "~/json";
 import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
-import { pingSqliteBlocker, syncFetch } from "~/sqlite-wasm.block";
+import { ping, syncFetch } from "~/sqlite-wasm.block";
 import { sqlOnFhir } from "~/sql";
 import { Kysely } from "kysely";
 import { sqliteDummy } from "~/sql.static";
@@ -30,7 +30,7 @@ const blockingWorker = new Worker(
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    await pingSqliteBlocker(blockingWorker);
+    await ping(blockingWorker);
 
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];

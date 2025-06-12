@@ -27,11 +27,11 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            "~": path.resolve(__dirname, "src"),
+            "~": path.resolve(__dirname, "src")
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm"],
+        exclude: ["@sqlite.org/sqlite-wasm"]
     },
     build: {
         assetsInlineLimit: 0,

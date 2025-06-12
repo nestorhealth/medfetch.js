@@ -1,13 +1,12 @@
+/**
+ * For convenience
+ */
 import { isBrowser } from "~/json";
-import {
-    Worker1PromiserDialect,
-} from "~/dialects";
-import type { DefaultPathMap, SqlOnFhirDialect } from "~/sql.types";
+import { Worker1PromiserDialect } from "~/dialects";
+import type { SqlOnFhirDialect } from "~/sql.types";
 import { kyselyDummy } from "~/sql";
 import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
-import type {
-    PathMap,
-} from "~/json.types";
+import { ResourceType } from "~/json.types";
 
 /**
  * Medfetch's default sqlite on FHIR client dialect
@@ -16,15 +15,16 @@ import type {
  * @param resources The resource types to include
  * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript users
  */
-export function sqliteOnFhir<Paths extends PathMap = {}>(
+export function sqliteOnFhir<const Resources extends ResourceType[]>(
     filename: string,
     baseURL: string | File,
-): SqlOnFhirDialect<DefaultPathMap, Paths> {
+    scope: Resources
+): SqlOnFhirDialect<Resources> {
     if (!isBrowser()) {
         console.warn(
             `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
         );
-        return kyselyDummy("sqlite") as any as SqlOnFhirDialect<DefaultPathMap, Paths>;
+        return kyselyDummy("sqlite") as any as SqlOnFhirDialect<Resources>;
     }
     return new Worker1PromiserDialect(
         {
@@ -35,6 +35,7 @@ export function sqliteOnFhir<Paths extends PathMap = {}>(
             },
             aux: {
                 baseURL,
+                scope
             },
         },
         promiserSyncV2(
@@ -51,5 +52,5 @@ export function sqliteOnFhir<Paths extends PathMap = {}>(
                 },
             ),
         ),
-    ) as SqlOnFhirDialect<DefaultPathMap, Paths>;
+    ) as SqlOnFhirDialect<Resources>;
 }
