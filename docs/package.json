@@ -16,6 +16,8 @@
     "vitepress": "^1.6.3"
   },
   "dependencies": {
+    "kysely": "^0.28.2",
+    "medfetch": "workspace:^",
     "vue": "^3.5.16"
   }
 }
