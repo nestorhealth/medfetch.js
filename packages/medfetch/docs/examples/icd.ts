@@ -58,9 +58,7 @@ db.schema.createTable("patients").ifNotExists().as(initialQuery).execute();
 
 const db2 = set<typeof dialect.$db & Changes>(db);
 
-const patients = await db2
+export const patients = () => db2
     .selectFrom("patients")
     .selectAll("patients")
     .execute();
-
-console.log("HERE", patients);

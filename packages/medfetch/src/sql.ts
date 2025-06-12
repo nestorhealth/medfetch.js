@@ -231,3 +231,14 @@ export async function sqlOnFhir(
         migrations(db, schema, sqlColumnMap, resources),
     );
 }
+
+/**
+ * Just pretend like this is real
+ * @param db The previous kysely instance
+ * @returns The new one
+ */
+export function set<NewDB>(
+  db: Kysely<any>,
+): Kysely<NewDB> {
+    return db as Kysely<NewDB>;
+}

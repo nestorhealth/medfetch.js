@@ -18,13 +18,29 @@ import { ResourceType } from "~/json.types";
 export function sqliteOnFhir<const Resources extends ResourceType[]>(
     filename: string,
     baseURL: string | File,
-    scope: Resources
+    scope: Resources,
+    worker?: Worker,
 ): SqlOnFhirDialect<Resources> {
     if (!isBrowser()) {
         console.warn(
             `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
         );
         return kyselyDummy("sqlite") as any as SqlOnFhirDialect<Resources>;
+    }
+    let _worker = worker;
+    if (!_worker) {
+        _worker = new Worker(
+            new URL(
+                import.meta.env.DEV
+                    ? "./sqlite-wasm.worker.js"
+                    : "./sqlite-wasm.worker.js",
+                import.meta.url,
+            ),
+            {
+                type: "module",
+                name: "sqlite-wasm.worker",
+            },
+        );
     }
     return new Worker1PromiserDialect(
         {
@@ -35,22 +51,9 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
             },
             aux: {
                 baseURL,
-                scope
+                scope,
             },
         },
-        promiserSyncV2(
-            new Worker(
-                new URL(
-                    import.meta.env.DEV
-                        ? "./sqlite-wasm.worker.js"
-                        : "./sqlite-wasm.worker.js",
-                    import.meta.url,
-                ),
-                {
-                    type: "module",
-                    name: "sqlite-wasm.worker",
-                },
-            ),
-        ),
+        promiserSyncV2(_worker),
     ) as SqlOnFhirDialect<Resources>;
 }

@@ -4,6 +4,15 @@ import { defineConfig } from "vitepress";
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   vite: {
+    server: {
+      headers: {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp",
+      },
+    },
+    optimizeDeps: {
+        exclude: ["@sqlite.org/sqlite-wasm"]
+    },
     resolve: {
       alias: {
         "~": fileURLToPath(new URL("../../src", import.meta.url)),
