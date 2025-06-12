@@ -2,7 +2,9 @@ import { InferResult, Kysely, sql } from "kysely";
 import { set } from "~/sql";
 import { sqliteOnFhir } from "~/sqlite.browser";
 
-const dialect = sqliteOnFhir(":memory:", "http://localhost:8787/fhir", [
+const BASE_URL = "http://localhost:8787/fhir"
+
+const dialect = sqliteOnFhir(":memory:", BASE_URL, [
     "Patient",
     "Condition",
 ]);
@@ -13,14 +15,16 @@ const db = new Kysely<typeof dialect.$db>({
 
 const conditionCode = sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`;
 
-// "Show me pediatric patients under 18 years old admitted in the US after 2015 with
-// tibial shaft fractures."
-
-const sanityCheck = await db
-    .selectFrom("Condition")
-    .selectAll("Condition")
-    .execute();
-console.log("Sanity Check results:", sanityCheck);
+const patient = await db.selectFrom("Patient")
+  .innerJoin("Condition", "Condition.subject", "Patient.id")
+  .select([
+    "Patient.id as patient_id",
+    "Patient.name as patient_name"
+  ])
+  .where(() => sql`${conditionCode} = 'S82.209'`)
+  .executeTakeFirstOrThrow();
+  
+console.log(`Hello ${patient.patient_name!}!`);
 
 const initialQuery = db
     .selectFrom("Patient")
