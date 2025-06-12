@@ -8,10 +8,10 @@ const dialect = sqliteOnFhir(":memory:", BASE_URL, [
   "Condition"
 ])
 
-const db = new Kysely<typeof dialect.$db>({
-  dialect
-})
+const db = new Kysely<typeof dialect.$db>({ dialect });
 
+const conditionCode = sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`;
+const hasTibiaFracture = () => sql<any>`${conditionCode} = 'S82.209'`;
 const patient = await db.selectFrom("Patient")
   .innerJoin("Condition", "Condition.subject", "Patient.id")
   .select([
@@ -19,9 +19,7 @@ const patient = await db.selectFrom("Patient")
     "Patient.name as patient_name",
     "Condition.onsetAge as onset_age"
   ])
-  .where(
-    () => sql`"Condition"."code" -> 'coding' -> 0 ->> 'code' LIKE '%salmonella%' COLLATE NO CASE`
-  )
+  .where(hasTibiaFracture)
   .executeTakeFirstOrThrow();
   
 console.log(`Hello ${patient.patient_name}!`);

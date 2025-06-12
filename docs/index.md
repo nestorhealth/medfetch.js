@@ -7,7 +7,7 @@ hero:
   tagline: >
     Query FHIR resources just like a SQL database
   image:
-    src: /demo.gif
+    src: /example.png
     alt: "Example code for medfetch.js"
   actions:
     - theme: brand
