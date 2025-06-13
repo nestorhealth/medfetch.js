@@ -1,19 +1,23 @@
 {
-  "name": "block-promise",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsup"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/block.d.ts",
-      "default": "./dist/block.js"
+    "name": "block-promise",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsup"
+    },
+    "main": "./dist/block.js",
+    "module": "./dist/block.js",
+    "types": "./dist/block.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/block.d.ts",
+            "import": "./dist/block.js",
+            "default": "./dist/block.js"
+        }
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.30",
+        "tsup": "^8.4.0",
+        "vite": "^6.2.2"
     }
-  },
-  "devDependencies": {
-    "@types/node": "^22.15.30",
-    "tsup": "^8.4.0",
-    "vite": "^6.2.2"
-  }
 }
