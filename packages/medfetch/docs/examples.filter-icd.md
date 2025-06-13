@@ -14,30 +14,11 @@ const worker = new SqliteWorker({
   ], worker);
 
   const db = new Kysely<typeof dialect.$db>({ dialect: dialect });
-  const patients = await db
-    .selectFrom('Patient')
-    .innerJoin('Condition', 'Condition.subject', 'Patient.id')
-    .select([
-      'Patient.id as patient_id',
-
-      // First name from JSON path
-      sql<string>`"Patient"."name" -> 0 -> 'given' ->> 0`.as('first_name'),
-
-      // Last name from JSON path
-      sql<string>`"Patient"."name" -> 0 ->> 'family'`.as('last_name'),
-
-      // ICD-10 code from Condition.code.coding[0].code
-      sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`.as('icd_code'),
-
-      // Extract onset year from onsetDateTime
-      sql<number>`CAST(strftime('%Y', "Condition"."onsetDateTime") AS INTEGER)`.as('onset_year'),
-
-      // Calculate age based on birthDate and today's date
-      sql<number>`CAST((julianday('now') - julianday("Patient"."birthDate")) / 365.25 AS INTEGER)`.as('age')
-    ])
-    .execute()
-
-    console.log("Received", patients)
+  const p = await db.selectFrom("Patient").selectAll("Patient").execute();
+  console.log("here", p)
+  console.log("p")
+  const pc = await db.selectFrom("Patient").innerJoin("Condition", "Condition.subject", "Patient.id").select(["Patient.id as pid", "Condition.subject as cid"]).execute();
+  console.log("pc", pc)
 });
 
 </script>

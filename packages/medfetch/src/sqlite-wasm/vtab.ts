@@ -29,9 +29,9 @@ export type LoadPageFn = (resourceType: string) => Page;
 
 function log(type: "error" | "info", ...msgs: any[]): void {
     if (type === "error") {
-        console.error(...msgs);
+        console.error("[medfetch/sqlite-wasm.vtab] >", ...msgs);
     } else {
-        console.info(...msgs)
+        console.info("[medfetch/sqlite-wasm.vtab] >", ...msgs);
     }
 }
 
@@ -62,7 +62,7 @@ export function medfetch_module_alloc(
                 xNext: x_next(sqlite3),
                 xColumn: x_column(sqlite3, sof.index),
                 xEof: x_eof(sqlite3),
-                xFilter: x_filter(sqlite3)
+                xFilter: x_filter(sqlite3),
             },
         });
 
@@ -80,7 +80,7 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
         : never
 >;
 /**
- * The xConnect method
+ * The xConnect method factory function
  * @param sqlite3 The database instance
  * @param baseURL Base URL of the FHIR server
  * @param args {@link Params<"xConnect">}
@@ -93,14 +93,12 @@ export function x_connect(
 ) {
     let sqlite3 = _sqlite3;
     return (...args: Params<"xConnect">) => {
-        console.log(
-            `[medfetch/sqlite-wasm.vtab] > medfetch virtual table ${tableName} connected`,
-        );
         let [pdb, _paux, _argc, _argv, ppvtab] = args;
         let rc = sqlite3.capi.SQLITE_OK;
         rc += sqlite3.capi.sqlite3_declare_vtab(pdb, migrationText);
         if (!rc) {
             sqlite3.vtab.xVtab.create(ppvtab);
+            log("info", `medfetch virtual table ${tableName} xConnect() to ${tableName} OK`);
         }
         return rc;
     };
@@ -111,32 +109,7 @@ export function x_best_index(_sqlite3: Sqlite3Static) {
     return (...args: Params<"xBestIndex">) => {
         const [, pIdxInfo] = args;
         const index = sqlite3.vtab.xIndexInfo(pIdxInfo);
-
-        for (let i = 0; i < index.$nConstraint; i++) {
-            const constraint = index.nthConstraint(i);
-            const usage = index.nthConstraintUsage(i);
-
-            if (!constraint.$usable) continue;
-
-            switch (constraint.$op) {
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_EQ:
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_GT:
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_GE:
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LT:
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LE:
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LIMIT:
-                case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_OFFSET: {
-                    usage.$argvIndex = i + 1;
-                    usage.$omit = 0;
-                    break;
-                }
-                default:
-                    // unsupported constraint
-                    break;
-            }
-        }
-
-        (index as any).$idxNum = 1;
+        (index as any).$idxNum = 0;
         (index as any).$estimatedCost = 10;
         index.dispose();
         return sqlite3.capi.SQLITE_OK;
@@ -152,7 +125,11 @@ export function x_disconnect(_sqlite3: Sqlite3Static) {
     };
 }
 
-export function x_open(_sqlite3: Sqlite3Static, resourceType: string, loadPage: LoadPageFn) {
+export function x_open(
+    _sqlite3: Sqlite3Static,
+    resourceType: string,
+    loadPage: LoadPageFn,
+) {
     let sqlite3 = _sqlite3 as Sqlite3;
 
     return (...args: Params<"xOpen">) => {
@@ -163,7 +140,7 @@ export function x_open(_sqlite3: Sqlite3Static, resourceType: string, loadPage: 
         cursor.pVtab = pVtab;
         const page = loadPage(resourceType);
         cursor.page = page;
-        
+
         return sqlite3.capi.SQLITE_OK;
     };
 }
@@ -254,14 +231,13 @@ export function x_eof(sqlite3: Sqlite3Static) {
 }
 
 /**
- * 
- * @param _sqlite3 
- * @param getPage 
- * @param resourceType 
- * @returns 
+ *
+ * @param _sqlite3
+ * @param getPage
+ * @param resourceType
+ * @returns
  */
-export function x_filter(
-    _sqlite3: Sqlite3Static) {
+export function x_filter(_sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3 as Sqlite3;
     let { capi, vtab } = sqlite3;
     return (..._args: Params<"xFilter">) => {
