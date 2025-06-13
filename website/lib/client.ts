@@ -1,5 +1,5 @@
-import { sql } from "kysely";
-import { db as sqliteDB } from "@/lib/sqlite-wasm";
+import { Kysely, sql } from "kysely";
+import { sqliteOnFhir } from "medfetch/sqlite"
 
 // Types
 export interface MedfetchDB {
@@ -27,7 +27,16 @@ export interface MedfetchDBOptions {
 // Initialize Medfetch database
 export async function initMedfetchDB(): Promise<MedfetchClient> {
   // Initialize Medfetch with SQLite WASM
-  const _db = sqliteDB;
+  const dialect = sqliteOnFhir(":memory:", `${process.env.NEXT_PUBLIC_API_URL!}/fhir`, [
+    "Condition",
+    "Patient"
+  ]);
+  const _db = new Kysely<typeof dialect.$db>({ dialect });
+  
+  const result = await _db.selectFrom("Condition")
+    .selectAll("Condition")
+    .executeTakeFirst();
+  console.log("got", result)
 
   // Create a database handle with common operations
   const db: MedfetchDB = {

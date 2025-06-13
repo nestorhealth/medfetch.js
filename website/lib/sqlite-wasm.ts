@@ -1,11 +1,10 @@
-import { sqliteOnFhir } from "medfetch/sqlite";
+import { sqliteOnFhir } from "../../medfetch/dist/sqlite.browser";
 import { Kysely, sql } from "kysely";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 const dialect = sqliteOnFhir(":memory:", `${API_URL}/fhir`, [
   "Patient",
-  "Account",
   "Procedure",
   "Condition",
 ]);

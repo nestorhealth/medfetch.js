@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import block from "block-promise";
+import block from "./block-promise/block.js";
 
 export const [syncFetch, ping] = block(
     ["sqlite-wasm.thread", "sqlite-wasm.block"],

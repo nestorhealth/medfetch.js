@@ -21,14 +21,6 @@ const worker = new SqliteWorker({
   ]).execute();
   console.log("results", results)
   
-  const results2 = await db.selectFrom("Patient").innerJoin("Condition", "Condition.subject", "Patient.id").select([
-    "Patient.id as pid",
-    "Condition.id as cid"
-  ]).execute();
-  console.log("results2", results2)
-
-  const results3 = await db.selectFrom("Condition").selectAll("Condition").execute();
-  console.log("results3", results3)
 });
 
 </script>
