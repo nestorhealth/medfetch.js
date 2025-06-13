@@ -146,3 +146,10 @@ export function fromNullableOrThrow<T extends readonly unknown[]>(
     }
     return args as { [K in keyof T]: NonNullable<T[K]> };
 }
+/**
+ * @returns If global `window` var exists
+ */
+
+export function isBrowser(): boolean {
+    return typeof window !== "undefined";
+}

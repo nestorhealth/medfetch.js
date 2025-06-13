@@ -110,11 +110,14 @@ interface ColumnValue {
  * The underlying js-land data generated that the database has access to at runtime
  * @internal
  */
-export interface RowResolver<ResourceKey extends ResourceType> {
+export interface RowResolver {
     /**
      * List of resource type to sql migration text associations held in a 2-tuple
      */
-    migrations: Array<[ResourceKey, string]>;
+    migrations: Array<[
+        string, // ResourceType
+        string // Migration Text
+    ]>;
 
     /**
      * From the fetched resource presented in arg0 and the given

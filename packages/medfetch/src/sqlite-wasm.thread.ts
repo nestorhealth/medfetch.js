@@ -1,42 +1,39 @@
 /// <reference lib="webworker" />
-import { GetPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
-import { worker1 } from "~/sqlite-wasm/worker1";
+import { LoadPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
+import { attach } from "~/sqlite-wasm/worker1";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/counter";
-import { Page } from "~/json";
+import { Page } from "~/json.page";
 import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
 import { ping, syncFetch } from "~/sqlite-wasm.block";
 import { sqlOnFhir } from "~/sql";
-import { Kysely } from "kysely";
-import { sqliteDummy } from "~/sql.static";
+import { DummyDriver, Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
 import { DEFAULT_SQLITE_FROM_FHIR } from "~/sql.types";
+import SqliteWasmBlocker from "./sqlite-wasm.block?worker";
+
+const qb = new Kysely({
+    dialect: {
+        createAdapter: () => new SqliteAdapter(),
+        createDriver: () => new DummyDriver(),
+        createIntrospector: (db) => new SqliteIntrospector(db),
+        createQueryCompiler: () => new SqliteQueryCompiler(),
+    }
+})
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
-const blockingWorker = new Worker(
-    new URL(
-        import.meta.env.DEV
-            ? "./sqlite-wasm.block.js"
-            : "./sqlite-wasm.block.js",
-        import.meta.url,
-    ),
-    {
-        type: "module",
-        name: "sqlite-wasm.block",
-    },
-);
+const block = new SqliteWasmBlocker({ name: "sqlite-wasm.block" });
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    await ping(blockingWorker);
-
+    await ping(block);
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];
     const moduleSet = new Set<number>();
 
-    const rc = worker1(sqlite3, async (msg, next) => {
+    const rc = attach(sqlite3, async (msg, next) => {
         if (msg.data?.type === "open") {
             // Get baseURL
             const baseURL = msg.data.aux?.baseURL;
@@ -49,14 +46,13 @@ sqlite3InitModule().then(async (sqlite3) => {
                 );
             }
 
-            const qb = new Kysely({ dialect: sqliteDummy });
             const schema = await sqlOnFhir(qb, DEFAULT_SQLITE_FROM_FHIR, scope);
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
                 throw new Error(
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
                 );
             }
-            const getPage: GetPageFn = (resourceType) =>
+            const getPage: LoadPageFn = (resourceType) =>
                 new Page(
                     (function* () {
                         const responseText = syncFetch(
@@ -78,11 +74,7 @@ sqlite3InitModule().then(async (sqlite3) => {
 
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
-            modules[dbIndex] = medfetch_module_alloc(
-                getPage,
-                sqlite3,
-                schema,
-            );
+            modules[dbIndex] = medfetch_module_alloc(getPage, sqlite3, schema);
         }
 
         // We don't get the dbId until after "open"
@@ -108,7 +100,9 @@ sqlite3InitModule().then(async (sqlite3) => {
                         0,
                     );
                     if (rc) {
-                        console.error(`[medfetch/sqlite-wasm] > ${key} returned error code ${rc}`);
+                        console.error(
+                            `[medfetch/sqlite-wasm] > ${key} returned error code ${rc}`,
+                        );
                     }
                     if (import.meta.env.DEV) {
                         console.log(

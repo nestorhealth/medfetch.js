@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /markdown-examples
+      link: /getting-started.sqlite
     - theme: alt
       text: View API Examples
       link: /api-examples

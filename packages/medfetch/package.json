@@ -25,11 +25,6 @@
       "import": "./dist/sql.js",
       "default": "./dist/sql.js"
     },
-    "./json": {
-      "types": "./dist/json.d.ts",
-      "import": "./dist/json.js",
-      "default": "./dist/json.js"
-    },
     "./sqlite": {
       "types": "./dist/sqlite.d.ts",
       "import": {

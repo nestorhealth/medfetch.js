@@ -7,7 +7,9 @@ export default defineConfig({
   description: "SQL on FHIR for the Web",
   outDir: "../../../../apps/api/public",
   base: "/docs/",
-  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/docs/logo.svg" }]],
+  head: [
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/docs/logo.svg" }],
+  ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -17,9 +19,13 @@ export default defineConfig({
     logo: "/logo.svg",
     sidebar: [
       {
+        text: "Getting Started",
+        items: [{ text: "SQLite on FHIR", link: "/getting-started.sqlite" }],
+      },
+      {
         text: "Examples",
         items: [
-          { text: "Markdown Examples", link: "/markdown-examples" },
+          { text: "Filter by ICD Codes", link: "/examples.filter-icd" },
           { text: "Runtime API Examples", link: "/api-examples" },
         ],
       },
@@ -30,12 +36,18 @@ export default defineConfig({
     ],
   },
   vite: {
-    server: {
-      headers: {
-        "Cross-Origin-Opener-Policy": "same-origin",
-        "Cross-Origin-Embedder-Policy": "require-corp",
+    plugins: [
+      // @ts-ignore
+      {
+        configureServer(server) {
+          server.middlewares.use((_req, res, next) => {
+            res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+            res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+            next();
+          });
+        },
       },
-    },
+    ],
     resolve: {
       alias: {
         "~": fileURLToPath(new URL("../../src", import.meta.url)),

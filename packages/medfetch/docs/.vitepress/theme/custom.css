@@ -1,5 +1,0 @@
-#app {
-  transform: scale(1.5);
-  transform-origin: top left;
-  width: calc(100% / 1.5);
-}

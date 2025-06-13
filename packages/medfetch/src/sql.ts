@@ -15,9 +15,8 @@ import {
 import type {
     FhirDataType,
     PrimitiveKey,
-    ResourceType,
 } from "~/json.types";
-import { unzipJSONSchema } from "~/json";
+import { unzipJSONSchema } from "~/json.page";
 import { type RowResolver } from "~/sql.types";
 
 /**
@@ -154,7 +153,7 @@ export function migrations(
     jsonSchema: JSONSchema7,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
     resources?: string[]
-): RowResolver<ResourceType> {
+): RowResolver {
     const definitions = jsonSchema["definitions"] as Record<
         string,
         Exclude<JSONSchema7Definition, boolean>
@@ -226,7 +225,7 @@ export async function sqlOnFhir(
     db: Kysely<any>,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
     resources?: string[]
-): Promise<RowResolver<ResourceType>> {
+): Promise<RowResolver> {
     return unzipJSONSchema().then((schema) =>
         migrations(db, schema, sqlColumnMap, resources),
     );

@@ -4,11 +4,10 @@ import type {
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
 import type { Resource } from "fhir/r4";
-import { Page } from "~/json";
+import { Page } from "~/json.page";
 import { Sqlite3, Sqlite3Module } from "~/sqlite-wasm/worker1.types";
 import { ResolveColumn } from "~/sql";
 import { RowResolver } from "~/sql.types";
-import { ResourceType } from "~/json.types";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -26,20 +25,28 @@ export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     peeked: IteratorResult<Resource>;
 }
 
-export type GetPageFn = (resourceType: string) => Page;
+export type LoadPageFn = (resourceType: string) => Page;
+
+function log(type: "error" | "info", ...msgs: any[]): void {
+    if (type === "error") {
+        console.error(...msgs);
+    } else {
+        console.info(...msgs)
+    }
+}
 
 /**
  * Allocate the medfetch_module object on the Web Assembly heap
  * and get back its struct-like object
- * @param getPage {@link FetchSync} handle closure over the FHIR data source
+ * @param loadPage {@link loadPage} handle closure over the FHIR data source
  * @param _sqlite3 Sqlite3
  * @param tokenFetcher Token fetcher for auth if needed
  * @returns The struct-like {@link Sqlite3Module}
  */
 export function medfetch_module_alloc(
-    getPage: GetPageFn,
+    loadPage: LoadPageFn,
     sqlite3: Sqlite3Static,
-    sof: RowResolver<ResourceType>,
+    sof: RowResolver,
 ): Record<string, Sqlite3Module> {
     const modules: Record<string, Sqlite3Module> = {};
 
@@ -50,12 +57,12 @@ export function medfetch_module_alloc(
                 xConnect: x_connect(sqlite3, migrationText, resourceType),
                 xBestIndex: x_best_index(sqlite3),
                 xDisconnect: x_disconnect(sqlite3),
-                xOpen: x_open(sqlite3),
+                xOpen: x_open(sqlite3, resourceType, loadPage),
                 xClose: x_close(sqlite3),
                 xNext: x_next(sqlite3),
                 xColumn: x_column(sqlite3, sof.index),
                 xEof: x_eof(sqlite3),
-                xFilter: x_filter(sqlite3, getPage, resourceType), // pass resourceType
+                xFilter: x_filter(sqlite3)
             },
         });
 
@@ -120,7 +127,7 @@ export function x_best_index(_sqlite3: Sqlite3Static) {
                 case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_LIMIT:
                 case sqlite3.capi.SQLITE_INDEX_CONSTRAINT_OFFSET: {
                     usage.$argvIndex = i + 1;
-                    usage.$omit = 0; // Don't omit unless you're filtering manually
+                    usage.$omit = 0;
                     break;
                 }
                 default:
@@ -145,7 +152,7 @@ export function x_disconnect(_sqlite3: Sqlite3Static) {
     };
 }
 
-export function x_open(_sqlite3: Sqlite3Static) {
+export function x_open(_sqlite3: Sqlite3Static, resourceType: string, loadPage: LoadPageFn) {
     let sqlite3 = _sqlite3 as Sqlite3;
 
     return (...args: Params<"xOpen">) => {
@@ -154,6 +161,9 @@ export function x_open(_sqlite3: Sqlite3Static) {
             ppCursor,
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
+        const page = loadPage(resourceType);
+        cursor.page = page;
+        
         return sqlite3.capi.SQLITE_OK;
     };
 }
@@ -243,19 +253,24 @@ export function x_eof(sqlite3: Sqlite3Static) {
     };
 }
 
+/**
+ * 
+ * @param _sqlite3 
+ * @param getPage 
+ * @param resourceType 
+ * @returns 
+ */
 export function x_filter(
-    _sqlite3: Sqlite3Static,
-    getPage: GetPageFn,
-    resourceType: string,
-) {
+    _sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3 as Sqlite3;
     let { capi, vtab } = sqlite3;
-
     return (..._args: Params<"xFilter">) => {
         let [pCursor, _idxNum, _idxCStr] = _args;
-
         let cursor = vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
-        cursor.page = getPage(resourceType);
+        if (!cursor || !cursor.page) {
+            log("error", "can't filter a page that doesn't exist");
+            return capi.SQLITE_ERROR;
+        }
         cursor.peeked = cursor.page.rows.next();
         return capi.SQLITE_OK;
     };

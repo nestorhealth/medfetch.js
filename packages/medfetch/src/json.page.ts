@@ -1,8 +1,8 @@
 import type { Resource } from "fhir/r4.js";
-import type { PathValue } from "~/json.types";
-import { kdvParser } from "~/json.parse";
-import type { JSONSchema7 } from "json-schema";
+import type { PathValue } from "./json.types";
+import { kdvParser } from "./json.parse";
 import { strFromU8, unzipSync } from "fflate";
+import type { JSONSchema7 } from "json-schema";
 
 /// Implementation level types
 type Link = PathValue<"Bundle">["link"];
@@ -13,7 +13,8 @@ const parseLink = kdvParser<Link[]>("link", 1);
 const parseEntry = kdvParser<Entry[]>("entry", 1);
 
 /**
- * Somewhat abstract mapping of a grouping or "page" of related FHIR data
+ * Parse a synchronous text generator of a Bundle
+ * and yields a generator of its resources
  */
 export class Page {
     #nextURL: string | null;
@@ -107,21 +108,6 @@ export class Page {
             return new Page(nextChunks, this.#fetcher);
         }
     }
-}
-/**
- * @internal
- * @returns If global `process` var exists
- */
-export function isServer(): boolean {
-    return typeof process !== "undefined";
-}
-/**
- * @internal
- * @returns If global `window` var exists
- */
-
-export function isBrowser(): boolean {
-    return typeof window !== "undefined";
 }
 
 /**

@@ -11,12 +11,12 @@ type BeforeOnMessage = (
 ) => Promisable<void>;
 
 /**
- * Run at top level of a js script to run the sqlite3 worker
+ * Run at top level of a js script to attach the sqlite3 worker1 api to the sqlite-wasm worker thread.
  * @param sqlite3 The sqlite3 WASM interface {@link Sqlite3Static}
  * @param before What function to run before each message
- * @returns 0 on success, 1 otherwise
+ * @returns 0 on success, 1 otherwise (e.g. called from main thread)
  */
-export function worker1(
+export function attach(
     sqlite3: Sqlite3Static,
     before?: BeforeOnMessage,
 ): 0 | 1 {

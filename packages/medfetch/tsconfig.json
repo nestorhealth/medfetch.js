@@ -29,9 +29,6 @@
     },
     "include": [
         "src",
-        "fiddle",
-        "sql-on-fhir/fhir",
-        "sql-on-fhir/examples",
         "docs"
     ],
     "exclude": ["dist"],

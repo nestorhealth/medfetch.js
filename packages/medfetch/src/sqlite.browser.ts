@@ -1,12 +1,13 @@
 /**
  * For convenience
  */
-import { isBrowser } from "~/json";
+import { isBrowser } from "./json.types";
 import { Worker1PromiserDialect } from "~/dialects";
 import type { SqlOnFhirDialect } from "~/sql.types";
 import { kyselyDummy } from "~/sql";
 import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
 import { ResourceType } from "~/json.types";
+import SqliteWasmWorker from "./sqlite-wasm.thread?worker";
 
 /**
  * Medfetch's default sqlite on FHIR client dialect
@@ -19,28 +20,17 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
     filename: string,
     baseURL: string | File,
     scope: Resources,
-    worker?: Worker,
+    worker?: Worker
 ): SqlOnFhirDialect<Resources> {
+    const SQLITE_WORKER = worker ?? new SqliteWasmWorker({
+        name: "sqlite-wasm.thread"
+    });
+
     if (!isBrowser()) {
         console.warn(
             `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
         );
         return kyselyDummy("sqlite") as any as SqlOnFhirDialect<Resources>;
-    }
-    let _worker = worker;
-    if (!_worker) {
-        _worker = new Worker(
-            new URL(
-                import.meta.env.DEV
-                    ? "./sqlite-wasm.worker.js"
-                    : "./sqlite-wasm.worker.js",
-                import.meta.url,
-            ),
-            {
-                type: "module",
-                name: "sqlite-wasm.worker",
-            },
-        );
     }
     return new Worker1PromiserDialect(
         {
@@ -54,6 +44,6 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
                 scope,
             },
         },
-        promiserSyncV2(_worker),
+        promiserSyncV2(SQLITE_WORKER),
     ) as SqlOnFhirDialect<Resources>;
 }
