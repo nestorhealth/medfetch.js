@@ -1,5 +1,6 @@
 # Medfetch API
-FHIR API + some extras on Cloudflare Workers with Hono
+The main server for all public medfetch related things. Comes with
+a sandbox FHIR API and some more.
 
 ```txt
 pnpm install
@@ -24,7 +25,6 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
 ```
 
 ## Architecture
-1. Edit an existing route:
 
 ## Extra
 To generate openapi types for the api client for:

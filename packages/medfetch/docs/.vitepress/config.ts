@@ -5,7 +5,6 @@ import { fileURLToPath } from "url";
 export default defineConfig({
   title: "Medfetch.js",
   description: "SQL on FHIR for the Web",
-  outDir: "../../../../apps/api/public",
   base: "/docs/",
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/docs/logo.svg" }],

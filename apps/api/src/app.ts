@@ -9,6 +9,7 @@ import fhir, { DB } from "./routes/fhir";
 import { customLogger } from "~/lib/context";
 import { HTTPException } from "hono/http-exception";
 import { Kysely } from "kysely";
+import { serveStatic } from "hono/serve-static";
 
 // Extend the Env type to include DB
 declare global {
@@ -52,7 +53,10 @@ app.use(
     );
     return next();
   }
-)
+);
+
+// Docs site
+app.get('/docs', c => c.redirect('/docs'))
 
 // Helper function to build WHERE clause from filters
 function buildWhereClause(filters: { field: string; operator: string; value: any }[] | undefined) {

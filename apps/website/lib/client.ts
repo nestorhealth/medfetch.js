@@ -24,13 +24,8 @@ export interface MedfetchDBOptions {
   filename?: string;
 }
 
-// Constants
-const DEFAULT_FHIR_SERVER = "https://r4.smarthealthit.org";
-
 // Initialize Medfetch database
-export async function initMedfetchDB(
-  options: MedfetchDBOptions = {},
-): Promise<MedfetchClient> {
+export async function initMedfetchDB(): Promise<MedfetchClient> {
   // Initialize Medfetch with SQLite WASM
   const _db = sqliteDB;
 

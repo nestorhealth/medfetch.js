@@ -46,11 +46,10 @@ export default defineConfig({
         },
         lib: {
             entry: {
-                "json": "src/json.ts",
                 "dialects": "src/dialects.ts",
                 "sql": "src/sql.ts",
                 "sqlite.browser": "src/sqlite.browser.ts",
-                "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
+                "sqlite-wasm.thread": "src/sqlite-wasm.thread.ts",
                 "sqlite-wasm.block": "src/sqlite-wasm.block.ts",
             },
             formats: ["es"],
