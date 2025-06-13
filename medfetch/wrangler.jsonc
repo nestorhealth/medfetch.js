@@ -1,7 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "medfetch-js-docs",
-  "main": "",
   "compatibility_date": "2025-06-03",
   "workers_dev": true,
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { db } from "@/lib/sqlite-wasm";
+import { db } from "@/lib/client";
 import { sql } from "kysely";
 import { useQuery } from "@tanstack/react-query";
 

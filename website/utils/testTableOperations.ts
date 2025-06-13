@@ -5,7 +5,7 @@ import { generateTestData, verifyTableExists } from "./testUtils";
 
 async function runTests() {
   console.log("Initializing test database...");
-  const db = await getMedfetchDB();
+  const db = getMedfetchDB();
   const tableManager = new TableManager(db);
   const transactionManager = new TransactionManager(db);
 
@@ -47,8 +47,8 @@ async function runTests() {
         score: 85.0
       });
       console.log("✗ Validation should have failed for null name");
-    } catch (err) {
-      console.log("✓ Validation correctly caught null name error");
+    } catch (_err: unknown) {
+      console.log("✓ Validation correctly caught null name error", _err);
     }
 
     try {
@@ -61,8 +61,8 @@ async function runTests() {
         score: 85.0
       });
       console.log("✗ Validation should have failed for negative age");
-    } catch (err) {
-      console.log("✓ Validation correctly caught negative age error");
+    } catch (_err: unknown) {
+      console.log("✓ Validation correctly caught negative age error", _err);
     }
 
     // Test 4: Test transaction isolation levels
@@ -73,7 +73,7 @@ async function runTests() {
         await transactionManager.executeInTransaction(
           async () => {
             // Update a row
-            await db.db.exec(`
+            await db.exec(`
               UPDATE TestTable 
               SET score = score + 10 
               WHERE id = 1;
@@ -117,7 +117,7 @@ async function runTests() {
       await transactionManager.executeInTransaction(
         async () => {
           // Outer transaction
-          await db.db.exec(`
+          await db.exec(`
             UPDATE TestTable 
             SET score = score + 5 
             WHERE id = 1;
@@ -126,7 +126,7 @@ async function runTests() {
           // Nested transaction
           await transactionManager.executeInNestedTransaction(
             async () => {
-              await db.db.exec(`
+              await db.exec(`
                 UPDATE TestTable 
                 SET score = score - 2 
                 WHERE id = 1;
@@ -143,7 +143,7 @@ async function runTests() {
 
     // Test 8: Verify final state
     console.log("\nTest 8: Verifying final state...");
-    const finalData = await db.db.prepare("SELECT * FROM TestTable ORDER BY id;").all();
+    const finalData = await db.prepare("SELECT * FROM TestTable ORDER BY id;").all();
     console.log("Final table state:", JSON.stringify(finalData, null, 2));
 
     console.log("\nAll tests completed successfully!");
