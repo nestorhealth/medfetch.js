@@ -1,13 +1,12 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
-import schema from "./fhir/schema";
 import { bundle } from "~/lib/mock";
 import patients from "~/../public/researcher-demo/Patient.json";
 import conditions from "~/../public/researcher-demo/Condition.json";
 import procedures from "~/../public/researcher-demo/Procedure.json";
+import { Hono } from "hono";
 
-const fhir = new OpenAPIHono<{ Bindings: Env; Variables: Vars }>();
+const fhir = new Hono<{ Bindings: Env; Variables: Vars }>();
 
-fhir.openapi(schema.Patient.GET, async (c) => {
+fhir.get("/Patient", async (c) => {
   return c.json(
     bundle({
       id: () => crypto.randomUUID(),
@@ -23,7 +22,7 @@ fhir.openapi(schema.Patient.GET, async (c) => {
   )
 });
 
-fhir.openapi(schema.Condition.GET, async (c) => {
+fhir.get("/Condition", async (c) => {
   return c.json(
     bundle({
       id: () => crypto.randomUUID(),
@@ -40,7 +39,7 @@ fhir.openapi(schema.Condition.GET, async (c) => {
   )
 })
 
-fhir.openapi(schema.Procedure.GET, async (c) => {
+fhir.get("/Procedure", async (c) => {
   return c.json(
     bundle({
       id: () => crypto.randomUUID(),
