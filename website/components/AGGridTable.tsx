@@ -17,12 +17,12 @@ import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import { TableManager } from "../utils/tableManager";
 import { TransactionManager } from "../utils/transactionManager";
+import { useMedDB } from "@/lib/client";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AGGridTableProps {
-  db: any;
   resource: string;
   rowData: any[];
   onCellEdit: (rowId: any, col: string, newValue: any) => void;
@@ -40,7 +40,9 @@ interface CustomColDef extends AgGridColDef {
   field: string;
 }
 
-const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCellEdit, onError }) => {
+const AGGridTable: React.FC<AGGridTableProps> = ({ resource, rowData, onCellEdit, onError }) => {
+  const db = useMedDB();
+  console.log("got", rowData)
   const [columnDefs, setColumnDefs] = useState<CustomColDef[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [error, setError] = useState<string | null>(null);

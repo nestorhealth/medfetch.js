@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { db } from "@/lib/sqlite-wasm";
+import { db } from "@/lib/client";
 import { sql } from "kysely";
 
 type Props = {

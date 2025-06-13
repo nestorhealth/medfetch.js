@@ -1,7 +1,15 @@
 "use client";
+import { medDB } from "@/lib/client";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function Showcase() {
+  useEffect(() => {
+    const result = medDB.prepare("select * from \"Patient\"").all();
+    Promise.resolve(result).then(
+      (result) => console.log("OK", result)
+    )
+  })
   return (
     <main>
       <div>

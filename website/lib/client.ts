@@ -1,5 +1,55 @@
+import { sqliteOnFhir } from "medfetch/sqlite";
+import { useRef } from "react";
 import { Kysely, sql } from "kysely";
-import { sqliteOnFhir } from "medfetch/sqlite"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+
+const dialect = sqliteOnFhir(":memory:", `${API_URL}/fhir`, [
+  "Patient",
+  "Procedure",
+  "Condition",
+]);
+
+export const db = new Kysely<typeof dialect.$db>({
+  dialect,
+});
+
+export const medDB: MedfetchDB = {
+  exec: async (sqlString: string) => {
+    await sql.raw(sqlString).execute(db);
+  },
+  prepare: (sqlString: string) => ({
+    all: async () => {
+      const result = await sql.raw(sqlString).execute(db);
+      return result.rows;
+    },
+    run: async () => {
+      await sql.raw(sqlString).execute(db);
+    },
+  }),
+};
+
+
+export function useMedDB(): MedfetchDB {
+  const dbRef = useRef<MedfetchDB>(medDB);
+  return dbRef.current;
+}
+
+
+/**
+ *
+ * @param strings
+ * @param rest
+ * @returns
+ */
+export function sql2<T>(
+  strings: TemplateStringsArray,
+  ...rest: any[]
+): Promise<T[]> {
+  return sql<T>(strings, ...rest)
+    .execute(db)
+    .then((result) => result.rows);
+}
 
 // Types
 export interface MedfetchDB {
@@ -10,13 +60,6 @@ export interface MedfetchDB {
   };
 }
 
-export interface MedfetchClient {
-  db: MedfetchDB;
-  loadFHIRJson: (resourceName: string, json: any[]) => Promise<void>;
-  runSQL: (sql: string) => Promise<any[]>;
-  queryAll: (sql: string) => Promise<any[]>;
-}
-
 // Define options type for initMedfetchDB
 export interface MedfetchDBOptions {
   baseURL?: string;
@@ -25,77 +68,25 @@ export interface MedfetchDBOptions {
 }
 
 // Initialize Medfetch database
-export async function initMedfetchDB(): Promise<MedfetchClient> {
+export function getMedfetchDB(): MedfetchDB {
   // Initialize Medfetch with SQLite WASM
-  const dialect = sqliteOnFhir(":memory:", `${process.env.NEXT_PUBLIC_API_URL!}/fhir`, [
-    "Condition",
-    "Patient"
-  ]);
-  const _db = new Kysely<typeof dialect.$db>({ dialect });
-  
-  const result = await _db.selectFrom("Condition")
-    .selectAll("Condition")
-    .executeTakeFirst();
-  console.log("got", result)
-
   // Create a database handle with common operations
-  const db: MedfetchDB = {
+  const __db: MedfetchDB = {
     exec: async (sqlString: string) => {
-      await sql.raw(sqlString).execute(_db);
+      await sql.raw(sqlString).execute(db);
     },
     prepare: (sqlString: string) => ({
       all: async () => {
-        const result = await sql.raw(sqlString).execute(_db);
+        const result = await sql.raw(sqlString).execute(db);
         return result.rows;
       },
       run: async () => {
-        await sql.raw(sqlString).execute(_db);
+        await sql.raw(sqlString).execute(db);
       },
     }),
   };
 
-  // Helper to load FHIR JSON into a virtual table
-  const loadFHIRJson = async (resourceName: string, json: any[]) => {
-    // First, ensure the table exists
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS ${resourceName} (
-        id TEXT PRIMARY KEY,
-        json TEXT,
-        type TEXT HIDDEN,
-        fp TEXT HIDDEN
-      );
-    `);
-
-    // Then insert the JSON data
-    for (const resource of json) {
-      await db.exec(`
-        INSERT OR REPLACE INTO ${resourceName} (id, json, type)
-        VALUES (
-          '${resource.id}',
-          '${JSON.stringify(resource)}',
-          '${resource.resourceType}'
-        );
-      `);
-    }
-  };
-
-  // Helper to run SQL and return results
-  const runSQL = async (sqlString: string): Promise<any[]> => {
-    return await db.prepare(sqlString).all();
-  };
-
-  // Helper to query all rows from a table
-  const queryAll = async (sqlString: string): Promise<any[]> => {
-    return await db.prepare(sqlString).all();
-  };
-
-  // Return the client interface
-  return {
-    db,
-    loadFHIRJson,
-    runSQL,
-    queryAll,
-  };
+  return __db;
 }
 
 // Example usage:

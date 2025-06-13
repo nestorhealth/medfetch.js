@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function PreviewPage() {
   const { data, isPending } = useQuery({
-    queryKey: ["/api/fhir/Patient"],
+    queryKey: ["/fhir/Patient"],
     queryFn: () => api.GET("/fhir/Patient")
   });
 

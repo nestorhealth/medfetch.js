@@ -1,199 +1,163 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { initMedfetchDB, type MedfetchClient } from "@/lib/client";
+import { useMedDB } from "@/lib/client";
 import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
-import { Database, Users, Activity, AlertCircle, RefreshCw, Settings, ArrowLeft } from "lucide-react";
+import {
+  Database,
+  Users,
+  Activity,
+  AlertCircle,
+  RefreshCw,
+  Settings,
+  ArrowLeft,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function WorkspacePage() {
+  const medDB = useMedDB();
   const router = useRouter();
-  const dbRef = useRef<MedfetchClient | null>(null);
-  const tableManagerRef = useRef<TableManager | null>(null);
-  const isInitializedRef = useRef(false);
-  
-  const [currentResource, setCurrentResource] = useState<"Patient" | "Procedure">("Patient");
+  const [currentResource, setCurrentResource] = useState<
+    "Patient" | "Procedure"
+  >("Patient");
   const [rawData, setRawData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [primaryKey, setPrimaryKey] = useState<string>("patient_id");
 
-  const initializeDatabase = useCallback(async () => {
-    if (isInitializedRef.current || dbRef.current) return;
-    
-    try {
-      setIsLoading(true);
-      isInitializedRef.current = true;
-      
-      const medDb = await initMedfetchDB();
-      
-      dbRef.current = medDb;
-      tableManagerRef.current = new TableManager(medDb);
+  const tableManagerRef = useRef<TableManager | null>(null);
 
-      await medDb.db.exec(`
-        BEGIN TRANSACTION;
-        
-        CREATE TABLE IF NOT EXISTS Patient (
-          patient_id TEXT PRIMARY KEY,
-          givenName TEXT,
-          familyName TEXT,
-          birthDate TEXT,
-          gender TEXT,
-          condition TEXT,
-          status TEXT
-        );
+  const initialize = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    tableManagerRef.current = new TableManager(medDB);
 
-        CREATE TABLE IF NOT EXISTS Procedure (
-          procedure_id TEXT PRIMARY KEY,
-          patient_id TEXT,
-          code TEXT,
-          performedDate TEXT,
-          notes TEXT,
-          FOREIGN KEY (patient_id) REFERENCES Patient(patient_id)
-        );
-        
-        COMMIT;
-      `);
+    const schema = await tableManagerRef.current.getTableSchema(currentResource);
+    const pkCol =
+      schema?.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
+    setPrimaryKey(pkCol);
 
-      const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
-      if (patientCount[0].count === 0) {
-        await medDb.db.exec(`
+    const rows = await medDB.prepare(`
+      select "Patient"."id" as "patient_id", strftime('%Y', "Condition"."onsetDateTime") as "onset_year", "Condition"."code" -> 'coding' -> 0 ->> 'code' as "icd_code", "Patient"."name" -> 0 -> 'given' ->> 0 as "first_name", "Patient"."name" -> 0 ->> 'family' as "last_name", 
+          (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
+          - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
+         as "age" from "Patient" inner join "Condition" on "Condition"."subject" = "Patient"."id" 
+      `).all();
+    setRawData(rows);
+  } catch (err) {
+    setError("Initialization error: " + (err as Error).message);
+  } finally {
+    setIsLoading(false);
+  }
+}, [medDB, currentResource]);
+
+  useEffect(() => {
+    initialize()
+  },[initialize])
+
+  const loadResourceData = useCallback(
+    async (resource: "Patient" | "Procedure") => {
+      try {
+        setError(null);
+        setIsLoading(true);
+
+        const schema = await tableManagerRef.current?.getTableSchema(resource);
+        const pkCol =
+          schema?.find((col: ColumnDefinition) => col.primaryKey)?.name ||
+          "patient_id";
+        setPrimaryKey(pkCol);
+
+        const rows = await medDB.prepare(`SELECT * FROM "${resource}"`).all();
+        setRawData(rows);
+      } catch (err) {
+        setError("Failed to load data: " + (err as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [medDB],
+  );
+
+  const handleCellEdit = useCallback(
+    async (rowId: any, col: string, newValue: any) => {
+      if (!primaryKey) return;
+
+      try {
+        setError(null);
+        const safeValue =
+          typeof newValue === "string" ? `'${newValue}'` : newValue;
+        const updateSQL = `UPDATE "${currentResource}" SET "${col}" = ${safeValue} WHERE "${primaryKey}" = '${rowId}';`;
+
+        await medDB.exec(`
           BEGIN TRANSACTION;
-          
-          INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
-          VALUES 
-            ('p1', 'John', 'Doe', '1970-01-01', 'male', 'Diabetes', 'Active'),
-            ('p2', 'Jane', 'Smith', '1985-03-15', 'female', 'Hypertension', 'Active'),
-            ('p3', 'Bob', 'Johnson', '1962-07-22', 'male', 'Heart Disease', 'Inactive'),
-            ('p4', 'Alice', 'Brown', '1978-11-08', 'female', 'Diabetes', 'Active'),
-            ('p5', 'Charlie', 'Wilson', '1955-09-30', 'male', 'COPD', 'Active');
-          
-          INSERT INTO Procedure (procedure_id, patient_id, code, performedDate, notes)
-          VALUES 
-            ('pr1', 'p1', 'Blood Test', '2024-01-15', 'Routine glucose check'),
-            ('pr2', 'p2', 'BP Monitoring', '2024-01-20', 'Weekly blood pressure check'),
-            ('pr3', 'p1', 'HbA1c Test', '2024-02-01', 'Diabetes monitoring'),
-            ('pr4', 'p3', 'ECG', '2024-01-25', 'Heart rhythm check'),
-            ('pr5', 'p4', 'Blood Test', '2024-02-10', 'Routine glucose check');
-          
+          ${updateSQL}
           COMMIT;
         `);
-      }
 
-    } catch (err) {
-      setError("Failed to initialize Medfetch DB: " + (err as Error).message);
-      isInitializedRef.current = false;
-      dbRef.current = null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const loadResourceData = useCallback(async (resource: "Patient" | "Procedure") => {
-    if (!dbRef.current || !tableManagerRef.current) return;
-    
-    try {
-      setError(null);
-      const schema = await tableManagerRef.current.getTableSchema(resource);
-      const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
-      setPrimaryKey(pkCol);
-      
-      const rows = await dbRef.current.db.prepare(`SELECT * FROM ${resource};`).all();
-      setRawData(rows);
-    } catch (err) {
-      setError("Failed to load data: " + (err as Error).message);
-    }
-  }, []);
-
-  useEffect(() => {
-    initializeDatabase();
-  }, [initializeDatabase]);
-
-  useEffect(() => {
-    if (dbRef.current && !isLoading) {
-      loadResourceData(currentResource);
-    }
-  }, [currentResource, isLoading, loadResourceData]);
-
-  const handleCellEdit = useCallback(async (rowId: any, col: string, newValue: any) => {
-    if (!dbRef.current || !primaryKey) return;
-    
-    try {
-      setError(null);
-      const updateSQL = `UPDATE ${currentResource} SET ${col} = ${typeof newValue === "string" ? `'${newValue}'` : newValue} WHERE ${primaryKey} = '${rowId}';`;
-      
-      await dbRef.current.db.exec(`
-        BEGIN TRANSACTION;
-        ${updateSQL}
-        COMMIT;
-      `);
-      
-      await loadResourceData(currentResource);
-    } catch (err) {
-      setError("Edit failed: " + (err as Error).message);
-    }
-  }, [currentResource, primaryKey, loadResourceData]);
-
-  const handleQuery = useCallback(async (sql: string): Promise<void> => {
-    if (!dbRef.current) return;
-
-    try {
-      setError(null);
-      
-      const statements = sql.split(';').filter(stmt => stmt.trim());
-      const isSelect = statements[0].trim().toLowerCase().startsWith('select');
-      
-      if (isSelect) {
-        for (const statement of statements) {
-          if (statement.trim()) {
-            await dbRef.current.db.prepare(statement + ';').all();
-          }
-        }
-      } else {
-        const transactionSQL = `
-          BEGIN TRANSACTION;
-          ${statements.join(';')};
-          COMMIT;
-        `;
-        await dbRef.current.db.exec(transactionSQL);
-      }
-
-      let affectedTable: "Patient" | "Procedure" | null = null;
-      const firstStmt = statements[0].trim().toLowerCase();
-      
-      if (firstStmt.startsWith('select')) {
-        const tableMatch = firstStmt.match(/from\s+(\w+)/i);
-        if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-      } else if (firstStmt.startsWith('insert')) {
-        const tableMatch = firstStmt.match(/into\s+(\w+)/i);
-        if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-      } else if (firstStmt.startsWith('update') || firstStmt.startsWith('delete')) {
-        const tableMatch = firstStmt.match(/(?:update|delete from)\s+(\w+)/i);
-        if (tableMatch) affectedTable = tableMatch[1] as "Patient" | "Procedure";
-      }
-
-      if (affectedTable && affectedTable !== currentResource) {
-        setCurrentResource(affectedTable);
-      } else {
         await loadResourceData(currentResource);
+      } catch (err) {
+        setError("Edit failed: " + (err as Error).message);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(`Query failed: ${errorMessage}`);
-      throw err;
-    }
-  }, [currentResource, loadResourceData]);
+    },
+    [primaryKey, loadResourceData],
+  );
 
-  const refreshData = useCallback(async () => {
-    if (!dbRef.current) return;
-    await loadResourceData(currentResource);
-  }, [currentResource, loadResourceData]);
+  const handleQuery = useCallback(
+    async (sql: string): Promise<void> => {
+      try {
+        setError(null);
+        const statements = sql
+          .split(";")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const isSelect = statements[0].toLowerCase().startsWith("select");
+
+        if (isSelect) {
+          for (const stmt of statements) {
+            await medDB.prepare(stmt + ";").all();
+          }
+        } else {
+          await medDB.exec(`
+            BEGIN TRANSACTION;
+            ${statements.join(";")};
+            COMMIT;
+          `);
+        }
+
+        let affectedTable: "Patient" | "Procedure" | null = null;
+        const first = statements[0].toLowerCase();
+        const match =
+          first.match(/from\s+(\w+)/i) ||
+          first.match(/into\s+(\w+)/i) ||
+          first.match(/(?:update|delete from)\s+(\w+)/i);
+        if (match) affectedTable = match[1] as "Patient" | "Procedure";
+
+        if (affectedTable && affectedTable !== currentResource) {
+          setCurrentResource(affectedTable);
+        } else {
+          await loadResourceData(currentResource);
+        }
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "Unknown error occurred";
+        setError(`Query failed: ${msg}`);
+        throw err;
+      }
+    },
+    [currentResource, loadResourceData],
+  );
+
+  const refreshData = useCallback(
+    () => loadResourceData(currentResource),
+    [currentResource, loadResourceData],
+  );
 
   const getTableStats = useCallback(() => {
-    if (!rawData) return { total: 0, active: 0 };
     const total = rawData.length;
-    const active = rawData.filter(row => row.status === 'Active' || !row.status).length;
+    const active = rawData.filter(
+      (r) => r.status === "Active" || !r.status,
+    ).length;
     return { total, active };
   }, [rawData]);
 
@@ -205,8 +169,12 @@ export default function WorkspacePage() {
         <div className="text-center">
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold text-white mb-2">Initializing Workspace</h3>
-            <p className="text-slate-400">Setting up your medical data environment...</p>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Initializing Workspace
+            </h3>
+            <p className="text-slate-400">
+              Setting up your medical data environment...
+            </p>
           </div>
         </div>
       </div>
@@ -220,28 +188,32 @@ export default function WorkspacePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.push('/showcase/researcher')}
+                onClick={() => router.push("/showcase/researcher")}
                 className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
                 title="Back to Connection Setup"
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
-              
+
               <div className="bg-blue-500/20 rounded-xl p-3">
                 <Database className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Medical Data Workspace</h1>
-                <p className="text-slate-400 text-sm">Connected to SMART Health IT FHIR Server</p>
+                <h1 className="text-xl font-bold text-white">
+                  Medical Data Workspace
+                </h1>
+                <p className="text-slate-400 text-sm">
+                  Connected to SMART Health IT FHIR Server
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 bg-green-500/20 text-green-400 px-3 py-1.5 rounded-lg text-sm">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span>Connected</span>
               </div>
-              
+
               <div className="flex bg-slate-800 rounded-lg p-1">
                 <button
                   onClick={() => setCurrentResource("Patient")}
@@ -280,17 +252,28 @@ export default function WorkspacePage() {
           <div className="mt-4 flex items-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-slate-300">Total Records: <span className="text-white font-medium">{stats.total}</span></span>
+              <span className="text-slate-300">
+                Total Records:{" "}
+                <span className="text-white font-medium">{stats.total}</span>
+              </span>
             </div>
             {currentResource === "Patient" && (
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-slate-300">Active: <span className="text-white font-medium">{stats.active}</span></span>
+                <span className="text-slate-300">
+                  Active:{" "}
+                  <span className="text-white font-medium">{stats.active}</span>
+                </span>
               </div>
             )}
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span className="text-slate-300">Table: <span className="text-white font-medium">{currentResource}</span></span>
+              <span className="text-slate-300">
+                Table:{" "}
+                <span className="text-white font-medium">
+                  {currentResource}
+                </span>
+              </span>
             </div>
           </div>
         </div>
@@ -307,7 +290,9 @@ export default function WorkspacePage() {
                   ) : (
                     <Activity className="h-5 w-5 text-purple-400" />
                   )}
-                  <h2 className="text-lg font-semibold text-white">{currentResource} Data</h2>
+                  <h2 className="text-lg font-semibold text-white">
+                    {currentResource} Data
+                  </h2>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
                   <Settings className="h-4 w-4" />
@@ -327,37 +312,18 @@ export default function WorkspacePage() {
             )}
 
             <div className="flex-1 p-6">
-              {dbRef.current ? (
-                <AGGridTable
-                  db={dbRef.current}
-                  resource={currentResource}
-                  rowData={rawData}
-                  onCellEdit={handleCellEdit}
-                  onError={setError}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                    <p className="text-slate-400">Loading database...</p>
-                  </div>
-                </div>
-              )}
+              <AGGridTable
+                resource={currentResource}
+                rowData={rawData}
+                onCellEdit={handleCellEdit}
+                onError={setError}
+              />
             </div>
           </div>
         </div>
 
         <div className="w-96 border-l border-slate-700">
-          {dbRef.current ? (
-            <ChatUI db={dbRef.current} onQuery={handleQuery} />
-          ) : (
-            <div className="flex items-center justify-center h-full bg-slate-900">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <p className="text-slate-400">Loading chat interface...</p>
-              </div>
-            </div>
-          )}
+          <ChatUI onQuery={handleQuery} />
         </div>
       </div>
     </div>

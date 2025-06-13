@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { type MedfetchClient } from "@/lib/client";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { api } from '@/lib/api';
@@ -16,7 +15,6 @@ interface Message {
 }
 
 interface ChatUIProps {
-  db: MedfetchClient;
   onQuery: (sql: string) => Promise<void>;
 }
 

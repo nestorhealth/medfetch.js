@@ -1,4 +1,4 @@
-import { MedfetchClient } from "@/lib/client";
+import { MedfetchDB } from "@/lib/client";
 
 export type TransactionIsolationLevel = 
   | 'READ UNCOMMITTED'
@@ -22,7 +22,7 @@ export class TransactionManager {
   private transactionStack: TransactionState[] = [];
   private savepointCounter = 0;
 
-  constructor(private db: MedfetchClient) {}
+  constructor(private db: MedfetchDB) {}
 
   /**
    * Starts a new transaction with optional isolation level
@@ -35,10 +35,10 @@ export class TransactionManager {
       // SQLite only supports SERIALIZABLE and READ UNCOMMITTED
       // READ COMMITTED is emulated using savepoints
       if (isolationLevel === 'READ COMMITTED') {
-        await this.db.db.exec('BEGIN TRANSACTION;');
+        await this.db.exec('BEGIN TRANSACTION;');
         await this.createSavepoint(transactionName);
       } else {
-        await this.db.db.exec(`BEGIN ${isolationLevel} TRANSACTION;`);
+        await this.db.exec(`BEGIN ${isolationLevel} TRANSACTION;`);
       }
 
       this.transactionStack.push({
@@ -65,7 +65,7 @@ export class TransactionManager {
     const savepointName = name || `savepoint_${currentTransaction.name}_${this.savepointCounter++}`;
     
     try {
-      await this.db.db.exec(`SAVEPOINT ${savepointName};`);
+      await this.db.exec(`SAVEPOINT ${savepointName};`);
       currentTransaction.savepoints.push(savepointName);
       return savepointName;
     } catch (err: unknown) {
@@ -88,7 +88,7 @@ export class TransactionManager {
     }
 
     try {
-      await this.db.db.exec(`ROLLBACK TO SAVEPOINT ${savepointName};`);
+      await this.db.exec(`ROLLBACK TO SAVEPOINT ${savepointName};`);
       // Remove all savepoints after this one
       const index = currentTransaction.savepoints.indexOf(savepointName);
       currentTransaction.savepoints = currentTransaction.savepoints.slice(0, index + 1);
@@ -116,9 +116,9 @@ export class TransactionManager {
     try {
       if (currentTransaction.isolationLevel === 'READ COMMITTED') {
         // For READ COMMITTED, we need to release the savepoint
-        await this.db.db.exec(`RELEASE SAVEPOINT ${currentTransaction.name};`);
+        await this.db.exec(`RELEASE SAVEPOINT ${currentTransaction.name};`);
       }
-      await this.db.db.exec('COMMIT;');
+      await this.db.exec('COMMIT;');
       options.onCommit?.();
     } catch (err: unknown) {
       const error = err as Error;
@@ -143,7 +143,7 @@ export class TransactionManager {
     }
 
     try {
-      await this.db.db.exec('ROLLBACK;');
+      await this.db.exec('ROLLBACK;');
       options.onRollback?.();
     } catch (err: unknown) {
       const error = err as Error;
@@ -187,7 +187,7 @@ export class TransactionManager {
     try {
       const result = await operation();
       // For nested transactions, we don't commit, just release the savepoint
-      await this.db.db.exec(`RELEASE SAVEPOINT ${savepointName};`);
+      await this.db.exec(`RELEASE SAVEPOINT ${savepointName};`);
       return result;
     } catch (err: unknown) {
       const error = err as Error;
