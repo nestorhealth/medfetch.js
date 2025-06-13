@@ -13,7 +13,6 @@
     "types": ["./dist/worker-configuration.d.ts"],
     "baseUrl": ".",
     "paths": {
-      "+/*": ["./dist/*"],
       "~/*": ["./src/*"]
     }
   },

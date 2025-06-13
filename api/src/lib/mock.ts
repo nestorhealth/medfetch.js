@@ -1,4 +1,3 @@
-import { Bundle } from "+/zod-fhir/Bundle";
 import { faker } from "@faker-js/faker";
 import z from "zod";
 
@@ -35,5 +34,3 @@ export function makeFactory<T extends z.ZodObject<any>, Output = z.infer<T>>(
     return result;
   };
 }
-
-export const bundle = makeFactory(Bundle);
