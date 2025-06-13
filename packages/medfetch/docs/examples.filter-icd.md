@@ -12,13 +12,23 @@ const worker = new SqliteWorker({
     "Patient",
     "Condition"
   ], worker);
+  
 
   const db = new Kysely<typeof dialect.$db>({ dialect: dialect });
-  const p = await db.selectFrom("Patient").selectAll("Patient").execute();
-  console.log("here", p)
-  console.log("p")
-  const pc = await db.selectFrom("Patient").innerJoin("Condition", "Condition.subject", "Patient.id").select(["Patient.id as pid", "Condition.subject as cid"]).execute();
-  console.log("pc", pc)
+  const results = await db.selectFrom("Patient").innerJoin("Condition", "Condition.subject", "Patient.id").select([
+    "Patient.id as pid",
+    "Condition.id as cid"
+  ]).execute();
+  console.log("results", results)
+  
+  const results2 = await db.selectFrom("Patient").innerJoin("Condition", "Condition.subject", "Patient.id").select([
+    "Patient.id as pid",
+    "Condition.id as cid"
+  ]).execute();
+  console.log("results2", results2)
+
+  const results3 = await db.selectFrom("Condition").selectAll("Condition").execute();
+  console.log("results3", results3)
 });
 
 </script>
@@ -38,7 +48,8 @@ SELECT
   "Patient"."id" AS "patient_id",
   "Patient"."name" -> 0 -> 'given' ->> 0 AS "first_name",
   "Patient"."name" -> 0 ->> 'family' AS "last_name",
-  "Patient"."birthDate" AS "birth_date",
+  (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
+ - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate")) AS "age",
   "Condition"."code" -> 'coding' -> 0 ->> 'code' AS "icd_code",
   "Condition"."onsetDateTime" AS "condition_onset"
 FROM "Patient"

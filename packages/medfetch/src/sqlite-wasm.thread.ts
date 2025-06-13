@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { LoadPageFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
+import { PageLoaderFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { attach } from "~/sqlite-wasm/worker1";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/counter";
@@ -52,14 +52,14 @@ sqlite3InitModule().then(async (sqlite3) => {
                     taggedMessage(`Can't handle that baseURL ${baseURL}`),
                 );
             }
-            const getPage: LoadPageFn = (resourceType) =>
-                new Page(
-                    (function* () {
-                        const responseText = syncFetch(
-                            `${baseURL}/${resourceType}`,
-                        );
-                        yield responseText;
-                    })(),
+            const getPage: PageLoaderFn = (resourceType) => {
+                const responseText = syncFetch(`${baseURL}/${resourceType}`);
+                const generator = function*() {
+                    yield responseText;
+                };
+                
+                return new Page(
+                    generator(),
                     (nextURL) => {
                         return (function* () {
                             const responseText = syncFetch(nextURL);
@@ -67,6 +67,7 @@ sqlite3InitModule().then(async (sqlite3) => {
                         })();
                     },
                 );
+            }
 
             console.log(
                 taggedMessage(`Received init message with baseURL: ${baseURL}`),

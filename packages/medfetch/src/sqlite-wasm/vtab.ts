@@ -25,15 +25,25 @@ export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
     peeked: IteratorResult<Resource>;
 }
 
-export type LoadPageFn = (resourceType: string) => Page;
+/**
+ * For loading in a memoized version of {@link Page}.
+ * The memo is a temporary(?) fix to xFilter having to
+ * refetch per row on an inner join, which obviously isn't ideal in the
+ * worst case.
+ */
+export type PageLoaderFn = (resourceType: string) => Page;
 
-function log(type: "error" | "info", ...msgs: any[]): void {
-    if (type === "error") {
-        console.error("[medfetch/sqlite-wasm.vtab] >", ...msgs);
-    } else {
-        console.info("[medfetch/sqlite-wasm.vtab] >", ...msgs);
-    }
-}
+const log = {
+    on: (f: boolean, cb: () => void) => {
+        if (f) {
+            cb();
+        }
+        cb();
+    },
+    info: console.info,
+    error: console.error,
+    warn: console.warn,
+};
 
 /**
  * Allocate the medfetch_module object on the Web Assembly heap
@@ -44,7 +54,7 @@ function log(type: "error" | "info", ...msgs: any[]): void {
  * @returns The struct-like {@link Sqlite3Module}
  */
 export function medfetch_module_alloc(
-    loadPage: LoadPageFn,
+    loadPage: PageLoaderFn,
     sqlite3: Sqlite3Static,
     sof: RowResolver,
 ): Record<string, Sqlite3Module> {
@@ -57,12 +67,12 @@ export function medfetch_module_alloc(
                 xConnect: x_connect(sqlite3, migrationText, resourceType),
                 xBestIndex: x_best_index(sqlite3),
                 xDisconnect: x_disconnect(sqlite3),
-                xOpen: x_open(sqlite3, resourceType, loadPage),
+                xOpen: x_open(sqlite3, loadPage, resourceType),
                 xClose: x_close(sqlite3),
                 xNext: x_next(sqlite3),
                 xColumn: x_column(sqlite3, sof.index),
                 xEof: x_eof(sqlite3),
-                xFilter: x_filter(sqlite3),
+                xFilter: x_filter(sqlite3)
             },
         });
 
@@ -98,7 +108,9 @@ export function x_connect(
         rc += sqlite3.capi.sqlite3_declare_vtab(pdb, migrationText);
         if (!rc) {
             sqlite3.vtab.xVtab.create(ppvtab);
-            log("info", `medfetch virtual table ${tableName} xConnect() to ${tableName} OK`);
+            log.info(
+                `medfetch virtual table ${tableName} xConnect() to ${tableName} OK`,
+            );
         }
         return rc;
     };
@@ -127,8 +139,8 @@ export function x_disconnect(_sqlite3: Sqlite3Static) {
 
 export function x_open(
     _sqlite3: Sqlite3Static,
+    loadPage: PageLoaderFn,
     resourceType: string,
-    loadPage: LoadPageFn,
 ) {
     let sqlite3 = _sqlite3 as Sqlite3;
 
@@ -138,8 +150,27 @@ export function x_open(
             ppCursor,
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
-        const page = loadPage(resourceType);
-        cursor.page = page;
+        const rawGen = loadPage(resourceType).rows;
+        const buffer: any[] = [];
+        let index = 0;
+        cursor.page = {
+            rows: {
+                next: () => {
+                    if (index < buffer.length) {
+                        return { value: buffer[index++], done: false };
+                    }
+                    const next = rawGen.next();
+                    if (!next.done) {
+                        buffer.push(next.value);
+                        index++;
+                    }
+                    return next;
+                },
+                reset: (() => {
+                    index = 0;
+                }) as any,
+            },
+        } as any;
 
         return sqlite3.capi.SQLITE_OK;
     };
@@ -231,23 +262,29 @@ export function x_eof(sqlite3: Sqlite3Static) {
 }
 
 /**
- *
  * @param _sqlite3
  * @param getPage
  * @param resourceType
  * @returns
  */
-export function x_filter(_sqlite3: Sqlite3Static) {
+export function x_filter(
+    _sqlite3: Sqlite3Static,
+) {
     let sqlite3 = _sqlite3 as Sqlite3;
     let { capi, vtab } = sqlite3;
+
     return (..._args: Params<"xFilter">) => {
-        let [pCursor, _idxNum, _idxCStr] = _args;
-        let cursor = vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
-        if (!cursor || !cursor.page) {
-            log("error", "can't filter a page that doesn't exist");
-            return capi.SQLITE_ERROR;
-        }
+        const [pCursor, _idxNum, _idxCStr] = _args;
+        const cursor = vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
+        if (!cursor) return capi.SQLITE_ERROR;
+
+        // Start the generator
         cursor.peeked = cursor.page.rows.next();
+        if (cursor.peeked.done) {
+            (cursor.page.rows as any).reset();
+            cursor.peeked = cursor.page.rows.next();
+        }
+
         return capi.SQLITE_OK;
     };
 }
