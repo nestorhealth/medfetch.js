@@ -3,11 +3,8 @@
   "name": "medfetch-js-docs",
   "compatibility_date": "2025-06-03",
   "workers_dev": true,
-
-  // This tells Wrangler to serve static assets from the given directory
-  "site": {
-    "bucket": ".vitepress/dist",
-    "entry-point": "."
+  "assets": {
+    "directory": "./.vitepress/dist"
   }
 
   // Optional: Uncomment and fill in as needed
