@@ -7,7 +7,6 @@ import type { SqlOnFhirDialect } from "~/sql.types";
 import { kyselyDummy } from "~/sql";
 import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
 import { ResourceType } from "~/json.types";
-import SqliteWasmWorker from "./sqlite-wasm.thread?worker";
 
 /**
  * Medfetch's default sqlite on FHIR client dialect
@@ -22,9 +21,13 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
     scope: Resources,
     worker?: Worker
 ): SqlOnFhirDialect<Resources> {
-    const SQLITE_WORKER = worker ?? new SqliteWasmWorker({
-        name: "sqlite-wasm.thread"
-    });
+    const SQLITE_WORKER = worker ?? new Worker(new URL(
+        import.meta.env.DEV ? "./sqlite-wasm.thread.js"
+        : "./sqlite-wasm.thread.js",
+        import.meta.url
+    ), {
+        type: "module"
+    })
 
     if (!isBrowser()) {
         console.warn(

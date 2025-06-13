@@ -9,7 +9,6 @@ import { ping, syncFetch } from "~/sqlite-wasm.block";
 import { sqlOnFhir } from "~/sql";
 import { DummyDriver, Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
 import { DEFAULT_SQLITE_FROM_FHIR } from "~/sql.types";
-import SqliteWasmBlocker from "./sqlite-wasm.block?worker";
 
 const qb = new Kysely({
     dialect: {
@@ -24,7 +23,15 @@ const qb = new Kysely({
 const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
-const block = new SqliteWasmBlocker({ name: "sqlite-wasm.block" });
+const block = new Worker(new URL(
+    import.meta.env.DEV ?
+    "./sqlite-wasm.worker.js" :
+    "./sqlite-wasm.worker.js",
+    import.meta.url
+), {
+    type: "module",
+    name: "sqlite-wasm.block"
+})
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
