@@ -1,17 +1,7 @@
 "use client";
 import Link from "next/link";
-import { db } from "@/lib/sqlite-wasm";
-import { useEffect } from "react";
 
 export default function Showcase() {
-  useEffect(() => {
-    async function init() {
-      const result = await db.selectFrom("Patient").selectAll("Patient").execute();
-      console.log("UH", result)
-    }
-    
-    init();
-  })
   return (
     <main>
       <div>

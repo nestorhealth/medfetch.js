@@ -32,7 +32,8 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
         : "./sqlite-wasm.thread.js",
         import.meta.url
     ), {
-        type: "module"
+        type: "module",
+        name: "sqlite-wasm.thread"
     })
 
     return new Worker1PromiserDialect(

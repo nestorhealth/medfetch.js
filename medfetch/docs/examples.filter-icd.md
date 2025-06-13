@@ -1,119 +1,122 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
+import { Kysely, sql } from "kysely";
 import { sqliteOnFhir } from "~/sqlite.browser";
-import { Kysely, sql } from "kysely"
 import SqliteWorker from "~/sqlite-wasm.thread?worker";
+import DataTable from "./components/DataTable.vue";
 
+type Column = {
+  name: string;
+  dataType: string;
+};
+
+const worker = new SqliteWorker({ name: "sqlite-wasm.thread" });
+const dialect = sqliteOnFhir(":memory:", "http://localhost:8787/fhir", [
+  "Patient",
+  "Condition"
+], worker);
+type patients_initial = {
+  patient_id: string;
+  onset_year: string;
+  icd_code: string;
+  first_name: string;
+  last_name: string;
+  age: string;
+}
+
+type ViewState = { rows: Record<string, unknown>[]; columns: Column[] }
+
+const db = new Kysely<typeof dialect.$db & { patients: patients_initial }>({ dialect });
+const viewStates = ref<ViewState[]>([]);
 onMounted(async () => {
-const worker = new SqliteWorker({
-  name: "sqlite-wasm.thread"
-})
-  const dialect = sqliteOnFhir(":memory:", "http://localhost:8787/fhir", [
-    "Patient",
-    "Condition"
-  ], worker);
-  
+  try {
+    const initial = db
+      .selectFrom("Patient")
+      .innerJoin("Condition", "Condition.subject", "Patient.id")
+      .select([
+        "Patient.id as patient_id",
+        sql<string>`strftime('%Y', "Condition"."onsetDateTime")`.as("onset_year"),
+        sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`.as("icd_code"),
+        sql<string>`"Patient"."name" -> 0 -> 'given' ->> 0`.as("first_name"),
+        sql<string>`"Patient"."name" -> 0 ->> 'family'`.as("last_name"),
+        sql<string>`
+          (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
+          - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
+        `.as("age")
+      ]);
 
-  const db = new Kysely<typeof dialect.$db>({ dialect: dialect });
-  const results = await db.selectFrom("Patient").innerJoin("Condition", "Condition.subject", "Patient.id").select([
-    "Patient.id as pid",
-    "Condition.id as cid"
-  ]).execute();
-  console.log("results", results)
-  
+    await db.schema.createTable("patients").as(initial).execute();
+
+    const patientTable = (await db.introspection.getTables()).find(t => t.name === "patients")!;
+
+    const rowState = await db.selectFrom("patients").selectAll("patients").execute();
+    const columnState = patientTable.columns.map(col => ({
+      name: col.name,
+      dataType: col.dataType
+    }))
+
+    
+    const views: ViewState[] = [
+      {
+        rows: rowState,
+        columns: columnState
+      }
+    ];
+    
+    const generalInclusion = await db
+      .selectFrom("patients")
+      .selectAll("patients")
+      .where("icd_code", "like", "S82.%")
+      .execute();
+    views.push({
+      rows: generalInclusion,
+      columns: columnState
+    });
+    console.log("uh", generalInclusion)
+    
+    viewStates.value = views
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 </script>
 
-# Filter by ICD codes
-
-This page demonstrates how to query Resources with ICD code filters. This is
-specific to ICD, but the general logic should work with any other code system.
-
-## Within a certain Range
-Let's find all Patients under 18 years old admitted after 2015 with tibial shaft fractures.
-For ICD, that's any code in the `S82.20`-`S82.299` range.
-- SQL:
-```sql
-CREATE TABLE "patients" AS
-SELECT
-  "Patient"."id" AS "patient_id",
-  "Patient"."name" -> 0 -> 'given' ->> 0 AS "first_name",
-  "Patient"."name" -> 0 ->> 'family' AS "last_name",
-  (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
- - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate")) AS "age",
-  "Condition"."code" -> 'coding' -> 0 ->> 'code' AS "icd_code",
-  "Condition"."onsetDateTime" AS "condition_onset"
-FROM "Patient"
-INNER JOIN "Condition" ON "Condition"."subject" = "Patient"."id"
-WHERE
-  -- Patient is under 18
-  date("Patient"."birthDate") > date('now', '-18 years')
-  
-  -- Condition happened after 2015
-  AND date("Condition"."onsetDateTime") > date('2015-01-01')
-  
-  -- ICD code is in the S82.20–S82.299 range
-  AND "Condition"."code" -> 'coding' -> 0 ->> 'code' LIKE 'S82.2%';
-```
-- Javascript:
+# ICD Code Query example
+This is what we'll start with:
+- JS
 ```ts
-const patients = await db
-  .selectFrom("Patient")
-  .innerJoin("Condition", "Condition.subject", "Patient.id")
-  .where(() => sql`date("Patient"."birthDate") > date('now', '-18 years')`)
-  .where(() => sql`date("Condition"."onsetDateTime") > date('2015-01-01')`)
-  .where(() => sql`"Condition"."code" -> 'coding' -> 0 ->> 'code' LIKE 'S82.2%'`)
+  const initial = db
+    .selectFrom("Patient")
+    .innerJoin("Condition", "Condition.subject", "Patient.id")
+    .select([
+      "Patient.id as patient_id",
+      sql<string>`strftime('%Y', "Condition"."onsetDateTime")`.as("onset_year"),
+      sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`.as("icd_code"),
+      sql<string>`"Patient"."name" -> 0 -> 'given' ->> 0`.as("first_name"),
+      sql<string>`"Patient"."name" -> 0 ->> 'family'`.as("last_name"),
+      sql<string>`
+        (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
+        - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
+      `.as("age")
+    ]);
+
+  await db.schema.createTable("patients").as(initial).execute();
+  rows.value = await db.selectFrom("patients").selectAll().execute();
 ```
 
-## Custom Containers
+- Result
+<ClientOnly>
+    <DataTable :columns="viewStates[0].columns" :rows="viewStates[0].rows" />
+</ClientOnly>
 
-**Input**
+This uses the ICD code system but the same logic should apply for most others.
 
-```md
-::: info
-This is an info box.
-:::
+## General Inclusion
+"Show me pediatric patients under 18 years old admitted in the US after 2015 with 
+tibial shaft fractures."
 
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
-```
-
-**Output**
-
-::: info
-This is an info box.
-:::
-
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
-
-## More
-
-Check out the documentation for the [full list of markdown extensions](https://vitepress.dev/guide/markdown).
+<ClientOnly>
+<pre>{{ viewStates }}</pre>
+  <DataTable :columns="viewStates[0].columns" :rows="viewStates[0].rows" />
+</ClientOnly>

@@ -55,9 +55,6 @@ app.use(
   }
 );
 
-// Docs site
-app.get('/docs', c => c.redirect('/docs'))
-
 // Helper function to build WHERE clause from filters
 function buildWhereClause(filters: { field: string; operator: string; value: any }[] | undefined) {
   if (!filters || filters.length === 0) return '';

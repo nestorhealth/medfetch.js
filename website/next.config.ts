@@ -34,5 +34,4 @@ export default nextConfig({
   eslint: {
     ignoreDuringBuilds: true
   },
-  transpilePackages: ["medfetch"]
 });

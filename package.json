@@ -9,7 +9,6 @@
     "node": "22.4.1"
   },
   "scripts": {
-    "build:api-deps": "pnpm run build:docs && mkdir -p ./apps/api/public/docs && cp -r ./packages/medfetch/docs/.vitepress/dist/* ./apps/api/public/docs",
     "build:docs": "pnpm --filter=medfetch run docs:build",
     "build:sof": "pnpm --filter=medfetch run build",
     "format": "concurrently \"pnpm run format:docs\" \"pnpm run format:sof\""
