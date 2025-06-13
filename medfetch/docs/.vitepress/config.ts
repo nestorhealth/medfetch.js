@@ -5,9 +5,8 @@ import { fileURLToPath } from "url";
 export default defineConfig({
   title: "Medfetch.js",
   description: "SQL on FHIR for the Web",
-  base: "/docs/",
   head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: "/docs/logo.svg" }],
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
   ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
