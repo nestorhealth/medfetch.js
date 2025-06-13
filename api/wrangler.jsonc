@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "api",
+  "name": "medfetch-api",
   "main": "src/app.ts",
   "assets": {
     "directory": "public"
