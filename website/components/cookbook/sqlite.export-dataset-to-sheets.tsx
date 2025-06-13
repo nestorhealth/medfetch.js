@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { sql2 } from "@/lib/sqlite-wasm";
+import { sql2 } from "@/lib/client";
 import {
   createSpreadsheet,
   googleRedirectURI,
