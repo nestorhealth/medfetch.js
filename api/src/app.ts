@@ -352,8 +352,8 @@ app.openapi(db.schemaOperation, async (c) => {
   }
 });
 
-app.route("/", nl2sql);
-app.route("/", fhir);
+app.route("/nl2sql", nl2sql);
+app.route("/fhir", fhir";
 
 // openapi reference
 app.doc("/openapi", {
