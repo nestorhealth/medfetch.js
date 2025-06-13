@@ -25,8 +25,8 @@ const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
 const block = new Worker(new URL(
     import.meta.env.DEV ?
-    "./sqlite-wasm.worker.js" :
-    "./sqlite-wasm.worker.js",
+    "./sqlite-wasm.block.js" :
+    "./sqlite-wasm.block.js",
     import.meta.url
 ), {
     type: "module",

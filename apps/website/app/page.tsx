@@ -7,7 +7,7 @@ export default function IndexPage() {
       <p>This page is under construction. Here are some working links:</p>
       <ol>
         <li>
-          <Link href="/docs">
+          <Link href={process.env.NEXT_PUBLIC_API_URL! + "/docs"} target="_blank">
           Documentation
           </Link>
         </li>
