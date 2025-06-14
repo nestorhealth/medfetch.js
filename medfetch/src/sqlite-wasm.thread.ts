@@ -9,6 +9,7 @@ import { ping, syncFetch } from "~/sqlite-wasm.block";
 import { sqlOnFhir } from "~/sql";
 import { DummyDriver, Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
 import { DEFAULT_SQLITE_FROM_FHIR } from "~/sql.types";
+import FetchBlock from "./sqlite-wasm.block?worker";
 
 const qb = new Kysely({
     dialect: {
@@ -31,11 +32,13 @@ const block = new Worker(new URL(
 ), {
     type: "module",
     name: "sqlite-wasm.block"
-})
+});
+
+const blockDev = new FetchBlock({ name: "sqlite-wasm.block" });
 
 // Load in sqlite3 on wasm
 sqlite3InitModule().then(async (sqlite3) => {
-    await ping(block);
+    await ping(import.meta.env.DEV ? blockDev : block);
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];
     const moduleSet = new Set<number>();
