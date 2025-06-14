@@ -52,24 +52,6 @@ export default function IndexPage() {
   ];
 
   return (
-<<<<<<< HEAD
-    <main>
-      <h1>Data fetching made easy with Medfetch</h1>
-      <p>This page is under construction. Here are some working links:</p>
-      <ol>
-        <li>
-          <Link href={process.env.NEXT_PUBLIC_API_URL! + "/docs"} target="_blank">
-          Documentation
-          </Link>
-        </li>
-        <li>
-          <Link href="/showcase">
-          Showcase
-          </Link>
-        </li>
-      </ol>
-    </main>
-=======
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
@@ -369,6 +351,5 @@ export default function IndexPage() {
         </div>
       </div>
     </div>
->>>>>>> main
   );
 }
