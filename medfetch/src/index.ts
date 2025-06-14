@@ -89,3 +89,5 @@ export function medfetch(baseURL: string): SofFn {
         );
     };
 }
+
+export * from './manifest';

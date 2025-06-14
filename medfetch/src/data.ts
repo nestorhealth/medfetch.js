@@ -1,4 +1,4 @@
-import { Resource, Link, Entry } from "./data.schema.js";
+import { Resource, Link, Entry } from "./examples/data.schema.js";
 import clarinet from "clarinet";
 import { DataError } from "~/data.error.js";
 import type { Bundle } from "fhir/r4.js";
