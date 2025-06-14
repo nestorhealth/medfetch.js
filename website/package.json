@@ -8,7 +8,10 @@
     "build": "npx concurrently \"pnpm run --filter=medfetch build\" \"pnpm run --filter=@medfetch.js/api api-typegen\" && next build && cp _headers out",
     "preview": "node server.mjs",
     "lint": "next lint",
-    "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+    "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@chevrotain/regexp-to-ast": "^11.0.3",
@@ -29,7 +32,7 @@
     "fhirpath": "^4.0.0",
     "kysely": "^0.28.2",
     "lucide-react": "^0.411.0",
-    "medfetch": "workspace:^",
+    "medfetch": "link:../medfetch",
     "next": "15.3.0",
     "nextra": "^4.2.17",
     "nextra-theme-docs": "^4.2.17",
@@ -45,9 +48,12 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^20.17.30",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.5.2",
     "concurrently": "^9.1.2",
     "csstype": "^3.1.3",
     "eslint": "^9",
@@ -59,6 +65,7 @@
     "ts-node": "^10.9.2",
     "tw-animate-css": "^1.2.5",
     "typescript": "^5.8.3",
-    "undici-types": "^7.10.0"
+    "undici-types": "^7.10.0",
+    "vitest": "^3.1.2"
   }
 }
