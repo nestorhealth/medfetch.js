@@ -1,0 +1,122 @@
+[
+  {
+    "resourceType": "Patient",
+    "id": "pat1",
+    "name": [
+      {
+        "use": "official",
+        "family": "Smith",
+        "given": ["John", "Robert"]
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1974-12-25",
+    "address": [
+      {
+        "use": "home",
+        "line": ["123 Main St"],
+        "city": "Boston",
+        "state": "MA",
+        "postalCode": "02108"
+      }
+    ]
+  },
+  {
+    "resourceType": "Patient",
+    "id": "pat2",
+    "name": [
+      {
+        "use": "official",
+        "family": "Johnson",
+        "given": ["Sarah"]
+      }
+    ],
+    "gender": "female",
+    "birthDate": "1985-06-15",
+    "address": [
+      {
+        "use": "home",
+        "line": ["456 Oak Ave"],
+        "city": "Cambridge",
+        "state": "MA",
+        "postalCode": "02139"
+      }
+    ]
+  },
+  {
+    "resourceType": "Procedure",
+    "id": "proc1",
+    "subject": {
+      "reference": "Patient/pat1"
+    },
+    "code": {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "44388-9",
+          "display": "Blood pressure panel"
+        }
+      ]
+    },
+    "status": "completed",
+    "performedDateTime": "2024-01-15T10:30:00Z"
+  },
+  {
+    "resourceType": "Procedure",
+    "id": "proc2",
+    "subject": {
+      "reference": "Patient/pat2"
+    },
+    "code": {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "72170-8",
+          "display": "Complete blood count panel"
+        }
+      ]
+    },
+    "status": "in-progress",
+    "performedDateTime": "2024-01-16T14:00:00Z"
+  },
+  {
+    "resourceType": "Patient",
+    "id": "pat3",
+    "name": [
+      {
+        "use": "official",
+        "family": "Williams",
+        "given": ["Michael"]
+      }
+    ],
+    "gender": "male",
+    "birthDate": "1990-03-20",
+    "address": [
+      {
+        "use": "home",
+        "line": ["789 Pine Rd"],
+        "city": "Somerville",
+        "state": "MA",
+        "postalCode": "02143"
+      }
+    ]
+  },
+  {
+    "resourceType": "Procedure",
+    "id": "proc3",
+    "subject": {
+      "reference": "Patient/pat3"
+    },
+    "code": {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "47527-7",
+          "display": "Metabolic panel"
+        }
+      ]
+    },
+    "status": "completed",
+    "performedDateTime": "2024-01-17T09:15:00Z"
+  }
+] 
