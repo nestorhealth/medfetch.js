@@ -27,20 +27,6 @@
         /* custom */
         "baseUrl": ".",
         "paths": {
-<<<<<<< HEAD
-            "~/*": ["src/*"],
-            "@sqlite": ["src/sqlite.browser.ts"]
-        }
-    },
-    "include": [
-        "src",
-        "docs"
-    ],
-    "exclude": ["dist"],
-    "vueCompilerOptions": {
-        "vitePressExtensions": [".md"]
-    }
-=======
             "~/*": ["src/*"]
         },
         "esModuleInterop": true,
@@ -51,5 +37,4 @@
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"]
->>>>>>> main
 }
