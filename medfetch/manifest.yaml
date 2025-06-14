@@ -1,0 +1,20 @@
+version: "1.0"
+resources:
+  - resourceType: Patient
+    table: patients
+    idColumn: id
+    fieldMappings:
+      id: Patient.id
+      first_name: Patient.name[0].given[0]
+      last_name: Patient.name[0].family
+      gender: Patient.gender
+      birth_date: Patient.birthDate
+      address_line1: Patient.address[0].line[0]
+      city: Patient.address[0].city
+      state: Patient.address[0].state
+      zip: Patient.address[0].postalCode
+      phone: Patient.telecom.where(system='phone').value
+      email: Patient.telecom.where(system='email').value
+      marital_status: Patient.maritalStatus.coding[0].code
+      race: Patient.extension.where(url='http://hl7.org/fhir/us/core/StructureDefinition/us-core-race').extension.where(url='text').value
+      ethnicity: Patient.extension.where(url='http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity').extension.where(url='text').value

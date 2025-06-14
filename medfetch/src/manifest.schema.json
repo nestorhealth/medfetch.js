@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["resources"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Optional version string for the manifest"
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["resourceType", "table", "idColumn", "fieldMappings"],
+        "additionalProperties": false,
+        "properties": {
+          "resourceType": {
+            "type": "string",
+            "description": "The FHIR resource type (e.g., 'Patient', 'Procedure')"
+          },
+          "table": {
+            "type": "string",
+            "description": "The source database table name"
+          },
+          "idColumn": {
+            "type": "string",
+            "description": "The column name containing the resource ID"
+          },
+          "fieldMappings": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "description": "FHIRPath expression mapping to the source column"
+            },
+            "minProperties": 1
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+} 

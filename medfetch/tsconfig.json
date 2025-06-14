@@ -2,12 +2,13 @@
     "compilerOptions": {
         "target": "ES2020",
         "useDefineForClassFields": true,
-        "module": "ESNext",
-        "lib": ["ESNext", "DOM", "DOM.Iterable", "webworker"],
+        "module": "ES2020",
+        "lib": ["ES2020", "DOM"],
         "skipLibCheck": true,
+        "resolveJsonModule": true,
 
         /* Bundler mode */
-        "moduleResolution": "bundler",
+        "moduleResolution": "node",
         "allowImportingTsExtensions": true,
         "isolatedModules": true,
         "moduleDetection": "force",
@@ -20,9 +21,13 @@
         "noFallthroughCasesInSwitch": true,
         "exactOptionalPropertyTypes": true,
 
+        // Allow `import foo from './foo.json'`
+        "allowSyntheticDefaultImports": true,
+
         /* custom */
         "baseUrl": ".",
         "paths": {
+<<<<<<< HEAD
             "~/*": ["src/*"],
             "@sqlite": ["src/sqlite.browser.ts"]
         }
@@ -35,4 +40,16 @@
     "vueCompilerOptions": {
         "vitePressExtensions": [".md"]
     }
+=======
+            "~/*": ["src/*"]
+        },
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "dist",
+        "declaration": true,
+        "types": ["@cloudflare/workers-types", "vitest/globals"]
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
+>>>>>>> main
 }

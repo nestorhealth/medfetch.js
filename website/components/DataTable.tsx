@@ -1,55 +1,63 @@
-import { Table, Callout } from "nextra/components";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 
-export function DataTable<TData extends Record<string, any>>({
+interface DataTableProps<TData> {
+  data: TData[];
+  columns: ColumnDef<TData>[];
+}
+
+export function DataTable<TData>({
   data,
   columns,
-  isPending,
-}: {
-  data?: TData[];
-  columns: (keyof TData & string)[];
-  isPending: boolean;
-}) {
+}: DataTableProps<TData>) {
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
   return (
-    <Table className="min-w-full w-full table-auto">
-      <thead>
-        <Table.Tr>
-          {columns.map((col) => (
-            <Table.Th key={col}>{col}</Table.Th>
-          ))}
-        </Table.Tr>
-      </thead>
-      <tbody>
-        {isPending ? (
-          <Table.Tr>
-            <Table.Td
-              colSpan={columns.length}
-              className="text-center py-4 text-muted-foreground"
-            >
-              Loading...
-            </Table.Td>
-          </Table.Tr>
-        ) : !data || data.length === 0 ? (
-          <Table.Tr>
-            <Table.Td
-              colSpan={columns.length}
-              className="text-center py-4 text-muted-foreground"
-            >
-              <Callout type="info">No result yet: hit the Run button!</Callout>
-            </Table.Td>
-          </Table.Tr>
-        ) : (
-          data.map((row, idx) => (
-            <Table.Tr key={idx}>
-              {columns.map((col) => (
-                <Table.Td key={col} className="px-2 py-1 border-b">
-                  {row[col] ?? <span className="text-muted-foreground">—</span>}
-                </Table.Td>
+    <div className="rounded-md border">
+      <table className="w-full">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className="border-b px-4 py-2 text-left text-sm font-medium"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </th>
               ))}
-            </Table.Tr>
-          ))
-        )}
-      </tbody>
-    </Table>
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <td
+                  key={cell.id}
+                  className="border-b px-4 py-2 text-sm"
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

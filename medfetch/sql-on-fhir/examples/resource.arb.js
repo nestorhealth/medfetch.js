@@ -1,24 +1,7 @@
-<<<<<<< HEAD:medfetch/sql-on-fhir/examples/resource.arb.ts
-import { FastCheck, Schema } from "effect";
-import * as fc from "effect/FastCheck";
-import { Resource } from "~/fhir/data.schema";
-=======
-// examples/resource.arb.js
 import { Schema } from "effect";
-import { Resource } from "./data.schema.ts";
->>>>>>> main:medfetch/src/examples/resource.arb.ts
+import { Resource } from "./data.schema";
 
-export interface TestCase<T> {
-    title: string;
-    input: T;
-    expected: boolean;
-}
-
-export interface NarrowTestCase<T> extends TestCase<T> {
-    schema: Schema.Schema<T>;
-}
-
-export const narrow_resource_cases: NarrowTestCase<any>[] = [
+export const narrow_resource_cases = [
     {
         title: "Minimal valid Patient resource",
         input: {
@@ -33,7 +16,7 @@ export const narrow_resource_cases: NarrowTestCase<any>[] = [
     }
 ];
 
-export const wide_resource_cases: TestCase<any>[] = [
+export const wide_resource_cases = [
     {
         title: "Complex Patient resource with additional fields",
         input: {
@@ -79,4 +62,4 @@ export const wide_resource_cases: TestCase<any>[] = [
         },
         expected: true
     }
-];
+]; 

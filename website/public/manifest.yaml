@@ -1,0 +1,21 @@
+version: "1.0.0"
+resources:
+  - resourceType: "Patient"
+    table: "patients"
+    idColumn: "id"
+    fieldMappings:
+      gender: "gender"
+      first_name: "name.given[0]"
+      last_name: "name.family[0]"
+      birth_date: "birthDate"
+      city: "address[0].city"
+      state: "address[0].state"
+
+  - resourceType: "Procedure"
+    table: "procedures"
+    idColumn: "uid"
+    fieldMappings:
+      code: "code.coding[0].code"
+      status: "status"
+      subject_id: "subject.reference"
+      performed_date: "performedDateTime" 

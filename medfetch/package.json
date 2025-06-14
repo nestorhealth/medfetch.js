@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "medfetch",
   "version": "0.5.0",
   "type": "module",
@@ -19,18 +20,94 @@
       "types": "./dist/dialects.d.ts",
       "import": "./dist/dialects.js",
       "default": "./dist/dialects.js"
+=======
+    "name": "medfetch",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "description": "sql on fhir database runner implementation",
+    "scripts": {
+        "dev": "vite",
+        "test": "vitest run --coverage",
+        "build": "rm -rf dist && npx vite build && npx concurrently \"npx tsc -p tsconfig.build.json\"",
+        "unit": "vitest src",
+        "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
+        "postinstall": "chmod +x bin/cli.mjs",
+        "suggest": "tsx src/cli/suggest-manifest.ts"
+>>>>>>> main
     },
     "./sql": {
       "types": "./dist/sql.d.ts",
       "import": "./dist/sql.js",
       "default": "./dist/sql.js"
     },
+<<<<<<< HEAD
     "./sqlite": {
       "types": "./dist/sqlite.d.ts",
       "import": {
         "default": "./dist/sqlite.browser.js"
       },
       "default": "./dist/sqlite.browser.js"
+=======
+    "bin": {
+        "medfetch": "./bin/cli.mjs"
+    },
+    "files": [
+        "dist",
+        "src/**/*.ts",
+        "tsconfig.json",
+        "bin",
+        "README.md"
+    ],
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "peerDependencies": {
+        "@sqlite.org/sqlite-wasm": "^3.49.1-build2",
+        "fhirpath": "^3.17.0"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20240320.1",
+        "@types/clarinet": "^0.12.3",
+        "@types/fhir": "^0.0.41",
+        "@types/js-yaml": "^4.0.9",
+        "@types/node": "^22.13.1",
+        "@types/uuid": "^9.0.8",
+        "@typescript-eslint/eslint-plugin": "^7.1.0",
+        "@typescript-eslint/parser": "^7.1.0",
+        "@vitest/browser": "^3.1.2",
+        "@vitest/coverage-istanbul": "3.1.2",
+        "@vitest/coverage-v8": "2.1.9",
+        "concurrently": "^9.1.2",
+        "dotenv": "^16.5.0",
+        "eslint": "^8.57.0",
+        "pagefind": "^1.3.0",
+        "prettier": "^3.4.2",
+        "ts-morph": "^25.0.0",
+        "tsup": "^8.4.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.3",
+        "vite": "^6.2.2",
+        "vitest": "^3.1.2"
+    },
+    "packageManager": "pnpm@9.12.2+sha512.22721b3a11f81661ae1ec68ce1a7b879425a1ca5b991c975b074ac220b187ce56c708fe5db69f4c962c989452eee76c82877f4ee80f474cebd61ee13461b6228",
+    "dependencies": {
+        "@types/js-yaml": "^4.0.9",
+        "ajv": "^8.17.1",
+        "clarinet": "^0.12.6",
+        "commander": "^14.0.0",
+        "effect": "^3.14.1",
+        "js-yaml": "^4.1.0",
+        "kysely": "^0.28.2",
+        "kysely-generic-sqlite": "^1.2.1",
+        "kysely-wasm": "^1.2.1",
+        "oauth-pkce": "^0.0.7",
+        "openai": "^5.0.1",
+        "uuid": "^9.0.1",
+        "yaml": "^2.8.0",
+        "zod": "^3.25.51"
+>>>>>>> main
     }
   },
   "files": [
