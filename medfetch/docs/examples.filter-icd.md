@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { table0, table1, table2 } from "./sql/icd-queries";
+import { table0, table1 } from "./sql/icd-queries";
 import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
 // @ts-ignore
@@ -31,11 +31,9 @@ onMounted(async () => {
   try {
     const t0  = await table0(db);
     const t1 = await table1(db)
-    const t2 = await table2(db);
     const views: ViewState[] = [
       t0,
       t1,
-      t2
     ];
     viewStates.value = views
   } catch (e) {
@@ -147,6 +145,29 @@ AND patients.onset_year > "2015"
 Let's group patients by their fracture type
 
 ::: code-group
+
+```js [fractureTypes.js]
+const groupByCaseQuery = db
+  .selectFrom("patients")
+  .select((eb) => [
+    eb
+      .case()
+      .when("icd_code", "like", "%A")
+      .then("Closed Fracture (A)")
+      .when("icd_code", "like", "%B")
+      .then("Open Type I/II (B)")
+      .when("icd_code", "like", "%C")
+      .then("Open Type III (C)")
+      .else("Other/Unspecified")
+      .endCase()
+      .as("fracture_type"),
+    eb.fn.countAll().as("total_cases"),
+  ])
+  .where("icd_code", "like", "S82.20%")
+  .groupBy("fracture_type")
+  .compile();
+```
+
 ```sql [fracture-types.sql]
 SELECT
   CASE
