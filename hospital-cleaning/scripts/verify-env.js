@@ -8,7 +8,7 @@ const envPath = path.join(__dirname, '..', '.env');
 function verifyEnv() {
   // Check if .env file exists
   if (!fs.existsSync(envPath)) {
-    console.error('❌ .env file not found in docs/hospital-cleaning directory');
+    console.error('❌ .env file not found in hospital-cleaning directory');
     process.exit(1);
   }
 
