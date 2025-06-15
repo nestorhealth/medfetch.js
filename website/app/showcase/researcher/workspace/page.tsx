@@ -90,11 +90,11 @@ export default function WorkspacePage() {
     
     try {
       setError(null);
-      const schema = await tableManagerRef.current.getTableSchema(resource);
+      const schema = await tableManagerRef.current.getTableSchema("patients");
       const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
       setPrimaryKey(pkCol);
-      
-      const rows = await dbRef.prepare(`SELECT * FROM ${resource};`).all();
+      const rows = await dbRef.prepare(`SELECT * FROM "patients";`).all();
+      console.log("i got", rows)
       setRawData(rows);
     } catch (err) {
       setError("Failed to load data: " + (err as Error).message);
@@ -323,7 +323,7 @@ export default function WorkspacePage() {
 
             <div className="flex-1 p-6">
               {dbRef ? (
-                <AGGridTable
+                <AGGridTable 
                   resource={currentResource}
                   rowData={rawData}
                   onCellEdit={handleCellEdit}
