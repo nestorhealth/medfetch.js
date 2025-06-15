@@ -29,12 +29,10 @@ export const medDB: MedfetchDB = {
   }),
 };
 
-
 export function useMedDB(): MedfetchDB {
   const dbRef = useRef<MedfetchDB>(medDB);
   return dbRef.current;
 }
-
 
 /**
  *

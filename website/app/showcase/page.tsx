@@ -1,26 +1,10 @@
 "use client";
-import { medDB } from "@/lib/client";
 import Link from "next/link";
-<<<<<<< HEAD
-import { useEffect } from "react";
-
-export default function Showcase() {
-  useEffect(() => {
-    const result = medDB.prepare("select * from \"Patient\"").all();
-    Promise.resolve(result).then(
-      (result) => console.log("OK", result)
-    )
-  })
-=======
 import {
   ArrowRight,
   Database,
-  Users,
   TrendingUp,
-  FileText,
   Activity,
-  Calendar,
-  PieChart,
   BarChart3,
   Search,
   Clock,
@@ -99,7 +83,6 @@ export default function Showcase() {
     }
   };
 
->>>>>>> main
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
