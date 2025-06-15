@@ -83,7 +83,7 @@ export default function WorkspacePage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [dbRef]);
 
   const loadResourceData = useCallback(async (resource: "Patient" | "Procedure") => {
     if (!dbRef || !tableManagerRef.current) return;
@@ -99,7 +99,7 @@ export default function WorkspacePage() {
     } catch (err) {
       setError("Failed to load data: " + (err as Error).message);
     }
-  }, []);
+  }, [dbRef]);
 
   useEffect(() => {
     initializeDatabase();
@@ -109,7 +109,7 @@ export default function WorkspacePage() {
     if (dbRef && !isLoading) {
       loadResourceData(currentResource);
     }
-  }, [currentResource, isLoading, loadResourceData]);
+  }, [currentResource, dbRef, isLoading, loadResourceData]);
 
   const handleCellEdit = useCallback(async (rowId: any, col: string, newValue: any) => {
     if (!dbRef || !primaryKey) return;
@@ -128,7 +128,7 @@ export default function WorkspacePage() {
     } catch (err) {
       setError("Edit failed: " + (err as Error).message);
     }
-  }, [currentResource, primaryKey, loadResourceData]);
+  }, [dbRef, primaryKey, currentResource, loadResourceData]);
 
   const handleQuery = useCallback(async (sql: string): Promise<void> => {
     if (!dbRef) return;
@@ -178,12 +178,12 @@ export default function WorkspacePage() {
       setError(`Query failed: ${errorMessage}`);
       throw err;
     }
-  }, [currentResource, loadResourceData]);
+  }, [currentResource, dbRef, loadResourceData]);
 
   const refreshData = useCallback(async () => {
     if (!dbRef) return;
     await loadResourceData(currentResource);
-  }, [currentResource, loadResourceData]);
+  }, [currentResource, dbRef, loadResourceData]);
 
   const getTableStats = useCallback(() => {
     if (!rawData) return { total: 0, active: 0 };
