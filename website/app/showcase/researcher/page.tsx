@@ -18,9 +18,7 @@ import { useRouter } from "next/navigation";
 export default function WorkspacePage() {
   const medDB = useMedDB();
   const router = useRouter();
-  const [currentResource, setCurrentResource] = useState<
-    "Patient" | "Procedure"
-  >("Patient");
+  const [currentTableName, setCurrentTableName] = useState<string>("patients");
   const [rawData, setRawData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,42 +31,48 @@ export default function WorkspacePage() {
     setIsLoading(true);
     tableManagerRef.current = new TableManager(medDB);
 
-    const schema = await tableManagerRef.current.getTableSchema(currentResource);
+    const schema = await tableManagerRef.current.getTableSchema(currentTableName);
     const pkCol =
       schema?.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
     setPrimaryKey(pkCol);
 
-    const rows = await medDB.prepare(`
+    const rows = await medDB.exec(`
+      create table patients as
       select "Patient"."id" as "patient_id", strftime('%Y', "Condition"."onsetDateTime") as "onset_year", "Condition"."code" -> 'coding' -> 0 ->> 'code' as "icd_code", "Patient"."name" -> 0 -> 'given' ->> 0 as "first_name", "Patient"."name" -> 0 ->> 'family' as "last_name", 
-          (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
-          - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
-         as "age" from "Patient" inner join "Condition" on "Condition"."subject" = "Patient"."id" 
-      `).all();
+    CAST(
+    (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
+    - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
+    AS INTEGER) as age
+         from "Patient" inner join "Condition" on "Condition"."subject" = "Patient"."id" 
+      `).then(
+        () => medDB.prepare("select * from patients;").all()
+      )
     setRawData(rows);
   } catch (err) {
     setError("Initialization error: " + (err as Error).message);
   } finally {
     setIsLoading(false);
   }
-}, [medDB, currentResource]);
+}, [medDB, currentTableName]);
 
   useEffect(() => {
     initialize()
   },[initialize])
 
   const loadResourceData = useCallback(
-    async (resource: "Patient" | "Procedure") => {
+    async () => {
       try {
         setError(null);
         setIsLoading(true);
 
-        const schema = await tableManagerRef.current?.getTableSchema(resource);
+        const schema = await tableManagerRef.current?.getTableSchema("patients");
+        console.log("got schema", schema)
         const pkCol =
           schema?.find((col: ColumnDefinition) => col.primaryKey)?.name ||
           "patient_id";
         setPrimaryKey(pkCol);
 
-        const rows = await medDB.prepare(`SELECT * FROM "${resource}"`).all();
+        const rows = await medDB.prepare(`SELECT * FROM "patients"`).all();
         setRawData(rows);
       } catch (err) {
         setError("Failed to load data: " + (err as Error).message);
@@ -87,7 +91,7 @@ export default function WorkspacePage() {
         setError(null);
         const safeValue =
           typeof newValue === "string" ? `'${newValue}'` : newValue;
-        const updateSQL = `UPDATE "${currentResource}" SET "${col}" = ${safeValue} WHERE "${primaryKey}" = '${rowId}';`;
+        const updateSQL = `UPDATE "${currentTableName}" SET "${col}" = ${safeValue} WHERE "${primaryKey}" = '${rowId}';`;
 
         await medDB.exec(`
           BEGIN TRANSACTION;
@@ -95,12 +99,12 @@ export default function WorkspacePage() {
           COMMIT;
         `);
 
-        await loadResourceData(currentResource);
+        await loadResourceData();
       } catch (err) {
         setError("Edit failed: " + (err as Error).message);
       }
     },
-    [primaryKey, loadResourceData],
+    [primaryKey, currentTableName, medDB, loadResourceData],
   );
 
   const handleQuery = useCallback(
@@ -133,10 +137,10 @@ export default function WorkspacePage() {
           first.match(/(?:update|delete from)\s+(\w+)/i);
         if (match) affectedTable = match[1] as "Patient" | "Procedure";
 
-        if (affectedTable && affectedTable !== currentResource) {
-          setCurrentResource(affectedTable);
+        if (affectedTable && affectedTable !== currentTableName) {
+          setCurrentTableName(affectedTable);
         } else {
-          await loadResourceData(currentResource);
+          await loadResourceData();
         }
       } catch (err) {
         const msg =
@@ -145,12 +149,12 @@ export default function WorkspacePage() {
         throw err;
       }
     },
-    [currentResource, loadResourceData],
+    [currentTableName, loadResourceData, medDB],
   );
 
   const refreshData = useCallback(
-    () => loadResourceData(currentResource),
-    [currentResource, loadResourceData],
+    () => loadResourceData(),
+    [loadResourceData],
   );
 
   const getTableStats = useCallback(() => {
@@ -216,9 +220,9 @@ export default function WorkspacePage() {
 
               <div className="flex bg-slate-800 rounded-lg p-1">
                 <button
-                  onClick={() => setCurrentResource("Patient")}
+                  onClick={() => setCurrentTableName("Patient")}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center space-x-2 ${
-                    currentResource === "Patient"
+                    currentTableName === "Patient"
                       ? "bg-blue-600 text-white"
                       : "text-slate-300 hover:text-white"
                   }`}
@@ -227,9 +231,9 @@ export default function WorkspacePage() {
                   <span>Patients</span>
                 </button>
                 <button
-                  onClick={() => setCurrentResource("Procedure")}
+                  onClick={() => setCurrentTableName("Procedure")}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center space-x-2 ${
-                    currentResource === "Procedure"
+                    currentTableName === "Procedure"
                       ? "bg-blue-600 text-white"
                       : "text-slate-300 hover:text-white"
                   }`}
@@ -257,7 +261,7 @@ export default function WorkspacePage() {
                 <span className="text-white font-medium">{stats.total}</span>
               </span>
             </div>
-            {currentResource === "Patient" && (
+            {currentTableName === "Patient" && (
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span className="text-slate-300">
@@ -271,7 +275,7 @@ export default function WorkspacePage() {
               <span className="text-slate-300">
                 Table:{" "}
                 <span className="text-white font-medium">
-                  {currentResource}
+                  {currentTableName}
                 </span>
               </span>
             </div>
@@ -285,13 +289,13 @@ export default function WorkspacePage() {
             <div className="bg-slate-800/50 px-6 py-4 border-b border-slate-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  {currentResource === "Patient" ? (
+                  {currentTableName === "Patient" ? (
                     <Users className="h-5 w-5 text-blue-400" />
                   ) : (
                     <Activity className="h-5 w-5 text-purple-400" />
                   )}
                   <h2 className="text-lg font-semibold text-white">
-                    {currentResource} Data
+                    {currentTableName} Data
                   </h2>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
@@ -313,7 +317,7 @@ export default function WorkspacePage() {
 
             <div className="flex-1 p-6">
               <AGGridTable
-                resource={currentResource}
+                resource={currentTableName}
                 rowData={rawData}
                 onCellEdit={handleCellEdit}
                 onError={setError}
