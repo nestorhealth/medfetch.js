@@ -61,6 +61,7 @@
     "inquirer-autocomplete-standalone": "^0.8.1",
     "pagefind": "^1.3.0",
     "prettier": "^3.4.2",
+    "shiki": "^3.6.0",
     "ts-morph": "^25.0.0",
     "tsc-alias": "^1.8.16",
     "tsup": "^8.4.0",
