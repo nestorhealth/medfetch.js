@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import type { Patient, Procedure } from '../utils/fhirProcessing'
 import { HospitalCleaningShowcase } from '../components/HospitalCleaningShowcase'
+import React from "react"
 
 // Sample data for demonstration
 const sampleData: (Patient | Procedure)[] = [
