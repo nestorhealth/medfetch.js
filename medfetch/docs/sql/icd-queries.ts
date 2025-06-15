@@ -1,12 +1,22 @@
 import { sql, Kysely } from "kysely";
 import { dummyDialect, type SqlOnFhirDB } from "~/sql";
 
-const db = new Kysely<any>({
+interface UserDB extends SqlOnFhirDB {
+  patients: {
+    patient_id: string;
+    age: number;
+    onset_year: string;
+    icd_code: string;
+    first_name: string;
+    last_name: string;
+  }
+}
+
+const db = new Kysely<UserDB>({
   dialect: dummyDialect("sqlite")
 });
-const fp: Kysely<SqlOnFhirDB> = db as any;
 
-const initial = fp
+const initial = db
   .selectFrom("Patient")
   .innerJoin("Condition", "Condition.subject", "Patient.id")
   .select([
@@ -27,8 +37,9 @@ export const initialQuery = initial.compile();
   
 const pediatricPatients = db
   .selectFrom("patients")
+  .innerJoin("Co")
   .selectAll("patients")
-  .where("patients.age", "<", 18);
+  .where("patients.age", "<", 18)
   
 export const pediatricPatientQuery = pediatricPatients.compile();
 
@@ -50,7 +61,6 @@ export async function table0(db: Kysely<any>) {
 
 export async function table1(db: Kysely<any>) {
   const rows = await db.executeQuery(pediatricPatientQuery).then(r => r.rows)
-  console.log("no rows?", rows)
   const columns =
     (await db.introspection.getTables()).find((t) => t.name === "patients")
       ?.columns ?? [];

@@ -12,7 +12,7 @@ const worker = new DBWorker({ name: "db.worker" });
 
 const dialect = sqliteOnFhir(
   ":memory:",
-  `${import.meta.env.API_URL}/fhir`,
+  `${import.meta.env.MODE === "development" ? "http://localhost:8787/fhir" : "https://api.medfetch.io/fhir"}`,
   ["Patient", "Condition"],
   worker,
 );
@@ -73,7 +73,6 @@ This is what we'll start with:
 - Result
 <ClientOnly>
     <DataTable :columns="viewStates[0].columns" :rows="viewStates[0].rows" />
-</ClientOnly>
 
 This uses the ICD code system but the same logic should apply for most others.
 
@@ -89,6 +88,9 @@ const pediatricPatients = db
   .where("Patient.age", "<" 18)
 ```
 - Result
-<ClientOnly>
-  <DataTable :columns="viewStates[1].columns" :rows="viewStates[1].rows" />
+  <DataTable
+    v-if="viewStates.length > 1 && viewStates[1].rows?.length"
+    :columns="viewStates[1].columns"
+    :rows="viewStates[1].rows"
+  />
 </ClientOnly>
