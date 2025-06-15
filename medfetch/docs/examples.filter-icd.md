@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { table0, table1 } from "./queries/icd.vue";
+import { table0, table1 } from "./sql/icd-queries";
 import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
 // @ts-ignore
