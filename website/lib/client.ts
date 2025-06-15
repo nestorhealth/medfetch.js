@@ -67,10 +67,6 @@ export interface MedfetchDBOptions {
   filename?: string;
 }
 
-<<<<<<< HEAD
-// Initialize Medfetch database
-export function getMedfetchDB(): MedfetchDB {
-=======
 
 const getFile = (fileName: string) => fetch(`https://r4.smarthealthit.org/Patient`).then(
   (res) => res.json()
@@ -81,12 +77,10 @@ const getFile = (fileName: string) => fetch(`https://r4.smarthealthit.org/Patien
 // Initialize Medfetch database
 export async function initMedfetchDB(
   options: MedfetchDBOptions = {},
-): Promise<MedfetchClient> {
+): Promise<MedfetchDB> {
   const { filename } = options;
 
   const file = await getFile(filename || "bundle.json");
-  
->>>>>>> main
   // Initialize Medfetch with SQLite WASM
   // Create a database handle with common operations
   const __db: MedfetchDB = {
