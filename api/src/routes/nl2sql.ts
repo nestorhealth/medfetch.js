@@ -10,9 +10,6 @@ const nl2sql = new OpenAPIHono<{
 
 nl2sql.openapi(schema.POST, async (c) => {
   try {
-    const openai = new OpenAI({
-      apiKey: c.env.OPENAI_API_KEY,
-    });
     const { query: userQuery } = c.req.valid("json");
 
     if (!userQuery) {
