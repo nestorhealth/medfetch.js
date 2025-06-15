@@ -90,6 +90,21 @@ export interface SqlOnFhirDialect<Resources extends ResourceType[]>
 }
 
 /**
+ * Get back the object type that maps the resource types given in
+ * {@link Resource} as literal keys to their resource shape map
+ * that itself maps the resource's keys to row-like values
+ *
+ * @template Resources The resource types to include
+ */
+export type SqlOnFhirDB<Resources extends ResourceType[] = ResourceType[]> =
+    {
+        [Resource in Resources[number]]: Rowify<
+            ResourceFromType<Resource>
+            & { id: string; }
+        >
+    }
+
+/**
  * The default path map, only compile-level don't trust these types at
  * runtime unvalidated
  */

@@ -90,4 +90,4 @@ export function medfetch(baseURL: string): SofFn {
     };
 }
 
-export * from './manifest';
+export * from '../src/manifest';

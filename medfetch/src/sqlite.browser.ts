@@ -1,40 +1,65 @@
-/**
- * For convenience
- */
 import { isBrowser } from "./json.types";
 import { Worker1PromiserDialect } from "~/dialects";
 import type { SqlOnFhirDialect } from "~/sql.types";
-import { kyselyDummy } from "~/sql";
+import { dummyDialect } from "~/sql";
 import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
 import { ResourceType } from "~/json.types";
 
+let __worker: Worker | null = null;
+
 /**
- * Medfetch's default sqlite on FHIR client dialect
+ * So we don't load in the module on every recall the browser may have made
+ * directly on indirectly to the dialect ctor
+ *
+ * @param userWorker A user provided Worker instance. If provided,
+ * then user is in charge of handling any teardown
+ * @returns A worker
+ */
+const getWorker = (userWorker?: Worker) => {
+    if (userWorker) {
+        return userWorker;
+    }
+    if (!__worker) {
+        __worker = new Worker(
+            new URL(
+                /* Bundler friendly */
+                import.meta.env.DEV
+                    ? "./threads/sqlite-wasm.js"
+                    : "./threads/sqlite-wasm.js",
+                import.meta.url,
+            ),
+            {
+                type: "module",
+                name: "sqlite-wasm",
+            },
+        );
+    } 
+    return __worker;
+};
+
+/**
+ * Medfetch's default sqlite on FHIR client dialect constructor.
+ * This is not a "pure" function: it spawns in the sqlite-wasm worker thread
+ * from the neighboring [sqlite-wasm.thread.ts](./sqlite-wasm.thread.ts)
+ * file.
  * @param filename The filename to persist the database to, uses opfs by default but if you pass in ":memory:", then the opfs vfs option will be
  * @param baseURL The fhir data source, either the base URL of a FHIR API or a raw File Bundle
  * @param resources The resource types to include
- * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript users
+ * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript
  */
 export function sqliteOnFhir<const Resources extends ResourceType[]>(
     filename: string,
     baseURL: string | File,
     scope: Resources,
-    worker?: Worker
+    worker?: Worker,
 ): SqlOnFhirDialect<Resources> {
     if (!isBrowser()) {
         console.warn(
             `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
         );
-        return kyselyDummy("sqlite") as any as SqlOnFhirDialect<Resources>;
+        return dummyDialect("sqlite") as any as SqlOnFhirDialect<Resources>;
     }
-    const SQLITE_WORKER = worker ?? new Worker(new URL(
-        import.meta.env.DEV ? "./sqlite-wasm.thread.js"
-        : "./sqlite-wasm.thread.js",
-        import.meta.url
-    ), {
-        type: "module",
-        name: "sqlite-wasm.thread"
-    })
+    const sqliteWorker = getWorker(worker);
 
     return new Worker1PromiserDialect(
         {
@@ -48,6 +73,6 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
                 scope,
             },
         },
-        promiserSyncV2(SQLITE_WORKER),
+        promiserSyncV2(sqliteWorker),
     ) as SqlOnFhirDialect<Resources>;
 }

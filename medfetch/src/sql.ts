@@ -23,7 +23,7 @@ import { type RowResolver } from "~/sql.types";
  * Static dummy kysely orm object
  * @param sqlFlavor The dialect enum
  */
-export function kyselyDummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
+export function dummyDialect(sqlFlavor: "sqlite" | "postgresql"): Dialect {
     switch (sqlFlavor) {
         case "sqlite": {
             return {
@@ -96,6 +96,15 @@ function checkResource(
     }
     return resource;
 }
+
+/**
+ * Default key filter callback for JSON schema. Removes extension keys
+ * (those that begin with '_') and isn't equal to "id" (this by default sets that to the primary key)
+ * @param key The JSON key name
+ * @returns If {@link key} should be iterated over in the column builder
+ */
+const defaultKeyFilter = (key: string) => key.charCodeAt(0) !== 95 && key !== "id";
+
 /**
  * Get the "create table" migration text for the given resource type from the data
  * in the json schema
@@ -110,8 +119,7 @@ function generateFhirTableMigration(
     columns: [string, JSONSchema7Definition][],
     db: Kysely<any>,
     sqlColumnMap: Record<string, ColumnDataType>,
-    keyFilter: (key: string) => boolean = (key) =>
-        !key.startsWith("_") && key !== "id",
+    keyFilter: (key: string) => boolean = defaultKeyFilter
 ): FhirTableMigration {
     const tb = db.schema
         .createTable(resourceType)
@@ -193,6 +201,7 @@ export function migrations(
             if (value) {
                 if (typeof value === "object") {
                     switch (column.fhirType) {
+                        // Just take its 
                         case "Reference": {
                             value = (value as Reference).reference ?? null;
                             break;
@@ -232,12 +241,16 @@ export async function sqlOnFhir(
 }
 
 /**
- * Just pretend like this is real
+ * Just pretend like this is real. For getting back
+ * itself when you know the next state and want its static types included
+ * in the the typecheck.
  * @param db The previous kysely instance
- * @returns The new one
+ * @returns The "new" one
  */
 export function set<NewDB>(
   db: Kysely<any>,
 ): Kysely<NewDB> {
     return db as Kysely<NewDB>;
 }
+
+export type { SqlOnFhirDB } from "./sql.types";
