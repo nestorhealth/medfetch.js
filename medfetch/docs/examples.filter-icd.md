@@ -12,7 +12,7 @@ const worker = new DBWorker({ name: "db.worker" });
 
 const dialect = sqliteOnFhir(
   ":memory:",
-  "http://localhost:8787/fhir",
+  `${import.meta.env.API_URL}/fhir`,
   ["Patient", "Condition"],
   worker,
 );
