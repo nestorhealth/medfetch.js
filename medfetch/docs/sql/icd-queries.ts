@@ -1,4 +1,3 @@
-<script lang="ts">
 import { sql, Kysely } from "kysely";
 import { dummyDialect, type SqlOnFhirDB } from "~/sql";
 
@@ -61,4 +60,3 @@ export async function table1(db: Kysely<any>) {
     columns,
   };
 }
-</script>
