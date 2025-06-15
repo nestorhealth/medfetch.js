@@ -5,5 +5,8 @@
   "workers_dev": true,
   "assets": {
     "directory": "./docs/.vitepress/dist"
+  },
+  "vars": {
+    "API_URL": "https://api.medfetch.io"
   }
 }
