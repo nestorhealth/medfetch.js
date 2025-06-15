@@ -27,21 +27,8 @@
         /* custom */
         "baseUrl": ".",
         "paths": {
-<<<<<<< HEAD
             "~/*": ["src/*"],
             "@sqlite": ["src/sqlite.browser.ts"]
-        }
-    },
-    "include": [
-        "src",
-        "docs"
-    ],
-    "exclude": ["dist"],
-    "vueCompilerOptions": {
-        "vitePressExtensions": [".md"]
-    }
-=======
-            "~/*": ["src/*"]
         },
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
@@ -50,6 +37,8 @@
         "types": ["@cloudflare/workers-types", "vitest/globals"]
     },
     "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"]
->>>>>>> main
-}
+    "exclude": ["node_modules", "dist"],
+    "vueCompilerOptions": {
+        "vitePressExtensions": [".md"]
+    }
+}   
