@@ -61,7 +61,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ resource, rowData, onCellEdit
     if (!db) return;
     (async () => {
       try {
-        const cols = await tableManager.current.getTableSchema(resource);
+        const cols = await tableManager.current.getTableSchema("patients");
         const newColumnDefs: CustomColDef[] = cols.map((c) => ({
           field: c.name,
           headerName: c.name,
