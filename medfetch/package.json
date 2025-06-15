@@ -48,6 +48,7 @@
     "kysely": "^0.28.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250605.0",
     "@hono/vite-dev-server": "^0.19.1",
     "@types/clarinet": "^0.12.3",
     "@types/fhir": "^0.0.41",
