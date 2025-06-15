@@ -1,15 +1,15 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { initMedfetchDB, type MedfetchClient } from "@/lib/client";
+import { useMedDB } from "@/lib/client";
 import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
-import { Database, MessageSquare, Users, Activity, AlertCircle, RefreshCw, Settings, ArrowLeft } from "lucide-react";
+import { Database, Users, Activity, AlertCircle, RefreshCw, Settings, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function WorkspacePage() {
   const router = useRouter();
-  const dbRef = useRef<MedfetchClient | null>(null);
+  const dbRef = useMedDB();
   const tableManagerRef = useRef<TableManager | null>(null);
   const isInitializedRef = useRef(false);
   
@@ -20,22 +20,14 @@ export default function WorkspacePage() {
   const [primaryKey, setPrimaryKey] = useState<string>("patient_id");
 
   const initializeDatabase = useCallback(async () => {
-    if (isInitializedRef.current || dbRef.current) return;
+    if (isInitializedRef.current || !dbRef) return;
     
     try {
       setIsLoading(true);
       isInitializedRef.current = true;
-      
-      const medDb = await initMedfetchDB({
-        baseURL: "https://r4.smarthealthit.org",
-        filename: 'medfetch.db',
-        trace: true
-      });
-      
-      dbRef.current = medDb;
-      tableManagerRef.current = new TableManager(medDb);
+      tableManagerRef.current = new TableManager(dbRef);
 
-      await medDb.db.exec(`
+      await dbRef.exec(`
         BEGIN TRANSACTION;
         
         CREATE TABLE IF NOT EXISTS Patient (
@@ -60,9 +52,9 @@ export default function WorkspacePage() {
         COMMIT;
       `);
 
-      const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
+      const patientCount = await dbRef.prepare('SELECT COUNT(*) as count FROM Patient;').all();
       if (patientCount[0].count === 0) {
-        await medDb.db.exec(`
+        await dbRef.exec(`
           BEGIN TRANSACTION;
           
           INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
@@ -88,14 +80,13 @@ export default function WorkspacePage() {
     } catch (err) {
       setError("Failed to initialize Medfetch DB: " + (err as Error).message);
       isInitializedRef.current = false;
-      dbRef.current = null;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const loadResourceData = useCallback(async (resource: "Patient" | "Procedure") => {
-    if (!dbRef.current || !tableManagerRef.current) return;
+    if (!dbRef || !tableManagerRef.current) return;
     
     try {
       setError(null);
@@ -103,7 +94,7 @@ export default function WorkspacePage() {
       const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
       setPrimaryKey(pkCol);
       
-      const rows = await dbRef.current.db.prepare(`SELECT * FROM ${resource};`).all();
+      const rows = await dbRef.prepare(`SELECT * FROM ${resource};`).all();
       setRawData(rows);
     } catch (err) {
       setError("Failed to load data: " + (err as Error).message);
@@ -115,19 +106,19 @@ export default function WorkspacePage() {
   }, [initializeDatabase]);
 
   useEffect(() => {
-    if (dbRef.current && !isLoading) {
+    if (dbRef && !isLoading) {
       loadResourceData(currentResource);
     }
   }, [currentResource, isLoading, loadResourceData]);
 
   const handleCellEdit = useCallback(async (rowId: any, col: string, newValue: any) => {
-    if (!dbRef.current || !primaryKey) return;
+    if (!dbRef || !primaryKey) return;
     
     try {
       setError(null);
       const updateSQL = `UPDATE ${currentResource} SET ${col} = ${typeof newValue === "string" ? `'${newValue}'` : newValue} WHERE ${primaryKey} = '${rowId}';`;
       
-      await dbRef.current.db.exec(`
+      await dbRef.exec(`
         BEGIN TRANSACTION;
         ${updateSQL}
         COMMIT;
@@ -140,7 +131,7 @@ export default function WorkspacePage() {
   }, [currentResource, primaryKey, loadResourceData]);
 
   const handleQuery = useCallback(async (sql: string): Promise<void> => {
-    if (!dbRef.current) return;
+    if (!dbRef) return;
 
     try {
       setError(null);
@@ -151,7 +142,7 @@ export default function WorkspacePage() {
       if (isSelect) {
         for (const statement of statements) {
           if (statement.trim()) {
-            await dbRef.current.db.prepare(statement + ';').all();
+            await dbRef.prepare(statement + ';').all();
           }
         }
       } else {
@@ -160,7 +151,7 @@ export default function WorkspacePage() {
           ${statements.join(';')};
           COMMIT;
         `;
-        await dbRef.current.db.exec(transactionSQL);
+        await dbRef.exec(transactionSQL);
       }
 
       let affectedTable: "Patient" | "Procedure" | null = null;
@@ -190,7 +181,7 @@ export default function WorkspacePage() {
   }, [currentResource, loadResourceData]);
 
   const refreshData = useCallback(async () => {
-    if (!dbRef.current) return;
+    if (!dbRef) return;
     await loadResourceData(currentResource);
   }, [currentResource, loadResourceData]);
 
@@ -331,9 +322,8 @@ export default function WorkspacePage() {
             )}
 
             <div className="flex-1 p-6">
-              {dbRef.current ? (
+              {dbRef ? (
                 <AGGridTable
-                  db={dbRef.current}
                   resource={currentResource}
                   rowData={rawData}
                   onCellEdit={handleCellEdit}
@@ -352,8 +342,8 @@ export default function WorkspacePage() {
         </div>
 
         <div className="w-96 border-l border-slate-700">
-          {dbRef.current ? (
-            <ChatUI db={dbRef.current} onQuery={handleQuery} />
+          {dbRef ? (
+            <ChatUI onQuery={handleQuery} />
           ) : (
             <div className="flex items-center justify-center h-full bg-slate-900">
               <div className="text-center">
