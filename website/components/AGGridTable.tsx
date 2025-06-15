@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
@@ -21,7 +20,7 @@ import { TransactionManager } from "../utils/transactionManager";
 import { useMedDB } from "@/lib/client";
 
 // Register AG Grid modules
-ModuleRegistry.registerModules([ AllCommunityModule ]);
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AGGridTableProps {
   resource: string;
@@ -43,7 +42,6 @@ interface CustomColDef extends AgGridColDef {
 
 const AGGridTable: React.FC<AGGridTableProps> = ({ resource, rowData, onCellEdit, onError }) => {
   const db = useMedDB();
-  console.log("got", rowData)
   const [columnDefs, setColumnDefs] = useState<CustomColDef[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [error, setError] = useState<string | null>(null);
