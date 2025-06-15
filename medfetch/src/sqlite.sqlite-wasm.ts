@@ -1,15 +1,19 @@
 /// <reference lib="webworker" />
 import { PageLoaderFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { attach } from "~/sqlite-wasm/worker1";
-import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import { Counter } from "~/sqlite-wasm/counter";
 import { Page } from "~/json.page";
 import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
-import { ping, syncFetch } from "~/sqlite-wasm.block";
+import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { sqlOnFhir } from "~/sql";
-import { DummyDriver, Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
+import {
+    DummyDriver,
+    Kysely,
+    SqliteAdapter,
+    SqliteIntrospector,
+    SqliteQueryCompiler,
+} from "kysely";
 import { DEFAULT_SQLITE_FROM_FHIR } from "~/sql.types";
-import FetchBlock from "./sqlite-wasm.block?worker";
 
 const qb = new Kysely({
     dialect: {
@@ -17,28 +21,25 @@ const qb = new Kysely({
         createDriver: () => new DummyDriver(),
         createIntrospector: (db) => new SqliteIntrospector(db),
         createQueryCompiler: () => new SqliteQueryCompiler(),
-    }
-})
+    },
+});
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
-const block = new Worker(new URL(
-    import.meta.env.DEV ?
-    "./sqlite-wasm.block.js" :
-    "./sqlite-wasm.block.js",
-    import.meta.url
-), {
-    type: "module",
-    name: "sqlite-wasm.block"
-});
-
-const blockDev = new FetchBlock({ name: "sqlite-wasm.block" });
-
-// Load in sqlite3 on wasm
-sqlite3InitModule().then(async (sqlite3) => {
-    await ping(import.meta.env.DEV ? blockDev : block);
+/**
+ * Attach the message handler to the *worker* thread that has {@link Sqlite3Static} loaded.
+ * This loads medfetch_module into every database opened
+ * 
+ * @param sqlite3Wasm The sqlite3 static object exposed by sqlite-wasm's esm module init function
+ * @param syncFetch The synchronous fetch callback. Needs to block 
+ * @returns 0 on success, 1 otherwise.
+ * 
+ * note: We add a callback if multiple databases per client is wanted
+ */
+export function medfetch(sqlite3Wasm: Sqlite3Static, syncFetch: (...args: Parameters<typeof fetch>) => string): 0 | 1 {
+    const sqlite3 = sqlite3Wasm;
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];
     const moduleSet = new Set<number>();
@@ -47,52 +48,68 @@ sqlite3InitModule().then(async (sqlite3) => {
         if (msg.data?.type === "open") {
             // Get baseURL
             const baseURL = msg.data.aux?.baseURL;
-            const scope = msg.data.aux?.scope ?? null;
+            const scope = msg.data.aux?.scope;
             if (!baseURL) {
-                throw new Error(
-                    taggedMessage(
-                        `Need a base URL to open a medfetch database, but got nothing.`,
-                    ),
-                );
+                throw new Error(taggedMessage(`You have no base URL lol`));
+            }
+            if (scope) {
+                if (!Array.isArray(scope)) {
+                    throw new Error(
+                        taggedMessage(
+                            `That's not an array: (scope = ${typeof scope === "string" || typeof scope === "number" ? scope.toString() : "unknown"})`,
+                        ),
+                    );
+                }
             }
 
-            const schema = await sqlOnFhir(qb, DEFAULT_SQLITE_FROM_FHIR, scope);
+            const resourcesToRows = await sqlOnFhir(
+                qb,
+                DEFAULT_SQLITE_FROM_FHIR,
+                scope,
+            );
             if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
                 throw new Error(
-                    taggedMessage(`Can't handle that baseURL ${baseURL}`),
-                );
-            }
-            const getPage: PageLoaderFn = (resourceType) => {
-                const responseText = syncFetch(`${baseURL}/${resourceType}`);
-                const generator = function*() {
-                    yield responseText;
-                };
-                
-                return new Page(
-                    generator(),
-                    (nextURL) => {
-                        return (function* () {
-                            const responseText = syncFetch(nextURL);
-                            yield responseText;
-                        })();
-                    },
+                    taggedMessage(`Can't handle that: baseURL = ${baseURL}`),
                 );
             }
 
-            console.log(
-                taggedMessage(`Received init message with baseURL: ${baseURL}`),
-            );
+            const getPage: PageLoaderFn = (resourceType) => {
+                const responseText = syncFetch(`${baseURL}/${resourceType}`);
+                const generator = function* () {
+                    // just yield the whole text for now until
+                    yield responseText;
+                };
+
+                return new Page(generator(), (nextURL) => {
+                    return (function* () {
+                        const responseText = syncFetch(nextURL);
+                        yield responseText;
+                    })();
+                });
+            };
 
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
-            modules[dbIndex] = medfetch_module_alloc(getPage, sqlite3, schema);
+            modules[dbIndex] = medfetch_module_alloc(
+                getPage,
+                sqlite3,
+                resourcesToRows,
+            );
+
+            let scopeMsg: string;
+            if (!!scope) {
+                scopeMsg = `Fetch set is scoped to ${scope.map((s: string) => `"${s}"`)}`;
+            } else [
+                scopeMsg = `No scope provided. Fetch set is scoped to all.`
+            ]
+            console.log(taggedMessage(`Connected to ${baseURL}. ${scopeMsg}`));
         }
 
         // We don't get the dbId until after "open"
         if (msg.data.type === "exec") {
             if (!msg.data.dbId) {
                 throw new Error(
-                    `[${tag}] > Can't query database with an undefined "dbId"`,
+                    `[${tag}] > Can't query that: Database with an undefined "dbId"`,
                 );
             }
 
@@ -132,7 +149,8 @@ sqlite3InitModule().then(async (sqlite3) => {
     } else {
         console.log(`[${tag}] > sqlite-wasm binary loaded and medfetch ready.`);
     }
-});
+    return rc;
+}
 
 function index(internalDbId: string): number {
     return parseInt(internalDbId.split("#")[1][0]) - 1;

@@ -24,7 +24,7 @@ export function viewSab(sab: SharedArrayBuffer): [Int32Array, Uint8Array] {
  * ```ts
  * // worker.ts
  * export const [getTodos, handleGetTodos] = block(
- *   "getTodos",
+ *   ["getTodos"],
  *   async (n: number) => {
  *     const response = await fetch("https://dummyjson.com/todos");
  *     const payload = await response.json();
@@ -46,7 +46,7 @@ export function viewSab(sab: SharedArrayBuffer): [Int32Array, Uint8Array] {
  * ```
  */
 export default function block<Args extends any[], Result>(
-    name: string | [string, string],
+    name: [string] | [string, string],
     blockingFn: (...args: Args) => Promise<Result>,
     {
         encode = JSON.stringify,
@@ -54,9 +54,8 @@ export default function block<Args extends any[], Result>(
         byteSize = 500_000,
     }: Partial<MessageConfig<Result>> = {},
 ): Block<Args, Result> {
-    const isNameArray = Array.isArray(name);
-    const syncWorkerName = isNameArray ? name[0] : name;
-    const asyncWorkerName = isNameArray ? name[1] : null;
+    const syncWorkerName = name[0];
+    const asyncWorkerName = name[1] ?? null;
     let workerPort: Worker | MessagePort | undefined = undefined;
 
     const blockFn = (...args: Args): Result => {

@@ -21,7 +21,7 @@ import { TransactionManager } from "../utils/transactionManager";
 import { useMedDB } from "@/lib/client";
 
 // Register AG Grid modules
-ModuleRegistry.registerModules([AllCommunityModule]);
+ModuleRegistry.registerModules([ AllCommunityModule ]);
 
 interface AGGridTableProps {
   resource: string;

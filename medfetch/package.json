@@ -4,14 +4,13 @@
   "type": "module",
   "description": "sql on fhir database runner implementation",
   "scripts": {
-    "dev": "pnpm run docs:dev",
     "test": "vitest run --coverage",
     "build": "rm -rf dist && npx concurrently \"npx vite build\" \"npx tsc -p tsconfig.build.json && npx tsc-alias -p tsconfig.build.json\"",
     "unit": "vitest src",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "dev:codegen": "tsx src/bin/codegen.ts",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:build": "vitepress build docs && cp _headers ./docs/.vitepress/dist",
     "docs:preview": "vitepress preview docs"
   },
   "exports": {

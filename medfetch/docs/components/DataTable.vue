@@ -49,6 +49,7 @@ const props = defineProps<{
   columns: { name: string; dataType?: string }[];
   rows: Record<string, unknown>[];
 }>();
+console.log("called", props)
 
 const rowsPerPage = 5;
 const page = ref(1);

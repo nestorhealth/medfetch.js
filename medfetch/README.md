@@ -28,3 +28,8 @@ You can infer the resolved database type using the infer field `.$db` from the d
 ```ts
 export const db = new Kysely<typeof dialect.$db>({ dialect }
 ```
+
+## Developing
+Docs are in /docs. It deploys to cloudflare workers as a static build.
+The official ones are on https://docs.medfetch.io. It updates on pushes to
+main.
