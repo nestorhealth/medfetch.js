@@ -4,8 +4,18 @@ import { useMedDB } from "@/lib/client";
 import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
-import { Database, Users, Activity, AlertCircle, RefreshCw, Settings, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+// Import icons directly
+import { 
+  ArrowLeft,
+  Database,
+  Users,
+  Activity,
+  AlertCircle,
+  RefreshCw,
+  Settings 
+} from "lucide-react/dist/esm/icons";
 
 export default function WorkspacePage() {
   const router = useRouter();

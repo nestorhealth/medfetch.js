@@ -223,8 +223,8 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ resource, rowData, onCellEdit
       if (bulkEditState.errors.size === 0) {
         await transactionManager.current.executeInTransaction(
           async () => {
-            for (const [rowId, changes] of bulkEditState.pendingChanges) {
-              for (const [field, value] of changes) {
+            for (const [rowId, changes] of Array.from(bulkEditState.pendingChanges)) {
+              for (const [field, value] of Array.from(changes)) {
                 await onCellEdit(rowId, field, value);
               }
             }
@@ -324,8 +324,8 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ resource, rowData, onCellEdit
               <button
                 onClick={() => {
                   // Apply all pending changes
-                  for (const [, changes] of bulkEditState.pendingChanges) {
-                    for (const [field, value] of changes) {
+                  for (const [rowId, changes] of Array.from(bulkEditState.pendingChanges)) {
+                    for (const [field, value] of Array.from(changes)) {
                       handleBulkEdit(field, value);
                     }
                   }

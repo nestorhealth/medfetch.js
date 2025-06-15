@@ -4,7 +4,7 @@ import { Kysely, sql } from "kysely";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
-const dialect = sqliteOnFhir(":memory:", `${API_URL}/fhir`, [
+const dialect = sqliteOnFhir(":memory:", `${API_URL}fhir`, [
   "Patient",
   "Procedure",
   "Condition",

@@ -4,16 +4,28 @@ import { useMedDB } from "@/lib/client";
 import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
-import {
+import { 
+  ArrowLeft,
   Database,
   Users,
   Activity,
   AlertCircle,
   RefreshCw,
-  Settings,
-  ArrowLeft,
+  Settings 
 } from "lucide-react";
+import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
+
+// Dynamically import icons
+const LucideIcons = {
+  ArrowLeft: dynamic(() => import('lucide-react').then(mod => mod.ArrowLeft)),
+  Database: dynamic(() => import('lucide-react').then(mod => mod.Database)),
+  Users: dynamic(() => import('lucide-react').then(mod => mod.Users)),
+  Activity: dynamic(() => import('lucide-react').then(mod => mod.Activity)),
+  AlertCircle: dynamic(() => import('lucide-react').then(mod => mod.AlertCircle)),
+  RefreshCw: dynamic(() => import('lucide-react').then(mod => mod.RefreshCw)),
+  Settings: dynamic(() => import('lucide-react').then(mod => mod.Settings))
+};
 
 export default function WorkspacePage() {
   const medDB = useMedDB();

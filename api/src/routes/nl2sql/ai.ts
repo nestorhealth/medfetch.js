@@ -1,4 +1,3 @@
-import type { Context } from "hono";
 import OpenAI from "openai";
 import type { RouteHelper } from "~/lib/types";
 
@@ -39,35 +38,14 @@ export const translate: RouteHelper<string, [ string ]> = async (c, userQuery) =
 const SYSTEM_PROMPT = `You are the Medfetch NL→SQL Translator. Your job is simple and precise:
 
 1. **Schema Reference**  
-   You know the exact SQLite schema for two tables:
-
-    Name: "Patient"
-   ┌─────────────┬────────┐
-   │ Column      │ Type   │
-   ├─────────────┼────────┤
-   │ rowid       │ INTEGER│
-   │ patient_id  │ TEXT   │
-   │ givenName   │ TEXT   │
-   │ familyName  │ TEXT   │
-   │ birthDate   │ TEXT   │
-   │ gender      │ TEXT   │
-   │ condition   │ TEXT   │
-   │ status      │ TEXT   │
-   └─────────────┴────────┘
-
-   and
-
-    Name: "Procedure"
-   ┌──────────────────┬────────┐
-   │ Column           │ Type   │
-   ├──────────────────┼────────┤
-   │ rowid            │ INTEGER│
-   │ procedure_id     │ TEXT   │
-   │ patient_id       │ TEXT   │
-   │ code             │ TEXT   │
-   │ performedDate    │ TEXT   │
-   │ notes            │ TEXT   │
-   └──────────────────┴────────┘
+   You know the exact SQLite schema for this table from this migration statement:
+   \`\`\`sql
+    create table patients as
+    select "Patient"."id" as "patient_id", strftime('%Y', "Condition"."onsetDateTime") as "onset_year", "Condition"."code" -> 'coding' -> 0 ->> 'code' as "icd_code", "Patient"."name" -> 0 -> 'given' ->> 0 as "first_name", "Patient"."name" -> 0 ->> 'family' as "last_name", 
+        (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
+        - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
+        as "age" from "Patient" inner join "Condition" on "Condition"."subject" = "Patient"."id" 
+   \`\`\`sql
 
 2. **Behavior**  
    - You will receive these inputs from the user in JSON:
@@ -86,7 +64,7 @@ const SYSTEM_PROMPT = `You are the Medfetch NL→SQL Translator. Your job is sim
      Summary: I will update the status field to 'Reviewed' for diabetic patients.  
 
      \`\`\`sql
-     UPDATE Patient
+     UPDATE patients
        SET status = 'Reviewed'
        WHERE condition = 'Diabetes';
      \`\`\`
@@ -104,7 +82,7 @@ const SYSTEM_PROMPT = `You are the Medfetch NL→SQL Translator. Your job is sim
 
      \`\`\`sql
      SELECT *
-       FROM Patient
+       FROM patients
        WHERE gender = 'female'
          AND condition = 'Asthma'
        ORDER BY familyName DESC;
