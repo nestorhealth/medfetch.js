@@ -51,41 +51,6 @@ const adultPatients = db
 
 const adultPatientsQuery = adultPatients.compile();
 
-const groupByCaseQuery = db
-  .selectFrom("patients")
-  .select((eb) => {
-    const fractureTypeCase = eb
-      .case()
-      .when("icd_code", "like", "%A")
-      .then("Closed Fracture (A)")
-      .when("icd_code", "like", "%B")
-      .then("Open Type I/II (B)")
-      .when("icd_code", "like", "%C")
-      .then("Open Type III (C)")
-      .else("Other/Unspecified")
-      .endCase();
-
-    return [
-      fractureTypeCase.as("fracture_type"),
-      eb.fn.countAll().as("total_cases"),
-    ];
-  })
-  .where("icd_code", "like", "S82.20%")
-  .groupBy((eb) =>
-    eb
-      .case()
-      .when("icd_code", "like", "%A")
-      .then("Closed Fracture (A)")
-      .when("icd_code", "like", "%B")
-      .then("Open Type I/II (B)")
-      .when("icd_code", "like", "%C")
-      .then("Open Type III (C)")
-      .else("Other/Unspecified")
-      .endCase()
-  )
-  .compile();
-
-
 function makeQueryState(query: CompiledQuery<any>, isMutation = false) {
   return async (db: Kysely<any>) => {
     let rows = await db
@@ -130,5 +95,3 @@ export async function table1(db: Kysely<any>) {
     columns,
   };
 }
-
-export const table2 = makeQueryState(groupByCaseQuery);
