@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { detectAnomalies, generateRunSummary } from '../utils/aiProcessing';
 import type { Patient, Procedure } from '../utils/fhirProcessing';
 import type { AnomalyDetection, RunSummary } from '../utils/aiProcessing';
@@ -19,7 +19,9 @@ export function HospitalCleaningShowcase({ initialData }: Props) {
 
   // Process resources and detect anomalies
   useEffect(() => {
+    let isMounted = true;
     async function processResources() {
+      if (!isMounted) return;
       setIsProcessing(true);
       setError(null);
       try {
@@ -27,6 +29,7 @@ export function HospitalCleaningShowcase({ initialData }: Props) {
         // Detect anomalies for each resource
         const allAnomalies: AnomalyDetection[] = [];
         for (const resource of originalResources) {
+          if (!isMounted) return;
           try {
             console.log(`Processing resource ${resource.id} (${resource.resourceType})`);
             const resourceAnomalies = await detectAnomalies(resource);
@@ -34,82 +37,189 @@ export function HospitalCleaningShowcase({ initialData }: Props) {
             allAnomalies.push(...resourceAnomalies);
           } catch (resourceError) {
             console.error(`Error processing resource ${resource.id}:`, resourceError);
-            setError(prev => 
-              prev ? `${prev}\nError processing ${resource.resourceType} ${resource.id}: ${resourceError instanceof Error ? resourceError.message : 'Unknown error'}` 
-              : `Error processing ${resource.resourceType} ${resource.id}: ${resourceError instanceof Error ? resourceError.message : 'Unknown error'}`
-            );
+            if (isMounted) {
+              setError(prev => 
+                prev ? `${prev}\nError processing ${resource.resourceType} ${resource.id}: ${resourceError instanceof Error ? resourceError.message : 'Unknown error'}` 
+                : `Error processing ${resource.resourceType} ${resource.id}: ${resourceError instanceof Error ? resourceError.message : 'Unknown error'}`
+              );
+            }
           }
         }
-        setAnomalies(allAnomalies);
-
-        if (allAnomalies.length > 0) {
-          console.log('Generating run summary with anomalies:', allAnomalies.length);
-          const runSummary = await generateRunSummary(originalResources, allAnomalies);
-          setSummary(runSummary);
-        } else {
-          console.log('No anomalies found, skipping summary generation');
-          setSummary({
-            text: 'No anomalies were detected in the data.',
-            stats: {
-              totalRecords: originalResources.length,
-              cleanedRecords: originalResources.length,
-              anomaliesFound: 0,
-              suggestionsApplied: 0
-            }
-          });
+        if (isMounted) {
+          setAnomalies(allAnomalies);
+          if (allAnomalies.length > 0) {
+            console.log('Generating run summary with anomalies:', allAnomalies.length);
+            const runSummary = await generateRunSummary(originalResources, allAnomalies);
+            setSummary(runSummary);
+          } else {
+            console.log('No anomalies found, skipping summary generation');
+            setSummary({
+              text: 'No anomalies were detected in the data.',
+              stats: {
+                totalRecords: originalResources.length,
+                cleanedRecords: originalResources.length,
+                anomaliesFound: 0,
+                suggestionsApplied: 0
+              }
+            });
+          }
         }
       } catch (err) {
         console.error('Error in processResources:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred while processing resources');
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'An error occurred while processing resources');
+        }
       } finally {
-        setIsProcessing(false);
+        if (isMounted) {
+          setIsProcessing(false);
+        }
       }
     }
 
     processResources();
+    return () => {
+      isMounted = false;
+    };
   }, [originalResources]);
 
-  // Apply cleaning suggestions
-  const applySuggestions = async () => {
-    setIsCleaning(true);
-    setError(null);
-    try {
-      const cleaned = [...originalResources];
-      let appliedCount = 0;
-
-      for (const anomaly of anomalies) {
-        const resourceIndex = cleaned.findIndex(r => r.id === anomaly.resourceId);
-        if (resourceIndex === -1) continue;
-
-        const resource = cleaned[resourceIndex];
-        if (anomaly.suggestion && anomaly.path) {
-          // Apply the suggestion based on the anomaly type
-          if (anomaly.path === 'performedDateTime' && anomaly.issue.includes('future date')) {
-            // For future dates, set to current date
-            (resource as Procedure).performedDateTime = new Date().toISOString();
-            appliedCount++;
-          }
-          // Add more cleaning rules here as needed
-        }
+  // Helper function to set a value at a nested path
+  const setNestedValue = (obj: any, path: string, value: any) => {
+    const pathParts = path.split('.');
+    let current = obj;
+    
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const part = pathParts[i];
+      if (!current[part]) {
+        current[part] = {};
       }
-
-      setCleanedResources(cleaned);
-      if (summary) {
-        setSummary({
-          ...summary,
-          stats: {
-            ...summary.stats,
-            cleanedRecords: appliedCount,
-            suggestionsApplied: appliedCount
-          }
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to apply cleaning suggestions');
-    } finally {
-      setIsCleaning(false);
+      current = current[part];
     }
+    
+    const lastPart = pathParts[pathParts.length - 1];
+    current[lastPart] = value;
+    return obj;
   };
+
+  // Helper function to clean the path by removing resource type prefix
+  const cleanPath = (path: string) => {
+    return path.replace(/^(Patient|Procedure)\./, '');
+  };
+
+  // Apply cleaning suggestions
+  const applySuggestions = useCallback(() => {
+    if (!originalResources || !anomalies.length) return;
+
+    console.log('Applying suggestions for anomalies:', anomalies);
+    
+    // Create a deep copy of original resources
+    const cleaned = JSON.parse(JSON.stringify(originalResources));
+    let appliedCount = 0;
+
+    // Process each anomaly
+    anomalies.forEach(anomaly => {
+      const resourceIndex = cleaned.findIndex((r: Patient | Procedure) => r.id === anomaly.resourceId);
+      if (resourceIndex === -1) return;
+
+      const resource = cleaned[resourceIndex];
+      const cleanPath = anomaly.path.replace(/^(Patient|Procedure)\./, '');
+
+      try {
+        // Handle specific anomaly types
+        if (cleanPath === 'performedDateTime' && anomaly.issue.includes('future')) {
+          // Set future dates to current date
+          const now = new Date().toISOString();
+          setNestedValue(resource, cleanPath, now);
+          appliedCount++;
+          console.log(`Applied suggestion: Set ${cleanPath} to current date`);
+        }
+        else if (cleanPath === 'telecom') {
+          // Add telecom information
+          setNestedValue(resource, cleanPath, [{
+            system: 'phone',
+            value: '(555) 123-4567',
+            use: 'home'
+          }]);
+          appliedCount++;
+          console.log('Applied suggestion: Added telecom information');
+        }
+        else if (cleanPath === 'managingOrganization') {
+          // Add managing organization
+          setNestedValue(resource, cleanPath, {
+            reference: 'Organization/org1',
+            display: 'General Hospital'
+          });
+          appliedCount++;
+          console.log('Applied suggestion: Added managing organization');
+        }
+        else if (cleanPath === 'communication.language') {
+          // Add communication preferences
+          if (!resource.communication) {
+            resource.communication = [];
+          }
+          resource.communication.push({
+            language: {
+              coding: [{
+                system: 'urn:ietf:bcp:47',
+                code: 'en',
+                display: 'English'
+              }]
+            },
+            preferred: true
+          });
+          appliedCount++;
+          console.log('Applied suggestion: Added communication preferences');
+        }
+        else if (cleanPath === 'contact') {
+          // Add emergency contact
+          setNestedValue(resource, cleanPath, [{
+            relationship: [{
+              coding: [{
+                system: 'http://terminology.hl7.org/CodeSystem/v2-0131',
+                code: 'C',
+                display: 'Emergency Contact'
+              }]
+            }],
+            name: {
+              family: 'Emergency',
+              given: ['Contact']
+            },
+            telecom: [{
+              system: 'phone',
+              value: '(555) 999-8888',
+              use: 'mobile'
+            }],
+            address: {
+              line: ['456 Emergency St'],
+              city: 'Boston',
+              state: 'MA',
+              postalCode: '02108'
+            }
+          }]);
+          appliedCount++;
+          console.log('Applied suggestion: Added emergency contact');
+        }
+      } catch (error) {
+        console.error(`Error applying suggestion for ${cleanPath}:`, error);
+      }
+    });
+
+    console.log(`Applied ${appliedCount} suggestions`);
+    console.log('Cleaned resources:', JSON.stringify(cleaned, null, 2));
+    
+    setCleanedResources(cleaned);
+    setSummary(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        stats: {
+          ...prev.stats,
+          suggestionsApplied: appliedCount,
+          cleanedRecords: appliedCount
+        },
+        lastUpdated: new Date().toISOString()
+      };
+    });
+  }, [originalResources, anomalies]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8">
