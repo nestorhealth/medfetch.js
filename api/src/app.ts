@@ -28,7 +28,7 @@ const app = new OpenAPIHono<{
 // Cors
 app.use("*", (c, next) => {
   const corsHandler = cors({
-    origin: [c.env.DOCS_HOST, c.env.MEDFETCH_DEV_HOST],
+    origin: [c.env.DOCS_HOST, c.env.MEDFETCH_DEV_HOST, "https://docs.medfetch.io"],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400

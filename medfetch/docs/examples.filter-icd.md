@@ -2,9 +2,7 @@
 import { table0, table1 } from "./sql/icd-queries";
 import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
-// @ts-ignore
 import { sqliteOnFhir } from "~/sqlite.browser";
-// @ts-ignore
 import DBWorker from "./sql/db.worker?worker";
 import { Kysely } from "kysely";
 
