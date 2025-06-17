@@ -54,5 +54,6 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ["@sqlite.org/sqlite-wasm"],
     },
+    envDir: fileURLToPath(new URL("../", import.meta.url))
   },
 });
