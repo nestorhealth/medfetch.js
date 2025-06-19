@@ -2,24 +2,39 @@
   "name": "@medfetch.js/api",
   "scripts": {
     "dev": "wrangler dev",
+    "deploy:preview": "wrangler deploy --minify --env preview",
     "deploy": "wrangler deploy --minify --env production",
-    "cf-typegen": "wrangler types ./exports/worker-configuration.d.ts --env-interface CloudflareBindings",
-    "api-typegen": "openapi-typescript ./exports/openapi.json -o ./dist/types.d.ts"
+    "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
+    "api-typegen": "openapi-typescript ./public/openapi.json -o ./dist/types.d.ts",
+    "demo-data-codegen": "tsx bin/researcher-demo.ts"
   },
   "exports": {
     "./types": {
-      "types": "./exports/types.d.ts"
+      "types": "./dist/types.d.ts"
     }
   },
   "dependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "@hono/node-server": "^1.14.4",
     "@hono/zod-openapi": "^0.19.8",
     "@hono/zod-validator": "^0.7.0",
+    "fflate": "^0.8.2",
     "hono": "^4.7.11",
+    "json-refs": "^3.0.15",
+    "json-schema-to-zod": "^2.6.1",
     "kysely": "^0.28.2",
-    "openai": "^5.0.1"
+    "kysely-d1": "^0.4.0",
+    "medfetch": "workspace:^",
+    "openai": "^5.0.1",
+    "xml2js": "^0.6.2",
+    "zod": "^3.25.51"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250605.0",
+    "@types/fhir": "^0.0.41",
+    "@types/node": "^22.15.30",
+    "@types/xml2js": "^0.4.14",
+    "commander": "^14.0.0",
     "openapi-typescript": "^7.8.0",
     "wrangler": "^4.4.0"
   }

@@ -27,11 +27,11 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-            "~": path.resolve(__dirname, "src"),
+            "~": path.resolve(__dirname, "src")
         },
     },
     optimizeDeps: {
-        exclude: ["@sqlite.org/sqlite-wasm"],
+        exclude: ["@sqlite.org/sqlite-wasm"]
     },
     build: {
         assetsInlineLimit: 0,
@@ -46,11 +46,12 @@ export default defineConfig({
         },
         lib: {
             entry: {
-                "sqlite-wasm": "src/sqlite-wasm.ts",
-                "sqlite-wasm/web-worker": "src/sqlite-wasm/web-worker.ts",
-                "fetch.worker": "src/fetch.worker.ts"
+                "dialects": "src/dialects.ts",
+                "sql": "src/sql.ts",
+                "sqlite.browser": "src/sqlite.browser.ts",
+                "threads/sqlite-wasm": "src/threads/sqlite-wasm.ts",
+                "threads/sqlite-wasm.block": "src/threads/sqlite-wasm.block.ts",
             },
-            name: "medfetch",
             formats: ["es"],
             fileName: (format, name) =>
                 format === "esm" || format === "es"

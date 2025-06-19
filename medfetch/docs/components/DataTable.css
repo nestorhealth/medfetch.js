@@ -1,0 +1,64 @@
+i/* Typography and layout */
+body {
+  font-family: var(--vp-font-family-base);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Table layout */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  color: var(--vp-c-text-1);
+  background-color: var(--vp-c-bg);
+}
+
+/* Header cells */
+th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--vp-c-divider);
+  background-color: var(--vp-c-bg-soft);
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+}
+
+/* Body cells */
+td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--vp-c-divider-light);
+  color: var(--vp-c-text-2);
+  vertical-align: top;
+}
+
+/* Pagination controls */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  color: var(--vp-c-text-2);
+}
+
+/* Buttons */
+button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--vp-c-text-1);
+  transition: background 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--vp-c-bg);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

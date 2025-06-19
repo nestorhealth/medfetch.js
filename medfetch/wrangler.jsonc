@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "medfetch-js-docs",
+  "compatibility_date": "2025-06-03",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./docs/.vitepress/dist"
+  },
+  "vars": {
+    "API_URL": "https://api.medfetch.io"
+  }
+}

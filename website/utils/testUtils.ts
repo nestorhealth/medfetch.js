@@ -1,8 +1,9 @@
-import type { MedfetchClient } from "@/lib/client";
 
 /**
  * Utility functions for database testing
  */
+
+import { MedfetchDB } from "@/lib/client";
 
 export interface TestData {
   id: number;
@@ -26,15 +27,15 @@ export const generateTestData = (count: number): TestData[] => {
   }));
 };
 
-export const verifyTableExists = async (db: MedfetchClient, tableName: string): Promise<boolean> => {
-  const result = await db.db.prepare(`
+export const verifyTableExists = async (db: MedfetchDB, tableName: string): Promise<boolean> => {
+  const result = await db.prepare(`
     SELECT name FROM sqlite_master 
     WHERE type='table' AND name='${tableName}';
   `).all();
   return result.length > 0;
 };
 
-export const getTableRowCount = async (db: MedfetchClient, tableName: string): Promise<number> => {
-  const result = await db.db.prepare(`SELECT COUNT(*) as count FROM ${tableName};`).all();
+export const getTableRowCount = async (db: MedfetchDB, tableName: string): Promise<number> => {
+  const result = await db.prepare(`SELECT COUNT(*) as count FROM ${tableName};`).all();
   return (result[0] as { count: number }).count;
 }; 

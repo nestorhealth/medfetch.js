@@ -30,11 +30,12 @@
         }
     },
     "include": [
-        "src/sqlite-wasm.ts"
+        "src/sqlite.browser.ts",
+        "src/dialects.ts",
+        "src/json.ts",
+        "src/sql.ts"
     ],
     "exclude": [
         "/**/*.test.ts",
-        "src/sqlite-wasm/vtab.ts",
-        "src/sqlite-wasm/vtab.*.ts"
     ]
 }

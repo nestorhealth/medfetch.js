@@ -3,9 +3,10 @@
 /synthea-data/
 /_defs/
 **/build
-.env
 *.db
 .next
 *.tgz
 /package/
 /coverage/
+/.vscode
+/docs/.vitepress/cache

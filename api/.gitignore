@@ -34,3 +34,6 @@ lerna-debug.log*
 
 # Wrangler generated types
 worker-configuration.d.ts
+
+# The docs build
+/public/docs

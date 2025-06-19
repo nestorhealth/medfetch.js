@@ -10,6 +10,10 @@
     ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "types": ["exports/worker-configuration.d.ts"]
+    "types": ["./dist/worker-configuration.d.ts"],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    }
   },
 }

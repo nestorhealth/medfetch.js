@@ -17,12 +17,12 @@ import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 import { TableManager } from "../utils/tableManager";
 import { TransactionManager } from "../utils/transactionManager";
+import { useMedDB } from "@/lib/client";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AGGridTableProps {
-  db: any;
   resource: string;
   rowData: any[];
   onCellEdit: (rowId: any, col: string, newValue: any) => void;
@@ -40,7 +40,8 @@ interface CustomColDef extends AgGridColDef {
   field: string;
 }
 
-const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCellEdit, onError }) => {
+const AGGridTable: React.FC<AGGridTableProps> = ({ resource, rowData, onCellEdit, onError }) => {
+  const db = useMedDB();
   const [columnDefs, setColumnDefs] = useState<CustomColDef[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
     if (!db) return;
     (async () => {
       try {
-        const cols = await tableManager.current.getTableSchema(resource);
+        const cols = await tableManager.current.getTableSchema("patients");
         const newColumnDefs: CustomColDef[] = cols.map((c) => ({
           field: c.name,
           headerName: c.name,
@@ -222,8 +223,8 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
       if (bulkEditState.errors.size === 0) {
         await transactionManager.current.executeInTransaction(
           async () => {
-            for (const [rowId, changes] of bulkEditState.pendingChanges) {
-              for (const [field, value] of changes) {
+            for (const [rowId, changes] of Array.from(bulkEditState.pendingChanges)) {
+              for (const [field, value] of Array.from(changes)) {
                 await onCellEdit(rowId, field, value);
               }
             }
@@ -323,8 +324,8 @@ const AGGridTable: React.FC<AGGridTableProps> = ({ db, resource, rowData, onCell
               <button
                 onClick={() => {
                   // Apply all pending changes
-                  for (const [, changes] of bulkEditState.pendingChanges) {
-                    for (const [field, value] of changes) {
+                  for (const [rowId, changes] of Array.from(bulkEditState.pendingChanges)) {
+                    for (const [field, value] of Array.from(changes)) {
                       handleBulkEdit(field, value);
                     }
                   }

@@ -35,6 +35,9 @@
         "declaration": true,
         "types": ["@cloudflare/workers-types", "vitest/globals"]
     },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"]
-}
+    "include": ["src/**/*", "docs/**/*"],
+    "exclude": ["node_modules", "dist"],
+    "vueCompilerOptions": {
+        "vitePressExtensions": [".md"]
+    }
+}   

@@ -1,15 +1,25 @@
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { initMedfetchDB, type MedfetchClient } from "@/lib/client";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useMedDB } from "@/lib/client";
 import { TableManager, type ColumnDefinition } from "@/utils/tableManager";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
-import { Database, MessageSquare, Users, Activity, AlertCircle, RefreshCw, Settings, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+// Import icons directly
+import { 
+  ArrowLeft,
+  Database,
+  Users,
+  Activity,
+  AlertCircle,
+  RefreshCw,
+  Settings 
+} from "lucide-react";
 
 export default function WorkspacePage() {
   const router = useRouter();
-  const dbRef = useRef<MedfetchClient | null>(null);
+  const dbRef = useMedDB();
   const tableManagerRef = useRef<TableManager | null>(null);
   const isInitializedRef = useRef(false);
   
@@ -20,22 +30,14 @@ export default function WorkspacePage() {
   const [primaryKey, setPrimaryKey] = useState<string>("patient_id");
 
   const initializeDatabase = useCallback(async () => {
-    if (isInitializedRef.current || dbRef.current) return;
+    if (isInitializedRef.current || !dbRef) return;
     
     try {
       setIsLoading(true);
       isInitializedRef.current = true;
-      
-      const medDb = await initMedfetchDB({
-        baseURL: "https://r4.smarthealthit.org",
-        filename: 'medfetch.db',
-        trace: true
-      });
-      
-      dbRef.current = medDb;
-      tableManagerRef.current = new TableManager(medDb);
+      tableManagerRef.current = new TableManager(dbRef);
 
-      await medDb.db.exec(`
+      await dbRef.exec(`
         BEGIN TRANSACTION;
         
         CREATE TABLE IF NOT EXISTS Patient (
@@ -60,9 +62,9 @@ export default function WorkspacePage() {
         COMMIT;
       `);
 
-      const patientCount = await medDb.db.prepare('SELECT COUNT(*) as count FROM Patient;').all();
+      const patientCount = await dbRef.prepare('SELECT COUNT(*) as count FROM Patient;').all();
       if (patientCount[0].count === 0) {
-        await medDb.db.exec(`
+        await dbRef.exec(`
           BEGIN TRANSACTION;
           
           INSERT INTO Patient (patient_id, givenName, familyName, birthDate, gender, condition, status)
@@ -88,46 +90,45 @@ export default function WorkspacePage() {
     } catch (err) {
       setError("Failed to initialize Medfetch DB: " + (err as Error).message);
       isInitializedRef.current = false;
-      dbRef.current = null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [dbRef]);
 
   const loadResourceData = useCallback(async (resource: "Patient" | "Procedure") => {
-    if (!dbRef.current || !tableManagerRef.current) return;
+    if (!dbRef || !tableManagerRef.current) return;
     
     try {
       setError(null);
-      const schema = await tableManagerRef.current.getTableSchema(resource);
+      const schema = await tableManagerRef.current.getTableSchema("patients");
       const pkCol = schema.find((col: ColumnDefinition) => col.primaryKey)?.name || "patient_id";
       setPrimaryKey(pkCol);
-      
-      const rows = await dbRef.current.db.prepare(`SELECT * FROM ${resource};`).all();
+      const rows = await dbRef.prepare(`SELECT * FROM "patients";`).all();
+      console.log("i got", rows)
       setRawData(rows);
     } catch (err) {
       setError("Failed to load data: " + (err as Error).message);
     }
-  }, []);
+  }, [dbRef]);
 
   useEffect(() => {
     initializeDatabase();
   }, [initializeDatabase]);
 
   useEffect(() => {
-    if (dbRef.current && !isLoading) {
+    if (dbRef && !isLoading) {
       loadResourceData(currentResource);
     }
-  }, [currentResource, isLoading, loadResourceData]);
+  }, [currentResource, dbRef, isLoading, loadResourceData]);
 
   const handleCellEdit = useCallback(async (rowId: any, col: string, newValue: any) => {
-    if (!dbRef.current || !primaryKey) return;
+    if (!dbRef || !primaryKey) return;
     
     try {
       setError(null);
       const updateSQL = `UPDATE ${currentResource} SET ${col} = ${typeof newValue === "string" ? `'${newValue}'` : newValue} WHERE ${primaryKey} = '${rowId}';`;
       
-      await dbRef.current.db.exec(`
+      await dbRef.exec(`
         BEGIN TRANSACTION;
         ${updateSQL}
         COMMIT;
@@ -137,10 +138,10 @@ export default function WorkspacePage() {
     } catch (err) {
       setError("Edit failed: " + (err as Error).message);
     }
-  }, [currentResource, primaryKey, loadResourceData]);
+  }, [dbRef, primaryKey, currentResource, loadResourceData]);
 
   const handleQuery = useCallback(async (sql: string): Promise<void> => {
-    if (!dbRef.current) return;
+    if (!dbRef) return;
 
     try {
       setError(null);
@@ -151,7 +152,7 @@ export default function WorkspacePage() {
       if (isSelect) {
         for (const statement of statements) {
           if (statement.trim()) {
-            await dbRef.current.db.prepare(statement + ';').all();
+            await dbRef.prepare(statement + ';').all();
           }
         }
       } else {
@@ -160,7 +161,7 @@ export default function WorkspacePage() {
           ${statements.join(';')};
           COMMIT;
         `;
-        await dbRef.current.db.exec(transactionSQL);
+        await dbRef.exec(transactionSQL);
       }
 
       let affectedTable: "Patient" | "Procedure" | null = null;
@@ -187,12 +188,12 @@ export default function WorkspacePage() {
       setError(`Query failed: ${errorMessage}`);
       throw err;
     }
-  }, [currentResource, loadResourceData]);
+  }, [currentResource, dbRef, loadResourceData]);
 
   const refreshData = useCallback(async () => {
-    if (!dbRef.current) return;
+    if (!dbRef) return;
     await loadResourceData(currentResource);
-  }, [currentResource, loadResourceData]);
+  }, [currentResource, dbRef, loadResourceData]);
 
   const getTableStats = useCallback(() => {
     if (!rawData) return { total: 0, active: 0 };
@@ -205,11 +206,11 @@ export default function WorkspacePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="text-center">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold text-white mb-2">Initializing Workspace</h3>
+          <div className="p-8 border bg-slate-800/50 backdrop-blur-sm border-slate-700 rounded-2xl">
+            <div className="w-12 h-12 mx-auto mb-4 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+            <h3 className="mb-2 text-lg font-semibold text-white">Initializing Workspace</h3>
             <p className="text-slate-400">Setting up your medical data environment...</p>
           </div>
         </div>
@@ -219,24 +220,24 @@ export default function WorkspacePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="px-6 py-4 border-b bg-slate-800/50 backdrop-blur-sm border-slate-700">
+        <div className="mx-auto max-w-7xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push('/showcase/researcher')}
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                className="p-2 transition-colors rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
                 title="Back to Connection Setup"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="w-4 h-4" />
               </button>
               
-              <div className="bg-blue-500/20 rounded-xl p-3">
-                <Database className="h-6 w-6 text-blue-400" />
+              <div className="p-3 bg-blue-500/20 rounded-xl">
+                <Database className="w-6 h-6 text-blue-400" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Medical Data Workspace</h1>
-                <p className="text-slate-400 text-sm">Connected to SMART Health IT FHIR Server</p>
+                <p className="text-sm text-slate-400">Connected to SMART Health IT FHIR Server</p>
               </div>
             </div>
             
@@ -246,7 +247,7 @@ export default function WorkspacePage() {
                 <span>Connected</span>
               </div>
               
-              <div className="flex bg-slate-800 rounded-lg p-1">
+              <div className="flex p-1 rounded-lg bg-slate-800">
                 <button
                   onClick={() => setCurrentResource("Patient")}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center space-x-2 ${
@@ -255,7 +256,7 @@ export default function WorkspacePage() {
                       : "text-slate-300 hover:text-white"
                   }`}
                 >
-                  <Users className="h-4 w-4" />
+                  <Users className="w-4 h-4" />
                   <span>Patients</span>
                 </button>
                 <button
@@ -266,74 +267,73 @@ export default function WorkspacePage() {
                       : "text-slate-300 hover:text-white"
                   }`}
                 >
-                  <Activity className="h-4 w-4" />
+                  <Activity className="w-4 h-4" />
                   <span>Procedures</span>
                 </button>
               </div>
 
               <button
                 onClick={refreshData}
-                className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                className="p-2 transition-colors rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white"
                 title="Refresh Data"
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center space-x-6 text-sm">
+          <div className="flex items-center mt-4 space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              <span className="text-slate-300">Total Records: <span className="text-white font-medium">{stats.total}</span></span>
+              <span className="text-slate-300">Total Records: <span className="font-medium text-white">{stats.total}</span></span>
             </div>
             {currentResource === "Patient" && (
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-slate-300">Active: <span className="text-white font-medium">{stats.active}</span></span>
+                <span className="text-slate-300">Active: <span className="font-medium text-white">{stats.active}</span></span>
               </div>
             )}
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-              <span className="text-slate-300">Table: <span className="text-white font-medium">{currentResource}</span></span>
+              <span className="text-slate-300">Table: <span className="font-medium text-white">{currentResource}</span></span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="flex h-[calc(100vh-120px)]">
-        <div className="flex-1 p-6 min-w-0">
-          <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700 rounded-2xl h-full flex flex-col overflow-hidden">
-            <div className="bg-slate-800/50 px-6 py-4 border-b border-slate-700">
+        <div className="flex-1 min-w-0 p-6">
+          <div className="flex flex-col h-full overflow-hidden border bg-slate-800/30 backdrop-blur-sm border-slate-700 rounded-2xl">
+            <div className="px-6 py-4 border-b bg-slate-800/50 border-slate-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   {currentResource === "Patient" ? (
-                    <Users className="h-5 w-5 text-blue-400" />
+                    <Users className="w-5 h-5 text-blue-400" />
                   ) : (
-                    <Activity className="h-5 w-5 text-purple-400" />
+                    <Activity className="w-5 h-5 text-purple-400" />
                   )}
                   <h2 className="text-lg font-semibold text-white">{currentResource} Data</h2>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
-                  <Settings className="h-4 w-4" />
+                  <Settings className="w-4 h-4" />
                   <span>Click cells to edit</span>
                 </div>
               </div>
             </div>
 
             {error && (
-              <div className="mx-6 mt-4 bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start space-x-3">
+              <div className="flex items-start p-4 mx-6 mt-4 space-x-3 border rounded-lg bg-red-500/10 border-red-500/20">
                 <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="text-red-400 font-medium">Error</h4>
-                  <p className="text-red-300 text-sm mt-1">{error}</p>
+                  <h4 className="font-medium text-red-400">Error</h4>
+                  <p className="mt-1 text-sm text-red-300">{error}</p>
                 </div>
               </div>
             )}
 
             <div className="flex-1 p-6">
-              {dbRef.current ? (
-                <AGGridTable
-                  db={dbRef.current}
+              {dbRef ? (
+                <AGGridTable 
                   resource={currentResource}
                   rowData={rawData}
                   onCellEdit={handleCellEdit}
@@ -342,7 +342,7 @@ export default function WorkspacePage() {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+                    <div className="w-12 h-12 mx-auto mb-4 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
                     <p className="text-slate-400">Loading database...</p>
                   </div>
                 </div>
@@ -351,13 +351,13 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        <div className="w-96 border-l border-slate-700">
-          {dbRef.current ? (
-            <ChatUI db={dbRef.current} onQuery={handleQuery} />
+        <div className="border-l w-96 border-slate-700">
+          {dbRef ? (
+            <ChatUI onQuery={handleQuery} />
           ) : (
             <div className="flex items-center justify-center h-full bg-slate-900">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+                <div className="w-12 h-12 mx-auto mb-4 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
                 <p className="text-slate-400">Loading chat interface...</p>
               </div>
             </div>

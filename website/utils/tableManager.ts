@@ -1,4 +1,4 @@
-import { MedfetchClient } from "@/lib/client";
+import { MedfetchDB } from "@/lib/client";
 
 export interface ColumnDefinition {
   name: string;
@@ -29,7 +29,7 @@ export interface BulkOperationResult {
 }
 
 export class TableManager {
-  constructor(private db: MedfetchClient) {}
+  constructor(private db: MedfetchDB) {}
 
   /**
    * Creates a new table with the given definition
@@ -57,7 +57,7 @@ export class TableManager {
     `;
 
     try {
-      await this.db.db.exec(sql);
+      await this.db.exec(sql);
     } catch (err: unknown) {
       const error = err as Error;
       throw new Error(`Failed to create table ${definition.name}: ${error.message}`);
@@ -104,7 +104,7 @@ export class TableManager {
    */
   async getTableSchema(tableName: string): Promise<ColumnDefinition[]> {
     try {
-      const columns = await this.db.db.prepare(`
+      const columns = await this.db.prepare(`
         PRAGMA table_info(${tableName});
       `).all();
 
@@ -127,7 +127,7 @@ export class TableManager {
    */
   async tableExists(tableName: string): Promise<boolean> {
     try {
-      const result = await this.db.db.prepare(`
+      const result = await this.db.prepare(`
         SELECT name FROM sqlite_master 
         WHERE type='table' AND name=?;
       `).all();
@@ -143,7 +143,7 @@ export class TableManager {
    */
   async dropTable(tableName: string): Promise<void> {
     try {
-      await this.db.db.exec(`DROP TABLE IF EXISTS ${tableName};`);
+      await this.db.exec(`DROP TABLE IF EXISTS ${tableName};`);
     } catch (err: unknown) {
       const error = err as Error;
       throw new Error(`Failed to drop table ${tableName}: ${error.message}`);
@@ -162,7 +162,7 @@ export class TableManager {
     const sql = `ALTER TABLE ${tableName} ADD COLUMN ${columnDef};`;
 
     try {
-      await this.db.db.exec(sql);
+      await this.db.exec(sql);
     } catch (err: unknown) {
       const error = err as Error;
       throw new Error(`Failed to add column ${column.name} to table ${tableName}: ${error.message}`);
@@ -197,14 +197,14 @@ export class TableManager {
 
       // Copy data
       const columnNames = newColumns.map(col => col.name).join(', ');
-      await this.db.db.exec(`
+      await this.db.exec(`
         INSERT INTO ${tempTableName} (${columnNames})
         SELECT ${columnNames} FROM ${tableName};
       `);
 
       // Drop old table and rename new one
       await this.dropTable(tableName);
-      await this.db.db.exec(`ALTER TABLE ${tempTableName} RENAME TO ${tableName};`);
+      await this.db.exec(`ALTER TABLE ${tempTableName} RENAME TO ${tableName};`);
     } catch (err: unknown) {
       const error = err as Error;
       // Cleanup temp table if it exists
@@ -258,7 +258,7 @@ export class TableManager {
         })
       );
 
-      await this.db.db.exec(`
+      await this.db.exec(`
         INSERT INTO ${tableName} (${columns})
         VALUES ${placeholders};
       `);
@@ -309,7 +309,7 @@ export class TableManager {
         
         const values = updateColumns.map(col => row[col]);
 
-        await this.db.db.exec(`
+        await this.db.exec(`
           UPDATE ${tableName}
           SET ${setClause}
           WHERE ${keyColumn} = ?;
