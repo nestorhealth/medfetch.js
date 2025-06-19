@@ -15,7 +15,7 @@ import {
   AlertCircle,
   RefreshCw,
   Settings 
-} from "lucide-react/dist/esm/icons";
+} from "lucide-react";
 
 export default function WorkspacePage() {
   const router = useRouter();

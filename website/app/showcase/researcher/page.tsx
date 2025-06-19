@@ -14,7 +14,7 @@ import {
   AlertCircle,
   RefreshCw,
   Settings 
-} from "lucide-react/dist/esm/icons";
+} from "lucide-react";
 
 // Header component
 function WorkspaceHeader({ 
