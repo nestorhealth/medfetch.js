@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import { medfetch } from "~/sqlite.sqlite-wasm";
-import { ping, syncFetch } from "~/threads/sqlite-wasm.block";
+import { medfetch } from "../sqlite.sqlite-wasm";
+import { ping, syncFetch } from "./sqlite-wasm.block";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 
 // The default web worker that handles loading the wasm web worker if user

@@ -1,9 +1,9 @@
 import { isBrowser } from "./json.types";
-import { Worker1PromiserDialect } from "~/dialects";
-import type { SqlOnFhirDialect } from "~/sql.types";
-import { dummyDialect } from "~/sql";
-import { promiserSyncV2 } from "~/sqlite-wasm/worker1.main";
-import { ResourceType } from "~/json.types";
+import { Worker1PromiserDialect } from "./dialects";
+import type { SqlOnFhirDialect } from "./sql.types";
+import { dummyDialect } from "./sql";
+import { promiserSyncV2 } from "./sqlite-wasm/worker1.main";
+import { ResourceType } from "./json.types";
 
 let __worker: Worker | null = null;
 

@@ -1,5 +1,5 @@
 import clarinet from "clarinet";
-import type { KdvParseFn, KdvParseFnMake, KdvParseResult } from "~/json.types";
+import type { KdvParseFn, KdvParseFnMake, KdvParseResult } from "./json.types";
 
 /**
  * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0

@@ -3,7 +3,7 @@
 import { Promisable } from "kysely-generic-sqlite";
 /* DONT IMPORT ANY VALUES EXCEPT FOR DEFAULT!! YOU'LL SPEND HOURS LOOKING FOR A SILENT BUG!! */
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
-import { Worker1Request } from "~/sqlite-wasm/worker1.types";
+import { Worker1Request } from "./worker1.types";
 
 type BeforeOnMessage = (
     event: MessageEvent<Worker1Request>,

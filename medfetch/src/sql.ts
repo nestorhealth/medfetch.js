@@ -16,8 +16,8 @@ import type {
     FhirDataType,
     PrimitiveKey,
 } from "~/json.types";
-import { unzipJSONSchema } from "~/json.page";
-import { type RowResolver } from "~/sql.types";
+import { unzipJSONSchema } from "./json.page";
+import { type RowResolver } from "./sql.types";
 
 /**
  * Static dummy kysely orm object

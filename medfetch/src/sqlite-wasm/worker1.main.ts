@@ -1,4 +1,4 @@
-import { KeyCounter } from "~/sqlite-wasm/counter";
+import { KeyCounter } from "./counter.js";
 // Get the Sqlite3CreateWorker1Promiser in scope
 import type {
     Sqlite3CreateWorker1Promiser,
@@ -6,8 +6,8 @@ import type {
     Worker1Promiser,
     Worker1Response,
     Worker1ResponseError,
-} from "~/sqlite-wasm/worker1.types";
-import { Worker1Error } from "~/sqlite-wasm/worker1.types";
+} from "./worker1.types.js";
+import { Worker1Error } from "./worker1.types.js";
 import "@sqlite.org/sqlite-wasm";
 
 /**

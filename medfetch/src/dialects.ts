@@ -5,15 +5,21 @@ import {
     type IGenericSqlite,
     type Promisable,
 } from "kysely-generic-sqlite";
-import { fromNullableOrThrow } from "~/json.types";
 import type {
     Worker1OpenRequest,
     Worker1Promiser,
-} from "~/sqlite-wasm/worker1.types";
-import { check } from "~/sqlite-wasm/worker1.main";
+} from "./sqlite-wasm/worker1.types";
+import { check } from "./sqlite-wasm/worker1.main";
 
 /* Its `db` field is a string */
 type Sqlite3WasmDB = IGenericSqlite<string>;
+
+function fromNullableOrThrow<T>(t: T): NonNullable<T> {
+    if (!t) {
+        throw new Error("that's null")
+    }
+    return t;
+}
 
 /**
  * Database interface

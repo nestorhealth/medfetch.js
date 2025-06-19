@@ -3,7 +3,7 @@ import type {
     PrimitiveKey,
     ResourceFromType,
     ResourceType,
-} from "~/json.types";
+} from "./json.types";
 
 export const DEFAULT_SQLITE_FROM_FHIR = {
     boolean: "integer", // SQLite has no native boolean; use 0/1
