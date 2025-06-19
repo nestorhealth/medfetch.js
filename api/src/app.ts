@@ -5,7 +5,7 @@ import { D1Database } from "@cloudflare/workers-types";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
 import nl2sql from "./routes/nl2sql";
-import fhir, { DB } from "./routes/fhir";
+import fhir from "./routes/fhir";
 import { customLogger } from "~/lib/context";
 import { HTTPException } from "hono/http-exception";
 import { Kysely } from "kysely";
@@ -16,7 +16,7 @@ declare global {
   type Env = Cloudflare.Env & { DB: D1Database };
   type Vars = {
     setError: <ErrorObject extends Error>(err: ErrorObject) => never;
-    db: Kysely<DB>;
+    db: Kysely<any>;
   }
 }
 
@@ -28,7 +28,7 @@ const app = new OpenAPIHono<{
 // Cors
 app.use("*", (c, next) => {
   const corsHandler = cors({
-    origin: [c.env.DOCS_HOST, c.env.MEDFETCH_DEV_HOST, "https://docs.medfetch.io"],
+    origin: [c.env.MEDFETCH_DEV_HOST, c.env.MEDFETCH_DEMO_HOST, "https://docs.medfetch.io"],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400
