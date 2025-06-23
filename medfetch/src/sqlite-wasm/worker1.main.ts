@@ -10,14 +10,15 @@ import type {
 import { Worker1Error } from "./worker1.types.js";
 import "@sqlite.org/sqlite-wasm";
 
+
 /**
  * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`
  * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser)
  * @param worker The worker to wrap
  * @returns The promiser-sync function
  */
-export function promiserSyncV2<TWorker = Worker>(worker: TWorker, sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser<TWorker>) {
-    const promiserPromise = sqlite3Worker1Promiser.v2({
+export function promiserSyncV2<TWorker = Worker>(worker: TWorker) {
+    const promiserPromise = ((globalThis as any).sqlite3Worker1Promiser as any as Sqlite3CreateWorker1Promiser<TWorker>).v2({
         worker,
     });
     const f = unwrap(promiserPromise);

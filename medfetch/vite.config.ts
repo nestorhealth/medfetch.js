@@ -36,7 +36,7 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["@sqlite.org/sqlite-wasm", "kysely"],
+            external: ["@sqlite.org/sqlite-wasm", "kysely", "node:worker_threads"],
             output: {
                 manualChunks: undefined,
                 entryFileNames: `[name].js`,
@@ -46,10 +46,12 @@ export default defineConfig({
         },
         lib: {
             entry: {
+                "block": "src/block.ts",
+                "block.node": "src/block.node.ts",
                 "dialects": "src/dialects.ts",
                 "sql": "src/sql.ts",
-                "sqlite.sqlite-wasm": "src/sqlite.sqlite-wasm.ts",
-                "threads/sqlite-wasm": "src/threads/sqlite-wasm.ts",
+                "sqlite-wasm": "src/sqlite-wasm.ts",
+                "threads/sqlite-wasm.db": "src/threads/sqlite-wasm.db.ts",
                 "threads/sqlite-wasm.block": "src/threads/sqlite-wasm.block.ts",
             },
             formats: ["es"],

@@ -30,9 +30,13 @@
         }
     },
     "include": [
-        "src/sqlite.browser.ts",
+        "src/block.ts",
+        "src/block.node.ts",
+
+        "src/sqlite-wasm.ts",
+        "src/sqlite-wasm.worker.ts",
         "src/dialects.ts",
-        "src/json.ts",
+        "src/json/*.ts",
         "src/sql.ts"
     ],
     "exclude": [

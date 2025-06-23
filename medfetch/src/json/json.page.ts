@@ -1,12 +1,12 @@
 import type { Resource } from "fhir/r4.js";
-import type { PathValue } from "./json.types.js";
-import { kdvParser } from "./json.parse.js";
+import { kdvParser, type PathValue } from "./json.parse.js";
 import { strFromU8, unzipSync } from "fflate";
 import type { JSONSchema7 } from "json-schema";
+import type { Bundle } from "fhir/r5.js";
 
 /// Implementation level types
-type Link = PathValue<"Bundle">["link"];
-type Entry = PathValue<"Bundle">["entry"];
+type Link = PathValue<Bundle, "Bundle">["link"];
+type Entry = PathValue<Bundle, "Bundle">["entry"];
 
 /// Their parse functions
 const parseLink = kdvParser<Link[]>("link", 1);

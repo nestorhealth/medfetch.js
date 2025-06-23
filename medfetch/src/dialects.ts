@@ -5,8 +5,8 @@ import {
     type IGenericSqlite,
     type Promisable,
 } from "kysely-generic-sqlite";
-import type { Worker1Promiser } from "./sqlite-wasm/worker1.types.js";
-import { check } from "./sqlite-wasm/worker1.main.js";
+import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/worker1.types.js";
+import { check, promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
 
 /* Its `db` field is a string */
 type Worker1DB = IGenericSqlite<string>;
@@ -141,4 +141,16 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
             };
         });
     }
+}
+
+export async function openPromiserDB<
+    TWorker = Worker
+>(worker: TWorker, openMsg: Worker1OpenRequest) {
+    const promiser = promiserSyncV2(worker);
+    const response = await promiser(openMsg);
+    if (response.type === "error" || !response.dbId) {
+        throw new Error(`Couldn't get back database ID from "openPromiserDB", early exiting...`)
+    }
+    const dbId = response.dbId;
+    return worker1DB(dbId, promiser);
 }

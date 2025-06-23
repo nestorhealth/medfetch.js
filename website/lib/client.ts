@@ -1,14 +1,14 @@
-import { sqliteOnFhir } from "medfetch/sqlite";
+import { medfetch } from "medfetch/sqlite-wasm";
 import { useRef } from "react";
 import { Kysely, sql } from "kysely";
+import type { Condition, Patient, Practitioner } from "fhir/r5";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
-const dialect = sqliteOnFhir(":memory:", `${API_URL}fhir`, [
-  "Patient",
-  "Procedure",
-  "Condition",
-]);
+type RESOURCES = Patient | Condition | Practitioner;
+const dialect = medfetch<RESOURCES>(":memory:", `${API_URL}/fhir`, {
+  scope: ["Patient", "Condition", "Practitioner"]
+});
 
 export const db = new Kysely<typeof dialect.$db>({
   dialect,
@@ -73,12 +73,7 @@ const getFile = (fileName: string) => fetch(`https://r4.smarthealthit.org/Patien
 )
 
 // Initialize Medfetch database
-export async function initMedfetchDB(
-  options: MedfetchDBOptions = {},
-): Promise<MedfetchDB> {
-  const { filename } = options;
-
-  const file = await getFile(filename || "bundle.json");
+export async function initMedfetchDB(): Promise<MedfetchDB> {
   // Initialize Medfetch with SQLite WASM
   // Create a database handle with common operations
   const __db: MedfetchDB = {
@@ -88,6 +83,7 @@ export async function initMedfetchDB(
     prepare: (sqlString: string) => ({
       all: async () => {
         const result = await sql.raw(sqlString).execute(db);
+        console.log("PREPARED", result)
         return result.rows;
       },
       run: async () => {

@@ -1,4 +1,3 @@
-
 export type SetWorker<TWorker = Worker> = {
     (worker: TWorker): Promise<void>;
     (): void;
@@ -11,9 +10,15 @@ export type SetWorker<TWorker = Worker> = {
  * @template Result the awaited return type of the original function
  */
 export type Block<Args extends any[], Result, TWorker = Worker> = readonly [
-    (...args: Args) => Result | null,
+    (...args: Args) => Result,
     SetWorker<TWorker>,
 ];
+
+export type CreateBlock<TWorker = Worker> =
+    <Args extends any[], Result>(
+        names: [string] | [string, string],
+        fn: (...args: Args) => Promise<Result>
+    ) => Block<Args, Result, TWorker>;
 
 /**
  * Set the encoder and decoder pairs along with
@@ -281,26 +286,24 @@ export function createSyncHandler<Args extends any[], Result, ParentPort = Messa
     semaphoreDown: (data: { args: Args; sab: SharedArrayBuffer }) => void,
 ) {
     const { thread, decoder } = context;
-    function syncHandler(...args: Args): Result | null {
+    function syncHandler(...args: Args): Result {
         if (thread.currentThread === thread.syncWorkerName) {
             const upResult = down(8 + decoder.byteSize, (sab) => {
                 semaphoreDown({ sab, args });
             });
             if (upResult[0] <= 0) {
-                console.warn(
+                throw new Error(
                     `[block.syncHandler] > "semaphore_down()" returned 0 bytes written back, returning null...`,
                 );
-                return null;
             } else {
                 const [len, buffer] = upResult;
                 const decoded = decoder.decode(buffer.slice(0, len));
                 return decoded;
             }
         } else {
-            console.warn(
+            throw new Error(
                 `[block.syncHandler] > Can't block on that thread "${thread.currentThread}". Can only block on ${thread.syncWorkerName}. Returning empty as a result...`,
             );
-            return null;
         }
     }
     return syncHandler;

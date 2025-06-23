@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import { loadExtension } from "../sqlite-wasm.js";
-import { ping, syncFetch } from "./sqlite-wasm.block.js";
+import { loadExtension } from "../sqlite-wasm.worker.js";
+import { setSyncFetch, syncFetch } from "./sqlite-wasm.block.js";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 
 // The default web worker that handles loading the wasm web worker if user
@@ -18,14 +18,14 @@ sqlite3InitModule().then(
         name: "sqlite-wasm.block"
       }
     );
-    await ping(blockFetchWorker);
+    await setSyncFetch(blockFetchWorker);
     const rc = loadExtension(sqlite3, {
       fetch: syncFetch
     });
     if (rc) {
-      console.error("oops")
+      console.error("Oops... Error loading in sqlite-wasm extension");
     } else {
-      console.log("success!")
+      console.log("Loaded medfetch extension!");
     }
   }
 )

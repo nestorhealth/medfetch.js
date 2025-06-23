@@ -1,4 +1,4 @@
-import block from "~/block-promise/block";
+import block from "~/block";
 
 export const [syncFetch, setSyncFetch] = block(
   ["db.worker", "db.block"],

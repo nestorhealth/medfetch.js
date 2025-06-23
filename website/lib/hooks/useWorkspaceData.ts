@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useMedDB } from '@/lib/client';
-import { TableManager, type ColumnDefinition } from '@/utils/tableManager';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useWorkspaceData() {
@@ -33,6 +32,8 @@ export function useWorkspaceData() {
           from "Patient" 
           inner join "Condition" on "Condition"."subject" = "Patient"."id"
         `);
+        const results = await medDB.prepare(`select * from "patients"`).all();
+        console.log("RESULTS", results)
         setIsInitialized(true);
       } catch (err) {
         setError("Initialization error: " + (err as Error).message);
