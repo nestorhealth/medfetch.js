@@ -15,9 +15,9 @@ interface WorkerNameMap {
  * Case 2. Async handler is Pinger
  * Then the 
  */
-export type Ping = (
-    worker: Worker | ((names: WorkerNameMap) => Worker),
-) => Promise<Worker>;
+export type SetWorker<TWorker = Worker> = (
+    worker: TWorker | ((names: WorkerNameMap) => TWorker),
+) => Promise<TWorker>;
     
 /**
  * The 2-tuple returned by [block()](./block.browser.ts)
@@ -25,9 +25,9 @@ export type Ping = (
  * @template Args the arguments the original function takes
  * @template Result the awaited return type of the original function
  */
-export type Block<Args extends any[], Result> = readonly [
+export type Block<Args extends any[], Result, TWorker = Worker> = readonly [
     (...args: Args) => Result,
-    Ping,
+    SetWorker<TWorker>,
 ];
 
 /**

@@ -1,4 +1,4 @@
-import type { Block, MessageConfig, Ping } from "./block.types";
+import type { Block, MessageConfig, SetWorker } from "./block.types.js";
 
 /**
  * Returns a plain 2-tuple {@link Array} "view" of a given SharedArrayBuffer
@@ -112,7 +112,7 @@ export default function block<Args extends any[], Result>(
         }
     };
 
-    const ping: Ping = async (workerFn) => {
+    const ping: SetWorker = async (workerFn) => {
         const worker =
             typeof workerFn === "function"
                 ? workerFn({

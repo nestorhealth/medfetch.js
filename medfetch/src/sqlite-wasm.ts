@@ -1,32 +1,22 @@
-/// <reference lib="webworker" />
-import { PageLoaderFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
-import { attach } from "~/sqlite-wasm/worker1";
-import { Counter } from "~/sqlite-wasm/counter";
-import { Page } from "~/json/json.page";
-import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
+import { PageLoaderFn, medfetch_module_alloc } from "./sqlite-wasm/vtab.js";
+import { attach, index, pointer } from "./sqlite-wasm/worker1.js";
+import { Counter } from "./sqlite-wasm/counter.js";
+import { Page } from "./json/json.page.js";
+import type { Sqlite3Module } from "./sqlite-wasm/worker1.types.js";
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
-import { sqlOnFhir } from "~/sql";
-import {
-    DummyDriver,
-    Kysely,
-    SqliteAdapter,
-    SqliteIntrospector,
-    SqliteQueryCompiler,
-} from "kysely";
-import { DEFAULT_SQLITE_FROM_FHIR } from "~/sql.types";
-
-const qb = new Kysely({
-    dialect: {
-        createAdapter: () => new SqliteAdapter(),
-        createDriver: () => new DummyDriver(),
-        createIntrospector: (db) => new SqliteIntrospector(db),
-        createQueryCompiler: () => new SqliteQueryCompiler(),
-    },
-});
+import { dummyDialect, migrations } from "./sql.js";
+import { DEFAULT_SQLITE_FROM_FHIR, SqlOnFhirDialect } from "./sql.types.js";
+import { worker1DB, Worker1PromiserDialect } from "./dialects.js";
+import { BROWSER } from "esm-env";
+import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
+
+export type LoadExtensionConfig = {
+    fetch: (...args: Parameters<typeof fetch>) => string;
+}
 
 /**
  * Attach the message handler to the *worker* thread that has {@link Sqlite3Static} loaded.
@@ -38,7 +28,8 @@ const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
  * 
  * note: We add a callback if multiple databases per client is wanted
  */
-export function medfetch(sqlite3Wasm: Sqlite3Static, syncFetch: (...args: Parameters<typeof fetch>) => string): 0 | 1 {
+export function loadExtension(sqlite3Wasm: Sqlite3Static, config: LoadExtensionConfig): 0 | 1 {
+    const syncFetch = config.fetch;
     const sqlite3 = sqlite3Wasm;
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];
@@ -62,8 +53,8 @@ export function medfetch(sqlite3Wasm: Sqlite3Static, syncFetch: (...args: Parame
                 }
             }
 
-            const resourcesToRows = await sqlOnFhir(
-                qb,
+            const resourcesToRows = await migrations(
+                "sqlite",
                 DEFAULT_SQLITE_FROM_FHIR,
                 scope,
             );
@@ -152,34 +143,83 @@ export function medfetch(sqlite3Wasm: Sqlite3Static, syncFetch: (...args: Parame
     return rc;
 }
 
-function index(internalDbId: string): number {
-    return parseInt(internalDbId.split("#")[1][0]) - 1;
-}
+let __worker: Worker | null = null;
 
 /**
- * Hack to get the pointer from the dbId, despite the docs saying it's
- * not guaranteed to mean anything...
- * Based on the dist code:
- * ```ts
- * // sqlite3.mjs line 11390 (lol)
- * const getDbId = function (db) {
- *   let id = wState.idMap.get(db);
- *   if (id) return id;
- *   id = 'db#' + ++wState.idSeq + '@' + db.pointer;
+ * So we don't load in the module on every recall the browser may have made
+ * directly on indirectly to the dialect ctor
  *
- *   wState.idMap.set(db, id);
- *   return id;
- * };
- * ```
- * A virtual table / any runtime loadable extension lives in memory only,
- * so the lifetime of an extension should match that of a database
- * on the heap, so this should (hopefully) be fine...
- *
- * @param internalDbId The database id assigned by the worker API
- * @returns The pointer value as a raw js number
- *
+ * @param userWorker A user provided Worker instance. If provided,
+ * then user is in charge of handling any teardown
+ * @returns A worker
  */
-function pointer(internalDbId: string): number {
-    const split = internalDbId.split("@");
-    return parseInt(split[split.length - 1]);
+const accessWorker = (userWorker?: Worker) => {
+    if (userWorker) {
+        return userWorker;
+    }
+    if (!__worker) {
+        __worker = new Worker(
+            new URL(
+                /* Bundler friendly */
+                import.meta.env.DEV
+                    ? "./threads/sqlite-wasm.js"
+                    : "./threads/sqlite-wasm.js",
+                import.meta.url,
+            ),
+            {
+                type: "module",
+                name: "sqlite-wasm",
+            },
+        );
+    } 
+    return __worker;
+};
+
+/**
+ * Medfetch's default sqlite on FHIR client dialect constructor.
+ * This is not a "pure" function: it spawns in the sqlite-wasm worker thread
+ * from the neighboring [sqlite-wasm.thread.ts](./sqlite-wasm.thread.ts)
+ * file.
+ * @param filename The filename to persist the database to, uses opfs by default but if you pass in ":memory:", then the opfs vfs option will be
+ * @param baseURL The fhir data source, either the base URL of a FHIR API or a raw File Bundle
+ * @param resources The resource types to include
+ * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript
+ */
+export function medfetch<const Resources extends {resourceType: string}>(
+    filename: string,
+    baseURL: string | File,
+    config: {
+        scope: [Resources["resourceType"], ...Resources["resourceType"][]];
+        worker?: Worker;
+    }
+): SqlOnFhirDialect<Resources> {
+    if (!BROWSER) {
+        console.warn(
+            `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
+        );
+        return dummyDialect("sqlite") as any as SqlOnFhirDialect<Resources>;
+    }
+
+    return new Worker1PromiserDialect({
+        database: async () => {
+            const sqliteWorker = accessWorker(config.worker);
+            const promiser = promiserSyncV2(sqliteWorker, (globalThis as any).sqlite3Worker1Promiser);
+            const response = await promiser({
+                type: "open",
+                args: {
+                    filename: filename,
+                    vfs: "opfs"
+                },
+                aux: {
+                    baseURL,
+                    scope: config.scope
+                }
+            });
+            if (response.type === "error" || !response.dbId) {
+                throw new Error(`Couldn't get back database ID, early exiting...`)
+            }
+            const dbId = response.dbId;
+            return worker1DB(dbId, promiser);
+        }
+    }) as SqlOnFhirDialect<Resources>;
 }

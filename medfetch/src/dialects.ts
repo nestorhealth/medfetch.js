@@ -5,8 +5,8 @@ import {
     type IGenericSqlite,
     type Promisable,
 } from "kysely-generic-sqlite";
-import type { Worker1Promiser } from "./sqlite-wasm/worker1.types";
-import { check } from "./sqlite-wasm/worker1.main";
+import type { Worker1Promiser } from "./sqlite-wasm/worker1.types.js";
+import { check } from "./sqlite-wasm/worker1.main.js";
 
 /* Its `db` field is a string */
 type Worker1DB = IGenericSqlite<string>;

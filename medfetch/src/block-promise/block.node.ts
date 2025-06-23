@@ -1,6 +1,7 @@
-import { view } from "~/block-promise/block";
-import type { Block, MessageConfig, Ping } from "./block.types";
+import { view } from "./block.js";
+import type { Block, MessageConfig, SetWorker } from "./block.types.js";
 import {
+    Worker,
     MessageChannel,
     MessagePort,
     parentPort,
@@ -48,7 +49,7 @@ export default function block<Args extends any[], Result>(
         decode = JSON.parse,
         byteSize = 500_000,
     }: Partial<MessageConfig<Result>> = {},
-): Block<Args, Result> {
+): Block<Args, Result, Worker> {
     const syncWorkerName = name[0];
     const asyncWorkerName = name[1] ?? null;
     let workerPort: Worker | MessagePort | undefined = undefined;
@@ -109,7 +110,7 @@ export default function block<Args extends any[], Result>(
         }
     };
 
-    const ping: Ping = async (workerFn) => {
+    const ping: SetWorker<Worker> = async (workerFn) => {
         const worker =
             typeof workerFn === "function"
                 ? workerFn({

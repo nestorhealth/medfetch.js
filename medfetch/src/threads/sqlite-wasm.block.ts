@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import block from "~/block-promise/block.js";
+import block from "../block-promise/block.js";
 
 // For the default sqlite3 worker thread, no validate
 export const [syncFetch, ping] = block(

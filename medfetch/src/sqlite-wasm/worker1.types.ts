@@ -235,8 +235,8 @@ export type Worker1Promiser = TPromiser<Worker1Request, Worker1Response>;
  *
  * This is, just to get that type, the Worker1 function type is [Worker1PromiserFunc]()
  */
-export type Sqlite3CreateWorker1Promiser = {
-    v2: (opts: { worker: Worker }) => Promise<Worker1Promiser>;
+export type Sqlite3CreateWorker1Promiser<TWorker = Worker> = {
+    v2: (opts: { worker: TWorker }) => Promise<Worker1Promiser>;
 };
 
 export interface Sqlite3Module extends PointerLikeMethods<sqlite3_module> {

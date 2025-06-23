@@ -15,9 +15,10 @@ import {
 import type {
     FhirDataType,
     PrimitiveKey,
-} from "~/json/json.types";
-import { unzipJSONSchema } from "./json/json.page";
-import { type RowResolver } from "./sql.types";
+} from "~/json/json.types.js";
+import { unzipJSONSchema } from "./json/json.page.js";
+import { SqlFlavor, type RowResolver } from "./sql.types.js";
+
 
 /**
  * Static dummy kysely orm object
@@ -156,7 +157,7 @@ function generateFhirTableMigration(
     };
 }
 
-export function migrations(
+function generateMigrations(
     db: Kysely<any>,
     jsonSchema: JSONSchema7,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
@@ -230,25 +231,15 @@ export function migrations(
  * @param sqlColumnMap Any primitive element -> sql column included here will be overriden
  * @returns A SQL on FHIR view for the given schema
  */
-export async function sqlOnFhir(
-    db: Kysely<any>,
+export async function migrations(
+    dialect: SqlFlavor,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
     resources?: string[]
 ): Promise<RowResolver> {
+    const db = new Kysely({
+        dialect: dummyDialect(dialect)
+    })
     return unzipJSONSchema().then((schema) =>
-        migrations(db, schema, sqlColumnMap, resources),
+        generateMigrations(db, schema, sqlColumnMap, resources),
     );
-}
-
-/**
- * Just pretend like this is real. For getting back
- * itself when you know the next state and want its static types included
- * in the the typecheck.
- * @param db The previous kysely instance
- * @returns The "new" one
- */
-export function set<NewDB>(
-  db: Kysely<any>,
-): Kysely<NewDB> {
-    return db as Kysely<NewDB>;
 }

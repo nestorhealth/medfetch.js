@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
-import { medfetch } from "../sqlite.sqlite-wasm";
-import { ping, syncFetch } from "./sqlite-wasm.block";
+import { loadExtension } from "../sqlite-wasm.js";
+import { ping, syncFetch } from "./sqlite-wasm.block.js";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 
 // The default web worker that handles loading the wasm web worker if user
@@ -19,7 +19,9 @@ sqlite3InitModule().then(
       }
     );
     await ping(blockFetchWorker);
-    const rc = medfetch(sqlite3, syncFetch);
+    const rc = loadExtension(sqlite3, {
+      fetch: syncFetch
+    });
     if (rc) {
       console.error("oops")
     } else {

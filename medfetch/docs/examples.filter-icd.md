@@ -2,13 +2,13 @@
 import { table0, table1 } from "./sql/icd-queries";
 import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
-import { sqliteOnFhir } from "~/sqlite.browser";
+import { medfetch } from "~/sqlite-wasm";
 import DBWorker from "./sql/db.worker?worker";
 import { Kysely } from "kysely";
 
 const worker = new DBWorker({ name: "db.worker" });
 
-const dialect = sqliteOnFhir(
+const dialect = medfetch(
   ":memory:",
   `${import.meta.env.MODE === "development" ? "http://localhost:8787/fhir" : "https://api.medfetch.io/fhir"}`,
   {

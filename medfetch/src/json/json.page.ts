@@ -148,6 +148,6 @@ export async function unzipJSONSchema(
         return parsed;
     } catch (error) {
         console.error(`Couldn't parse the JSON file ${filename}: ${error}`);
-        throw new Error("", { cause: error });
+        throw new Error("");
     }
 }

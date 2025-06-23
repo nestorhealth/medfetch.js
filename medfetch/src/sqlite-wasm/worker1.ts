@@ -3,7 +3,7 @@
 import { Promisable } from "kysely-generic-sqlite";
 /* DONT IMPORT ANY VALUES EXCEPT FOR DEFAULT!! YOU'LL SPEND HOURS LOOKING FOR A SILENT BUG!! */
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
-import { Worker1Request } from "./worker1.types";
+import { Worker1Request } from "./worker1.types.js";
 
 type BeforeOnMessage = (
     event: MessageEvent<Worker1Request>,
@@ -39,4 +39,36 @@ export function attach(
     };
 
     return 0;
+}
+
+export function index(internalDbId: string): number {
+    return parseInt(internalDbId.split("#")[1][0]) - 1;
+}
+
+/**
+ * Hack to get the pointer from the dbId, despite the docs saying it's
+ * not guaranteed to mean anything...
+ * Based on the dist code:
+ * ```ts
+ * // sqlite3.mjs line 11390 (lol)
+ * const getDbId = function (db) {
+ *   let id = wState.idMap.get(db);
+ *   if (id) return id;
+ *   id = 'db#' + ++wState.idSeq + '@' + db.pointer;
+ *
+ *   wState.idMap.set(db, id);
+ *   return id;
+ * };
+ * ```
+ * A virtual table / any runtime loadable extension lives in memory only,
+ * so the lifetime of an extension should match that of a database
+ * on the heap, so this should (hopefully) be fine...
+ *
+ * @param internalDbId The database id assigned by the worker API
+ * @returns The pointer value as a raw js number
+ *
+ */
+export function pointer(internalDbId: string): number {
+    const split = internalDbId.split("@");
+    return parseInt(split[split.length - 1]);
 }

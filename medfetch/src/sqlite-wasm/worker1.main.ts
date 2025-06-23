@@ -16,12 +16,8 @@ import "@sqlite.org/sqlite-wasm";
  * @param worker The worker to wrap
  * @returns The promiser-sync function
  */
-export function promiserSyncV2(worker: Worker) {
-    const promiserPromise = (
-        globalThis as typeof globalThis & {
-            sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser;
-        }
-    ).sqlite3Worker1Promiser.v2({
+export function promiserSyncV2<TWorker = Worker>(worker: TWorker, sqlite3Worker1Promiser: Sqlite3CreateWorker1Promiser<TWorker>) {
+    const promiserPromise = sqlite3Worker1Promiser.v2({
         worker,
     });
     const f = unwrap(promiserPromise);

@@ -48,7 +48,7 @@ export default defineConfig({
             entry: {
                 "dialects": "src/dialects.ts",
                 "sql": "src/sql.ts",
-                "sqlite.browser": "src/sqlite.browser.ts",
+                "sqlite.sqlite-wasm": "src/sqlite.sqlite-wasm.ts",
                 "threads/sqlite-wasm": "src/threads/sqlite-wasm.ts",
                 "threads/sqlite-wasm.block": "src/threads/sqlite-wasm.block.ts",
             },
