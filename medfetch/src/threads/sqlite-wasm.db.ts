@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { loadExtension } from "../sqlite-wasm.worker.js";
+import { loadExtension } from "../sqlite-wasm.js";
 import { setSyncFetch, syncFetch } from "./sqlite-wasm.block.js";
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 

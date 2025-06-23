@@ -3,7 +3,9 @@ import { useRef } from "react";
 import { Kysely, sql } from "kysely";
 import type { Condition, Patient, Practitioner } from "fhir/r5";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+const apiURL = process.env.NEXT_PUBLIC_API_URL!;
+// (cuz of you fuckers !!!!)
+const API_URL = apiURL.endsWith("/") ? apiURL.slice(0, apiURL.length -1) : apiURL;
 
 type RESOURCES = Patient | Condition | Practitioner;
 const dialect = medfetch<RESOURCES>(":memory:", `${API_URL}/fhir`, {

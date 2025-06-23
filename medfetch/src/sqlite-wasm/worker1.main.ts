@@ -10,7 +10,6 @@ import type {
 import { Worker1Error } from "./worker1.types.js";
 import "@sqlite.org/sqlite-wasm";
 
-
 /**
  * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`
  * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser)

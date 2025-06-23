@@ -32,8 +32,6 @@ export function useWorkspaceData() {
           from "Patient" 
           inner join "Condition" on "Condition"."subject" = "Patient"."id"
         `);
-        const results = await medDB.prepare(`select * from "patients"`).all();
-        console.log("RESULTS", results)
         setIsInitialized(true);
       } catch (err) {
         setError("Initialization error: " + (err as Error).message);
