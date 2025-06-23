@@ -2,7 +2,7 @@
 import { PageLoaderFn, medfetch_module_alloc } from "~/sqlite-wasm/vtab";
 import { attach } from "~/sqlite-wasm/worker1";
 import { Counter } from "~/sqlite-wasm/counter";
-import { Page } from "~/json.page";
+import { Page } from "~/json/json.page";
 import type { Sqlite3Module } from "~/sqlite-wasm/worker1.types";
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { sqlOnFhir } from "~/sql";

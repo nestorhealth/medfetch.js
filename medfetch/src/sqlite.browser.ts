@@ -1,9 +1,8 @@
-import { isBrowser } from "./json.types";
+import { isBrowser } from "./json/json.types";
 import { Worker1PromiserDialect } from "./dialects";
 import type { SqlOnFhirDialect } from "./sql.types";
 import { dummyDialect } from "./sql";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main";
-import { ResourceType } from "./json.types";
 
 let __worker: Worker | null = null;
 
@@ -47,11 +46,13 @@ const getWorker = (userWorker?: Worker) => {
  * @param resources The resource types to include
  * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript
  */
-export function sqliteOnFhir<const Resources extends ResourceType[]>(
+export function sqliteOnFhir<const Resources extends {resourceType: string}>(
     filename: string,
     baseURL: string | File,
-    scope: Resources,
-    worker?: Worker,
+    config: {
+        scope: ReadonlyArray<Resources["resourceType"]>;
+        worker?: Worker;
+    }
 ): SqlOnFhirDialect<Resources> {
     if (!isBrowser()) {
         console.warn(
@@ -59,7 +60,7 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
         );
         return dummyDialect("sqlite") as any as SqlOnFhirDialect<Resources>;
     }
-    const sqliteWorker = getWorker(worker);
+    const sqliteWorker = getWorker(config.worker);
 
     return new Worker1PromiserDialect(
         {
@@ -70,7 +71,7 @@ export function sqliteOnFhir<const Resources extends ResourceType[]>(
             },
             aux: {
                 baseURL,
-                scope,
+                scope: config.scope,
             },
         },
         promiserSyncV2(sqliteWorker),

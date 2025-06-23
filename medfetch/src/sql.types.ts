@@ -3,7 +3,7 @@ import type {
     PrimitiveKey,
     ResourceFromType,
     ResourceType,
-} from "./json.types";
+} from "./json/json.types";
 
 export const DEFAULT_SQLITE_FROM_FHIR = {
     boolean: "integer", // SQLite has no native boolean; use 0/1
@@ -82,27 +82,12 @@ type Rowify<T> = {
 /**
  * Generic for a sql on fhir "dialect"
  */
-export interface SqlOnFhirDialect<Resources extends ResourceType[]>
+export interface SqlOnFhirDialect<Resources extends {resourceType: string;}>
     extends Dialect {
     readonly $db: {
-        [R in Resources[number]]: Rowify<ResourceFromType<R>> & { id: string };
+        [R in Resources["resourceType"]]: Rowify<Resources["resourceType"]> & { id: string };
     };
 }
-
-/**
- * Get back the object type that maps the resource types given in
- * {@link Resource} as literal keys to their resource shape map
- * that itself maps the resource's keys to row-like values
- *
- * @template Resources The resource types to include
- */
-export type SqlOnFhirDB<Resources extends ResourceType[] = ResourceType[]> =
-    {
-        [Resource in Resources[number]]: Rowify<
-            ResourceFromType<Resource>
-            & { id: string; }
-        >
-    }
 
 /**
  * The default path map, only compile-level don't trust these types at

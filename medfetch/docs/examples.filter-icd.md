@@ -11,8 +11,10 @@ const worker = new DBWorker({ name: "db.worker" });
 const dialect = sqliteOnFhir(
   ":memory:",
   `${import.meta.env.MODE === "development" ? "http://localhost:8787/fhir" : "https://api.medfetch.io/fhir"}`,
-  ["Patient", "Condition"],
-  worker,
+  {
+    worker,
+    scope: ["Patient", "Condition"]
+  }
 );
 const db = new Kysely({
   dialect,

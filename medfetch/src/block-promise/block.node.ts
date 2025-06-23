@@ -1,16 +1,11 @@
+import { view } from "~/block-promise/block";
 import type { Block, MessageConfig, Ping } from "./block.types";
-
-/**
- * Returns a plain 2-tuple {@link Array} "view" of a given SharedArrayBuffer
- * where bytes 0-7 are the signal bytes and bytes 8 - N are allocated for the
- * message data.
- *
- * @param sab A {@link SharedArrayBuffer}
- * @returns [ signalBytes as Int32Array, resultBuffer as Uint8Array ]
- */
-export function view(sab: SharedArrayBuffer): [Int32Array, Uint8Array] {
-    return [new Int32Array(sab, 0, 2), new Uint8Array(sab, 8)];
-}
+import {
+    MessageChannel,
+    MessagePort,
+    parentPort,
+    workerData,
+} from "node:worker_threads";
 
 /**
  * Block a worker when it calls the returned sync handle (element 0 in {@link Block}) on the provided {@link blockingFn}
@@ -59,19 +54,18 @@ export default function block<Args extends any[], Result>(
     let workerPort: Worker | MessagePort | undefined = undefined;
 
     const blockFn = (...args: Args): Result => {
-        if (self.name === syncWorkerName) {
+        if (workerData?.name === syncWorkerName) {
             const sab = new SharedArrayBuffer(8 + byteSize);
             const [signal, buffer] = view(sab);
-            if (!self) {
-                console.warn(
-                    `[block-promise::${name}] > I can't post that message. Did you forget to set the async worker?`,
+            if (!parentPort) {
+                throw new Error(
+                    `[block-promise::${workerData?.name}] Nothing to block on...`,
                 );
-                return void 0 as Result;
             }
             if (workerPort) {
                 workerPort.postMessage({ sab, args });
             } else {
-                self.postMessage({ sab, args });
+                parentPort.postMessage({ sab, args });
             }
             Atomics.wait(signal, 0, 0);
             const rc = Atomics.load(signal, 0);
@@ -80,7 +74,7 @@ export default function block<Args extends any[], Result>(
             const text = new TextDecoder().decode(buffer.slice(0, len));
             return decode(text);
         } else {
-            if (self.name === asyncWorkerName) {
+            if (workerData?.name === asyncWorkerName) {
                 console.warn(
                     `[block-promise::${syncWorkerName}] > From async worker: ${asyncWorkerName}: "I can't block for that worker: ${self.name}"`,
                 );
@@ -91,9 +85,12 @@ export default function block<Args extends any[], Result>(
         }
     };
 
-    const resolveBlockingPromise = async (e: MessageEvent) => {
-        if (e.data && e.data.sab) {
-            const { sab, args } = e.data;
+    const resolveBlockingPromise = async (e: {
+        sab: SharedArrayBuffer;
+        args: Args;
+    }) => {
+        if (e && e.sab) {
+            const { sab, args } = e;
             const [signal, buffer] = view(sab);
             let rc = 0;
             try {
@@ -120,33 +117,36 @@ export default function block<Args extends any[], Result>(
                       asyncWorker: asyncWorkerName,
                   })
                 : workerFn;
-        if (self.name === syncWorkerName) {
+        if (workerData?.name === syncWorkerName) {
             // Case 1. The worker is providing the async handler
             workerPort = await handshakePing(worker);
         } else {
-            worker.onmessage = resolveBlockingPromise;
+            parentPort?.on("message", resolveBlockingPromise);
         }
         return worker;
     };
-    
+
     const pong = () => {
         /**
-        * Only useful if the deferring worker is the owner of the
-        * task handler thread.
-        * @param e The message event
-        */
-        if (self.name === asyncWorkerName) {
-            console.log("[block-promise] > Registering \"forward \" async worker thread", asyncWorkerName);
-            self.onmessage = (e: MessageEvent) => {
+         * Only useful if the deferring worker is the owner of the
+         * task handler thread.
+         * @param e The message event
+         */
+        if (workerData?.name === asyncWorkerName) {
+            console.log(
+                '[block-promise] > Registering "forward " async worker thread',
+                asyncWorkerName,
+            );
+            parentPort?.on("message", (e) => {
                 if (e.ports && e.ports[0]) {
                     const port = e.ports[0];
                     port.postMessage(0);
-                    port.onmessage = resolveBlockingPromise;
+                    port.on("message", resolveBlockingPromise);
                 }
-            };
+            });
         }
-    }
-    if (self.name === asyncWorkerName) {
+    };
+    if (workerData?.name === asyncWorkerName) {
         pong();
     }
 
@@ -158,16 +158,16 @@ async function handshakePing(worker: Worker) {
     return new Promise<MessagePort>((resolve, reject) => {
         const handleHandshakeResponse = (e: MessageEvent) => {
             if (e.data === 0) {
-                port1.removeEventListener("message", handleHandshakeResponse);
+                port1.off("message", handleHandshakeResponse);
                 resolve(port1);
             } else {
-                port1.removeEventListener("message", handleHandshakeResponse);
+                port1.off("message", handleHandshakeResponse);
                 reject(
                     new Error(`Unexpected message: ${JSON.stringify(e.data)}`),
                 );
             }
         };
-        port1.addEventListener("message", handleHandshakeResponse);
+        port1.on("message", handleHandshakeResponse);
         port1.start();
         worker.postMessage(null, [port2]);
     });

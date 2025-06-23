@@ -1,6 +1,6 @@
 import type { Resource } from "fhir/r4.js";
-import type { PathValue } from "./json.types";
-import { kdvParser } from "./json.parse";
+import type { PathValue } from "./json.types.js";
+import { kdvParser } from "./json.parse.js";
 import { strFromU8, unzipSync } from "fflate";
 import type { JSONSchema7 } from "json-schema";
 

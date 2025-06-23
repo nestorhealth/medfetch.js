@@ -15,8 +15,8 @@ import {
 import type {
     FhirDataType,
     PrimitiveKey,
-} from "~/json.types";
-import { unzipJSONSchema } from "./json.page";
+} from "~/json/json.types";
+import { unzipJSONSchema } from "./json/json.page";
 import { type RowResolver } from "./sql.types";
 
 /**
@@ -252,5 +252,3 @@ export function set<NewDB>(
 ): Kysely<NewDB> {
     return db as Kysely<NewDB>;
 }
-
-export type { SqlOnFhirDB } from "./sql.types";
