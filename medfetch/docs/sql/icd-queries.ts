@@ -1,10 +1,10 @@
 import type { Condition, Patient } from "fhir/r4";
 import { sql, Kysely, CompiledQuery } from "kysely";
-import { dummyDialect } from "~/sql";
+import { dummyDialect, Rowify } from "~/sql";
 
 type UserDB = {
-  Patient: Patient;
-  Condition: Condition;
+  Patient: Rowify<Patient>;
+  Condition: Rowify<Condition>;
   patients: {
     patient_id: string;
     age: number;

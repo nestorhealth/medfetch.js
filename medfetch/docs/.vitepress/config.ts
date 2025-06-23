@@ -11,14 +11,17 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: "Home", link: "/" },
+      { text: "Guide", link: "/guide" },
       { text: "Examples", link: "/examples.filter-icd" },
     ],
     logo: "/logo.svg",
     sidebar: [
       {
-        text: "Getting Started",
-        items: [{ text: "SQLite on FHIR", link: "/getting-started.sqlite" }],
+        text: "Introduction",
+        items: [
+          { text: "Getting Started", link: "/guide.index" },
+          { text: "Design", link: "/guide.design" },
+        ],
       },
       {
         text: "Examples",

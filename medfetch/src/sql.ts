@@ -78,15 +78,17 @@ type ScalarColumnFrom<T> =
         ? Exclude<T, undefined>
         : string;
 
+// #region snippet
 /**
  * Turn some type T into something that looks like a row
  * (a 1-level record with objects / arrays turned into strings)
  */
-type Rowify<T> = {
+export type Rowify<T> = {
     [K in keyof T]-?: undefined extends T[K]
         ? NonNullable<ScalarColumnFrom<T[K]>> | null
         : ScalarColumnFrom<T[K]>;
 };
+// #endregion snippet
 
 /**
  * Generic for a sql on fhir "dialect"

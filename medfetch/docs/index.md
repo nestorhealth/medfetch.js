@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /getting-started.sqlite
+      link: /guide.index
     - theme: alt
       text: View API Examples
       link: /api-examples
