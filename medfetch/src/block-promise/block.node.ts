@@ -1,11 +1,17 @@
-import { view } from "./block.js";
-import type { Block, MessageConfig, SetWorker } from "./block.types.js";
+import {
+    type MessageConfig,
+    type Block,
+    createSyncHandler,
+    ThreadContext,
+    createSetBlock,
+} from "./block.js";
 import {
     Worker,
     MessageChannel,
     MessagePort,
     parentPort,
     workerData,
+    isMainThread,
 } from "node:worker_threads";
 
 /**
@@ -13,7 +19,7 @@ import {
  * @param name The name of the *deferrer*, meaning the worker that needs to block.
  * @param blockingFn The async function to block on
  * @param config The optional configuration, see {@link MessageConfig}
- * @returns A {@link Block} 3 tuple.
+ * @returns A {@link Block} 2 tuple.
  *
  * 1. Example of deferring async task to main thread
  * @example
@@ -45,131 +51,64 @@ export default function block<Args extends any[], Result>(
     name: [string] | [string, string],
     blockingFn: (...args: Args) => Promise<Result>,
     {
-        encode = JSON.stringify,
-        decode = JSON.parse,
+        encode = (result) => {
+            const plaintext = JSON.stringify(result);
+            const encoder = new TextEncoder();
+            return encoder.encode(plaintext);
+        },
+        decode = (result) => {
+            const decoded = new TextDecoder().decode(result);
+            const parsed = JSON.parse(decoded);
+            return parsed;
+        },
         byteSize = 500_000,
     }: Partial<MessageConfig<Result>> = {},
 ): Block<Args, Result, Worker> {
-    const syncWorkerName = name[0];
-    const asyncWorkerName = name[1] ?? null;
     let workerPort: Worker | MessagePort | undefined = undefined;
 
-    const blockFn = (...args: Args): Result => {
-        if (workerData?.name === syncWorkerName) {
-            const sab = new SharedArrayBuffer(8 + byteSize);
-            const [signal, buffer] = view(sab);
-            if (!parentPort) {
-                throw new Error(
-                    `[block-promise::${workerData?.name}] Nothing to block on...`,
-                );
-            }
-            if (workerPort) {
-                workerPort.postMessage({ sab, args });
-            } else {
-                parentPort.postMessage({ sab, args });
-            }
-            Atomics.wait(signal, 0, 0);
-            const rc = Atomics.load(signal, 0);
-            if (rc) throw new Error("Deferred error");
-            const len = signal[1];
-            const text = new TextDecoder().decode(buffer.slice(0, len));
-            return decode(text);
-        } else {
-            if (workerData?.name === asyncWorkerName) {
-                console.warn(
-                    `[block-promise::${syncWorkerName}] > From async worker: ${asyncWorkerName}: "I can't block for that worker: ${self.name}"`,
-                );
-                return void 0 as Result;
-            } else {
-                return void 0 as Result;
-            }
-        }
-    };
-
-    const resolveBlockingPromise = async (e: {
-        sab: SharedArrayBuffer;
-        args: Args;
-    }) => {
-        if (e && e.sab) {
-            const { sab, args } = e;
-            const [signal, buffer] = view(sab);
-            let rc = 0;
-            try {
-                const result = await blockingFn(...args);
-                const encoded = new TextEncoder().encode(encode(result));
-                if (encoded.length > buffer.length)
-                    throw new Error(`[block-promise::${name}] > Too large`);
-                buffer.set(encoded);
-                signal[1] = encoded.length;
-            } catch {
-                rc = 1;
-            } finally {
-                Atomics.store(signal, 0, rc);
-                Atomics.notify(signal, 0);
-            }
-        }
-    };
-
-    const ping: SetWorker<Worker> = async (workerFn) => {
-        const worker =
-            typeof workerFn === "function"
-                ? workerFn({
-                      syncWorker: syncWorkerName,
-                      asyncWorker: asyncWorkerName,
-                  })
-                : workerFn;
-        if (workerData?.name === syncWorkerName) {
-            // Case 1. The worker is providing the async handler
-            workerPort = await handshakePing(worker);
-        } else {
-            parentPort?.on("message", resolveBlockingPromise);
-        }
-        return worker;
-    };
-
-    const pong = () => {
-        /**
-         * Only useful if the deferring worker is the owner of the
-         * task handler thread.
-         * @param e The message event
-         */
-        if (workerData?.name === asyncWorkerName) {
-            console.log(
-                '[block-promise] > Registering "forward " async worker thread',
-                asyncWorkerName,
-            );
-            parentPort?.on("message", (e) => {
-                if (e.ports && e.ports[0]) {
-                    const port = e.ports[0];
-                    port.postMessage(0);
-                    port.on("message", resolveBlockingPromise);
-                }
-            });
-        }
-    };
-    if (workerData?.name === asyncWorkerName) {
-        pong();
+    const syncWorkerName = name[0];
+    const asyncWorkerName = name[1] ?? null;
+    const threadContext: ThreadContext<MessagePort, MessagePort> = {
+        syncWorkerName,
+        asyncWorkerName,
+        currentThread: isMainThread ? null : workerData?.name,
+        parentPort: parentPort,
+        createMessageChannel: () => new MessageChannel(),
     }
 
-    return [blockFn, ping];
-}
-
-async function handshakePing(worker: Worker) {
-    const { port1, port2 } = new MessageChannel();
-    return new Promise<MessagePort>((resolve, reject) => {
-        const handleHandshakeResponse = (e: MessageEvent) => {
-            if (e.data === 0) {
-                port1.off("message", handleHandshakeResponse);
-                resolve(port1);
-            } else {
-                port1.off("message", handleHandshakeResponse);
-                reject(
-                    new Error(`Unexpected message: ${JSON.stringify(e.data)}`),
-                );
+    const blockFn = createSyncHandler(
+        {
+            thread: threadContext,
+            decoder: {
+                byteSize: byteSize,
+                decode: decode,
             }
-        };
-        port1.on("message", handleHandshakeResponse);
-        port1.start();
-        worker.postMessage(null, [port2]);
-    });
+        },
+        (data) => {
+            if (workerPort) {
+                (workerPort as any).postMessage({ data });
+            } else {
+                parentPort!.postMessage({ data });
+            }
+        },
+    );
+    const set = createSetBlock<Args, Result, Worker, MessagePort>(
+        {
+            thread: threadContext,
+            encoder: {
+                blockingFn,
+                encode
+            }
+        },
+        port => port.start(),
+        (port, data) => port.postMessage({ data }, data.ports),
+        (port, handler) => port.on("message", handler),
+        (port, handler) => port.on("message", handler),
+        (port, handler) => port.off("message", handler),
+        port => {
+            workerPort = port
+        }
+    )
+
+    return [blockFn, set];
 }

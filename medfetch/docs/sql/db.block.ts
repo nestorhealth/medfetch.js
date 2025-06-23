@@ -6,4 +6,6 @@ export const [syncFetch, setSyncFetch] = block(
     fetch(...args)
     .then(res => res.json())
     .then(JSON.stringify)
-)
+);
+
+setSyncFetch();
