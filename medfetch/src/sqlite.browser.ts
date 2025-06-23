@@ -1,5 +1,5 @@
 import { isBrowser } from "./json/json.types";
-import { Worker1PromiserDialect } from "./dialects";
+import { worker1DB, Worker1PromiserDialect } from "./dialects";
 import type { SqlOnFhirDialect } from "./sql.types";
 import { dummyDialect } from "./sql";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main";
@@ -50,7 +50,7 @@ export function sqliteOnFhir<const Resources extends {resourceType: string}>(
     filename: string,
     baseURL: string | File,
     config: {
-        scope: ReadonlyArray<Resources["resourceType"]>;
+        scope: [Resources["resourceType"], ...Resources["resourceType"][]];
         worker?: Worker;
     }
 ): SqlOnFhirDialect<Resources> {
@@ -60,20 +60,27 @@ export function sqliteOnFhir<const Resources extends {resourceType: string}>(
         );
         return dummyDialect("sqlite") as any as SqlOnFhirDialect<Resources>;
     }
-    const sqliteWorker = getWorker(config.worker);
 
-    return new Worker1PromiserDialect(
-        {
-            type: "open",
-            args: {
-                vfs: "opfs",
-                filename,
-            },
-            aux: {
-                baseURL,
-                scope: config.scope,
-            },
-        },
-        promiserSyncV2(sqliteWorker),
-    ) as SqlOnFhirDialect<Resources>;
+    return new Worker1PromiserDialect({
+        database: async () => {
+            const sqliteWorker = getWorker(config.worker);
+            const promiser = promiserSyncV2(sqliteWorker);
+            const response = await promiser({
+                type: "open",
+                args: {
+                    filename: filename,
+                    vfs: "opfs"
+                },
+                aux: {
+                    baseURL,
+                    scope: config.scope
+                }
+            });
+            if (response.type === "error" || !response.dbId) {
+                throw new Error(`Couldn't get back database ID, early exiting...`)
+            }
+            const dbId = response.dbId;
+            return worker1DB(dbId, promiser);
+        }
+    }) as SqlOnFhirDialect<Resources>;
 }

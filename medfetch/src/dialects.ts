@@ -5,18 +5,15 @@ import {
     type IGenericSqlite,
     type Promisable,
 } from "kysely-generic-sqlite";
-import type {
-    Worker1OpenRequest,
-    Worker1Promiser,
-} from "./sqlite-wasm/worker1.types";
+import type { Worker1Promiser } from "./sqlite-wasm/worker1.types";
 import { check } from "./sqlite-wasm/worker1.main";
 
 /* Its `db` field is a string */
-type Sqlite3WasmDB = IGenericSqlite<string>;
+type Worker1DB = IGenericSqlite<string>;
 
 function fromNullableOrThrow<T>(t: T): NonNullable<T> {
     if (!t) {
-        throw new Error("that's null")
+        throw new Error("that's null");
     }
     return t;
 }
@@ -26,21 +23,10 @@ function fromNullableOrThrow<T>(t: T): NonNullable<T> {
  * @param promiser Main thread messenger for worker1 thread (sqlite3 calls their messenger interface the "Promiser")
  * @returns {@link IGenericSqlite} implementation using promiser
  */
-async function sqlite3WasmDB(
+export async function worker1DB(
+    dbId: string,
     promiser: Worker1Promiser,
-    openMessage?: Worker1OpenRequest,
-): Promise<Sqlite3WasmDB> {
-    let dbId: string;
-    if (openMessage) {
-        dbId = await promiser(openMessage)
-            .then(check)
-            .then((res) => fromNullableOrThrow(res.dbId)[0]);
-    } else {
-        dbId = await promiser("open")
-            .then(check)
-            .then((res) => fromNullableOrThrow(res.dbId)[0]);
-    }
-
+): Promise<Worker1DB> {
     return {
         db: dbId,
         close() {
@@ -54,34 +40,61 @@ async function sqlite3WasmDB(
             sql: string,
             parameters?: any[] | readonly any[],
         ): Promisable<QueryResult<any>> {
-            return promiser({
-                type: "exec",
-                dbId,
-                args: {
-                    rowMode: "object",
-                    sql,
-                    bind: parameters ?? [],
-                },
-            })
-                .then(check)
-                .then((response): QueryResult<any> => {
-                    const [resultRows] = fromNullableOrThrow(
-                        response.result.resultRows,
-                    );
-                    const numAffectedRows = BigInt(resultRows.length);
-                    let queryResult: QueryResult<any> = {
-                        rows: resultRows,
-                    };
-                    if (!isSelect) {
-                        queryResult = {
-                            ...queryResult,
-                            numAffectedRows,
+            if (!isSelect) {
+                return promiser({
+                    type: "exec",
+                    dbId,
+                    args: {
+                        rowMode: "array",
+                        sql,
+                        bind: parameters ?? [],
+                    },
+                })
+                    .then(check)
+                    .then((response): QueryResult<any> => {
+                        const [resultRows] = fromNullableOrThrow(
+                            response.result.resultRows,
+                        );
+                        const numAffectedRows = BigInt(resultRows);
+                        let queryResult: QueryResult<any> = {
+                            rows: resultRows,
                         };
-                    }
-                    return queryResult;
-                });
+                        if (!isSelect) {
+                            queryResult = {
+                                ...queryResult,
+                                numAffectedRows,
+                            };
+                        }
+                        return queryResult;
+                    });
+            } else {
+                return promiser({
+                    type: "exec",
+                    dbId,
+                    args: {
+                        rowMode: "object",
+                        sql,
+                        bind: parameters ?? [],
+                    },
+                })
+                    .then(check)
+                    .then((response): QueryResult<any> => {
+                        return {
+                            rows: response.result.resultRows ?? [],
+                        };
+                    });
+            }
         },
     };
+}
+
+async function accessDB<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
+    if (typeof t === "function") {
+        const result = (t as () => T | Promise<T>)(); // call the function
+        return await result;
+    } else {
+        return t;
+    }
 }
 
 /**
@@ -89,34 +102,39 @@ async function sqlite3WasmDB(
  * from @sqlite.org/sqlite-wasm
  */
 export class Worker1PromiserDialect extends GenericSqliteDialect {
-    constructor(
-        openMessage: Worker1OpenRequest,
-        worker1Promiser: Worker1Promiser,
-    ) {
+    constructor(config: {
+        database: Worker1DB | (() => Promise<Worker1DB>) | (() => Worker1DB);
+    }) {
         super(async () => {
-            const db = await sqlite3WasmDB(worker1Promiser, openMessage);
+            const db = await accessDB<Worker1DB>(config.database);
             return {
                 db,
                 close: () => db.close(),
                 query: buildQueryFn({
                     all: async (sql, params) => {
-                        const response = await worker1Promiser("exec", {
-                            sql,
-                            bind: params as any,
-                            rowMode: "object",
-                        });
-                        const data = check(response);
-                        return data.result.resultRows ?? [];
+                        const response = await db.query(true, sql, params);
+                        return response.rows ?? [];
                     },
-                    run: async () => {
-                        const response = await worker1Promiser("exec", {
-                            sql: "SELECT last_insert_rowid()",
-                        }).then(check);
-                        const insertId = BigInt(
-                            response.result.resultRows?.at(0) ?? 0,
+                    run: async (sql, params) => {
+                        const result = await db.query(false, sql, params);
+
+                        // Check if this is an INSERT
+                        const isInsert = /^\s*insert\s+/i.test(sql);
+
+                        const insertId: bigint = BigInt(
+                            isInsert
+                                ? ((
+                                      await db.query(
+                                          false,
+                                          "SELECT last_insert_rowid()",
+                                      )
+                                  ).rows.at(0)?.["last_insert_rowid()"] ?? 0)
+                                : 0,
                         );
+
                         return {
                             insertId,
+                            numAffectedRows: result.numAffectedRows ?? 0n,
                         };
                     },
                 }),

@@ -1,7 +1,10 @@
+import type { Condition, Patient } from "fhir/r4";
 import { sql, Kysely, CompiledQuery } from "kysely";
-import { dummyDialect, type SqlOnFhirDB } from "~/sql";
+import { dummyDialect } from "~/sql";
 
-interface UserDB extends SqlOnFhirDB<["Patient", "Condition"]> {
+type UserDB = {
+  Patient: Patient;
+  Condition: Condition;
   patients: {
     patient_id: string;
     age: number;
