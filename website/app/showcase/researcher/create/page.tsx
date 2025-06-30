@@ -91,16 +91,10 @@ export default function CreateWorkspacePage() {
             <div className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
                 <Sparkles className="w-5 h-5 text-blue-400" />
-                <h2 className="text-xl font-semibold text-white">Workspace Details</h2>
+                <h2 className="text-xl font-semibold text-white">Workspace Name</h2>
               </div>
               
               <div>
-                <label
-                  htmlFor="workspaceName"
-                  className="block text-sm font-medium text-slate-200 mb-3"
-                >
-                  Workspace Name
-                </label>
                 <input
                   id="workspaceName"
                   type="text"
@@ -123,9 +117,9 @@ export default function CreateWorkspacePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div className="p-6 bg-slate-900/30 rounded-2xl border border-slate-700/30 hover:border-slate-600/50 transition-colors">
-                    <h3 className="text-lg font-medium text-white mb-2">Upload FHIR Data</h3>
+                    <h3 className="text-lg font-medium text-white mb-2">Upload .JSON file</h3>
                     <p className="text-sm text-slate-300 mb-4">
-                      Upload your own FHIR bundle JSON file
+                      Attatch your own data bundle in JSON format
                     </p>
                     <input
                       id="jsonUpload"
@@ -139,7 +133,7 @@ export default function CreateWorkspacePage() {
 
                 <div className="space-y-4">
                   <div className="p-6 bg-slate-900/30 rounded-2xl border border-slate-700/30 hover:border-slate-600/50 transition-colors">
-                    <h3 className="text-lg font-medium text-white mb-2">Use Demo Data</h3>
+                    <h3 className="text-lg font-medium text-white mb-2">Try with Demo Data</h3>
                     <p className="text-sm text-slate-300 mb-4">
                       Start with sample data to explore features
                     </p>
@@ -149,7 +143,7 @@ export default function CreateWorkspacePage() {
                       className="w-full bg-transparent border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200"
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Load Demo Data
+                      Load Demo JSON file
                     </Button>
                   </div>
                 </div>
@@ -165,7 +159,7 @@ export default function CreateWorkspacePage() {
                   <div className="flex-1">
                     {isDemo ? (
                       <div className="text-green-300">
-                        <span className="font-medium">Demo data selected</span>
+                        <span className="font-medium">Demo Data JSON file selected</span>
                         <p className="text-sm text-green-300/80 mt-1">
                           Ready to create your workspace with sample data
                         </p>

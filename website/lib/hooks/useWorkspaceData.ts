@@ -107,7 +107,7 @@ export function useWorkspaceData() {
   const executeQuery = useMutation({
     mutationFn: async (sql: string) => {
       if (uploadedBundle)
-        throw new Error("Queries are disabled for uploaded datasets.");
+        throw new Error("Database not initialized for uploaded datasets yet.");
       if (!medDB) throw new Error("Database not initialized");
 
       const stmts = sql
@@ -150,7 +150,7 @@ export function useWorkspaceData() {
       newValue: any;
     }) => {
       if (uploadedBundle)
-        throw new Error("Cell edits are disabled for uploaded datasets.");
+        throw new Error("Database not initialized for cell edits yet.");
       if (!medDB) throw new Error("Database not initialized");
 
       const safe =
