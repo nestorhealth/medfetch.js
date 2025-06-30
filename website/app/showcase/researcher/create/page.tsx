@@ -15,6 +15,7 @@ export default function CreateWorkspacePage() {
 
   const router = useRouter();
 
+  /* ─────────────── local upload ─────────────── */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -25,7 +26,6 @@ export default function CreateWorkspacePage() {
         const result = JSON.parse(event.target?.result as string);
         setJsonData(result);
 
-        // Count FHIR Patient resources
         const patients = Array.isArray(result.entry)
           ? result.entry.filter(
               (item) => item.resource?.resourceType === "Patient"
@@ -43,19 +43,45 @@ export default function CreateWorkspacePage() {
     reader.readAsText(file);
   };
 
+  /* ─────────────── create workspace (upload) ─────────────── */
   const handleSubmit = () => {
     if (!workspaceName || !jsonData) {
       setError("Please enter a workspace name and upload a valid JSON file.");
       return;
     }
 
-    // Store in localStorage for retrieval on /workspace page
     localStorage.setItem(
       "workspaceData",
       JSON.stringify({ workspaceName, jsonData })
     );
+    router.push("/showcase/researcher");
+  };
 
-    router.push("/showcase/researcher/workspace");
+  /* ─────────────── demo json ─────────────── */
+  const handleDemoJson = async () => {
+    try {
+      const res = await fetch("/api/public/researcher-demo/Patient.json");
+      if (!res.ok) throw new Error("Failed to fetch demo JSON");
+      const demo = await res.json();
+
+      /* Wrap plain array into FHIR-style bundle if necessary */
+      const wrapped =
+        Array.isArray(demo)
+          ? { entry: demo.map((resource: any) => ({ resource })) }
+          : demo;
+
+      localStorage.setItem(
+        "workspaceData",
+        JSON.stringify({
+          workspaceName: workspaceName || "Demo Workspace",
+          jsonData: wrapped,
+        })
+      );
+
+      router.push("/showcase/researcher");
+    } catch {
+      setError("Could not load demo JSON.");
+    }
   };
 
   return (
@@ -102,8 +128,7 @@ export default function CreateWorkspacePage() {
             />
           </div>
 
-
-          {/* (this only takes in JSON file uploads) Success */}
+          {/* Success */}
           {uploadSuccess && (
             <div className="text-sm text-green-300 bg-green-900/30 border border-green-700/30 rounded-lg px-4 py-3">
               ✅ Upload successful. Found <strong>{patientCount}</strong>{" "}
@@ -118,14 +143,22 @@ export default function CreateWorkspacePage() {
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="pt-4">
+          {/* Action buttons */}
+          <div className="pt-4 space-y-3">
             <Button
               onClick={handleSubmit}
               className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white"
             >
               <UploadIcon className="mr-2 size-4" />
               Create Workspace
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleDemoJson}
+              className="w-full h-11 border-blue-600 text-blue-300 hover:bg-blue-600/20"
+            >
+              Use Demo JSON
             </Button>
           </div>
         </div>

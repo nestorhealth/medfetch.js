@@ -83,7 +83,7 @@ export default function IndexPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/showcase/researcher"
+                href="/showcase/researcher/create"
                 className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl inline-flex items-center justify-center space-x-2 shadow-xl"
               >
                 <MessageSquare className="h-5 w-5" />
@@ -211,7 +211,7 @@ export default function IndexPage() {
                   </div>
                 </div>
                 <Link
-                  href="/showcase/researcher"
+                  href="/showcase/researcher/create"
                   className="mt-8 bg-white text-gray-900 hover:bg-gray-100 px-4 py-3 rounded-lg font-medium transition-all duration-300 inline-flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 w-fit"
                 >
                   <span>Try It Now</span>
@@ -334,7 +334,7 @@ export default function IndexPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/showcase/researcher"
+                href="/showcase/researche/create"
                 className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center space-x-2 shadow-xl hover:shadow-2xl"
               >
                 <span>Start Free Demo</span>
