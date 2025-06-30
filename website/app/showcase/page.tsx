@@ -14,39 +14,40 @@ import {
 
 export default function Showcase() {
   const showcaseItems = [
-    {
-      id: "researcher",
-      title: "Clinical Researcher Dashboard",
-      description:
-        "Interactive spreadsheet interface for medical researchers to query patient data, analyze treatment outcomes, and generate reports.",
-      features: [
-        "Natural language queries",
-        "Real-time data filtering",
-        "Export capabilities",
-        "Statistical analysis",
-      ],
-      icon: Database,
-      status: "Live Demo",
-      complexity: "Advanced",
-      href: "/showcase/researcher",
-    },
-    {
-      id: "analytics",
-      title: "Healthcare Analytics",
-      description:
-        "Comprehensive analytics dashboard for hospital administrators to track metrics, outcomes, and operational efficiency.",
-      features: [
-        "Performance metrics",
-        "Trend analysis",
-        "Custom reports",
-        "KPI tracking",
-      ],
-      icon: TrendingUp,
-      status: "Coming Soon",
-      complexity: "Expert",
-      href: "#",
-    },
-  ];
+  {
+    id: "researcher",
+    title: "Clinical Researcher Dashboard",
+    description:
+      "Interactive spreadsheet interface for medical researchers to query patient data, analyze treatment outcomes, and generate reports.",
+    features: [
+      "Natural language queries",
+      "Real-time data filtering",
+      "Export capabilities",
+      "Statistical analysis",
+    ],
+    icon: Database,
+    status: "Live Demo",
+    complexity: "Advanced",
+    href: "/showcase/researcher/create", // <-- updated
+  },
+  {
+    id: "analytics",
+    title: "Healthcare Analytics",
+    description:
+      "Comprehensive analytics dashboard for hospital administrators to track metrics, outcomes, and operational efficiency.",
+    features: [
+      "Performance metrics",
+      "Trend analysis",
+      "Custom reports",
+      "KPI tracking",
+    ],
+    icon: TrendingUp,
+    status: "Coming Soon",
+    complexity: "Expert",
+    href: "#",
+  },
+];
+
 
   const stats = [
     { label: "Healthcare Facilities", value: "40+", icon: Activity },
