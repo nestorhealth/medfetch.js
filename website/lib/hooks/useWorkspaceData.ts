@@ -1,60 +1,55 @@
-import { useState, useEffect, useMemo } from "react";
-import { useMedDB } from "@/lib/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo } from "react"
+import { useMedDB } from "@/lib/client"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
-const queryKey = (table: string) => ["workspaceData", table];
+const queryKey = (table: string) => ["workspaceData", table]
 
 export function useWorkspaceData() {
-  const [uploadedBundle, setUploadedBundle] = useState<any | null>(null);
-  const [currentTableName, setCurrentTableName] = useState("patients");
-  const [error, setError] = useState<string | null>(null);
+  const [uploadedBundle, setUploadedBundle] = useState<any | null>(null)
+  const [currentTableName, setCurrentTableName] =
+    useState<"Patient" | "Procedure">("Patient")
+  const [error, setError] = useState<string | null>(null)
 
-  const medDB = useMedDB();
-  const queryClient = useQueryClient();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const medDB = useMedDB()
+  const queryClient = useQueryClient()
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return
     try {
-      const raw = localStorage.getItem("workspaceData");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed.jsonData) setUploadedBundle(parsed.jsonData);
-  
-    } catch {
-    }
-  }, []);
+      const raw = localStorage.getItem("workspaceData")
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (parsed.jsonData) setUploadedBundle(parsed.jsonData)
+    } catch {}
+  }, [])
 
   const derivedPatients = useMemo(() => {
-    if (!uploadedBundle) return [];
-    const entries = Array.isArray(uploadedBundle.entry)
-      ? uploadedBundle.entry
-      : [];
+    if (!uploadedBundle) return []
+    const entries = Array.isArray(uploadedBundle.entry) ? uploadedBundle.entry : []
     return entries
       .filter((e: any) => e.resource?.resourceType === "Patient")
       .map(({ resource: r }: any) => {
-        const birth = r.birthDate ? new Date(r.birthDate) : undefined;
+        const birth = r.birthDate ? new Date(r.birthDate) : undefined
         const age = birth
           ? Math.floor(
               (Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000)
             )
-          : undefined;
+          : undefined
         return {
           patient_id: r.id,
           first_name: r.name?.[0]?.given?.[0] ?? "",
           last_name: r.name?.[0]?.family ?? "",
           age,
           gender: r.gender,
-          status: r.active ? "Active" : "Inactive",
-        };
-      });
-  }, [uploadedBundle]);
+          status: r.active ? "Active" : "Inactive"
+        }
+      })
+  }, [uploadedBundle])
 
   const derivedProcedures = useMemo(() => {
-    if (!uploadedBundle) return [];
-    const entries = Array.isArray(uploadedBundle.entry)
-      ? uploadedBundle.entry
-      : [];
+    if (!uploadedBundle) return []
+    const entries = Array.isArray(uploadedBundle.entry) ? uploadedBundle.entry : []
     return entries
       .filter((e: any) => e.resource?.resourceType === "Procedure")
       .map(({ resource: r }: any) => ({
@@ -62,131 +57,110 @@ export function useWorkspaceData() {
         patient: r.subject?.reference?.replace("Patient/", "") ?? "",
         code: r.code?.coding?.[0]?.display ?? "",
         performed: r.performedDateTime ?? "",
-        status: r.status ?? "",
-      }));
-  }, [uploadedBundle]);
+        status: r.status ?? ""
+      }))
+  }, [uploadedBundle])
 
   useEffect(() => {
-    if (!medDB || isInitialized || uploadedBundle) return;
-    (async () => {
+    if (!medDB || isInitialized || uploadedBundle) return
+    ;(async () => {
       try {
         await medDB.exec(`
           create table if not exists patients as
-          select 
-            "Patient"."id"                                      as patient_id,
-            strftime('%Y', "Condition"."onsetDateTime")         as onset_year,
-            "Condition"."code" -> 'coding' -> 0 ->> 'code'      as icd_code, 
-            "Patient"."name" -> 0 -> 'given' ->> 0              as first_name,
-            "Patient"."name" -> 0 ->> 'family'                  as last_name,
-            CAST(
-              (strftime('%Y','now') - strftime('%Y',"Patient"."birthDate"))
-              - (strftime('%m-%d','now') < strftime('%m-%d',"Patient"."birthDate"))
-            AS INTEGER)                                         as age
-          from "Patient"
-          inner join "Condition" on "Condition"."subject" = "Patient"."id";
-        `);
-        setIsInitialized(true);
+          select "Patient"."id" as patient_id,
+            strftime('%Y',"Condition"."onsetDateTime") as onset_year,
+            "Condition"."code"->'coding'->0->>'code' as icd_code,
+            "Patient"."name"->0->'given'->>0 as first_name,
+            "Patient"."name"->0->>'family' as last_name,
+            CAST((strftime('%Y','now')-strftime('%Y',"Patient"."birthDate"))-(strftime('%m-%d','now')<strftime('%m-%d',"Patient"."birthDate")) AS INTEGER) as age
+          from "Patient" inner join "Condition" on "Condition"."subject"="Patient"."id";
+          create table if not exists procedures(
+            procedure_id text primary key,
+            patient text,
+            code text,
+            performed text,
+            status text
+          );
+        `)
+        setIsInitialized(true)
       } catch (e: any) {
-        setError(`Initialization error: ${e.message}`);
+        setError(`Initialization error: ${e.message}`)
       }
-    })();
-  }, [medDB, isInitialized, uploadedBundle]);
+    })()
+  }, [medDB, isInitialized, uploadedBundle])
+
+  const dbTable = currentTableName === "Patient" ? "patients" : "procedures"
 
   const {
     data: sqlRows = [],
-    isLoading: sqlLoading,
+    isLoading: sqlLoading
   } = useQuery({
-    queryKey: queryKey(currentTableName),
+    queryKey: queryKey(dbTable),
     queryFn: async () => {
-      if (!medDB) throw new Error("DB not ready");
-      return await medDB.prepare(`SELECT * FROM "${currentTableName}"`).all();
+      if (!medDB) throw new Error("DB not ready")
+      return await medDB.prepare(`SELECT * FROM "${dbTable}"`).all()
     },
     enabled: !!medDB && isInitialized && !uploadedBundle,
-  });
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity
+  })
 
   const executeQuery = useMutation({
     mutationFn: async (sql: string) => {
-      if (uploadedBundle)
-        throw new Error("Database not initialized for uploaded datasets yet.");
-      if (!medDB) throw new Error("Database not initialized");
-
-      const stmts = sql
-        .split(";")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const isSelect = stmts[0].toLowerCase().startsWith("select");
-
-      let results: any[] = [];
+      if (uploadedBundle) throw new Error("Database not initialized for uploaded datasets yet.")
+      if (!medDB) throw new Error("Database not initialized")
+      const stmts = sql.split(";").map((s) => s.trim()).filter(Boolean)
+      const isSelect = stmts[0].toLowerCase().startsWith("select")
+      let results: any[] = []
       if (isSelect) {
-        for (const s of stmts) {
-          const r = await medDB.prepare(s + ";").all();
-          results = results.concat(r);
-        }
-      } else {
-        await medDB.exec(`BEGIN; ${stmts.join(";")}; COMMIT;`);
-      }
-
-      if (isSelect) {
-        queryClient.setQueryData(queryKey(currentTableName), results);
-      } else {
-        await queryClient.invalidateQueries({
-          queryKey: queryKey(currentTableName),
-        });
-      }
-      return results;
+        for (const s of stmts) results = results.concat(await medDB.prepare(s + ";").all())
+      } else await medDB.exec(`BEGIN; ${stmts.join(";")}; COMMIT;`)
+      if (isSelect) queryClient.setQueryData(queryKey(dbTable), results)
+      else await queryClient.invalidateQueries({ queryKey: queryKey(dbTable) })
+      return results
     },
-    onError: (e: any) =>
-      setError(e instanceof Error ? e.message : String(e)),
-  });
+    onError: (e: any) => setError(e instanceof Error ? e.message : String(e))
+  })
 
   const editCell = useMutation({
     mutationFn: async ({
       rowId,
       col,
-      newValue,
+      newValue
     }: {
-      rowId: any;
-      col: string;
-      newValue: any;
+      rowId: any
+      col: string
+      newValue: any
     }) => {
-      if (uploadedBundle)
-        throw new Error("Database not initialized for cell edits yet.");
-      if (!medDB) throw new Error("Database not initialized");
-
-      const safe =
-        typeof newValue === "string" ? `'${newValue}'` : newValue;
+      if (uploadedBundle) throw new Error("Database not initialized for cell edits yet.")
+      if (!medDB) throw new Error("Database not initialized")
+      const pk = currentTableName === "Patient" ? "patient_id" : "procedure_id"
+      const safe = typeof newValue === "string" ? `'${newValue}'` : newValue
       await medDB.exec(
-        `BEGIN;
-         UPDATE "${currentTableName}"
-         SET "${col}"=${safe}
-         WHERE patient_id='${rowId}';
-         COMMIT;`
-      );
-      await queryClient.invalidateQueries({
-        queryKey: queryKey(currentTableName),
-      });
+        `BEGIN; UPDATE "${dbTable}" SET "${col}"=${safe} WHERE ${pk}='${rowId}'; COMMIT;`
+      )
+      await queryClient.invalidateQueries({ queryKey: queryKey(dbTable) })
     },
-    onError: (e: any) =>
-      setError(e instanceof Error ? e.message : String(e)),
-  });
+    onError: (e: any) => setError(e instanceof Error ? e.message : String(e))
+  })
 
   const rawData =
-    uploadedBundle && currentTableName === "patients"
+    uploadedBundle && currentTableName === "Patient"
       ? derivedPatients
-      : uploadedBundle && currentTableName === "procedures"
+      : uploadedBundle && currentTableName === "Procedure"
       ? derivedProcedures
-      : sqlRows;
+      : sqlRows
 
   const stats = {
     total: rawData.length,
     active:
-      currentTableName === "patients"
+      currentTableName === "Patient"
         ? rawData.filter((r: any) => r.status === "Active").length
-        : 0,
-  };
+        : 0
+  }
 
-  const isLoading =
-    uploadedBundle ? false : sqlLoading || !isInitialized;
+  const isLoading = uploadedBundle ? false : sqlLoading || !isInitialized
 
   return {
     currentTableName,
@@ -197,6 +171,6 @@ export function useWorkspaceData() {
     setError,
     executeQuery,
     editCell,
-    stats,
-  };
+    stats
+  }
 }
