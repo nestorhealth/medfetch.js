@@ -2,22 +2,25 @@ import { useState, useEffect, useMemo } from "react";
 import { useMedDB } from "@/lib/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-type TableName = "Patient" | "Procedure";
+const queryKey = (table: string) => ["workspaceData", table];
 
 export function useWorkspaceData() {
   const [uploadedBundle, setUploadedBundle] = useState<any | null>(null);
-  const [currentTableName, setCurrentTableName] =
-    useState<TableName>("Patient");
+  const [currentTableName, setCurrentTableName] = useState("patients");
   const [error, setError] = useState<string | null>(null);
+
+  const medDB = useMedDB();
+  const queryClient = useQueryClient();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem("workspaceData");
-      if (raw) {
-        const { jsonData } = JSON.parse(raw);
-        setUploadedBundle(jsonData);
-      }
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed.jsonData) setUploadedBundle(parsed.jsonData);
+  
     } catch {
     }
   }, []);
@@ -40,9 +43,8 @@ export function useWorkspaceData() {
           patient_id: r.id,
           first_name: r.name?.[0]?.given?.[0] ?? "",
           last_name: r.name?.[0]?.family ?? "",
-          gender: r.gender,
-          birthDate: r.birthDate,
           age,
+          gender: r.gender,
           status: r.active ? "Active" : "Inactive",
         };
       });
@@ -64,10 +66,6 @@ export function useWorkspaceData() {
       }));
   }, [uploadedBundle]);
 
-  const medDB = useMedDB();
-  const queryClient = useQueryClient();
-  const [isInitialized, setIsInitialized] = useState(false);
-
   useEffect(() => {
     if (!medDB || isInitialized || uploadedBundle) return;
     (async () => {
@@ -75,31 +73,33 @@ export function useWorkspaceData() {
         await medDB.exec(`
           create table if not exists patients as
           select 
-            "Patient"."id"                                as patient_id,
-            "Patient"."name" -> 0 ->> 'family'            as last_name,
-            "Patient"."name" -> 0 -> 'given' ->> 0        as first_name,
-            CAST((strftime('%Y','now') - strftime('%Y',"Patient"."birthDate"))
-                 - (strftime('%m-%d','now') < strftime('%m-%d',"Patient"."birthDate"))
-                 AS INTEGER)                              as age,
-            "Condition"."code" -> 'coding' -> 0 ->> 'code' as icd_code
+            "Patient"."id"                                      as patient_id,
+            strftime('%Y', "Condition"."onsetDateTime")         as onset_year,
+            "Condition"."code" -> 'coding' -> 0 ->> 'code'      as icd_code, 
+            "Patient"."name" -> 0 -> 'given' ->> 0              as first_name,
+            "Patient"."name" -> 0 ->> 'family'                  as last_name,
+            CAST(
+              (strftime('%Y','now') - strftime('%Y',"Patient"."birthDate"))
+              - (strftime('%m-%d','now') < strftime('%m-%d',"Patient"."birthDate"))
+            AS INTEGER)                                         as age
           from "Patient"
-          inner join "Condition" 
-               on "Condition"."subject" = "Patient"."id";
+          inner join "Condition" on "Condition"."subject" = "Patient"."id";
         `);
         setIsInitialized(true);
-      } catch (err) {
-        setError(`Initialization error: ${(err as Error).message}`);
+      } catch (e: any) {
+        setError(`Initialization error: ${e.message}`);
       }
     })();
   }, [medDB, isInitialized, uploadedBundle]);
 
-  const { data: sqlRows = [], isLoading: sqlLoading } = useQuery({
-    queryKey: ["workspaceData", currentTableName],
+  const {
+    data: sqlRows = [],
+    isLoading: sqlLoading,
+  } = useQuery({
+    queryKey: queryKey(currentTableName),
     queryFn: async () => {
-      if (!medDB || !isInitialized) throw new Error("DB not ready");
-      return await medDB.prepare(
-        `SELECT * FROM "${currentTableName}"`
-      ).all();
+      if (!medDB) throw new Error("DB not ready");
+      return await medDB.prepare(`SELECT * FROM "${currentTableName}"`).all();
     },
     enabled: !!medDB && isInitialized && !uploadedBundle,
   });
@@ -107,9 +107,7 @@ export function useWorkspaceData() {
   const executeQuery = useMutation({
     mutationFn: async (sql: string) => {
       if (uploadedBundle)
-        throw new Error(
-          "SQL queries are disabled when using an uploaded dataset."
-        );
+        throw new Error("Queries are disabled for uploaded datasets.");
       if (!medDB) throw new Error("Database not initialized");
 
       const stmts = sql
@@ -117,11 +115,11 @@ export function useWorkspaceData() {
         .map((s) => s.trim())
         .filter(Boolean);
       const isSelect = stmts[0].toLowerCase().startsWith("select");
-      let results: any[] = [];
 
+      let results: any[] = [];
       if (isSelect) {
-        for (const stmt of stmts) {
-          const r = await medDB.prepare(stmt + ";").all();
+        for (const s of stmts) {
+          const r = await medDB.prepare(s + ";").all();
           results = results.concat(r);
         }
       } else {
@@ -129,19 +127,16 @@ export function useWorkspaceData() {
       }
 
       if (isSelect) {
-        queryClient.setQueryData(
-          ["workspaceData", currentTableName],
-          results
-        );
+        queryClient.setQueryData(queryKey(currentTableName), results);
       } else {
         await queryClient.invalidateQueries({
-          queryKey: ["workspaceData", currentTableName],
+          queryKey: queryKey(currentTableName),
         });
       }
       return results;
     },
-    onError: (err: any) =>
-      setError(err instanceof Error ? err.message : String(err)),
+    onError: (e: any) =>
+      setError(e instanceof Error ? e.message : String(e)),
   });
 
   const editCell = useMutation({
@@ -155,35 +150,37 @@ export function useWorkspaceData() {
       newValue: any;
     }) => {
       if (uploadedBundle)
-        throw new Error(
-          "Direct cell edits are disabled when using an uploaded dataset."
-        );
+        throw new Error("Cell edits are disabled for uploaded datasets.");
       if (!medDB) throw new Error("Database not initialized");
 
       const safe =
         typeof newValue === "string" ? `'${newValue}'` : newValue;
       await medDB.exec(
-        `BEGIN; UPDATE "${currentTableName}" SET "${col}"=${safe} WHERE "patient_id"='${rowId}'; COMMIT;`
+        `BEGIN;
+         UPDATE "${currentTableName}"
+         SET "${col}"=${safe}
+         WHERE patient_id='${rowId}';
+         COMMIT;`
       );
       await queryClient.invalidateQueries({
-        queryKey: ["workspaceData", currentTableName],
+        queryKey: queryKey(currentTableName),
       });
     },
-    onError: (err: any) =>
-      setError(err instanceof Error ? err.message : String(err)),
+    onError: (e: any) =>
+      setError(e instanceof Error ? e.message : String(e)),
   });
 
   const rawData =
-    uploadedBundle && currentTableName === "Patient"
+    uploadedBundle && currentTableName === "patients"
       ? derivedPatients
-      : uploadedBundle && currentTableName === "Procedure"
+      : uploadedBundle && currentTableName === "procedures"
       ? derivedProcedures
       : sqlRows;
 
   const stats = {
     total: rawData.length,
     active:
-      currentTableName === "Patient"
+      currentTableName === "patients"
         ? rawData.filter((r: any) => r.status === "Active").length
         : 0,
   };
