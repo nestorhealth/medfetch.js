@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation } from "@tanstack/react-query";
 import { DataTable } from "@/components/ui/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { db } from "@/lib/client";
+import { memoryDB } from "@/lib/client";
 import { sql } from "kysely";
 
 type Props = {
@@ -33,7 +33,7 @@ export function SQLCodeblock({ children, columns, dropTables }: Props) {
   const { data, mutate, isPending } = useMutation({
     mutationFn: async () => {
       if (sqlText) {
-        const result = (await db.executeQuery(sql.raw(sqlText).compile(db))).rows;
+        const result = (await memoryDB.executeQuery(sql.raw(sqlText).compile(memoryDB))).rows;
         return result;
       }
     },

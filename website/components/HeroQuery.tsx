@@ -1,6 +1,6 @@
 "use client";
 
-import { db } from "@/lib/client";
+import { memoryDB } from "@/lib/client";
 import { sql } from "kysely";
 import { useQuery } from "@tanstack/react-query";
 
@@ -10,7 +10,7 @@ export function HeroQuery() {
   const { data } = useQuery({
     queryKey: ["/hero"],
     queryFn: async () => {
-      const initialState = await db
+      const initialState = await memoryDB
         .selectFrom("Patient")
         .innerJoin("Condition", "Condition.subject", "Patient.id")
         .select([

@@ -10,6 +10,7 @@ import {
   MapPin,
   Activity,
 } from "lucide-react";
+import SanityCheck from "@/app/page.SanityCheck";
 
 export default function IndexPage() {
   const mockPatientData = [
@@ -350,6 +351,7 @@ export default function IndexPage() {
           </div>
         </div>
       </div>
+      <SanityCheck />
     </div>
   );
 }

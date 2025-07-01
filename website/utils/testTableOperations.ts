@@ -1,11 +1,11 @@
-import { medDB } from "@/lib/client";
+import { medDB, memoryDB } from "@/lib/client";
 import { TableManager } from "./tableManager";
 import { TransactionManager, TransactionIsolationLevel } from "./transactionManager";
 import { generateTestData, verifyTableExists } from "./testUtils";
 
 async function runTests() {
   console.log("Initializing test database...");
-  const db = medDB;
+  const db = medDB(memoryDB);
   const tableManager = new TableManager(db);
   const transactionManager = new TransactionManager(db);
 
