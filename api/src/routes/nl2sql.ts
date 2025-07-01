@@ -1,6 +1,5 @@
 import schema from "./nl2sql/schema";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import OpenAI from "openai";
 import { translate } from "~/routes/nl2sql/ai";
 
 const nl2sql = new OpenAPIHono<{

@@ -26,7 +26,7 @@ const ErrorSchema = z
 
 const POST = createRoute({
   method: "post",
-  path: "/nl2sql",
+  path: "/",
   request: {
     body: {
       content: {

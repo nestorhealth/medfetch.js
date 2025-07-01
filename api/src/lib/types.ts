@@ -1,4 +1,5 @@
-import { Context } from "hono";
+import type { Context } from "hono";
+import { z } from "zod";
 
 /**
  * Maybe promiseable. Should always `await` this
@@ -38,3 +39,9 @@ export type RouteHelper<Result, Args extends unknown[] = []> = (
   }>,
   ...args: Args
 ) => Promiseable<Result>;
+
+export const vfsTypes = z.enum([
+  "opfs",
+  "kvfs"
+]);
+export type VFSType = z.infer<typeof vfsTypes>;

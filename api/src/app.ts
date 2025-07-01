@@ -1,22 +1,19 @@
 import db from "./routes/db";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { cors } from "hono/cors";
-import { D1Database } from "@cloudflare/workers-types";
+import type { D1Database } from "@cloudflare/workers-types";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
 import nl2sql from "./routes/nl2sql";
 import fhir from "./routes/fhir";
-import { customLogger } from "~/lib/context";
-import { HTTPException } from "hono/http-exception";
-import { Kysely } from "kysely";
-import { serveStatic } from "hono/serve-static";
+import { customLogger, cors, errorSetter } from "~/middleware";
+import authRouter from "~/routes/auth";
+import workspaces from "~/routes/workspaces";
 
 // Extend the Env type to include DB
 declare global {
   type Env = Cloudflare.Env & { DB: D1Database };
   type Vars = {
     setError: <ErrorObject extends Error>(err: ErrorObject) => never;
-    db: Kysely<any>;
   }
 }
 
@@ -26,34 +23,11 @@ const app = new OpenAPIHono<{
 }>();
 
 // Cors
-app.use("*", (c, next) => {
-  const corsHandler = cors({
-    origin: [c.env.MEDFETCH_DOCS_HOST, c.env.MEDFETCH_DEMO_HOST],
-    allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
-    maxAge: 86400
-  });
-  return corsHandler(c, next);
-});
-
+app.use("*", cors);
 // Attach logger middleware
 app.use(logger(customLogger));
-
 // For server side errors, return 500
-app.use(
-  (c, next) => {
-    c.set("setError",
-      (err) => {
-        customLogger(`Internal server error: ${err.message}`);
-        throw new HTTPException(500, {
-          message: err.message,
-          cause: err.cause,
-        })
-      }
-    );
-    return next();
-  }
-);
+app.use(errorSetter);
 
 // Helper function to build WHERE clause from filters
 function buildWhereClause(filters: { field: string; operator: string; value: any }[] | undefined) {
@@ -352,8 +326,10 @@ app.openapi(db.schemaOperation, async (c) => {
   }
 });
 
-app.route("/", nl2sql);
+app.route("/nl2sql", nl2sql);
 app.route("/fhir", fhir);
+app.route("/auth", authRouter);
+app.route("/workspaces", workspaces);
 
 // openapi reference
 app.doc("/openapi", {
