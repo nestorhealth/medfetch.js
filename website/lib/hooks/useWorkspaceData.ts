@@ -13,6 +13,7 @@ export function useWorkspaceData() {
 
   const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
+  console.log("uh", parsed.jsonData)
   const blob = new Blob([JSON.stringify(parsed.jsonData)], {
     type: "application/json",
   });
@@ -35,8 +36,8 @@ export function useWorkspaceData() {
     if (!medDB || isInitialized) return;
     (async () => {
       try {
-        const patients = await medDB.selectFrom("Patient").selectAll("Patient").execute();
-        console.log("UH", patients)
+        let patients = await medDB.selectFrom("Patient").selectAll("Patient").execute();
+        patients = await medDB.selectFrom("Patient").selectAll("Patient").execute();
         setPatients(patients)
         setIsInitialized(true);
       } catch (e: any) {

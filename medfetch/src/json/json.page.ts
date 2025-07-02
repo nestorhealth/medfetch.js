@@ -33,9 +33,9 @@ export class Page {
      * @param baseURL Either a string to indicate the base fhir url or a singular File of a {@link Bundle} that serves as the base of the fhir data
      * @param syncFetch The {@link FetchTextSync} text getter function
      * @returns A page loader
-     * 
+     *
      * @example
-     * ```ts 
+     * ```ts
      * // src/sqlite-wasm.worker.ts
      * const pageLoader = Page.createLoader(baseURL, syncFetch);
      * // Map database index to medfetch_module "instance"
@@ -68,7 +68,10 @@ export class Page {
                     pageCache.set(resourceType, filteredBundle);
                 }
                 return new Page(function* () {
-                    yield filteredBundle;
+                    const chunkSize = 400_000;
+                    for (let i = 0; i < filteredBundle.length; i += chunkSize) {
+                        yield filteredBundle.slice(i, i + chunkSize);
+                    }
                 });
             };
         } else {

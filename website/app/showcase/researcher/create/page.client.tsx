@@ -7,13 +7,28 @@ import { Separator } from "@/components/ui/separator";
 import { UploadIcon, FileJson2, Sparkles, Users } from "lucide-react";
 import type { Bundle } from "fhir/r5";
 
-export function CreateWorkspaceForm() {
+/**
+ * Filter through resources with resourceType key equal to {@link resourceType}. If anything coallesces to undefined, then this returns 0
+ * @param bundle The bundle to aggregate the count
+ * @param resourceType The resourceType to count
+ * @returns The resource count, or 0 if something was undefined in the path chain
+ */
+const getResourceCount = (
+  bundle: Bundle<{resourceType: string}>,
+  resourceType: string
+) => {
+  return bundle.entry?.filter(entry => entry.resource?.resourceType === resourceType).length ?? 0;
+}
+
+export function CreateWorkspaceForm(props: {
+  demoBundle: Bundle<{resourceType: string;}>
+}) {
   const [workspaceName, setWorkspaceName] = useState("");
   const [jsonData, setJsonData] = useState<any>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [patientCount, setPatientCount] = useState<number>(0);
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo] = useState(false);
 
   const router = useRouter();
 
@@ -26,15 +41,7 @@ export function CreateWorkspaceForm() {
       try {
         const result = JSON.parse(event.target?.result as string);
         setJsonData(result);
-        setIsDemo(false);
-
-        const patients = Array.isArray(result.entry)
-          ? (result.entry as NonNullable<Bundle["entry"]>).filter(
-              (item) => item.resource?.resourceType === "Patient",
-            )
-          : [];
-        setPatientCount(patients.length);
-
+        setPatientCount(getResourceCount(result, "Patient"));
         setUploadSuccess(true);
         setError(null);
       } catch {
@@ -46,25 +53,26 @@ export function CreateWorkspaceForm() {
   };
 
   const handleUseDemo = () => {
-    setJsonData(null);
-    setIsDemo(true);
-    setUploadSuccess(true);
-    setPatientCount(0);
+    setJsonData(props.demoBundle);
+    const patientCount = getResourceCount(props.demoBundle, "Patient");
+    setPatientCount(patientCount);
     setError(null);
+    setUploadSuccess(true);
   };
 
   const handleSubmit = () => {
-    if (!workspaceName || (!jsonData && !isDemo)) {
-      setError("Please enter a workspace name and choose data to load.");
+    if (!workspaceName) {
+      setError("Please enter a workspace name.");
+      return;
+    }
+    if (!jsonData) {
+      setError("Please enter a Bundle JSON to load.");
       return;
     }
 
     const payload: Record<string, any> = { workspaceName };
-    if (isDemo) {
-      payload.demo = true;
-    } else {
-      payload.jsonData = jsonData;
-    }
+    payload.demo = false;
+    payload.jsonData = jsonData;
 
     localStorage.setItem("workspaceData", JSON.stringify(payload));
     router.push("/showcase/researcher");
