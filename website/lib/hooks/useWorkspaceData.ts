@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
-import { useMedDB } from "@/lib/client"
+import { useMedfetch } from "@/lib/client"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { sql } from "kysely"
 
 const queryKey = (table: string) => ["workspaceData", table]
 
@@ -10,7 +11,7 @@ export function useWorkspaceData() {
     useState<"Patient" | "Procedure">("Patient")
   const [error, setError] = useState<string | null>(null)
 
-  const medDB = useMedDB();
+  const medDB = useMedfetch();
   const queryClient = useQueryClient()
   const [isInitialized, setIsInitialized] = useState(false)
 
@@ -65,7 +66,7 @@ export function useWorkspaceData() {
     if (!medDB || isInitialized || uploadedBundle) return
     ;(async () => {
       try {
-        await medDB.exec(`
+        await sql.raw(`
           create table if not exists patients as
           select "Patient"."id" as patient_id,
             strftime('%Y',"Condition"."onsetDateTime") as onset_year,
@@ -81,7 +82,7 @@ export function useWorkspaceData() {
             performed text,
             status text
           );
-        `)
+        `).execute(medDB);
         setIsInitialized(true)
       } catch (e: any) {
         setError(`Initialization error: ${e.message}`)
@@ -98,7 +99,7 @@ export function useWorkspaceData() {
     queryKey: queryKey(dbTable),
     queryFn: async () => {
       if (!medDB) throw new Error("DB not ready")
-      return await medDB.prepare(`SELECT * FROM "${dbTable}"`).all()
+      return await sql.raw(`SELECT * FROM "${dbTable}"`).execute(medDB).then(result => result.rows);
     },
     enabled: !!medDB && isInitialized && !uploadedBundle,
     refetchOnWindowFocus: false,
@@ -107,15 +108,19 @@ export function useWorkspaceData() {
   })
 
   const executeQuery = useMutation({
-    mutationFn: async (sql: string) => {
+    mutationFn: async (sqlText: string) => {
       if (uploadedBundle) throw new Error("Database not initialized for uploaded datasets yet.")
       if (!medDB) throw new Error("Database not initialized")
-      const stmts = sql.split(";").map((s) => s.trim()).filter(Boolean)
+      const stmts = sqlText.split(";").map((s) => s.trim()).filter(Boolean)
       const isSelect = stmts[0].toLowerCase().startsWith("select")
       let results: any[] = []
       if (isSelect) {
-        for (const s of stmts) results = results.concat(await medDB.prepare(s + ";").all())
-      } else await medDB.exec(`BEGIN; ${stmts.join(";")}; COMMIT;`)
+        for (const s of stmts) {
+          results = await sql.raw(s).execute(medDB).then(result => result.rows)
+        }
+      } else await medDB.transaction().execute(async tx => {
+        await sql.raw(sqlText).execute(tx)
+      })
       if (isSelect) queryClient.setQueryData(queryKey(dbTable), results)
       else await queryClient.invalidateQueries({ queryKey: queryKey(dbTable) })
       return results
@@ -137,9 +142,14 @@ export function useWorkspaceData() {
       if (!medDB) throw new Error("Database not initialized")
       const pk = currentTableName === "Patient" ? "patient_id" : "procedure_id"
       const safe = typeof newValue === "string" ? `'${newValue}'` : newValue
-      await medDB.exec(
-        `BEGIN; UPDATE "${dbTable}" SET "${col}"=${safe} WHERE ${pk}='${rowId}'; COMMIT;`
-      )
+      await medDB.transaction().execute(async tx => {
+        tx
+          .updateTable(dbTable)
+          .set(sql`${col} = ${newValue}`)
+          .where(sql`${pk}`, "=", rowId)
+          .execute();
+      })
+      console.log("Transaction update complete")
       await queryClient.invalidateQueries({ queryKey: queryKey(dbTable) })
     },
     onError: (e: any) => setError(e instanceof Error ? e.message : String(e))

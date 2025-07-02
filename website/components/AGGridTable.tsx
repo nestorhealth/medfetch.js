@@ -17,7 +17,7 @@ import "ag-grid-community/styles/ag-grid.css"
 import "ag-grid-community/styles/ag-theme-alpine.css"
 import { TableManager } from "../utils/tableManager"
 import { TransactionManager } from "../utils/transactionManager"
-import { useMedDB } from "@/lib/client"
+import { useMedfetch } from "@/lib/client"
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -47,7 +47,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
   onError,
   onSelectionChange
 }) => {
-  const db = useMedDB()
+  const db = useMedfetch()
   const [columnDefs, setColumnDefs] = useState<CustomColDef[]>([])
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [error, setError] = useState<string | null>(null)

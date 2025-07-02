@@ -19,7 +19,8 @@ If a file has a `*.node.ts `, this means this is the node export:
 }
 ```
 
-Otherwise, every file is exported as is, including any `module-tag.module-name`. Module definitions and side effects are allowed
+Otherwise, every file is exported as is, including any `module-tag.module-name`.
+Module definitions and side effects are allowed
 can be run on any module-tag only file. The only rule is that
 there are no barrel exports where you just export from another module
 only without importing it. This messes with bundlers so
@@ -30,6 +31,6 @@ bundler anyway.
 Modules include
 - `sqlite-wasm` - The `medfetch` default export (*main* thread)
 - `sqlite-wasm.worker` - Functions for invoking the extension directly on the worker thread.
-- `block.js` - A default export function for main thread blocking
-- `dialects` - Kysely related functions
-- `sql.js`
+- `block` - A default export function for main thread blocking
+- `dialects` - Kysely related functions, mainly internal
+- `sql` - Helpers for deriving runtime SQL on FHIR data

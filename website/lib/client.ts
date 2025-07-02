@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DatabaseIntrospector, Kysely, sql } from "kysely";
+import { Kysely, sql } from "kysely";
 import type { Condition, Patient, Practitioner } from "fhir/r5";
 import medfetch from "medfetch/sqlite-wasm";
 
@@ -39,6 +39,7 @@ export const memoryDB = new Kysely<typeof dialect.$db>({
 
 export const medDB: (db: Kysely<any>) => MedfetchDB = (db) => {
   return {
+    kys: db,
     introspection: db.introspection,
     exec: async (sqlString: string) => {
       await sql.raw(sqlString).execute(db);
@@ -55,16 +56,16 @@ export const medDB: (db: Kysely<any>) => MedfetchDB = (db) => {
   };
 };
 
-export function useMedDB(
+export function useMedfetch(
   filename?: string,
   vfs: "opfs" | "kvfs" = "opfs",
-): MedfetchDB {
-  const [dbRef, setDBRef] = useState<MedfetchDB>(medDB(memoryDB));
+): Kysely<any> {
+  const [dbRef, setDBRef] = useState<Kysely<any>>(memoryDB);
 
   useEffect(() => {
     async function open() {
       if (filename) {
-        const db = await openDBFile(filename, vfs).then(medDB);
+        const db = await openDBFile(filename, vfs);
         setDBRef(db);
       }
     }
@@ -89,16 +90,6 @@ export function sql2<T>(
   return sql<T>(strings, ...rest)
     .execute(memoryDB)
     .then((result) => result.rows);
-}
-
-// Types
-export interface MedfetchDB {
-  introspection: DatabaseIntrospector;
-  exec: (sql: string) => Promise<void>;
-  prepare: (sql: string) => {
-    all: () => Promise<any[]>;
-    run: () => Promise<void>;
-  };
 }
 
 // Define options type for initMedfetchDB
