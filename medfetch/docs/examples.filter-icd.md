@@ -9,11 +9,8 @@ import { mockPatientBundleFile } from "./data/bundles.Patient"
 
 const worker = new DBWorker({ name: "db.worker" });
 
-console.log("FILE", mockPatientBundleFile)
-
 const dialect = medfetch(
-  ":memory:",
-  mockPatientBundleFile,
+  import.meta.env.DEV ? "http://localhost:8787/fhir" : "https://api.medfetch.io/fhir",
   {
     worker,
     scope: ["Patient", "Condition"]

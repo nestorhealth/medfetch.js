@@ -1,6 +1,3 @@
-// Expose loading extension
-export { loadExtension } from "./sqlite-wasm.worker.js";
-
 import { dummy, type SqlOnFhirDialect } from "./sql.js";
 import { worker1DB, Worker1PromiserDialect } from "./dialects.js";
 import { BROWSER } from "esm-env";
@@ -53,6 +50,32 @@ const accessWorker = (userWorker?: Worker) => {
 };
 
 /**
+ * To allow for a plain array input for the scope as opposed to a nested
+ * object when using the default :memory: mode
+ * @param opts 
+ * @returns 
+ */
+function normalizeOptions<Resources extends {resourceType: string}>(opts: ClientOptions<Resources> | Resources["resourceType"][]): ClientOptions<Resources> {
+    if (Array.isArray(opts)) {
+        return {
+            scope: opts,
+            filename: ":memory:",
+            worker: accessWorker()
+        }
+    } else {
+        return opts;
+    }
+}
+
+type ClientOptions<Resources extends {
+    resourceType: string;
+}> = {
+    scope?: Resources["resourceType"][];
+    worker?: Worker;
+    filename?: string;
+};
+
+/**
  * Medfetch's default sqlite on FHIR client dialect constructor.
  * This delays opening the worker thread until the very first call sqlite-wasm worker thread from the neighboring [sqlite-wasm.thread.ts](./sqlite-wasm.thread.ts), so in that sense this is lazy
  * file.
@@ -64,7 +87,7 @@ const accessWorker = (userWorker?: Worker) => {
  * @example 
  * From a FHIR server
  * ```ts
- * const dialect = medfetch(":memory:", "https://my.fhir.api.com", [
+ * const dialect = medfetch("https://my.fhir.api.com", [
  *   "Patient",
  *   "Condition",
  *   "Encounter"
@@ -75,20 +98,18 @@ const accessWorker = (userWorker?: Worker) => {
  * From a File
  * ```ts
  * const file = new File(...)
- * const dialect = medfetch(":memory:", file, [
+ * const dialect = medfetch(file, [
  *   "Patient",
  *   "Condition",
  *   "Encounter"
  * ]);
  * ```
  */
-export default function medfetch<const Resources extends {resourceType: string}>(
-    filename: string,
+export default function medfetch<
+    const Resources extends {resourceType: string}
+>(
     baseURL: string | File,
-    config: {
-        scope: [Resources["resourceType"], ...Resources["resourceType"][]];
-        worker?: Worker;
-    }
+    config: ClientOptions<Resources> | Resources["resourceType"][] = []
 ): SqlOnFhirDialect<Resources> {
     if (!BROWSER) {
         console.warn(
@@ -96,19 +117,20 @@ export default function medfetch<const Resources extends {resourceType: string}>
         );
         return dummy("sqlite") as any as SqlOnFhirDialect<Resources>;
     }
-
+    const { worker, filename, scope } = normalizeOptions(config);
+    
     return new Worker1PromiserDialect({
         database: async () => {
-            const sqliteWorker = accessWorker(config.worker);
+            const sqliteWorker = accessWorker(worker);
             const promiserDB = await openPromiserDB(sqliteWorker, {
                 type: "open",
                 args: {
                     vfs: "opfs",
-                    filename,
+                    filename: filename ?? ":memory:"
                 },
                 aux: {
                     baseURL: baseURL,
-                    scope: config.scope
+                    scope: scope
                 }
             });
             return promiserDB;

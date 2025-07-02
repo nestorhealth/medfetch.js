@@ -103,9 +103,11 @@ type Rowify<T> = {
 export interface SqlOnFhirDialect<Resources extends { resourceType: string }>
     extends Dialect {
     readonly $db: {
-        [R in Resources["resourceType"]]: Rowify<Resources["resourceType"]> & {
-            id: string;
-        };
+        [R in Resources["resourceType"]]: Rowify<
+            Extract<Resources, { resourceType: R }> & {
+                id: string;
+            }
+        >;
     };
 }
 
@@ -281,11 +283,19 @@ function generateFhirTableMigration(
     };
 }
 
+/**
+ * Map from FHIR JSON schemas to SQL migration text + column lookup
+ * @param db A dummy kysely querybuilder
+ * @param jsonSchema The master JSON schema
+ * @param sqlColumnMap FHIR type -> SQL column data type
+ * @param resourceScope Scope 
+ * @returns An object with a migrations array listen in order of the {@link resourceScope} field in its `migrations` field and a `index` function that indexes a given Resource with the corresponding column number
+ */
 function generateMigrations(
     db: Kysely<any>,
     jsonSchema: JSONSchema7,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    resources?: string[],
+    resourceScope?: string[],
 ): SQLResolver {
     const definitions = jsonSchema["definitions"] as Record<
         string,
@@ -294,14 +304,17 @@ function generateMigrations(
     if (!definitions) {
         throw new Error("Bad json schema");
     }
-    if (!resources) {
-        resources = Object.keys(
+    // #region snippet
+    if (!resourceScope) {
+        // Default to EVERY resource type if nothing is passed!
+        resourceScope = Object.keys(
             (jsonSchema as any)["discriminator"]["mapping"],
         );
     }
+    // #endregion snippet
 
     const columnMap = new Map<string, Array<ColumnKey>>();
-    const schemaEntries = resources.map((resourceType) => {
+    const schemaEntries = resourceScope.map((resourceType) => {
         const resourceDefinition = definitions[resourceType];
         if (!resourceDefinition || !resourceDefinition["properties"]) {
             throw new Error(
