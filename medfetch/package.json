@@ -14,15 +14,11 @@
         "docs:preview": "vitepress preview docs"
     },
     "exports": {
-        "./block.js": {
+        "./block": {
             "types": "./dist/block.d.ts",
             "import": "./dist/block.js",
+            "node": "./dist/block.node.js",
             "default": "./dist/block.js"
-        },
-        "./block.node.js": {
-            "types": "./dist/block.node.d.ts",
-            "import": "./dist/block.node.js",
-            "default": "./dist/block.node.js"
         },
         "./dialects": {
             "types": "./dist/dialects.d.ts",
@@ -38,6 +34,11 @@
             "types": "./dist/sqlite-wasm.d.ts",
             "import": "./dist/sqlite-wasm.js",
             "default": "./dist/sqlite-wasm.js"
+        },
+        "./sqlite-wasm.worker": {
+            "types": "./dist/sqlite-wasm.worker.d.ts",
+            "import": "./dist/sqlite-wasm.worker.js",
+            "default": "./dist/sqlite-wasm.worker.js"
         }
     },
     "files": [

@@ -1,7 +1,7 @@
-import { medfetch } from "medfetch/sqlite-wasm";
 import { useEffect, useState } from "react";
 import { DatabaseIntrospector, Kysely, sql } from "kysely";
 import type { Condition, Patient, Practitioner } from "fhir/r5";
+import medfetch from "medfetch/sqlite-wasm";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
 const API_URL = apiURL.endsWith("/")
@@ -22,7 +22,6 @@ export async function openDBFile(filename: string, vfs: "opfs" | "kvfs" = "opfs"
   const dialect = medfetch(`${filename}.db`, `${API_URL}/fhir`, {
     scope: ["Patient", "Condition", "Practitioner"],
   });
-  console.log("got dialect", dialect)
 
   const db = new Kysely<typeof dialect.$db>({ dialect });
   dbCache.set(cacheKey, db);

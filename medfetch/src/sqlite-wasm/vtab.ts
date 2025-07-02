@@ -6,7 +6,7 @@ import type {
 import type { Resource } from "fhir/r4";
 import { Page } from "../json/json.page.js";
 import { Sqlite3, Sqlite3Module } from "../sqlite-wasm/worker1.types.js";
-import type { ResolveColumn, RowResolver } from "../sql.js";
+import type { ResolveColumn, SQLResolver } from "../sql.js";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -55,7 +55,7 @@ const log = {
 export function medfetch_module_alloc(
     loadPage: PageLoaderFn,
     sqlite3: Sqlite3Static,
-    sof: RowResolver,
+    sof: SQLResolver,
 ): Record<string, Sqlite3Module> {
     const modules: Record<string, Sqlite3Module> = {};
 
@@ -71,7 +71,7 @@ export function medfetch_module_alloc(
                 xNext: x_next(sqlite3),
                 xColumn: x_column(sqlite3, sof.index),
                 xEof: x_eof(sqlite3),
-                xFilter: x_filter(sqlite3)
+                xFilter: x_filter(sqlite3),
             },
         });
 
@@ -149,29 +149,34 @@ export function x_open(
             ppCursor,
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
-        const rawGen = loadPage(resourceType).rows;
-        const buffer: any[] = [];
-        let index = 0;
-        cursor.page = {
-            rows: {
-                next: () => {
-                    if (index < buffer.length) {
-                        return { value: buffer[index++], done: false };
-                    }
-                    const next = rawGen.next();
-                    if (!next.done) {
-                        buffer.push(next.value);
-                        index++;
-                    }
-                    return next;
+        try {
+            const rawGen = loadPage(resourceType).rows;
+            const buffer: any[] = [];
+            let index = 0;
+            cursor.page = {
+                rows: {
+                    next: () => {
+                        if (index < buffer.length) {
+                            return { value: buffer[index++], done: false };
+                        }
+                        const next = rawGen.next();
+                        if (!next.done) {
+                            buffer.push(next.value);
+                            index++;
+                        }
+                        return next;
+                    },
+                    reset: (() => {
+                        index = 0;
+                    }) as any,
                 },
-                reset: (() => {
-                    index = 0;
-                }) as any,
-            },
-        } as any;
+            } as any;
 
-        return sqlite3.capi.SQLITE_OK;
+            return sqlite3.capi.SQLITE_OK;
+        } catch (err) {
+            log.error(`xOpen() error on resourceType="${resourceType}": ${err}`);
+            return sqlite3.capi.SQLITE_ERROR;
+        }
     };
 }
 
@@ -266,9 +271,7 @@ export function x_eof(sqlite3: Sqlite3Static) {
  * @param resourceType
  * @returns
  */
-export function x_filter(
-    _sqlite3: Sqlite3Static,
-) {
+export function x_filter(_sqlite3: Sqlite3Static) {
     let sqlite3 = _sqlite3 as Sqlite3;
     let { capi, vtab } = sqlite3;
 

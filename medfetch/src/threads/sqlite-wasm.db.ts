@@ -1,24 +1,23 @@
 /// <reference lib="webworker" />
-import { loadExtension } from "../sqlite-wasm.js";
-import { setSyncFetch, syncFetch } from "./sqlite-wasm.block.js";
-import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
+import { loadExtension } from "../sqlite-wasm.worker.js";
+import { setSyncFetch, syncFetch } from "./sqlite-wasm.fetch.js";
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm"; // external
 
-// The default web worker that handles loading the wasm web worker if user
-// doesn't provide one
+// Default sqlite3 worker -- connects to the fetch worker 
 sqlite3InitModule().then(
   async sqlite3 => {
-    const blockFetchWorker = new Worker(
+    const fetchWorker = new Worker(
       new URL(
         import.meta.env.DEV ?
-        "./sqlite-wasm.block.js" : "./sqlite-wasm.block.js",
+        "./sqlite-wasm.fetch.js" : "./sqlite-wasm.fetch.js",
         import.meta.url
       ),
       {
         type: "module",
-        name: "sqlite-wasm.block"
+        name: "sqlite-wasm.fetch"
       }
     );
-    await setSyncFetch(blockFetchWorker);
+    await setSyncFetch(fetchWorker);
     const rc = loadExtension(sqlite3, {
       fetch: syncFetch
     });

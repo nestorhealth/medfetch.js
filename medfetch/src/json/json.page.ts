@@ -3,6 +3,7 @@ import { kdvParser, type PathValue } from "./json.parse.js";
 import { strFromU8, unzipSync } from "fflate";
 import type { JSONSchema7 } from "json-schema";
 import type { Bundle } from "fhir/r5.js";
+import { PageLoaderFn } from "~/sqlite-wasm/vtab.js";
 
 /// Implementation level types
 type Link = PathValue<Bundle, "Bundle">["link"];
@@ -11,6 +12,8 @@ type Entry = PathValue<Bundle, "Bundle">["entry"];
 /// Their parse functions
 const parseLink = kdvParser<Link[]>("link", 1);
 const parseEntry = kdvParser<Entry[]>("entry", 1);
+
+export type FetchTextSync = (...args: Parameters<typeof fetch>) => string;
 
 /**
  * Parse a synchronous text generator of a Bundle
@@ -25,15 +28,78 @@ export class Page {
     #rows: Generator<Resource> | undefined = undefined;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
+    /**
+     * Create a {@link PageLoaderFn}. You probably won't need to use this yourself
+     * @param baseURL Either a string to indicate the base fhir url or a singular File of a {@link Bundle} that serves as the base of the fhir data
+     * @param syncFetch The {@link FetchTextSync} text getter function
+     * @returns A page loader
+     * 
+     * @example
+     * ```ts 
+     * // src/sqlite-wasm.worker.ts
+     * const pageLoader = Page.createLoader(baseURL, syncFetch);
+     * // Map database index to medfetch_module "instance"
+     * const dbIndex = dbCount.set();
+     * modules[dbIndex] = medfetch_module_alloc(
+     *     pageLoader,
+     *     sqlite3,
+     *     resourcesToRows
+     * );
+     * ```
+     */
+    static createLoader(
+        baseURL: string | File,
+        syncFetch: FetchTextSync,
+    ): PageLoaderFn {
+        if (baseURL instanceof File) {
+            const url = URL.createObjectURL(baseURL);
+            const bundle: Bundle = JSON.parse(syncFetch(url));
+            const pageCache: Map<string, string> = new Map();
+            return (resourceType) => {
+                let filteredBundle = pageCache.get(resourceType);
+                if (!filteredBundle) {
+                    filteredBundle = JSON.stringify({
+                        ...bundle,
+                        entry: bundle.entry?.filter(
+                            (entry) =>
+                                entry.resource?.resourceType === resourceType,
+                        ),
+                    });
+                    pageCache.set(resourceType, filteredBundle);
+                }
+                return new Page(function* () {
+                    yield filteredBundle;
+                });
+            };
+        } else {
+            return (resourceType) => {
+                let responseText: string = syncFetch(
+                    `${baseURL}/${resourceType}`,
+                );
+                const generator = function* () {
+                    // just yield the whole text for now until
+                    yield responseText;
+                };
+
+                return new Page(generator(), (nextURL) => {
+                    return (function* () {
+                        const responseText = syncFetch(nextURL);
+                        yield responseText;
+                    })();
+                });
+            };
+        }
+    }
+
     constructor(
-        chunks: Generator<string>,
+        chunks: Generator<string> | (() => Generator<string>),
         nextPage?: (nextURL: string) => Generator<string>,
     ) {
         this.#nextURL = null;
         this.#isLinkParsed = false;
         this.#cursor = -1;
         this.#acc = [];
-        this.#chunks = chunks;
+        this.#chunks = chunks instanceof Function ? chunks() : chunks;
         this.#fetcher = nextPage;
     }
 
@@ -117,8 +183,8 @@ export class Page {
  * @returns The JSON parsed JSON schema object
  */
 export async function unzipJSONSchema(
-    zipURL: string = "https://build.fhir.org/fhir.schema.json.zip",
-    filename = "fhir.schema.json",
+    zipURL: string,
+    filename: string,
 ): Promise<JSONSchema7> {
     const response = await fetch(zipURL).catch((error) => {
         console.error(`Couldn't handle "fetch" request: ${error}`);

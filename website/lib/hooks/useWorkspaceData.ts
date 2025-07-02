@@ -10,7 +10,7 @@ export function useWorkspaceData() {
     useState<"Patient" | "Procedure">("Patient")
   const [error, setError] = useState<string | null>(null)
 
-  const medDB = useMedDB()
+  const medDB = useMedDB();
   const queryClient = useQueryClient()
   const [isInitialized, setIsInitialized] = useState(false)
 

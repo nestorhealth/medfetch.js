@@ -52,7 +52,7 @@ export default defineConfig({
                 "sql": "src/sql.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
                 "threads/sqlite-wasm.db": "src/threads/sqlite-wasm.db.ts",
-                "threads/sqlite-wasm.block": "src/threads/sqlite-wasm.block.ts",
+                "threads/sqlite-wasm.fetch": "src/threads/sqlite-wasm.fetch.ts",
             },
             formats: ["es"],
             fileName: (format, name) =>

@@ -12,12 +12,12 @@ import {
     SqliteQueryCompiler,
     Dialect,
 } from "kysely";
-import type {
-    FhirDataType,
-    PrimitiveKey,
-} from "./json/json.parse.js";
+import type { FhirDataType, PrimitiveKey } from "./json/json.parse.js";
 import { unzipJSONSchema } from "./json/json.page.js";
 
+/**
+ * Default column map of FHIR type to SQL type for SQLite
+ */
 export const DEFAULT_SQLITE_FROM_FHIR = {
     boolean: "integer", // SQLite has no native boolean; use 0/1
     base64Binary: "blob", // binary content
@@ -41,6 +41,9 @@ export const DEFAULT_SQLITE_FROM_FHIR = {
     unsignedInt: "integer",
 } satisfies Record<PrimitiveKey, ColumnDataType>;
 
+/**
+ * Default column map of FHIR type to SQL type for Postgresql
+ */
 export const DEFAULT_POSTGRESQL_FROM_FHIR = {
     base64Binary: "bytea", // PostgreSQL binary
     canonical: "text", // FHIR URI-like string
@@ -68,6 +71,12 @@ export const DEFAULT_POSTGRESQL_FROM_FHIR = {
     time: "time", // Time without date
 } satisfies Record<PrimitiveKey, ColumnDataType>;
 
+const DEFAULT_JSON_SCHEMA_OPTIONS = {
+    jsonSchemaURL: "https://build.fhir.org/fhir.schema.json.zip",
+    jsonSchemaFilename: "fhir.schema.json",
+    scope: [],
+} satisfies JSONSchemaOptions;
+
 /**
  * The sql text syntaxes the fetcher works with
  */
@@ -91,10 +100,12 @@ type Rowify<T> = {
 /**
  * Generic for a sql on fhir "dialect"
  */
-export interface SqlOnFhirDialect<Resources extends {resourceType: string;}>
+export interface SqlOnFhirDialect<Resources extends { resourceType: string }>
     extends Dialect {
     readonly $db: {
-        [R in Resources["resourceType"]]: Rowify<Resources["resourceType"]> & { id: string };
+        [R in Resources["resourceType"]]: Rowify<Resources["resourceType"]> & {
+            id: string;
+        };
     };
 }
 
@@ -111,14 +122,16 @@ interface ColumnValue {
  * The underlying js-land data generated that the database has access to at runtime
  * @internal
  */
-export interface RowResolver {
+export interface SQLResolver {
     /**
      * List of resource type to sql migration text associations held in a 2-tuple
      */
-    migrations: Array<[
-        string, // ResourceType
-        string // Migration Text
-    ]>;
+    migrations: Array<
+        [
+            string, // ResourceType
+            string, // Migration Text
+        ]
+    >;
 
     /**
      * From the fetched resource presented in arg0 and the given
@@ -131,12 +144,11 @@ export interface RowResolver {
     index: (resource: unknown, index: number) => ColumnValue;
 }
 
-
 /**
  * Static dummy kysely orm object
  * @param sqlFlavor The dialect enum
  */
-export function dummyDialect(sqlFlavor: "sqlite" | "postgresql"): Dialect {
+export function dummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
     switch (sqlFlavor) {
         case "sqlite": {
             return {
@@ -188,7 +200,6 @@ interface FhirTableMigration {
  */
 export type ResolveColumn = (resource: any, index: number) => ColumnValue;
 
-
 /**
  * Checks an arbitrary object and asserts that "id" in resource and "resourceType" in resource. That's it.
  * @param resource Some arbitrary js value
@@ -216,7 +227,8 @@ function checkResource(
  * @param key The JSON key name
  * @returns If {@link key} should be iterated over in the column builder
  */
-const defaultKeyFilter = (key: string) => key.charCodeAt(0) !== 95 && key !== "id";
+const defaultKeyFilter = (key: string) =>
+    key.charCodeAt(0) !== 95 && key !== "id";
 
 /**
  * Get the "create table" migration text for the given resource type from the data
@@ -232,7 +244,7 @@ function generateFhirTableMigration(
     columns: [string, JSONSchema7Definition][],
     db: Kysely<any>,
     sqlColumnMap: Record<string, ColumnDataType>,
-    keyFilter: (key: string) => boolean = defaultKeyFilter
+    keyFilter: (key: string) => boolean = defaultKeyFilter,
 ): FhirTableMigration {
     const tb = db.schema
         .createTable(resourceType)
@@ -265,7 +277,7 @@ function generateFhirTableMigration(
     }, tb);
     return {
         sql: finalTb.compile().sql + ";\n",
-        columnKeys: columnKeys
+        columnKeys: columnKeys,
     };
 }
 
@@ -273,8 +285,8 @@ function generateMigrations(
     db: Kysely<any>,
     jsonSchema: JSONSchema7,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    resources?: string[]
-): RowResolver {
+    resources?: string[],
+): SQLResolver {
     const definitions = jsonSchema["definitions"] as Record<
         string,
         Exclude<JSONSchema7Definition, boolean>
@@ -283,14 +295,18 @@ function generateMigrations(
         throw new Error("Bad json schema");
     }
     if (!resources) {
-        resources = Object.keys((jsonSchema as any)["discriminator"]["mapping"]);
+        resources = Object.keys(
+            (jsonSchema as any)["discriminator"]["mapping"],
+        );
     }
 
     const columnMap = new Map<string, Array<ColumnKey>>();
     const schemaEntries = resources.map((resourceType) => {
         const resourceDefinition = definitions[resourceType];
         if (!resourceDefinition || !resourceDefinition["properties"]) {
-            throw new Error(`That resource key doesn't exist: "${resourceType}"`);
+            throw new Error(
+                `That resource key doesn't exist: "${resourceType}"`,
+            );
         }
         const resourceProperties = resourceDefinition["properties"];
         const migration = generateFhirTableMigration(
@@ -314,7 +330,7 @@ function generateMigrations(
             if (value) {
                 if (typeof value === "object") {
                     switch (column.fhirType) {
-                        // Just take its 
+                        // Just take its
                         case "Reference": {
                             value = (value as Reference).reference ?? null;
                             break;
@@ -336,22 +352,30 @@ function generateMigrations(
     };
 }
 
+type JSONSchemaOptions = {
+    jsonSchemaURL: string | undefined;
+    jsonSchemaFilename: string | undefined;
+    scope: string[];
+};
+
 /**
- * Get the default FHIR to SQL database schema
+ * Create a FHIR to SQL database schema
  * @param sqlFlavor The sql text dialect
  * @param resourceTypes The resource types to include
- * @param sqlColumnMap Any primitive element -> sql column included here will be overriden
+ * @param config Optional options. From {@link JSONSchemaOptions}
  * @returns A SQL on FHIR view for the given schema
  */
-export async function migrations(
+export async function fromFhir(
     dialect: SqlFlavor,
     sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    resources?: string[]
-): Promise<RowResolver> {
+    jsonSchemaOptions: Partial<JSONSchemaOptions>,
+): Promise<SQLResolver> {
+    const { jsonSchemaURL, jsonSchemaFilename, scope } = jsonSchemaOptions;
     const db = new Kysely({
-        dialect: dummyDialect(dialect)
-    })
-    return unzipJSONSchema().then((schema) =>
-        generateMigrations(db, schema, sqlColumnMap, resources),
-    );
+        dialect: dummy(dialect),
+    });
+    return unzipJSONSchema(
+        jsonSchemaURL ?? DEFAULT_JSON_SCHEMA_OPTIONS.jsonSchemaURL,
+        jsonSchemaFilename ?? DEFAULT_JSON_SCHEMA_OPTIONS.jsonSchemaFilename,
+    ).then((schema) => generateMigrations(db, schema, sqlColumnMap, scope));
 }

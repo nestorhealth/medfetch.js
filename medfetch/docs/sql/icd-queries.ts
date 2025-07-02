@@ -1,6 +1,5 @@
 import type { Condition, Patient } from "fhir/r4";
-import { sql, Kysely, CompiledQuery } from "kysely";
-import { dummyDialect } from "~/sql";
+import { sql, Kysely, CompiledQuery, DummyDriver, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
 
 type UserDB = {
   Patient: Patient;
@@ -13,10 +12,15 @@ type UserDB = {
     first_name: string;
     last_name: string;
   };
-}
+};
 
 const db = new Kysely<UserDB>({
-  dialect: dummyDialect("sqlite"),
+  dialect: {
+    createAdapter: () => new SqliteAdapter(),
+    createDriver: () => new DummyDriver(),
+    createIntrospector: (db) => new SqliteIntrospector(db),
+    createQueryCompiler: () => new SqliteQueryCompiler(),
+  },
 });
 
 const initial = db.schema.createTable("patients").as(
@@ -56,12 +60,11 @@ const adultPatientsQuery = adultPatients.compile();
 
 function makeQueryState(query: CompiledQuery<any>, isMutation = false) {
   return async (db: Kysely<any>) => {
-    let rows = await db
-      .executeQuery(query).then(r => r.rows);
+    let rows = await db.executeQuery(query).then((r) => r.rows);
     if (isMutation) {
       rows = await db.selectFrom("patients").selectAll("patients").execute();
     }
-    
+
     const columns =
       (await db.introspection.getTables()).find((t) => t.name === "patients")
         ?.columns ?? [];

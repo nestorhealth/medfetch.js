@@ -2,34 +2,34 @@
 An in-database Javascript [sql-on-fhir](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/) implementation. It connects [@sqlite.org/sqlite-wasm]() 
 loaded with our custom virtual-table extension to a [kysely]() orm instance.
 
-## Quick start
-1. Install
-```bash
-pnpm add medfetch kysely @sqlite.org/sqlite-wasm
+## Modules
+
+All public ones are under `src/*`. Bundling is kind of fragile with browser builds that involve worker contexts so don't do barrel exports here.
+If a file has a `*.node.ts `, this means this is the node export:
+```json
+"exports": {
+    "./block.js": {
+        "types": "./dist/block.d.ts",
+        "import": "./dist/block.js",
+        "node": "./dist/block.node.js",
+        "default": "./dist/block.js"
+    ...
+    }
+...
+}
 ```
 
-2. Create your sql-on-fhir dialect and instantiate db client
-```ts
-import { sqliteOnFhir } from "medfetch/sqlite";
-import { Kysely } from "kysely";
+Otherwise, every file is exported as is, including any `module-tag.module-name`. Module definitions and side effects are allowed
+can be run on any module-tag only file. The only rule is that
+there are no barrel exports where you just export from another module
+only without importing it. This messes with bundlers so
+it's better to sacrifice the bundling into a single file
+since the modules will be bundled into js by the consumer
+bundler anyway.
 
-const dialect = sqliteOnFhir(":memory:", "https://my.fhir.api.com", [
-    /* There are over 150 resources so you are in charge
-       of picking which ones you care about. */
-    "Patient",
-    "Condition",
-    "Encounter"
-]);
-
-export const db = new Kysely({ dialect });
-```
-
-You can infer the resolved database type using the infer field `.$db` from the dialect if you're using typescript:
-```ts
-export const db = new Kysely<typeof dialect.$db>({ dialect }
-```
-
-## Developing
-Docs are in /docs. It deploys to cloudflare workers as a static build.
-The official ones are on https://docs.medfetch.io. It updates on pushes to
-main.
+Modules include
+- `sqlite-wasm` - The `medfetch` default export (*main* thread)
+- `sqlite-wasm.worker` - Functions for invoking the extension directly on the worker thread.
+- `block.js` - A default export function for main thread blocking
+- `dialects` - Kysely related functions
+- `sql.js`
