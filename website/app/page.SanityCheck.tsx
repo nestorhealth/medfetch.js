@@ -9,14 +9,31 @@ import { toast } from "sonner";
 export default function SanityCheck() {
   useEffect(() => {
     async function logCheckResult() {
-      await authClient.getSession();
+      const session = await authClient.getSession();
+      if (session.data) {
+        toast.success(`You are authenticated.`)
+      } else {
+        toast.error(`You should sign-in`);
+      }
       const workspace = await api.GET("/workspaces/{id}", {
         params: {
           path: {
             id: 2
           }
+        },
+      })
+      .catch(
+        () => {
+          toast.warning(`Pinging workspace again...`)
+          return api.GET("/workspaces/{id}", {
+            params: {
+              path: {
+                id: 2
+              }
+            }
+          });
         }
-      });
+      )
       if (!workspace.data) {
         return toast.error(`Unable to fetch workspace:${workspace.error.error}`);
       }
