@@ -2,7 +2,7 @@
 
 import { mockPatientBundleFile } from "@/app/mock-file";
 import { api, authClient } from "@/lib/api";
-import { open } from "@/lib/client";
+import { openDB } from "@/lib/client";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 import { useEffect } from "react";
@@ -36,7 +36,7 @@ async function logCheckResult() {
   if (!workspace.data) {
     return toast.error(`Unable to fetch workspace:${workspace.error.error}`);
   }
-  const db = await open(workspace.data.name);
+  const db = await openDB(workspace.data.name, "");
   const tables = await db.introspection.getTables();
   const hasPatientsTable = tables.some((table) => table.name === "patients");
   if (!hasPatientsTable) {
@@ -59,8 +59,9 @@ async function logCheckResult() {
 export default function SanityCheck() {
   useEffect(() => {
     async function foo() {
-      const dialect = medfetch(":memory:", mockPatientBundleFile, {
-        scope: ["Patient"]
+      const dialect = medfetch(mockPatientBundleFile, {
+        scope: ["Patient"],
+        filename: ":memory:"
       });
       const db = new Kysely<any>({
         dialect

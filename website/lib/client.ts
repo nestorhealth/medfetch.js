@@ -19,8 +19,9 @@ const dbCache = new Map<string, Kysely<any>>();
 export async function openDB(filename: string, baseURL: string | File) {
   const cacheKey = `${filename}`;
   if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
-  const dialect = medfetch(`${filename}.db`, baseURL, {
+  const dialect = medfetch(baseURL, {
     scope: ["Patient", "Condition", "Practitioner"],
+    filename: filename
   });
 
   const db = new Kysely<any>({ dialect });
@@ -29,7 +30,7 @@ export async function openDB(filename: string, baseURL: string | File) {
 }
 
 type RESOURCES = Patient | Condition | Practitioner;
-const dialect = medfetch<RESOURCES>(":memory:", `${API_URL}/fhir`, {
+const dialect = medfetch<RESOURCES>(`${API_URL}/fhir`, {
   scope: ["Patient", "Condition", "Practitioner"],
 });
 

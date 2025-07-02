@@ -562,6 +562,108 @@
         }
       }
     },
+    "/fhir/{resourceType}": {
+      "get": {
+        "description": "Search by Resource Type",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "resourceType",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "resourceType": {
+                      "type": "string",
+                      "enum": [
+                        "Bundle"
+                      ]
+                    },
+                    "link": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "relation": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "relation",
+                          "url"
+                        ]
+                      }
+                    },
+                    "entry": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "resource": {
+                            "type": "object",
+                            "properties": {
+                              "resourceType": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "resourceType"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "resourceType",
+                    "link",
+                    "entry"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/workspaces": {
       "post": {
         "requestBody": {
@@ -593,6 +695,9 @@
                   "properties": {
                     "error": {
                       "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -610,6 +715,9 @@
                   "type": "object",
                   "properties": {
                     "error": {
+                      "type": "string"
+                    },
+                    "message": {
                       "type": "string"
                     }
                   },
@@ -646,6 +754,9 @@
                   "properties": {
                     "error": {
                       "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -663,7 +774,7 @@
         "parameters": [
           {
             "schema": {
-              "type": "number"
+              "type": "string"
             },
             "required": true,
             "name": "id",
@@ -690,6 +801,9 @@
                   "properties": {
                     "error": {
                       "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -707,6 +821,9 @@
                   "type": "object",
                   "properties": {
                     "error": {
+                      "type": "string"
+                    },
+                    "message": {
                       "type": "string"
                     }
                   },
@@ -726,6 +843,9 @@
                   "properties": {
                     "error": {
                       "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -741,7 +861,7 @@
         "parameters": [
           {
             "schema": {
-              "type": "number"
+              "type": "string"
             },
             "required": true,
             "name": "id",
@@ -768,6 +888,9 @@
                   "properties": {
                     "error": {
                       "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -785,6 +908,9 @@
                   "type": "object",
                   "properties": {
                     "error": {
+                      "type": "string"
+                    },
+                    "message": {
                       "type": "string"
                     }
                   },

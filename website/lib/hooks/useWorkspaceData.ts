@@ -11,18 +11,19 @@ export function useWorkspaceData() {
   >("Patient");
   const [error, setError] = useState<string | null>(null);
 
-  const raw = localStorage.getItem("workspaceData");
+  const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
   const blob = new Blob([JSON.stringify(parsed.jsonData)], {
     type: "application/json",
   });
-  const file = new File([blob], "asdfasdfasd;faeifha;sfd.json", {
+  const file = new File([blob], "dummy.json", {
     type: "application/json",
     lastModified: Date.now(),
   });
   const medDB = new Kysely<any>({
-    dialect: medfetch("this_doesn't_matter_lol", file, {
+    dialect: medfetch(file, {
       scope: ["Patient", "Procedure"],
+      filename: "thisReallyDoesntMatter"
     }),
   });
 

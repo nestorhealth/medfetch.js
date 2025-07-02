@@ -1,7 +1,8 @@
 import { z } from "@hono/zod-openapi"
 
 const baseErrorSchema = z.object({
-  error: z.string()
+  error: z.string(),
+  message: z.string().optional()
 });
 
 export const ERRORS = {
