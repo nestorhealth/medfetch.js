@@ -46,7 +46,7 @@ export const GET = {
     path: "/{id}",
     request: {
       params: z.object({
-        id: z.number()
+        id: z.string()
       })
     },
     responses: {
@@ -79,3 +79,25 @@ export const GET = {
     }
   })
 };
+
+export const DELETE = createRoute({
+  method: "delete",
+  path: "/{id}",
+  request: {
+    params: z.object({
+      id: z.string()
+    })
+  },
+  responses: {
+    200: {
+      description: "200 OK",
+      content: {
+        "application/json": {
+          schema: WorkspaceSchema
+        }
+      }
+    },
+    401: ERRORS[401],
+    404: ERRORS[404]
+  }
+})

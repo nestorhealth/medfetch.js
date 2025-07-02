@@ -1,7 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { auth } from "~/lib/auth";
 import { customLogger, db } from "~/middleware";
-import { GET, POST } from "~/routes/workspaces/schema";
+import { DELETE, GET, POST } from "~/routes/workspaces/schema";
 
 const workspaces = new OpenAPIHono<{
   Bindings: Env;
@@ -96,5 +96,30 @@ workspaces.openapi(GET.list, async (c) => {
     .execute();
   return c.json(resultRows, 200);
 });
+
+workspaces.openapi(DELETE, async (c) => {
+  const session = await auth.api.getSession({
+    headers: c.req.raw.headers
+  });
+  if (!session) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+  
+  const workspaceId = parseId(c.req.param("id"));
+  const resultRow = await db
+    .deleteFrom("workspaces")
+    .where("workspaces.id", "=", workspaceId)
+    .where("workspaces.userId", "=", session.user.id)
+    .returningAll()
+    .executeTakeFirst();
+  if (!resultRow) {
+    return c.json({ error: "Not Found" }, 404);
+  }
+  return c.json({
+    id: resultRow.id,
+    name: resultRow.name,
+    vfsType: resultRow.vfsType
+  }, 200);
+})
 
 export default workspaces;

@@ -13,8 +13,9 @@ export const cors = createMiddleware(async (c, next) => {
   const corsHandler = corsMiddleware({
     origin: [c.env?.MEDFETCH_DOCS_HOST ?? "https://docs.medfetch.io", c.env?.MEDFETCH_DEMO_HOST ?? "https://medfetchjs.pages.dev"],
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
+    allowHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400,
+    credentials: true
   });
   return corsHandler(c, next);
 });

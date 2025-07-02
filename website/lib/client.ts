@@ -1,5 +1,5 @@
 import { medfetch } from "medfetch/sqlite-wasm";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DatabaseIntrospector, Kysely, sql } from "kysely";
 import type { Condition, Patient, Practitioner } from "fhir/r5";
 
@@ -16,12 +16,13 @@ const dbCache = new Map<string, Kysely<any>>();
  * @param vfs The backing browser filesystem - kvfs only works on browser, opfs only works on worker threads
  * @returns The kysely instance
  */
-async function openDBFile(filename: string, vfs: "opfs" | "kvfs" = "opfs") {
+export async function openDBFile(filename: string, vfs: "opfs" | "kvfs" = "opfs") {
   const cacheKey = `${filename}?vfs=${vfs}`;
   if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
   const dialect = medfetch(`${filename}.db`, `${API_URL}/fhir`, {
     scope: ["Patient", "Condition", "Practitioner"],
   });
+  console.log("got dialect", dialect)
 
   const db = new Kysely<typeof dialect.$db>({ dialect });
   dbCache.set(cacheKey, db);
