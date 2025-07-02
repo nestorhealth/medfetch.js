@@ -1,7 +1,7 @@
 "use client";
 
 import { api, authClient } from "@/lib/api";
-import { openDBFile, useMedDB } from "@/lib/client";
+import { openDBFile } from "@/lib/client";
 import { sql } from "kysely";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 export default function SanityCheck() {
   useEffect(() => {
     async function logCheckResult() {
+      await authClient.getSession();
       const workspace = await api.GET("/workspaces/{id}", {
         params: {
           path: {
@@ -30,6 +31,7 @@ export default function SanityCheck() {
       }
       const patientsCached = await sql.raw("select * from patients").execute(db);
       console.log("SAVED PATIENTS", patientsCached.rows)
+      toast.success(`Successfully cached ${patientsCached.rows.length} custom-schema patients.`);
     }
     logCheckResult();
   }, []);
