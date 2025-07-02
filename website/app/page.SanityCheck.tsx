@@ -2,7 +2,7 @@
 
 import { mockPatientBundleFile } from "@/app/mock-file";
 import { api, authClient } from "@/lib/api";
-import { openDBFile } from "@/lib/client";
+import { open } from "@/lib/client";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 import { useEffect } from "react";
@@ -36,7 +36,7 @@ async function logCheckResult() {
   if (!workspace.data) {
     return toast.error(`Unable to fetch workspace:${workspace.error.error}`);
   }
-  const db = await openDBFile(workspace.data.name);
+  const db = await open(workspace.data.name);
   const tables = await db.introspection.getTables();
   const hasPatientsTable = tables.some((table) => table.name === "patients");
   if (!hasPatientsTable) {

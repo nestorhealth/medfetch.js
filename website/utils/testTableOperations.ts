@@ -1,13 +1,12 @@
-import { medDB, memoryDB } from "@/lib/client";
+import { memoryDB } from "@/lib/client";
 import { TableManager } from "./tableManager";
 import { TransactionManager, TransactionIsolationLevel } from "./transactionManager";
 import { generateTestData, verifyTableExists } from "./testUtils";
+import { sql } from "kysely";
 
 async function runTests() {
-  console.log("Initializing test database...");
-  const db = medDB(memoryDB);
-  const tableManager = new TableManager(db);
-  const transactionManager = new TransactionManager(db);
+  const tableManager = new TableManager(memoryDB);
+  const transactionManager = new TransactionManager(memoryDB);
 
   try {
     // Test 1: Create a test table with various column types
@@ -25,7 +24,7 @@ async function runTests() {
     });
     
     // Verify table was created
-    const tableExists = await verifyTableExists(db, "TestTable");
+    const tableExists = await verifyTableExists(memoryDB, "TestTable");
     console.log(`✓ Table created successfully (verified: ${tableExists})`);
 
     // Test 2: Insert test data using utility function
@@ -73,11 +72,11 @@ async function runTests() {
         await transactionManager.executeInTransaction(
           async () => {
             // Update a row
-            await db.exec(`
+            await sql.raw(`
               UPDATE TestTable 
               SET score = score + 10 
               WHERE id = 1;
-            `);
+            `).execute(memoryDB);
             console.log(`✓ Transaction with ${level} isolation executed successfully`);
           },
           { isolationLevel: level }
@@ -143,7 +142,7 @@ async function runTests() {
 
     // Test 8: Verify final state
     console.log("\nTest 8: Verifying final state...");
-    const finalData = await db.prepare("SELECT * FROM TestTable ORDER BY id;").all();
+    const finalData = await sql.raw("SELECT * FROM TestTable ORDER BY id;").execute(memoryDB);
     console.log("Final table state:", JSON.stringify(finalData, null, 2));
 
     console.log("\nAll tests completed successfully!");

@@ -3,7 +3,7 @@
  * Utility functions for database testing
  */
 
-import { MedfetchDB } from "@/lib/client";
+import { Kysely, sql } from "kysely";
 
 export interface TestData {
   id: number;
@@ -27,15 +27,15 @@ export const generateTestData = (count: number): TestData[] => {
   }));
 };
 
-export const verifyTableExists = async (db: MedfetchDB, tableName: string): Promise<boolean> => {
-  const result = await db.prepare(`
+export const verifyTableExists = async (db: Kysely<any>, tableName: string): Promise<boolean> => {
+  const result = await sql.raw(`
     SELECT name FROM sqlite_master 
     WHERE type='table' AND name='${tableName}';
-  `).all();
+  `).execute(db).then(r => r.rows);
   return result.length > 0;
 };
 
-export const getTableRowCount = async (db: MedfetchDB, tableName: string): Promise<number> => {
-  const result = await db.prepare(`SELECT COUNT(*) as count FROM ${tableName};`).all();
+export const getTableRowCount = async (db: Kysely<any>, tableName: string): Promise<number> => {
+  const result = await sql.raw(`SELECT COUNT(*) as count FROM ${tableName};`).execute(db).then(result => result.rows);
   return (result[0] as { count: number }).count;
 }; 

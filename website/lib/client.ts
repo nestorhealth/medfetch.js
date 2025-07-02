@@ -16,14 +16,14 @@ const dbCache = new Map<string, Kysely<any>>();
  * @param vfs The backing browser filesystem - kvfs only works on browser, opfs only works on worker threads
  * @returns The kysely instance
  */
-export async function openDBFile(filename: string, vfs: "opfs" | "kvfs" = "opfs") {
-  const cacheKey = `${filename}?vfs=${vfs}`;
+export async function openDB(filename: string, baseURL: string | File) {
+  const cacheKey = `${filename}`;
   if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
-  const dialect = medfetch(`${filename}.db`, `${API_URL}/fhir`, {
+  const dialect = medfetch(`${filename}.db`, baseURL, {
     scope: ["Patient", "Condition", "Practitioner"],
   });
 
-  const db = new Kysely<typeof dialect.$db>({ dialect });
+  const db = new Kysely<any>({ dialect });
   dbCache.set(cacheKey, db);
   return db;
 }
@@ -65,7 +65,7 @@ export function useMedfetch(
   useEffect(() => {
     async function open() {
       if (filename) {
-        const db = await openDBFile(filename, vfs);
+        const db = await openDB(filename, vfs);
         setDBRef(db);
       }
     }
