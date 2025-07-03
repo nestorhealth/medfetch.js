@@ -83,6 +83,9 @@ export async function table0(db: Kysely<any>) {
   const columns =
     (await db.introspection.getTables()).find((t) => t.name === "patients")
       ?.columns ?? [];
+  
+  const pragma = await sql.raw(`PRAGMA table_info('patients')`).execute(db).then(r => r.rows);
+  console.log("PRAGMA", pragma)
 
   return {
     rows,

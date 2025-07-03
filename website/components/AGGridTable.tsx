@@ -19,10 +19,12 @@ import { TableManager } from "../lib/tableManager"
 import { TransactionManager } from "../lib/transactionManager"
 import { useMedfetch } from "@/lib/client"
 import { call } from "@/lib/utils"
+import { Kysely } from "kysely"
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
 interface AGGridTableProps {
+  db: Kysely<any>;
   resource: string
   rowData: any[]
   onCellEdit: (rowId: any, col: string, newValue: any) => void
@@ -42,13 +44,13 @@ interface CustomColDef extends AgGridColDef {
 }
 
 const AGGridTable: React.FC<AGGridTableProps> = ({
+  db,
   resource,
   rowData,
   onCellEdit,
   onError,
   onSelectionChange
 }) => {
-  const db = useMedfetch()
   const [columnDefs, setColumnDefs] = useState<CustomColDef[]>([])
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -60,7 +62,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
     errors: new Map()
   })
 
-  const tableManager = useRef(new TableManager(db))
+  const tableManager = useRef(new TableManager(db));
   const transactionManager = useRef(new TransactionManager(db))
 
   useEffect(() => {

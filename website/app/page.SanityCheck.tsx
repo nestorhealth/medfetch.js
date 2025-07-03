@@ -65,6 +65,9 @@ export default function SanityCheck() {
       });
       const result = await db.selectFrom("Patient").selectAll("Patient").execute();
       console.log("Sanity Check from File results:", result)
+      
+      const pragma = await sql.raw(`pragma table_info("Patient")`).execute(db);
+      console.log("Sanity Check Pragma:", pragma)
     }
     foo();
   }, []);

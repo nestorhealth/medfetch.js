@@ -84,7 +84,7 @@ export function loadExtension(
             if (!!scope) {
                 scopeMsg = `Fetch set is scoped to ${scope.map((s: string) => `"${s}"`)}`;
             } else
-                [(scopeMsg = `No scope provided. Fetch set is scoped to all.`)];
+                [(scopeMsg = `No scope was provided, so fetch set is scoped to all.`)];
             console.log(taggedMessage(`Connected to ${baseURL}. ${scopeMsg}`));
         }
 
@@ -130,7 +130,7 @@ export function loadExtension(
     if (rc) {
         console.error(`[${tag}] > Fatal error loading sqlite-wasm binary.`);
     } else {
-        console.log(`[${tag}] > sqlite-wasm binary loaded and medfetch ready.`);
+        console.log(`[${tag}] > sqlite-wasm binary + medfetch vtab loaded .`);
     }
     return rc;
 }

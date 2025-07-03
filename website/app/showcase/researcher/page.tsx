@@ -239,6 +239,7 @@ function DataTableSection({
         )}
         <div className="flex-1 p-6">
           <AGGridTable
+            db={db}
             resource={currentTableName}
             rowData={rawData}
             onCellEdit={onCellEdit}

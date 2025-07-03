@@ -82,7 +82,7 @@ export async function worker1DB(
                         return {
                             rows: response.result.resultRows ?? [],
                         };
-                    });
+                    })
             }
         },
     };

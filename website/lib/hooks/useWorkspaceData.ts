@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 import { call } from "@/lib/utils";
+import { mockPatientBundleFile } from "@/app/mock-file";
 
 const queryKey = (table: string) => ["workspaceData", table];
 
@@ -21,47 +22,55 @@ export function useWorkspaceData() {
     type: "application/json",
     lastModified: Date.now(),
   });
-  const dialect = medfetch(file);
-  const medDB = new Kysely<any>({
-    dialect,
+  const fileName = "foo.db"
+
+  const dialect = medfetch(mockPatientBundleFile, {
+    filename: fileName
+  });
+  const db = new Kysely<any>({
+    dialect
   });
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!medDB || isInitialized) return;
+    if (!db || isInitialized) return;
     call(async () => {
       try {
-        let patients = await medDB
+        let patients = await db
           .selectFrom("Patient")
           .selectAll("Patient")
           .execute();
-        patients = await medDB
+        patients = await db
           .selectFrom("Patient")
           .selectAll("Patient")
           .execute();
         setPatients(patients);
         console.log("Set patients", patients)
+        const pragmaResults = await sql`PRAGMA table_info(patients);`
+          .execute(db)
+          .then(r => r.rows)
+          console.log("PRAGMA", pragmaResults)
         setIsInitialized(true);
       } catch (e: any) {
         setError(`Initialization error: ${e.message}`);
       }
     });
-  }, [medDB, isInitialized]);
+  }, [db, isInitialized]);
 
   const dbTable = currentTableName === "Patient" ? "patients" : "procedures";
 
   const { data: sqlRows = [], isLoading: sqlLoading } = useQuery({
     queryKey: queryKey(dbTable),
     queryFn: async () => {
-      if (!medDB) throw new Error("DB not ready");
+      if (!db) throw new Error("DB not ready");
       return await sql
         .raw(`SELECT * FROM "${dbTable}"`)
-        .execute(medDB)
+        .execute(db)
         .then((result) => result.rows);
     },
-    enabled: !!medDB && isInitialized,
+    enabled: !!db && isInitialized,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     staleTime: Infinity,
@@ -69,7 +78,7 @@ export function useWorkspaceData() {
 
   const executeQuery = useMutation({
     mutationFn: async (sqlText: string) => {
-      if (!medDB) throw new Error("Database not initialized");
+      if (!db) throw new Error("Database not initialized");
       const stmts = sqlText
         .split(";")
         .map((s) => s.trim())
@@ -81,12 +90,12 @@ export function useWorkspaceData() {
           results = results.concat(
             await sql
               .raw(s)
-              .execute(medDB)
+              .execute(db)
               .then((result) => result.rows),
           );
         }
       } else
-        await medDB.transaction().execute(async (tx) => {
+        await db.transaction().execute(async (tx) => {
           await sql.raw(sqlText).execute(tx);
         });
       if (isSelect) queryClient.setQueryData(queryKey(dbTable), results);
@@ -106,11 +115,11 @@ export function useWorkspaceData() {
       col: string;
       newValue: any;
     }) => {
-      if (!medDB) throw new Error("Database not initialized");
+      if (!db) throw new Error("Database not initialized");
       const safeValue =
         typeof newValue === "string" ? `'${newValue}'` : newValue;
       const updateSQL = `UPDATE "${currentTableName}" SET "${col}" = ${safeValue} WHERE "patient_id" = '${rowId}';`;
-      await medDB.transaction().execute(async (tx) => {
+      await db.transaction().execute(async (tx) => {
         sql.raw(updateSQL).execute(tx);
       });
       console.log("Transaction update complete");

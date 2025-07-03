@@ -2,23 +2,9 @@
 import { table0, table1 } from "./sql/icd-queries";
 import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
-import medfetch from "~/sqlite-wasm";
-import DBWorker from "./sql/db.worker?worker";
 import { Kysely } from "kysely";
 import { mockPatientBundleFile } from "./data/bundles.Patient"
-
-const worker = new DBWorker({ name: "db.worker" });
-
-const dialect = medfetch(
-  import.meta.env.DEV ? "http://localhost:8787/fhir" : "https://api.medfetch.io/fhir",
-  {
-    worker,
-    scope: ["Patient", "Condition"]
-  }
-);
-const db = new Kysely({
-  dialect,
-});
+import { db } from "./sql/db"
 
 type Column = {
   name: string;
@@ -32,7 +18,6 @@ onMounted(async () => {
   const result = await db.selectFrom("Patient").selectAll("Patient").execute().then(
     () => db.selectFrom("Patient").selectAll("Patient").execute()
   );
-  console.log("RESULT", result)
     const t0  = await table0(db);
     const t1 = await table1(db)
     const views: ViewState[] = [
