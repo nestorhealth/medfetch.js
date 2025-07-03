@@ -19,6 +19,7 @@ import {
   Trash2,
   CheckCircle
 } from "lucide-react"
+import { Kysely } from "kysely"
 
 function WorkspaceHeader({
   currentTableName,
@@ -193,8 +194,10 @@ function DataTableSection({
   error,
   onCellEdit,
   selectedRows,
-  onSelectionChange
+  onSelectionChange,
+  db
 }: {
+  db: Kysely<any>
   currentTableName: string
   rawData: any[]
   error: string | null
@@ -300,7 +303,8 @@ export default function WorkspacePage() {
     setError,
     executeQuery,
     editCell,
-    stats
+    stats,
+    db
   } = useWorkspaceData();
 
   const [selectedRows, setSelectedRows] = useState<any[]>([])
@@ -496,6 +500,7 @@ export default function WorkspacePage() {
       />
       <div className="flex h-[calc(100vh-120px)]">
         <DataTableSection
+          db={db}
           currentTableName={currentTableName}
           rawData={rawData}
           error={error}

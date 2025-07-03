@@ -12,7 +12,7 @@ import "@sqlite.org/sqlite-wasm";
 
 /**
  * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`
- * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser)
+ * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser). **YOU** (the caller) are in charge of keeping this handle alive in your script!!
  * @param worker The worker to wrap
  * @returns The promiser-sync function
  */

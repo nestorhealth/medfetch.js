@@ -157,5 +157,6 @@ export function useWorkspaceData() {
     executeQuery,
     editCell,
     stats,
+    db: db
   };
 }

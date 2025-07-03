@@ -1,16 +1,21 @@
 import { dummy, type SqlOnFhirDialect } from "./sql.js";
 import { worker1DB, Worker1PromiserDialect } from "./dialects.js";
 import { BROWSER } from "esm-env";
-import type { Worker1OpenRequest } from "./sqlite-wasm/worker1.types.js";
+import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/worker1.types.js";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
 
 // singleton
 let __worker: Worker | null = null;
+let __promiser: Worker1Promiser | null = null;
 
 async function openPromiserDB<
     TWorker = Worker
 >(worker: TWorker, openMsg: Worker1OpenRequest) {
-    const promiser = promiserSyncV2(worker);
+    if (!__promiser) {
+        __promiser = promiserSyncV2(worker);
+    }
+
+    const promiser = __promiser;
     const response = await promiser(openMsg);
     if (response.type === "error" || !response.dbId) {
         throw new Error(`Couldn't get back database ID from "openPromiserDB", early exiting...`)

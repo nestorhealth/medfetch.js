@@ -68,6 +68,13 @@ export default function SanityCheck() {
       
       const pragma = await sql.raw(`pragma table_info("Patient")`).execute(db);
       console.log("Sanity Check Pragma:", pragma)
+      
+      const dialect2 = medfetch(mockPatientBundleFile);
+      const db2 = new Kysely<any>({
+        dialect: dialect2
+      });
+      const response = await db2.selectFrom("Patient").selectAll("Patient").execute();
+      console.log("here", response)
     }
     foo();
   }, []);
