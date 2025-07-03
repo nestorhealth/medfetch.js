@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
+import { call } from "@/lib/utils";
 
 const queryKey = (table: string) => ["workspaceData", table];
 
@@ -13,7 +14,6 @@ export function useWorkspaceData() {
 
   const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
-  console.log("uh", parsed.jsonData)
   const blob = new Blob([JSON.stringify(parsed.jsonData)], {
     type: "application/json",
   });
@@ -21,29 +21,33 @@ export function useWorkspaceData() {
     type: "application/json",
     lastModified: Date.now(),
   });
+  const dialect = medfetch(file);
   const medDB = new Kysely<any>({
-    dialect: medfetch(file, {
-      scope: ["Patient", "Procedure"],
-      filename: "thisReallyDoesntMatter"
-    }),
+    dialect,
   });
-
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
 
   useEffect(() => {
     if (!medDB || isInitialized) return;
-    (async () => {
+    call(async () => {
       try {
-        let patients = await medDB.selectFrom("Patient").selectAll("Patient").execute();
-        patients = await medDB.selectFrom("Patient").selectAll("Patient").execute();
-        setPatients(patients)
+        let patients = await medDB
+          .selectFrom("Patient")
+          .selectAll("Patient")
+          .execute();
+        patients = await medDB
+          .selectFrom("Patient")
+          .selectAll("Patient")
+          .execute();
+        setPatients(patients);
+        console.log("Set patients", patients)
         setIsInitialized(true);
       } catch (e: any) {
         setError(`Initialization error: ${e.message}`);
       }
-    })();
+    });
   }, [medDB, isInitialized]);
 
   const dbTable = currentTableName === "Patient" ? "patients" : "procedures";
@@ -132,7 +136,7 @@ export function useWorkspaceData() {
         : 0,
   };
 
-  const isLoading = sqlLoading || !isInitialized;
+  const isLoading = !isInitialized;
 
   return {
     currentTableName,

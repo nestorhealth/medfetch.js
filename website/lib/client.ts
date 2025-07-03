@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Kysely, sql } from "kysely";
 import type { Condition, Patient, Practitioner } from "fhir/r5";
 import medfetch from "medfetch/sqlite-wasm";
+import { call } from "@/lib/utils";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
 const API_URL = apiURL.endsWith("/")
@@ -16,7 +17,7 @@ const dbCache = new Map<string, Kysely<any>>();
  * @param vfs The backing browser filesystem - kvfs only works on browser, opfs only works on worker threads
  * @returns The kysely instance
  */
-export async function openDB(filename: string, baseURL: string | File) {
+export async function openDB(baseURL: string | File, filename?: string) {
   const cacheKey = `${filename}`;
   if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
   const dialect = medfetch(baseURL, {
@@ -38,42 +39,23 @@ export const memoryDB = new Kysely<typeof dialect.$db>({
   dialect,
 });
 
-export const medDB: (db: Kysely<any>) => MedfetchDB = (db) => {
-  return {
-    kys: db,
-    introspection: db.introspection,
-    exec: async (sqlString: string) => {
-      await sql.raw(sqlString).execute(db);
-    },
-    prepare: (sqlString: string) => ({
-      all: async () => {
-        const result = await sql.raw(sqlString).execute(db);
-        return result.rows;
-      },
-      run: async () => {
-        await sql.raw(sqlString).execute(db);
-      },
-    }),
-  };
-};
-
 export function useMedfetch(
+  baseURL?: string | File,
   filename?: string,
-  vfs: "opfs" | "kvfs" = "opfs",
 ): Kysely<any> {
   const [dbRef, setDBRef] = useState<Kysely<any>>(memoryDB);
 
   useEffect(() => {
-    async function open() {
-      if (filename) {
-        const db = await openDB(filename, vfs);
-        setDBRef(db);
-      }
+    if (baseURL) {
+      call(
+        async () => {
+          console.log("called")
+          const db = await openDB(baseURL, filename);
+          setDBRef(db);
+        }
+      )
     }
-    if (filename) {
-      open();
-    }
-  }, [filename, vfs]);
+  }, [filename, baseURL]);
 
   return dbRef;
 }

@@ -59,15 +59,12 @@ async function logCheckResult() {
 export default function SanityCheck() {
   useEffect(() => {
     async function foo() {
-      const dialect = medfetch(mockPatientBundleFile, {
-        scope: ["Patient"],
-        filename: ":memory:"
-      });
+      const dialect = medfetch(mockPatientBundleFile);
       const db = new Kysely<any>({
         dialect
       });
       const result = await db.selectFrom("Patient").selectAll("Patient").execute();
-      console.log("GOT", result)
+      console.log("Sanity Check from File results:", result)
     }
     foo();
   }, []);

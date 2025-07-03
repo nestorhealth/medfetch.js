@@ -300,7 +300,7 @@ export default function WorkspacePage() {
     executeQuery,
     editCell,
     stats
-  } = useWorkspaceData()
+  } = useWorkspaceData();
 
   const [selectedRows, setSelectedRows] = useState<any[]>([])
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)

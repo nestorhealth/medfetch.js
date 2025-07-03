@@ -305,7 +305,7 @@ function generateMigrations(
         throw new Error("Bad json schema");
     }
     // #region snippet
-    if (!resourceScope) {
+    if (!resourceScope || resourceScope.length === 0) {
         // Default to EVERY resource type if nothing is passed!
         resourceScope = Object.keys(
             (jsonSchema as any)["discriminator"]["mapping"],

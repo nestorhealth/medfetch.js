@@ -15,9 +15,10 @@ import {
 } from "ag-grid-community"
 import "ag-grid-community/styles/ag-grid.css"
 import "ag-grid-community/styles/ag-theme-alpine.css"
-import { TableManager } from "../utils/tableManager"
-import { TransactionManager } from "../utils/transactionManager"
+import { TableManager } from "../lib/tableManager"
+import { TransactionManager } from "../lib/transactionManager"
 import { useMedfetch } from "@/lib/client"
+import { call } from "@/lib/utils"
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -64,7 +65,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
 
   useEffect(() => {
     if (!db) return
-    ;(async () => {
+    call(async () => {
       try {
         const cols = await tableManager.current.getTableSchema("patients")
         const newColumnDefs: CustomColDef[] = cols.map((c) => ({
@@ -105,7 +106,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
         setError(errorMessage)
         onError?.(errorMessage)
       }
-    })()
+    });
   }, [db, resource, bulkEditState.pendingChanges, bulkEditState.errors])
 
   useEffect(() => {
