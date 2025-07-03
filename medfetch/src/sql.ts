@@ -392,3 +392,28 @@ export async function fromFhir(
         jsonSchemaFilename ?? DEFAULT_JSON_SCHEMA_OPTIONS.jsonSchemaFilename,
     ).then((schema) => generateMigrations(db, schema, sqlColumnMap, scope));
 }
+
+/**
+ * 2-tuple for defining a table {@link SqlView.tableName} derived from a virtual table {@link SqlView.virtualTableName}
+ * 
+ * @example
+ * 
+ * type PatientView = SqlView<{
+ *   Patient: {...};
+ *   patients: {...};
+ * }>;
+ * const patientView: PatientView = {
+ *   tableName: "patients_cached",
+ *   virtualTableName: "Patient",
+ *   ctasStatement: `create table "patients_cached" as select * from Patient;`
+ * }
+ */
+export type SqlView<T> = {
+    tableName: Extract<keyof T, string>;
+    virtualTableName: Extract<keyof T, string>;
+};
+
+export type SqlViewData<T> = {
+    rows: T[];
+    ctasStatement: string;
+}

@@ -297,7 +297,7 @@ export default function WorkspacePage() {
   const {
     currentTableName,
     setCurrentTableName,
-    rawData,
+    viewData: rawData,
     isLoading,
     error,
     setError,

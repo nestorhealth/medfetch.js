@@ -36,7 +36,7 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["@sqlite.org/sqlite-wasm", "kysely", "node:worker_threads"],
+            external: ["@sqlite.org/sqlite-wasm", "kysely", "node:worker_threads", "react", "react-dom"],
             output: {
                 manualChunks: undefined,
                 entryFileNames: `[name].js`,

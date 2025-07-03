@@ -20,6 +20,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Kysely } from "kysely";
+import medfetch from "medfetch/sqlite-wasm";
 
 function WorkspaceHeader({
   currentTableName,
@@ -295,22 +296,39 @@ export default function WorkspacePage() {
   const workspaceName = "my-cool-workspace";
   const viewName = "patients";
   const initialResource = "Patient";
+
+  const raw = globalThis.localStorage?.getItem("workspaceData");
+  const parsed = JSON.parse(raw ?? '{"jsonData": null}');
+  const blob = new Blob([JSON.stringify(parsed.jsonData)], {
+    type: "application/json",
+  });
+  const file = new File([blob], "idontmatter.json", {
+    type: "application/json",
+    lastModified: Date.now(),
+  });
+
+  const db = new Kysely({
+    dialect: medfetch(file, {
+      filename: workspaceName
+    }),
+  });
+
   const {
     currentTableName,
     setCurrentTableName,
-    initialTableStatement,
-    rawData,
+    ctas,
+    rows,
     isLoading,
     error,
     setError,
     executeQuery,
     editCell,
     stats,
-    db,
-  } = useWorkspaceData(workspaceName, {
+  } = useWorkspaceData(db, {
     tableName: viewName,
-    virtualTableName: initialResource
+    virtualTableName: initialResource,
   });
+  console.log("right", rows)
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -331,7 +349,7 @@ export default function WorkspacePage() {
 
   const handleDownload = (format: "csv" | "json") => {
     try {
-      const data = selectedRows.length > 0 ? selectedRows : rawData;
+      const data = selectedRows.length > 0 ? selectedRows : rows;
       if (data.length === 0) {
         showNotification("No data to download", "info");
         return;
@@ -492,7 +510,7 @@ export default function WorkspacePage() {
         onClose={() => setShowExportModal(false)}
         onExport={handleDownload}
         selectedCount={selectedRows.length}
-        totalCount={rawData.length}
+        totalCount={rows.length}
         tableName={currentTableName}
       />
 
@@ -512,7 +530,7 @@ export default function WorkspacePage() {
           <DataTableSection
             db={db}
             currentTableName={currentTableName}
-            rawData={rawData}
+            rawData={rows}
             error={error}
             onCellEdit={handleCellEdit}
             selectedRows={selectedRows}
@@ -521,7 +539,7 @@ export default function WorkspacePage() {
         )}
         <div className="border-l w-96 border-slate-700">
           <ChatUI
-            initialTableStatement={initialTableStatement!}
+            initialTableStatement={ctas!}
             onQuery={async (sql) => {
               try {
                 await executeQuery.mutateAsync(sql);
