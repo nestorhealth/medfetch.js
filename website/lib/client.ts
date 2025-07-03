@@ -39,27 +39,6 @@ export const memoryDB = new Kysely<typeof dialect.$db>({
   dialect,
 });
 
-export function useMedfetch(
-  baseURL?: string | File,
-  filename?: string,
-): Kysely<any> {
-  const [dbRef, setDBRef] = useState<Kysely<any>>(memoryDB);
-
-  useEffect(() => {
-    if (baseURL) {
-      call(
-        async () => {
-          console.log("called")
-          const db = await openDB(baseURL, filename);
-          setDBRef(db);
-        }
-      )
-    }
-  }, [filename, baseURL]);
-
-  return dbRef;
-}
-
 /**
  *
  * @param strings

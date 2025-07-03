@@ -1,10 +1,10 @@
-"use client";
-import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
-import ChatUI from "@/components/ChatUI";
-import AGGridTable from "@/components/AGGridTable";
-import { ExportModal } from "@/components/ExportModal";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+"use client"
+import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData"
+import ChatUI from "@/components/ChatUI"
+import AGGridTable from "@/components/AGGridTable"
+import { ExportModal } from "@/components/ExportModal"
+import { useRouter } from "next/navigation"
+import { useRef, useState } from "react"
 import {
   ArrowLeft,
   Database,
@@ -17,9 +17,9 @@ import {
   Upload,
   Save,
   Trash2,
-  CheckCircle,
-} from "lucide-react";
-import { Kysely } from "kysely";
+  CheckCircle
+} from "lucide-react"
+import { Kysely } from "kysely"
 
 function WorkspaceHeader({
   currentTableName,
@@ -30,28 +30,28 @@ function WorkspaceHeader({
   onUpload,
   onSave,
   onDelete,
-  hasUnsavedChanges,
+  hasUnsavedChanges
 }: {
-  currentTableName: string;
-  setCurrentTableName: (name: string) => void;
-  stats: { total: number; active: number };
-  onRefresh: () => void;
-  onDownload: () => void;
-  onUpload: (file: File) => void;
-  onSave: () => void;
-  onDelete: () => void;
-  hasUnsavedChanges: boolean;
+  currentTableName: string
+  setCurrentTableName: (name: string) => void
+  stats: { total: number; active: number }
+  onRefresh: () => void
+  onDownload: () => void
+  onUpload: (file: File) => void
+  onSave: () => void
+  onDelete: () => void
+  hasUnsavedChanges: boolean
 }) {
-  const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const handleUploadClick = () => fileInputRef.current?.click();
+  const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const handleUploadClick = () => fileInputRef.current?.click()
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      onUpload(file);
-      e.target.value = "";
+      onUpload(file)
+      e.target.value = ""
     }
-  };
+  }
   return (
     <div className="px-6 py-4 border-b bg-slate-800/50 backdrop-blur-sm border-slate-700">
       <input
@@ -177,13 +177,15 @@ function WorkspaceHeader({
             <div className="w-2 h-2 bg-purple-400 rounded-full" />
             <span className="text-slate-300">
               Table:{" "}
-              <span className="font-medium text-white">{currentTableName}</span>
+              <span className="font-medium text-white">
+                {currentTableName}
+              </span>
             </span>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function DataTableSection({
@@ -193,15 +195,15 @@ function DataTableSection({
   onCellEdit,
   selectedRows,
   onSelectionChange,
-  db,
+  db
 }: {
-  db: Kysely<any>;
-  currentTableName: string;
-  rawData: any[];
-  error: string | null;
-  onCellEdit: (rowId: any, col: string, newValue: any) => Promise<void>;
-  selectedRows: any[];
-  onSelectionChange: (selectedRows: any[]) => void;
+  db: Kysely<any>
+  currentTableName: string
+  rawData: any[]
+  error: string | null
+  onCellEdit: (rowId: any, col: string, newValue: any) => Promise<void>
+  selectedRows: any[]
+  onSelectionChange: (selectedRows: any[]) => void
 }) {
   return (
     <div className="flex-1 min-w-0 p-6">
@@ -250,30 +252,30 @@ function DataTableSection({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function StatusNotification({
   message,
   type,
-  onClose,
+  onClose
 }: {
-  message: string;
-  type: "success" | "error" | "info";
-  onClose: () => void;
+  message: string
+  type: "success" | "error" | "info"
+  onClose: () => void
 }) {
   const bgColor =
     type === "success"
       ? "bg-green-500/20 border-green-500/20"
       : type === "error"
-        ? "bg-red-500/20 border-red-500/20"
-        : "bg-blue-500/20 border-blue-500/20";
+      ? "bg-red-500/20 border-red-500/20"
+      : "bg-blue-500/20 border-blue-500/20"
   const textColor =
     type === "success"
       ? "text-green-400"
       : type === "error"
-        ? "text-red-400"
-        : "text-blue-400";
+      ? "text-red-400"
+      : "text-blue-400"
   return (
     <div
       className={`fixed top-4 right-4 p-4 rounded-lg border ${bgColor} ${textColor} z-50 max-w-sm`}
@@ -288,17 +290,13 @@ function StatusNotification({
         </button>
       </div>
     </div>
-  );
+  )
 }
 
 export default function WorkspacePage() {
-  const workspaceName = "my-cool-workspace";
-  const viewName = "patients";
-  const initialResource = "Patient";
   const {
     currentTableName,
     setCurrentTableName,
-    initialTableStatement,
     rawData,
     isLoading,
     error,
@@ -306,162 +304,155 @@ export default function WorkspacePage() {
     executeQuery,
     editCell,
     stats,
-    db,
-  } = useWorkspaceData(workspaceName, {
-    tableName: viewName,
-    virtualTableName: initialResource
-  });
+    db
+  } = useWorkspaceData();
 
-  const [selectedRows, setSelectedRows] = useState<any[]>([]);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<any[]>([])
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "error" | "info";
-  } | null>(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-
+    message: string
+    type: "success" | "error" | "info"
+  } | null>(null)
+  const [showExportModal, setShowExportModal] = useState(false)
+  
   const showNotification = (
     message: string,
-    type: "success" | "error" | "info",
+    type: "success" | "error" | "info"
   ) => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
-  const dbTable = currentTableName === "Patient" ? "patients" : "procedures";
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 3000)
+  }
+  const dbTable = currentTableName === "Patient" ? "patients" : "procedures"
 
-  const handleDownload = (format: "csv" | "json") => {
+  const handleDownload = (format: 'csv' | 'json') => {
     try {
-      const data = selectedRows.length > 0 ? selectedRows : rawData;
+      const data = selectedRows.length > 0 ? selectedRows : rawData
       if (data.length === 0) {
-        showNotification("No data to download", "info");
-        return;
+        showNotification("No data to download", "info")
+        return
       }
-      let blob: Blob, fileName: string;
+      let blob: Blob, fileName: string
       if (format === "csv") {
-        const headers = Object.keys(data[0]);
+        const headers = Object.keys(data[0])
         const csv = [
           headers.join(","),
           ...data.map((r) =>
             headers
               .map((h) => {
-                const v = r[h];
+                const v = r[h]
                 return typeof v === "string" && v.includes(",")
                   ? `"${v.replace(/"/g, '""')}"`
-                  : v;
+                  : v
               })
-              .join(","),
-          ),
-        ].join("\n");
-        blob = new Blob([csv], { type: "text/csv" });
-        fileName = `${dbTable}_${Date.now()}.csv`;
+              .join(",")
+          )
+        ].join("\n")
+        blob = new Blob([csv], { type: "text/csv" })
+        fileName = `${dbTable}_${Date.now()}.csv`
       } else {
         blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        fileName = `${dbTable}_${Date.now()}.json`;
+          type: "application/json"
+        })
+        fileName = `${dbTable}_${Date.now()}.json`
       }
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      showNotification(
-        `Downloaded ${data.length} rows as ${format.toUpperCase()}`,
-        "success",
-      );
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      showNotification(`Downloaded ${data.length} rows as ${format.toUpperCase()}`, "success")
     } catch {
-      showNotification("Download failed", "error");
+      showNotification("Download failed", "error")
     }
-  };
+  }
 
   const handleUpload = async (file: File) => {
     try {
-      const text = await file.text();
-      let rows: any[] = [];
+      const text = await file.text()
+      let rows: any[] = []
       if (file.name.endsWith(".json")) {
-        const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) rows = parsed;
-        else throw new Error("JSON must be an array of objects");
+        const parsed = JSON.parse(text)
+        if (Array.isArray(parsed)) rows = parsed
+        else throw new Error("JSON must be an array of objects")
       } else if (file.name.endsWith(".csv")) {
-        const [headerLine, ...lines] = text.trim().split("\n");
-        const headers = headerLine.split(",").map((h) => h.trim());
+        const [headerLine, ...lines] = text.trim().split("\n")
+        const headers = headerLine.split(",").map((h) => h.trim())
         rows = lines.map((l) => {
-          const obj: any = {};
-          l.split(",").forEach((v, i) => (obj[headers[i]] = v.trim()));
-          return obj;
-        });
-      } else throw new Error("Unsupported file type");
+          const obj: any = {}
+          l.split(",").forEach((v, i) => (obj[headers[i]] = v.trim()))
+          return obj
+        })
+      } else throw new Error("Unsupported file type")
       if (rows.length === 0) {
-        showNotification("No rows found", "info");
-        return;
+        showNotification("No rows found", "info")
+        return
       }
       const insertSqls = rows
         .map((r) => {
           const cols = Object.keys(r)
             .map((c) => `"${c}"`)
-            .join(", ");
+            .join(", ")
           const vals = Object.values(r)
             .map((v) =>
-              typeof v === "string" ? `'${v.replace(/'/g, "''")}'` : v,
+              typeof v === "string" ? `'${v.replace(/'/g, "''")}'` : v
             )
-            .join(", ");
-          return `INSERT INTO "${dbTable}" (${cols}) VALUES (${vals})`;
+            .join(", ")
+          return `INSERT INTO "${dbTable}" (${cols}) VALUES (${vals})`
         })
-        .join("; ");
-      await executeQuery.mutateAsync(insertSqls);
-      await executeQuery.mutateAsync(`SELECT * FROM "${dbTable}"`);
-      setHasUnsavedChanges(true);
-      showNotification(`Uploaded ${rows.length} rows`, "success");
+        .join("; ")
+      await executeQuery.mutateAsync(insertSqls)
+      await executeQuery.mutateAsync(`SELECT * FROM "${dbTable}"`)
+      setHasUnsavedChanges(true)
+      showNotification(`Uploaded ${rows.length} rows`, "success")
     } catch (e: any) {
-      showNotification(`Upload failed: ${e.message}`, "error");
+      showNotification(`Upload failed: ${e.message}`, "error")
     }
-  };
+  }
 
   const handleSave = async () => {
     try {
-      await executeQuery.mutateAsync("COMMIT");
-      setHasUnsavedChanges(false);
-      showNotification("Changes saved", "success");
+      await executeQuery.mutateAsync("COMMIT")
+      setHasUnsavedChanges(false)
+      showNotification("Changes saved", "success")
     } catch {
-      showNotification("Save failed", "error");
+      showNotification("Save failed", "error")
     }
-  };
+  }
 
   const handleDelete = async () => {
     if (selectedRows.length === 0) {
-      showNotification("No selection", "info");
-      return;
+      showNotification("No selection", "info")
+      return
     }
-    if (!confirm(`Delete ${selectedRows.length} selected rows?`)) return;
+    if (!confirm(`Delete ${selectedRows.length} selected rows?`)) return
     try {
-      const idField =
-        currentTableName === "Patient" ? "patient_id" : "procedure_id";
+      const idField = currentTableName === "Patient" ? "patient_id" : "procedure_id"
       const deleteSql = selectedRows
         .map((r) => `DELETE FROM "${dbTable}" WHERE ${idField}='${r[idField]}'`)
-        .join("; ");
-      await executeQuery.mutateAsync(deleteSql);
-      await executeQuery.mutateAsync(`SELECT * FROM "${dbTable}"`);
-      setSelectedRows([]);
-      setHasUnsavedChanges(true);
-      showNotification("Rows deleted", "success");
+        .join("; ")
+      await executeQuery.mutateAsync(deleteSql)
+      await executeQuery.mutateAsync(`SELECT * FROM "${dbTable}"`)
+      setSelectedRows([])
+      setHasUnsavedChanges(true)
+      showNotification("Rows deleted", "success")
     } catch {
-      showNotification("Delete failed", "error");
+      showNotification("Delete failed", "error")
     }
-  };
+  }
 
-  const handleSelectionChange = (rows: any[]) => setSelectedRows(rows);
+  const handleSelectionChange = (rows: any[]) => setSelectedRows(rows)
 
   const handleCellEdit = async (rowId: any, col: string, newValue: any) => {
     try {
-      await editCell.mutateAsync({ rowId, col, newValue });
-      setHasUnsavedChanges(true);
+      await editCell.mutateAsync({ rowId, col, newValue })
+      setHasUnsavedChanges(true)
     } catch (e: any) {
-      throw e;
+      throw e
     }
-  };
+  }
 
   if (isLoading)
     return (
@@ -476,7 +467,7 @@ export default function WorkspacePage() {
           </p>
         </div>
       </div>
-    );
+    )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
@@ -486,7 +477,7 @@ export default function WorkspacePage() {
           onClose={() => setNotification(null)}
         />
       )}
-
+      
       <ExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
@@ -495,7 +486,7 @@ export default function WorkspacePage() {
         totalCount={rawData.length}
         tableName={currentTableName}
       />
-
+      
       <WorkspaceHeader
         currentTableName={currentTableName}
         setCurrentTableName={setCurrentTableName}
@@ -508,31 +499,28 @@ export default function WorkspacePage() {
         hasUnsavedChanges={hasUnsavedChanges}
       />
       <div className="flex h-[calc(100vh-120px)]">
-        {!isLoading && (
-          <DataTableSection
-            db={db}
-            currentTableName={currentTableName}
-            rawData={rawData}
-            error={error}
-            onCellEdit={handleCellEdit}
-            selectedRows={selectedRows}
-            onSelectionChange={handleSelectionChange}
-          />
-        )}
+        <DataTableSection
+          db={db}
+          currentTableName={currentTableName}
+          rawData={rawData}
+          error={error}
+          onCellEdit={handleCellEdit}
+          selectedRows={selectedRows}
+          onSelectionChange={handleSelectionChange}
+        />
         <div className="border-l w-96 border-slate-700">
           <ChatUI
-            initialTableStatement={initialTableStatement!}
             onQuery={async (sql) => {
               try {
-                await executeQuery.mutateAsync(sql);
-                setHasUnsavedChanges(true);
+                await executeQuery.mutateAsync(sql)
+                setHasUnsavedChanges(true)
               } catch (e: any) {
-                setError(e.message);
+                setError(e.message)
               }
             }}
           />
         </div>
       </div>
     </div>
-  );
+  )
 }

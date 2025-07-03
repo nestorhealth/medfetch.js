@@ -17,9 +17,9 @@ import "ag-grid-community/styles/ag-grid.css"
 import "ag-grid-community/styles/ag-theme-alpine.css"
 import { TableManager } from "../lib/tableManager"
 import { TransactionManager } from "../lib/transactionManager"
-import { useMedfetch } from "@/lib/client"
 import { call } from "@/lib/utils"
 import { Kysely } from "kysely"
+import { toast } from "sonner"
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -69,7 +69,8 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
     if (!db) return
     call(async () => {
       try {
-        const cols = await tableManager.current.getTableSchema("patients")
+        toast.success(`We have ${rowData.length} rows passed into the AgGrid component`)
+        const cols = await tableManager.current.getTableSchema(resource)
         const newColumnDefs: CustomColDef[] = cols.map((c) => ({
           field: c.name,
           headerName: c.name,
@@ -354,7 +355,7 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
             editable: true,
             cellClass: "editable-cell"
           }}
-          getRowId={(params) => params.data.patient_id?.toString() || params.data.procedure_id?.toString()}
+          getRowId={(params) => params.data.id?.toString() || params.data.id?.toString()}
           onGridReady={onGridReady}
           onCellValueChanged={onCellValueChanged}
           onSelectionChanged={onSelectionChanged}

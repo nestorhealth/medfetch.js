@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { api } from '@/lib/api';
 import { Send, MessageSquare, Database, AlertCircle, CheckCircle, Copy, Play } from 'lucide-react';
+import { Kysely } from 'kysely';
 
 interface Message {
   id: string;
@@ -17,9 +18,10 @@ interface Message {
 
 interface ChatUIProps {
   onQuery: (sql: string) => Promise<void>;
+  initialTableStatement: string;
 }
 
-export default function ChatUI({ onQuery }: ChatUIProps) {
+export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +48,8 @@ export default function ChatUI({ onQuery }: ChatUIProps) {
     try {
       const response2 = await api.POST("/nl2sql", {
         body: {
-          query: userMessage.content
+          query: userMessage.content,
+          tableStatement: initialTableStatement
         }
       });
       if (response2.error) {

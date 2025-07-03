@@ -5,6 +5,7 @@ const NLSchema = z
     query: z.string().openapi({
       example: "Get me all happy Patients"
     }),
+    tableStatement: z.string()
   })
   .openapi("POST");
 

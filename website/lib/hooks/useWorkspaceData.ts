@@ -6,10 +6,23 @@ import { call } from "@/lib/utils";
 
 const queryKey = (table: string) => ["workspaceData", table];
 
-export function useWorkspaceData() {
-  const [currentTableName, setCurrentTableName] = useState<
-    "Patient" | "Procedure"
-  >("Patient");
+function createDatabase(...args: Parameters<typeof medfetch>) {
+  const dialect = medfetch(...args);
+  const db = new Kysely<any>({
+    dialect,
+  });
+  return db;
+}
+
+export function useWorkspaceData(
+  workspaceName: string,
+  view: {
+    tableName: string;
+    virtualTableName: string;
+  }
+) {
+  const [currentTableName, setCurrentTableName] =
+    useState<string>(view.tableName);
   const [error, setError] = useState<string | null>(null);
 
   const raw = globalThis.localStorage?.getItem("workspaceData");
@@ -17,60 +30,56 @@ export function useWorkspaceData() {
   const blob = new Blob([JSON.stringify(parsed.jsonData)], {
     type: "application/json",
   });
-  const file = new File([blob], "dummy.json", {
+  const file = new File([blob], "idontmatter.json", {
     type: "application/json",
     lastModified: Date.now(),
   });
-  console.log("file size", file.size)
-  const fileName = "foo.db"
 
-  const dialect = medfetch(file, {
-    filename: fileName
+  const db = createDatabase(file, {
+    filename: workspaceName,
   });
-  const db = new Kysely<any>({
-    dialect
-  });
+
   const queryClient = useQueryClient();
+  const [initialTableStatement, setInitialTableStatement] = useState<string>();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!db || isInitialized) return;
+    if (isInitialized) return;
     call(async () => {
       try {
-        let patients = await db
-          .selectFrom("Patient")
-          .selectAll("Patient")
+        await db.schema
+          .createTable(view.tableName)
+          .ifNotExists()
+          .as(db.selectFrom(view.tableName).selectAll(view.tableName))
           .execute();
-        patients = await db
-          .selectFrom("Patient")
-          .selectAll("Patient")
-          .execute();
-        setPatients(patients);
-        console.log("Set patients", patients)
-        const pragmaResults = await sql`PRAGMA table_info(patients);`
-          .execute(db)
-          .then(r => r.rows)
-          console.log("PRAGMA", pragmaResults)
+        const resultRow = await db
+          .selectFrom("sqlite_master")
+          .select("sql")
+          .where("name", "=", "patients")
+          .executeTakeFirstOrThrow();
+        const initialData = await db.selectFrom(view.tableName).selectAll(view.tableName).execute();
+        setData(initialData);
+        setInitialTableStatement(resultRow.sql);
         setIsInitialized(true);
       } catch (e: any) {
         setError(`Initialization error: ${e.message}`);
       }
     });
-  }, [db, isInitialized]);
+  }, [db, view.tableName, isInitialized, view.virtualTableName]);
 
   const dbTable = currentTableName === "Patient" ? "patients" : "procedures";
-
+  
   const { data: sqlRows = [], isLoading: sqlLoading } = useQuery({
-    queryKey: queryKey(dbTable),
+    queryKey: [...queryKey(dbTable), isInitialized],
     queryFn: async () => {
-      if (!db) throw new Error("DB not ready");
       return await sql
         .raw(`SELECT * FROM "${dbTable}"`)
         .execute(db)
         .then((result) => result.rows);
     },
-    enabled: !!db && isInitialized,
+    initialData: data,
+    enabled: isInitialized,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     staleTime: Infinity,
@@ -135,7 +144,7 @@ export function useWorkspaceData() {
   //       ? derivedProcedures
   //       : sqlRows;
   //
-  const rawData = patients;
+  const rawData = sqlRows;
 
   const stats = {
     total: rawData.length,
@@ -145,7 +154,7 @@ export function useWorkspaceData() {
         : 0,
   };
 
-  const isLoading = !isInitialized;
+  const isLoading = !isInitialized || sqlLoading;
 
   return {
     currentTableName,
@@ -157,6 +166,7 @@ export function useWorkspaceData() {
     executeQuery,
     editCell,
     stats,
-    db: db
+    initialTableStatement,
+    db: db,
   };
 }

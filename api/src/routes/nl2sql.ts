@@ -9,12 +9,12 @@ const nl2sql = new OpenAPIHono<{
 
 nl2sql.openapi(schema.POST, async (c) => {
   try {
-    const { query: userQuery } = c.req.valid("json");
+    const { query: userQuery, tableStatement  } = c.req.valid("json");
 
     if (!userQuery) {
       return c.json({ error: "Query is required" }, 400);
     }
-    const response = await translate(c, userQuery);
+    const response = await translate(c, userQuery, tableStatement);
 
     // Parse the response
     const lines = response.split("\n");

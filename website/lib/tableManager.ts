@@ -113,7 +113,7 @@ export class TableManager {
    */
   async getTableSchema(tableName: string): Promise<ColumnDefinition[]> {
     try {
-      const columns = await sql.raw(`PRAGMA table_info("patients");`)
+      const columns = await sql.raw(`PRAGMA table_info("${tableName}")`)
         .execute(this.db)
         .then((r) => r.rows);
 
