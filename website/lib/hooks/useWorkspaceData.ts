@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Kysely, sql } from "kysely";
 
-const queryKey = (table: string) => ["workspaceData", table];
-
 export function useWorkspaceData(
   db: Kysely<any>,
   view: {
