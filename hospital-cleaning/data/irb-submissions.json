@@ -1,0 +1,219 @@
+{
+  "irb_1751425481901_343": {
+    "id": "irb_1751425481901_343",
+    "researcherId": "researcher_001",
+    "fileName": "IRB_V1_Missing_Data_Retention.pdf",
+    "filePath": "/uploads/irb_1751425481901_343_IRB_V1_Missing_Data_Retention.pdf",
+    "uploadedAt": "2025-07-02T03:04:41.901Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing voluntary participation and withdrawal rights"
+      ],
+      "suggestions": [
+        "Clearly state that participation is voluntary and participants can withdraw"
+      ],
+      "complianceScore": 75
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-02T03:04:51.123Z"
+    },
+    "workflowId": "workflow_1751425491124_2223"
+  },
+  "irb_1751426115398_444": {
+    "id": "irb_1751426115398_444",
+    "researcherId": "researcher_001",
+    "fileName": "IRB_V4_Missing_Risks_Section.pdf",
+    "filePath": "/uploads/irb_1751426115398_444_IRB_V4_Missing_Risks_Section.pdf",
+    "uploadedAt": "2025-07-02T03:15:15.398Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing voluntary participation and withdrawal rights"
+      ],
+      "suggestions": [
+        "Clearly state that participation is voluntary and participants can withdraw"
+      ],
+      "complianceScore": 75
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-02T03:16:20.432Z"
+    },
+    "workflowId": "workflow_1751426180433_7240"
+  },
+  "irb_1751475407363_85": {
+    "id": "irb_1751475407363_85",
+    "researcherId": "researcher_001",
+    "fileName": "IRB_V2_Unclear_Purpose.pdf",
+    "filePath": "/uploads/irb_1751475407363_85_IRB_V2_Unclear_Purpose.pdf",
+    "uploadedAt": "2025-07-02T16:56:47.363Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [],
+      "suggestions": [],
+      "complianceScore": 85
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-02T16:58:30.625Z"
+    },
+    "workflowId": "workflow_1751475510626_8584"
+  },
+  "irb_1751475742548_780": {
+    "id": "irb_1751475742548_780",
+    "researcherId": "researcher_001",
+    "fileName": "IRB_V5_Incorrect_Data_Sharing_Policy.pdf",
+    "filePath": "/uploads/irb_1751475742548_780_IRB_V5_Incorrect_Data_Sharing_Policy.pdf",
+    "uploadedAt": "2025-07-02T17:02:22.548Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing voluntary participation and withdrawal rights"
+      ],
+      "suggestions": [
+        "Clearly state that participation is voluntary and participants can withdraw"
+      ],
+      "complianceScore": 75
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": "",
+      "reviewedAt": "2025-07-02T17:03:13.950Z"
+    },
+    "workflowId": "workflow_1751475793950_2654"
+  },
+  "irb_1751486167628_214": {
+    "id": "irb_1751486167628_214",
+    "researcherId": "researcher_001",
+    "fileName": "good-diabetes-study.txt",
+    "filePath": "/uploads/irb_1751486167628_214_good-diabetes-study.txt",
+    "uploadedAt": "2025-07-02T19:56:07.628Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing \"DATA COLLECTION METHODS\" section.",
+        "Missing \"DATA ANALYSIS PLAN\" section.",
+        "Missing \"BUDGET AND FUNDING\" section.",
+        "Missing \"ETHICAL CONSIDERATIONS\" section."
+      ],
+      "suggestions": [
+        "Include a \"DATA COLLECTION METHODS\" section that outlines the specific procedures for data collection, similar to the reference template.",
+        "Add a \"DATA ANALYSIS PLAN\" that details the statistical methods to be used for analyzing the data.",
+        "Incorporate a \"BUDGET AND FUNDING\" section that outlines the financial aspects of the study.",
+        "Include an \"ETHICAL CONSIDERATIONS\" section that explicitly states compliance with ethical guidelines and regulations."
+      ],
+      "complianceScore": 70,
+      "comparison": "The submitted IRB application includes a section on \"STUDY OBJECTIVES,\" which is not explicitly present in the reference template but is implied within the \"STUDY DESIGN AND METHODOLOGY.\" However, the submitted IRB does not explicitly mention \"DATA COLLECTION METHODS,\" which is a key component in the reference template.\nThe submitted IRB lacks a detailed \"DATA ANALYSIS PLAN,\" which is present in the reference template and outlines specific statistical methods to be used.\nThe \"BUDGET AND FUNDING\" section is completely absent in the submitted IRB, while it is included in the reference template.\nThe submitted IRB does not explicitly mention \"ETHICAL CONSIDERATIONS,\" which is included in the reference template and addresses compliance with ethical guidelines and regulations.\nThe \"TARGET POPULATION\" and \"DATA REQUIREMENTS\" sections in the submitted IRB provide useful information but do not directly correspond to any section in the reference template, which may lead to a lack of clarity regarding participant selection and data handling."
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-02T19:56:23.223Z"
+    },
+    "workflowId": "workflow_1751486183224_1452"
+  },
+  "irb_1751487143986_250": {
+    "id": "irb_1751487143986_250",
+    "researcherId": "researcher_001",
+    "fileName": "good-cardiovascular-study.txt",
+    "filePath": "/uploads/irb_1751487143986_250_good-cardiovascular-study.txt",
+    "uploadedAt": "2025-07-02T20:12:23.986Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing explicit sections on study design and methodology.",
+        "Missing detailed data collection methods.",
+        "Missing budget and funding information.",
+        "Missing ethical considerations section.",
+        "Missing data analysis plan.",
+        "Missing timeline and schedule for the study."
+      ],
+      "suggestions": [
+        "Include a section that clearly outlines the study design and methodology to provide context for the research.",
+        "Add a detailed description of data collection methods to clarify how data will be gathered and analyzed.",
+        "Consider including a budget and funding section to provide transparency regarding resource allocation.",
+        "Incorporate an ethical considerations section that explicitly states compliance with IRB guidelines and federal regulations.",
+        "Add a data analysis plan to detail how the collected data will be processed and interpreted.",
+        "Include a timeline and schedule for the study to assess feasibility and planning."
+      ],
+      "complianceScore": 60,
+      "comparison": "The submitted IRB document does not explicitly mention the study design and methodology, which is present in the reference template. This section is critical for understanding the research framework.\nThe submitted IRB lacks a detailed data collection methods section, which is outlined in the reference template. This omission makes it unclear how data will be gathered and analyzed.\nThe submitted IRB does not include a budget and funding section, which is part of the reference template. While not always required, it is a significant component for understanding resource allocation.\nThe submitted IRB does not explicitly mention the ethical considerations section, which outlines compliance with IRB guidelines and federal regulations, as seen in the reference template.\nThe submitted IRB does not include a data analysis plan, which is essential for understanding how the collected data will be processed and interpreted.\nThe submitted IRB does not mention the timeline and schedule for the study, which is included in the reference template. This information is important for assessing the feasibility and planning of the research."
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-02T20:12:56.689Z"
+    },
+    "workflowId": "workflow_1751487176690_66"
+  },
+  "irb_1751487584093_477": {
+    "id": "irb_1751487584093_477",
+    "researcherId": "researcher_001",
+    "fileName": "good-cardiovascular-study.txt",
+    "filePath": "/uploads/irb_1751487584093_477_good-cardiovascular-study.txt",
+    "uploadedAt": "2025-07-02T20:19:44.093Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing explicit sections on study design and methodology.",
+        "Missing detailed data collection methods.",
+        "Missing data analysis plan.",
+        "Missing budget and funding information.",
+        "Incomplete monitoring and oversight details."
+      ],
+      "suggestions": [
+        "Include a dedicated section that outlines the study design and methodology to provide clarity on the research framework.",
+        "Add a detailed description of the data collection methods to ensure transparency in how data will be gathered.",
+        "Incorporate a data analysis plan that specifies the statistical methods to be used for analyzing the data.",
+        "Include a budget and funding section to address financial considerations related to the study.",
+        "Expand the monitoring and oversight section to include specific procedures and roles, such as the involvement of a data safety monitoring board."
+      ],
+      "complianceScore": 70,
+      "comparison": "The submitted IRB does not include a section explicitly detailing the study design and methodology, which is present in the reference template. This section is crucial for understanding the framework of the study.\nThe submitted IRB lacks a clear data collection methods section. While some data requirements are mentioned, the specific procedures and methods for data collection are not detailed as they are in the reference template.\nThe submitted IRB does not include a data analysis plan, which is an important aspect of the study that outlines how the collected data will be analyzed.\nThe submitted IRB does not mention a budget or funding section, which is included in the reference template and is important for understanding the financial aspects of the study.\nThe submitted IRB does not explicitly mention monitoring procedures beyond regular IRB review and approval. The reference template includes specific details about oversight and monitoring, including the role of a data safety monitoring board and regular progress reports."
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-02T20:20:16.262Z"
+    },
+    "workflowId": "workflow_1751487616263_421"
+  },
+  "irb_1751514808442_274": {
+    "id": "irb_1751514808442_274",
+    "researcherId": "researcher_001",
+    "fileName": "good-cardiovascular-study.txt",
+    "filePath": "/uploads/irb_1751514808442_274_good-cardiovascular-study.txt",
+    "fileContent": "RESEARCH PROTOCOL: Cardiovascular Health Study\n\nPRINCIPAL INVESTIGATOR: Dr. Sarah Johnson, MD, PhD\nDepartment of Cardiology, University Medical Center\n\nSTUDY TITLE: Impact of Lifestyle Interventions on Cardiovascular Health Outcomes\n\nINFORMED CONSENT:\nAll participants will receive detailed informed consent forms explaining:\n- Study purpose and procedures\n- Potential risks and benefits\n- Right to withdraw at any time\n- Confidentiality protections\n- Contact information for questions\n\nDATA SECURITY AND PRIVACY PROTECTION:\n- All data will be stored in HIPAA-compliant secure systems\n- Data encryption for transmission and storage\n- Access limited to authorized research personnel\n- Regular security audits and updates\n- Data retention policy: 7 years post-study completion\n\nRISK ASSESSMENT:\nPotential risks include:\n- Minor discomfort during blood draws\n- Time commitment for study visits\n- Potential privacy concerns (mitigated by security measures)\n- Minimal risk of data breach (mitigated by encryption)\n\nBenefits include:\n- Free health assessments\n- Potential health improvements\n- Contribution to medical knowledge\n- Compensation for time and effort\n\nVOLUNTARY PARTICIPATION:\nParticipation in this study is completely voluntary. Participants may withdraw from the study at any time without penalty or loss of benefits to which they are otherwise entitled.\n\nCONFIDENTIALITY AND PRIVACY:\nAll participant data will be kept strictly confidential. Personal identifiers will be removed and replaced with unique study codes.\n\nSTUDY OBJECTIVES:\nThis study aims to evaluate the effectiveness of lifestyle interventions on cardiovascular health outcomes in patients with hypertension and related conditions.\n\nTARGET POPULATION:\n- Patients aged 18-75 years\n- Diagnosed with essential hypertension (ICD-10: I10)\n- Both male and female participants\n- Active patients with recent encounters\n\nDATA REQUIREMENTS:\n- Patient demographics and medical history\n- Blood pressure measurements and trends\n- Medication history and adherence\n- Lifestyle factors and interventions\n- Cardiovascular outcomes and events\n\nRESOURCE TYPES NEEDED:\n- Patient: Basic demographics, age, gender, active status\n- Condition: Hypertension diagnoses, clinical status\n- Observation: Blood pressure readings, lab values\n- MedicationRequest: Antihypertensive medications\n- Procedure: Cardiovascular procedures and interventions\n- Encounter: Clinical visits and follow-ups\n\nFILTERS AND CRITERIA:\n- Age range: 18-75 years\n- Gender: All (male and female)\n- Conditions: Essential hypertension (SNOMED: 38341003)\n- Date range: 2020-01-01 to 2025-12-31\n- Target patient count: 500 patients\n\nMONITORING AND OVERSIGHT:\n- Regular IRB review and approval\n- Data safety monitoring board\n- Annual progress reports\n- Adverse event reporting procedures ",
+    "uploadedAt": "2025-07-03T03:53:28.442Z",
+    "status": "approved",
+    "aiReview": {
+      "issues": [
+        "Missing explicit section on \"Study Design and Methodology.\"",
+        "Missing \"DATA ANALYSIS PLAN.\"",
+        "Missing \"BUDGET AND FUNDING\" section.",
+        "Missing \"ETHICAL CONSIDERATIONS\" section.",
+        "Incomplete mention of \"Monitoring and Oversight.\""
+      ],
+      "suggestions": [
+        "Include a dedicated \"Study Design and Methodology\" section that clearly outlines the research procedures and data collection methods.",
+        "Add a \"DATA ANALYSIS PLAN\" that details the statistical methods and analyses that will be employed.",
+        "Incorporate a \"BUDGET AND FUNDING\" section to provide transparency regarding the financial aspects of the study.",
+        "Include an \"ETHICAL CONSIDERATIONS\" section to address compliance with ethical guidelines and regulations.",
+        "Expand the \"Monitoring and Oversight\" section to provide a more comprehensive overview of monitoring procedures."
+      ],
+      "complianceScore": 70,
+      "comparison": "The submitted IRB application does not include a section explicitly labeled \"Study Design and Methodology,\" which is present in the reference template. While the methodology is implied through the \"DATA REQUIREMENTS\" and \"TARGET POPULATION\" sections, it lacks a clear description of the research procedures and data collection methods as outlined in the reference template.\nThe submitted IRB application does not explicitly mention a \"DATA ANALYSIS PLAN,\" which is included in the reference template. This omission means there is no detailed description of how the data will be analyzed, which is a critical component of a research protocol.\nThe submitted IRB application lacks a \"BUDGET AND FUNDING\" section, which is present in the reference template. This section is important for understanding the financial aspects of the study.\nThe \"ETHICAL CONSIDERATIONS\" section is missing from the submitted IRB application. This section is crucial for outlining how the study will adhere to ethical guidelines and regulations.\nThe submitted IRB application does not explicitly mention \"Monitoring\" in the context of oversight and monitoring procedures, although it does mention \"Regular IRB review and approval\" and \"Data safety monitoring board.\" The reference template provides a more comprehensive overview of monitoring and oversight."
+    },
+    "adminReview": {
+      "approved": true,
+      "feedback": " (Approved with warnings - please address issues in future submissions)",
+      "reviewedAt": "2025-07-03T03:53:41.282Z"
+    },
+    "workflowId": "workflow_1751514821498_226"
+  }
+}

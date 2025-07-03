@@ -1,0 +1,237 @@
+{
+  "resourceType": "Patient",
+  "resources": [
+    {
+      "resourceType": "Patient",
+      "id": "45280",
+      "meta": {
+        "versionId": "2",
+        "lastUpdated": "2022-11-04T09:21:58.755+00:00",
+        "source": "#q1O6wJsU1L8I0sfn"
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Updating the patient birth date and gender</div>"
+      },
+      "active": true,
+      "name": [
+        {
+          "use": "official",
+          "family": "PS4",
+          "given": [
+            "PS3",
+            "updating"
+          ]
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1976-12-25"
+    },
+    {
+      "resourceType": "Patient",
+      "id": "53373",
+      "meta": {
+        "versionId": "9",
+        "lastUpdated": "2025-03-11T17:44:45.305+00:00",
+        "source": "#bMlQrQ79iQ1h1FIz"
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\">Some narrative</div>"
+      },
+      "active": true,
+      "name": [
+        {
+          "use": "official",
+          "family": "Zhang",
+          "given": [
+            "4567",
+            "James"
+          ]
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1974-12-25"
+    },
+    {
+      "resourceType": "Patient",
+      "id": "55190",
+      "meta": {
+        "versionId": "2",
+        "lastUpdated": "2022-11-11T14:55:40.752+00:00",
+        "source": "#4Gff5dtPSodvreDM"
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><table><tbody><tr><td>Name</td><td>Peter James \n                              <b>Chalmers</b> (&quot;Jim&quot;) \n                           </td></tr><tr><td>Address</td><td>534 Erewhon, Pleasantville, Vic, 3999</td></tr><tr><td>Contacts</td><td>Home: unknown. Work: (03) 5555 6473</td></tr><tr><td>Id</td><td>MRN: 12345 (Acme Healthcare)</td></tr></tbody></table></div>"
+      },
+      "identifier": [
+        {
+          "use": "usual",
+          "type": {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                "code": "MR"
+              }
+            ]
+          },
+          "system": "urn:oid:1.2.36.146.595.217.0.1",
+          "value": "1234567890",
+          "period": {
+            "start": "2001-05-06"
+          },
+          "assigner": {
+            "display": "Test Healthcare"
+          }
+        }
+      ],
+      "active": true,
+      "name": [
+        {
+          "use": "official",
+          "family": "Suthar",
+          "given": [
+            "Kailash"
+          ]
+        }
+      ],
+      "telecom": [
+        {
+          "system": "phone",
+          "value": "(03) 3410 5613",
+          "use": "mobile",
+          "rank": 2
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1990-12-20",
+      "deceasedBoolean": false,
+      "address": [
+        {
+          "use": "home",
+          "type": "both",
+          "text": "534 Erewhon St PeasantVille, Rainbow, Vic  3999",
+          "line": [
+            "534 Erewhon St"
+          ],
+          "city": "PleasantVille",
+          "district": "Rainbow",
+          "state": "Vic",
+          "postalCode": "3999",
+          "period": {
+            "start": "1974-12-25"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Patient",
+      "id": "55770",
+      "meta": {
+        "versionId": "19",
+        "lastUpdated": "2022-03-24T23:57:32.873+00:00",
+        "source": "#eHiMnVcdHFt9pel5"
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><div class=\"hapiHeaderText\">swanand salvi <b>CHALMERS </b></div><table class=\"hapiPropertyTable\"><tbody><tr><td>Date of birth</td><td><span>25 December 1974</span></td></tr></tbody></table></div>"
+      },
+      "active": true,
+      "name": [
+        {
+          "use": "official",
+          "family": "Chalmers",
+          "given": [
+            "swanand",
+            "salvi"
+          ]
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1974-12-25"
+    },
+    {
+      "resourceType": "Patient",
+      "id": "220000",
+      "meta": {
+        "versionId": "2",
+        "lastUpdated": "2020-09-11T02:57:29.928+00:00",
+        "source": "#QjVDhz8SqCvBQ4h4"
+      },
+      "text": {
+        "status": "generated",
+        "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><div class=\"hapiHeaderText\">Vu Le <b>VU </b></div><table class=\"hapiPropertyTable\"><tbody><tr><td>Address</td><td><span>Ho Chi Minh </span><span>HCM </span><span>Vietnam </span></td></tr><tr><td>Date of birth</td><td><span>20 September 1984</span></td></tr></tbody></table></div>"
+      },
+      "extension": [
+        {
+          "url": "http://superehr.org/Extenstion/blood-group",
+          "valueCoding": {
+            "system": "http://superehr.org/ValueSet/blood-group",
+            "code": "B",
+            "display": "B"
+          }
+        },
+        {
+          "url": "http://superehr.org/Extenstion/blood-rh-status",
+          "valueCoding": {
+            "system": "http://superehr.org/ValueSet/blood-rh-status",
+            "code": "+",
+            "display": "Dương"
+          }
+        },
+        {
+          "url": "http://superehr.org/Extenstion/ethnicity",
+          "valueString": "KinhAA"
+        },
+        {
+          "url": "http://superehr.org/Extenstion/occupation",
+          "valueString": "Kỹ sưAA"
+        }
+      ],
+      "active": true,
+      "name": [
+        {
+          "use": "official",
+          "text": "Le Quoc Vu",
+          "family": "Vu",
+          "given": [
+            "Vu",
+            "Le"
+          ]
+        }
+      ],
+      "telecom": [
+        {
+          "system": "phone",
+          "value": "0928033451",
+          "use": "mobile"
+        },
+        {
+          "system": "email",
+          "value": "lqvu@sk-global.biz",
+          "use": "home"
+        }
+      ],
+      "gender": "male",
+      "birthDate": "1984-09-20",
+      "address": [
+        {
+          "use": "home",
+          "type": "physical",
+          "text": "6/26 CMT8 P.BenThanh Q.1",
+          "city": "Ho Chi Minh",
+          "state": "HCM",
+          "postalCode": "700000",
+          "country": "Vietnam"
+        }
+      ]
+    }
+  ],
+  "queryParams": {
+    "active": "true",
+    "gender": "male",
+    "_count": "5"
+  },
+  "executionTime": 1713
+}

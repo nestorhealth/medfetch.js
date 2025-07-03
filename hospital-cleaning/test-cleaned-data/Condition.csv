@@ -1,0 +1,469 @@
+"abatement_date","asserter_reference","clinical_status","condition_category","condition_code","condition_display","condition_name","condition_notes","condition_system","encounter_reference","id","onset_date","patient_reference","recorded_date","resourceType","severity","verification_status"
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39540","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39541","1999-03","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39592","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39593","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39594","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39595","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39611","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39612","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39613","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39628","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39629","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39630","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39631","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39646","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39647","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39648","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39649","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39664","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39665","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39666","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39667","1997-01","Patient/39254",,"Condition",,
+,"Practitioner/1058","resolved",,"22298006","Myocardial infarction","Shortness of breath",,"http://snomed.info/sct",,"1421","2010-11-11T11:12:14.456+07:00","Patient/1194",,"Condition",,
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"39730","2019-09-24","Patient/1194",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"39731","2019-09-24","Patient/1194",,"Condition",,"confirmed"
+,,"resolved",,,,"Asthma",,,,"39732",,"Patient/1200",,"Condition",,"confirmed"
+,"Practitioner/1058","active",,"386661006","Fever",,,"http://snomed.info/sct",,"39735","2013-04-02","Patient/1200","2019-04-04","Condition",,"confirmed"
+,"Practitioner/1058","active",,"87628006","Bacterial infectious disease",,,"http://snomed.info/sct",,"39737",,"Patient/1316","2019-09-04","Condition",,"differential"
+,,"resolved",,,,"Asthma",,,,"39738",,"Patient/1316",,"Condition",,"confirmed"
+,"Patient/1208","active",,"254637007","NSCLC - Non-small cell lung cancer",,,"http://snomed.info/sct",,"39740","2019-08-05","Patient/1203","2019-08-03","Condition",,"confirmed"
+,"Patient/1208","active",,"18099001","Retropharyngeal abscess",,,"http://snomed.info/sct",,"39744","2018-02-27","Patient/1208","2018-02-20","Condition",,"confirmed"
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39746","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39747","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39748","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39749","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39792","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39793","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39794","2010-09","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"39795","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39796","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"39812","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39813","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"39814","1992-08","Patient/39254",,"Condition",,
+,,"resolved",,"59621000","Hypertension",,,"2.16.840.1.113883.6.96",,"39815","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"39816","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40072","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40073","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40074","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40075","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40090","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40091","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40092","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40093","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40108","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40109","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40110","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40111","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40126","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40127","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40128","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40129","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40144","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40145","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40146","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40147","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40195","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40196","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40197","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40198","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40223","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40224","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40225","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40226","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40243","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40244","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40245","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40246","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40317","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40318","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40319","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40320","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40457","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40458","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40459","1992-08","Patient/39254",,"Condition",,
+,,"resolved",,"59621000","Hypertension",,,"2.16.840.1.113883.6.96",,"40460","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40461","1997-01","Patient/39254",,"Condition",,
+,,"active",,"195967001","Asthma",,,"http://snomed.info/sct",,"40463","1950","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40464","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"11101003","PTCA",,,"http://snomed.info/sct",,"40465","1999-03","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40466","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"233604007","Pneumonia",,,"http://snomed.info/sct",,"40482","1997-01","Patient/39254",,"Condition",,
+,,"resolved",,"22298006","Myocardial infarction",,,"http://snomed.info/sct",,"40484","1997-01","Patient/39254",,"Condition",,
+,,,"Diagnosis","195917001","asthma","asthma",,"http://snomed.info/ct",,"42026",,"Patient/42024",,"Condition","mild to moderate",
+,,,"Diagnosis","73211009","diabetes","diabetes",,"http://snomed.info/ct",,"42027",,"Patient/42024",,"Condition","moderate",
+,,,"Diagnosis","38341003","hypertension","hypertension",,"http://snomed.info/ct",,"42028",,"Patient/42024",,"Condition","Mild",
+,,,"Diagnosis","35489007","depression","depression",,"http://snomed.info/ct",,"42029",,"Patient/42024",,"Condition","Moderate",
+,,,"Diagnosis","247389009","neuropathic pain","neuropathic pain",,"http://snomed.info/ct",,"42030",,"Patient/42024",,"Condition","moderate",
+,,,"Diagnosis","69896004","rheumatoid arthritis","rheumatoid arthritis - both hands",,"http://snomed.info/ct",,"42031",,"Patient/42024",,"Condition","Moderate",
+,,,"Diagnosis","69896004","rheumatoid arthritis","rheumatoid arthritis - left elbow",,"http://snomed.info/ct",,"42032",,"Patient/42024",,"Condition","Diagnosis",
+,,,"Diagnosis","235595009","GERD","GERD",,"http://snomed.info/ct",,"42033",,"Patient/42024",,"Condition","Moderate",
+,,,"Diagnosis","13644009","high cholesterol","high cholesterol",,"http://snomed.info/ct",,"42034",,"Patient/42024",,"Condition","Moderate",
+,,,"Diagnosis","414941998","onychomycosis","onychomycosis",,"http://snomed.info/ct",,"42035",,"Patient/42024",,"Condition","severe",
+,,,"Diagnosis","194818000","angina","angina",,"http://snomed.info/ct",,"42036",,"Patient/42024",,"Condition","Moderate",
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"45499",,,,"Condition",,
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"45500",,,,"Condition",,
+,"#contained-practitioner",,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"45507",,,,"Condition",,
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"45532",,,,"Condition",,
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"45549",,,,"Condition",,
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"47791",,,,"Condition",,
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"48665",,,,"Condition",,
+,,,,"204256004","Congenital pointed ear",,,"http://snomed.info/sct",,"48668",,,,"Condition",,
+,,,,"204256004","Pointed Ear",,,"http://snomed.info/sct",,"48704",,,,"Condition",,
+"2019-08-01T20:27:01-04:00",,"resolved",,"10509002","Acute bronchitis (disorder)","Acute bronchitis (disorder)",,"http://snomed.info/sct","Encounter/49422","49423","2019-07-25T20:27:01-04:00","Patient/49006","2019-07-25T20:27:01-04:00","Condition",,"confirmed"
+,,,,"20425625","SNOMED 20425625 = Deformity of pinna","Just a text for testing",,"http://snomed.info/sct",,"51322",,,,"Condition",,
+,,,,,,,,,,"cf-1572300557656",,"Patient/cf-1572285491892",,"Condition",,
+,,"asd",,,,,"Min lange kommentar",,,"52850",,"Patient/22","2019-10-30T13:43:29+01:00","Condition",,"confirmed"
+,,"asd",,,,,"Min lange kommentar",,,"52851",,"Patient/22","2019-10-30T13:43:29+01:00","Condition",,"confirmed"
+,,"asd",,,,,"Min lange kommentar",,,"52852",,"Patient/22","2019-10-30T13:43:29+01:00","Condition",,"confirmed"
+,,"notrealcode",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"52859","2012-05-24","Patient/22",,"Condition",,"confirmed"
+,,"notrealcode",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"52860","2012-05-24","Patient/22",,"Condition",,"confirmed"
+,,"resolved","ConditionCategoryCodes","363746003","Hypertension","SNOMED CT",,"2.16.840.1.113883.6.96",,"53226","2010-01-10","Patient/53254",,"Condition",,
+,,"resolved","ConditionCategoryCodes","386807006","Memory impairment",,"functional-status","2.16.840.1.113883.6.96",,"53238","2007-04","Patient/53254",,"Condition",,
+,,"resolved","ConditionCategoryCodes","233604007","Pneumonia","SNOMED CT","medical-history","2.16.840.1.113883.6.96",,"53247","2011-11-01T01:00:00-04:00","Patient/53254",,"Condition",,
+,,,,"233604007","Pneumonia","SNOMED CT",,"2.16.840.1.113883.6.96",,"53281","2007-04","Patient/53254",,"Condition",,
+,,,,,,,,,,"53282","2011-11-01T01:00:00-04:00","Patient/53254",,"Condition",,
+,,,,"363746003","Hypertension","SNOMED CT",,"2.16.840.1.113883.6.96",,"53312","2010-01-10","Patient/53254",,"Condition",,
+,,,,"233604007","Pneumonia","SNOMED CT",,"2.16.840.1.113883.6.96",,"53313","2007-04","Patient/53254",,"Condition",,
+,,,,,,,,,,"53314","2011-11-01T01:00:00-04:00","Patient/53254",,"Condition",,
+,,,,"363746003","Hypertension","SNOMED CT",,"2.16.840.1.113883.6.96",,"53344","2010-01-10","Patient/53373",,"Condition",,
+,,,,"233604007","Pneumonia","SNOMED CT",,"2.16.840.1.113883.6.96",,"53345","2007-04","Patient/53373",,"Condition",,
+,,,"Diagnosis","195917001","asthma","asthma",,"http://snomed.info/ct",,"59532",,"Patient/59530",,"Condition","mild to moderate",
+,,,"Diagnosis","73211009","diabetes","diabetes",,"http://snomed.info/ct",,"59533",,"Patient/59530",,"Condition","moderate",
+,,,"Diagnosis","38341003","hypertension","hypertension",,"http://snomed.info/ct",,"59534",,"Patient/59530",,"Condition","Mild",
+,,,"Diagnosis","35489007","depression","depression",,"http://snomed.info/ct",,"59535",,"Patient/59530",,"Condition","Moderate",
+,,,"Diagnosis","247389009","neuropathic pain","neuropathic pain",,"http://snomed.info/ct",,"59536",,"Patient/59530",,"Condition","moderate",
+,,,"Diagnosis","69896004","rheumatoid arthritis","rheumatoid arthritis - both hands",,"http://snomed.info/ct",,"59537",,"Patient/59530",,"Condition","Moderate",
+,,,"Diagnosis","69896004","rheumatoid arthritis","rheumatoid arthritis - left elbow",,"http://snomed.info/ct",,"59538",,"Patient/59530",,"Condition","Diagnosis",
+,,,"Diagnosis","235595009","GERD","GERD",,"http://snomed.info/ct",,"59539",,"Patient/59530",,"Condition","Moderate",
+,,,"Diagnosis","13644009","high cholesterol","high cholesterol",,"http://snomed.info/ct",,"59540",,"Patient/59530",,"Condition","Moderate",
+,,,"Diagnosis","414941998","onychomycosis","onychomycosis",,"http://snomed.info/ct",,"59541",,"Patient/59530",,"Condition","severe",
+,,,"Diagnosis","194818000","angina","angina",,"http://snomed.info/ct",,"59542",,"Patient/59530",,"Condition","Moderate",
+,,,"Diagnosis","195917001","asthma","asthma",,"http://snomed.info/ct",,"69052",,"Patient/69050",,"Condition","mild to moderate",
+,,,"Diagnosis","73211009","diabetes","diabetes",,"http://snomed.info/ct",,"69053",,"Patient/69050",,"Condition","moderate",
+,,,"Diagnosis","38341003","hypertension","hypertension",,"http://snomed.info/ct",,"69054",,"Patient/69050",,"Condition","Mild",
+,,,"Diagnosis","35489007","depression","depression",,"http://snomed.info/ct",,"69055",,"Patient/69050",,"Condition","Moderate",
+,,,"Diagnosis","247389009","neuropathic pain","neuropathic pain",,"http://snomed.info/ct",,"69056",,"Patient/69050",,"Condition","moderate",
+,,,"Diagnosis","69896004","rheumatoid arthritis","rheumatoid arthritis - both hands",,"http://snomed.info/ct",,"69057",,"Patient/69050",,"Condition","Moderate",
+,,,"Diagnosis","69896004","rheumatoid arthritis","rheumatoid arthritis - left elbow",,"http://snomed.info/ct",,"69058",,"Patient/69050",,"Condition","Diagnosis",
+,,,"Diagnosis","235595009","GERD","GERD",,"http://snomed.info/ct",,"69059",,"Patient/69050",,"Condition","Moderate",
+,,,"Diagnosis","13644009","high cholesterol","high cholesterol",,"http://snomed.info/ct",,"69060",,"Patient/69050",,"Condition","Moderate",
+,,,"Diagnosis","414941998","onychomycosis","onychomycosis",,"http://snomed.info/ct",,"69061",,"Patient/69050",,"Condition","severe",
+,,,"Diagnosis","194818000","angina","angina",,"http://snomed.info/ct",,"69062",,"Patient/69050",,"Condition","Moderate",
+,,,,"46177005","End-stage renal disease (disorder)","End-stage renal disease",,"http://snomed.info/sct",,"69630",,,,"Condition",,
+,,,,"46177005","End-stage renal disease (disorder)","End-stage renal disease",,"http://snomed.info/sct",,"69692",,"urn:uuid:79284eb6-0ed9-4951-b683-b422edde4240",,"Condition",,
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73153","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73198","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73299","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73699","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73784","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73880","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73919","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"73961","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"74008","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"74055","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"74103","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"74561","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75404","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75466","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75533","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75597","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75669","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75739","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75810","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75885","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"75957","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76029","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76101","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76158","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76226","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76286","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76460","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76535","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76610","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76698","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76793","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76888","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"76983","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"77086","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"77180","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"77275","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"77540","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"77685","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"77900","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"78063","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"78184","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"78570","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"78771","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"78941","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"79159","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"79618","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"79780","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"84053","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"84437","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"84613","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"84722","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"85088","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"85380","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"85698","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"85815","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"86297","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"86348","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"86989","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"87438","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"87458","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"87716","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"88121","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"88405","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"89022","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"89650","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"90485","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"92171","2012-05-24",,,"Condition",,"confirmed"
+,"Patient/1201","recurrence",,"179005","Apraxia of dressing",,,"http://snomed.info/sct","Encounter/10","99308","2015-08-05","Patient/1201","2015-10-05","Condition",,"unconfirmed"
+,"Patient/1201","relapse",,"184004","Withdrawal arrhythmia",,,"http://snomed.info/sct","Encounter/1413","99309","2018-08-05","Patient/1201","2018-10-05","Condition",,"differential"
+,"Patient/1201","inactive",,"188001","Intercostal artery injury",,,"http://snomed.info/sct","Encounter/1413","99310","2017-08-05","Patient/1201","2017-10-05","Condition",,"provisional"
+,"Patient/1201","inactive",,"188001","Intercostal artery injury",,,"http://snomed.info/sct","Encounter/94881","99311","2017-08-05","Patient/1201","2017-10-05","Condition",,"provisional"
+,"Practitioner/1058","resolved",,"22298006","Myocardial infarction","Shortness of breath",,"http://snomed.info/sct",,"1425","2010-11-11T11:12:14.456+07:00","Patient/1203",,"Condition",,
+,"Practitioner/1058","active",,"87628006","Bacterial infectious disease",,,"http://snomed.info/sct",,"39741",,"Patient/1203","2019-09-10","Condition",,"differential"
+,,,,"condition-title","sick",,"sdfgh","https://happy.long-nguyen.de/code",,"102336",,"Patient/22",,"Condition",,
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103109","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103186","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103262","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103340","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103418","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103496","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103575","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103656","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103737","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103819","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"103923","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104047","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104158","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104267","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104376","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104485","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104595","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104705","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104812","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"104926","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105037","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105162","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105286","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105456","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105563","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105683","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105790","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105903","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105931","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105961","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"105997","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106028","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106054","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106081","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106109","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106137","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106165","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106193","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"106222","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113267","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113319","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113369","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113408","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113450","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113561","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113677","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113789","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"113906","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"114017","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"114128","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"114239","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"114513","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"115497","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"115605","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"115716","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"115827","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"115938","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"116080","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"116424","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"116535","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"116646","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"116941","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"117053","2012-05-24",,,"Condition",,"confirmed"
+,,"resolved",,"39065001","Bacterial infectious disease","infectious disease",,"http://snomed.info/sct",,"137147","2019-09-24","Patient/1194",,"Condition",,"confirmed"
+,,,,"204256004","Congenital pointed ear",,,"http://snomded.info/sct",,"160156",,,,"Condition",,
+,,,,"204256004","Pointed Ear",,,"https://snomed.info/sct",,"160157",,,,"Condition",,
+,,,,"204256004","Pointed ear",,,"http://snomed.info/sct",,"160169",,,,"Condition",,
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"182233","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"182356","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"182910","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"183291","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"183897","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"184129","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"191956","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"192306","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"192847","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"195715","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"206423","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"206543","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"206723","2012-05-24","Patient/206686",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"214364","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"215608","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"215700","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"215727","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"215755","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"215819","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216057","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216175","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216258","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216328","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216387","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216479","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"216515","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218134","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218253","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218293","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218389","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218518","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218711","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218795","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218832","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218919","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"218996","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"219035","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"219078","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"219635","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"219687","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"220204","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"220811","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"220921","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"220974","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221028","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221062","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221143","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221192","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221197","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221202","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221239","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221252","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221265","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221272","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221310","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221314","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221428","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221514","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221570","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221893","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"221914","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222152","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222189","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222292","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222467","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222628","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222635","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222799","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"222932","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223400","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223438","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223486","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223534","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223582","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223630","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223740","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223819","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223825","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"223912","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"224010","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"224121","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"224169","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"224185","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"224191","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"243172","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"243284","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"243396","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"243585","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"243798","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"243909","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244020","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244304","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244382","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244493","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244604","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244782","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"244957","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"245071","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"245729","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"245977","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"246404","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"246536","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"246904","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"Name","Stuff",,,"my:little:urn",,"247008",,,"2019-12-09T11:15:50+01:00","Condition",,"differential"
+,,"active",,"Name","Stuff",,,"my:little:urn",,"247009",,,"2019-12-09T11:15:50+01:00","Condition",,"differential"
+,,"active",,"Name","Stuff",,,"my:little:urn",,"247010",,,"2019-12-09T11:15:50+01:00","Condition",,"differential"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"247102","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"247216","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"247333","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"Name","Stuff",,,"my:little:urn",,"247421",,,"2019-12-09T11:15:50+01:00","Condition",,"differential"
+,,"active",,"Name","Stuff",,,"my:little:urn",,"247423",,,"2019-12-09T11:15:50+01:00","Condition",,"differential"
+,,"active",,"Name","Stuff",,,"my:little:urn",,"247424",,,"2019-12-09T11:15:50+01:00","Condition",,"differential"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"247985","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248043","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248099","2012-05-24","Patient/example",,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248123","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248240","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248590","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248713","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248735","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248862","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"248995","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"249119","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"249243","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"249372","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"249639","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"250414","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"251238","2012-05-24",,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"251365","2012-05-24",,,"Condition",,"confirmed"
+,,"inactive",,,,,,,,"256553",,,,"Condition",,"confirmed"
+,,"active",,"39065001","Burn of ear","Burnt Ear",,"http://snomed.info/sct",,"256730","2012-05-24",,,"Condition",,"confirmed"
+,,,,,"Muscle ache",,,,,"259991",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"259992",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"259994",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"259995",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"259996",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"259997",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"259999",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260000",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260001",,,,"Condition",,
+,,,,,"high fever",,,,,"260002",,,,"Condition",,
+,,,,,"high fever",,,,,"260003",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260004",,,,"Condition",,
+,,,,,"high fever",,,,,"260008",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260009",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260011",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260012",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260017",,,,"Condition",,
+,,,,,"Sore throat",,,,,"260019",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260020",,,,"Condition",,
+,,,,,"high fever",,,,,"260028",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260030",,,,"Condition",,
+,,,,,"high fever",,,,,"260031",,,,"Condition",,
+,,,,,"high fever",,,,,"260032",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260033",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260038",,,,"Condition",,
+,,,,,"high fever",,,,,"260039",,,,"Condition",,
+,,,,,"high fever",,,,,"260041",,,,"Condition",,
+,,,,,"high fever",,,,,"260042",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260043",,,,"Condition",,
+,,,,,"high fever",,,,,"260046",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"260358",,,,"Condition",,
+,,,,,"high fever",,,,,"265784",,,,"Condition",,
+,,,,,"high fever",,,,,"265885",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"267575",,,,"Condition",,
+,,,,"02","XXXX病",,,"http://terminology.hl7fhir.cn/Sichuan/ValueSet/疾病种类",,"285169","2019-12-12",,"2019-12-12","Condition",,
+,,,,"02","XXXX病",,,"http://terminology.hl7fhir.cn/Sichuan/ValueSet/疾病种类",,"286576","2019-12-12",,"2019-12-12","Condition",,
+,,"active",,,,"Asthma",,,,"288667","2019-12-12","Patient/example","2019-12-12","Condition",,"confirmed"
+,,,,,"high fever",,,,,"306964",,,,"Condition",,
+,,,,,"high fever",,,,,"306965",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"307131",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"307908",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"307909",,,,"Condition",,
+,,,,,"Muscle ache",,,,,"307910",,,,"Condition",,

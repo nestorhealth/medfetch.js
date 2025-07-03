@@ -1,0 +1,6 @@
+"address_line1","birth_date","city","country","deceased","email","first_name","full_name","gender","id","last_name","phone","postal_code","resourceType","state"
+,"1976-12-25",,,,,"PS3",,"male","45280","PS4",,,"Patient",
+,"1974-12-25",,,,,"4567",,"male","53373","Zhang",,,"Patient",
+"534 Erewhon St","1990-12-20","PleasantVille",,false,,"Kailash",,"male","55190","Suthar","(03) 3410 5613","3999","Patient","Vic"
+,"1974-12-25",,,,,"swanand",,"male","55770","Chalmers",,,"Patient",
+,"1984-09-20","Ho Chi Minh","Vietnam",,"lqvu@sk-global.biz","Vu","Le Quoc Vu","male","220000","Vu","0928033451","700000","Patient","HCM"

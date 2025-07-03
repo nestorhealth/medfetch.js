@@ -1,0 +1,81 @@
+RESEARCH PROTOCOL: Diabetes Management and Outcomes Study
+
+PRINCIPAL INVESTIGATOR: Dr. Michael Chen, MD, PhD
+Department of Endocrinology, Medical Research Institute
+
+STUDY TITLE: Comparative Effectiveness of Diabetes Management Strategies
+
+INFORMED CONSENT:
+All participants will receive comprehensive informed consent documentation including:
+- Detailed explanation of study objectives and procedures
+- Clear description of potential risks and benefits
+- Explicit statement of voluntary participation
+- Right to withdraw at any time without consequences
+- Comprehensive privacy and confidentiality protections
+- Contact information for study team and IRB
+
+DATA SECURITY AND PRIVACY PROTECTION:
+- HIPAA-compliant data storage and transmission
+- End-to-end encryption for all data
+- Role-based access controls
+- Regular security assessments and penetration testing
+- Data anonymization and de-identification protocols
+- Secure data retention and disposal procedures
+
+RISK ASSESSMENT:
+Potential risks include:
+- Minor discomfort from blood glucose monitoring
+- Time commitment for study visits and data collection
+- Potential privacy concerns (adequately mitigated)
+- Minimal risk of data breach (comprehensive security measures)
+
+Benefits include:
+- Comprehensive diabetes health assessments
+- Potential improvements in diabetes management
+- Contribution to diabetes research and treatment
+- Financial compensation for participation
+
+VOLUNTARY PARTICIPATION:
+Participation in this study is completely voluntary. Participants have the right to withdraw at any time without penalty or loss of benefits to which they are otherwise entitled.
+
+CONFIDENTIALITY AND PRIVACY:
+All participant data will be kept strictly confidential. Personal identifiers will be removed and replaced with unique study codes. Data will be stored in secure, encrypted systems.
+
+STUDY OBJECTIVES:
+This study aims to compare the effectiveness of different diabetes management strategies on glycemic control and long-term outcomes in patients with Type 2 diabetes.
+
+TARGET POPULATION:
+- Patients aged 21-80 years
+- Diagnosed with Type 2 diabetes mellitus (ICD-10: E11)
+- Both male and female participants
+- Active patients with regular follow-up care
+
+DATA REQUIREMENTS:
+- Patient demographics and medical history
+- Diabetes diagnosis and duration
+- Glycemic control measurements (HbA1c, blood glucose)
+- Medication history and adherence
+- Comorbid conditions and complications
+- Treatment outcomes and adverse events
+
+RESOURCE TYPES NEEDED:
+- Patient: Demographics, age, gender, active status
+- Condition: Diabetes diagnoses, clinical status, complications
+- Observation: HbA1c, blood glucose, lab values
+- MedicationRequest: Diabetes medications, insulin
+- Procedure: Diabetes-related procedures
+- Encounter: Clinical visits and follow-ups
+
+FILTERS AND CRITERIA:
+- Age range: 21-80 years
+- Gender: All (male and female)
+- Conditions: Type 2 diabetes mellitus (SNOMED: 44054006)
+- Date range: 2019-01-01 to 2025-12-31
+- Target patient count: 300 patients
+
+MONITORING AND OVERSIGHT:
+- Regular IRB review and approval
+- Independent data safety monitoring board
+- Quarterly progress reports
+- Comprehensive adverse event reporting
+- Annual study audits 

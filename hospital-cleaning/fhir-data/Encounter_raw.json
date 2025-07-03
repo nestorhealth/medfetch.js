@@ -1,0 +1,2064 @@
+{
+  "resourceType": "Encounter",
+  "resources": [
+    {
+      "resourceType": "Encounter",
+      "id": "619779",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T05:30:28.201+00:00",
+        "source": "#lxQjDKl7eskGCGq5"
+      },
+      "subject": {
+        "reference": "Patient/619774"
+      },
+      "period": {
+        "start": "2020-02-12T05:20:28+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/619776",
+            "display": "ER, ed897cf4-18e0-4f97-be65-e146197213b5"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:20:28+00:00",
+            "end": "2020-02-12T05:25:28+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/619777",
+            "display": "Ward 1, Room dd9c8851-4488-4a17-bec4-d1a6dd1fdd0c, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:25:28+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "619786",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T05:30:28.869+00:00",
+        "source": "#OitdyYWbfqisgJyW"
+      },
+      "subject": {
+        "reference": "Patient/619781"
+      },
+      "period": {
+        "start": "2020-02-12T05:10:28+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/619785",
+            "display": "Ward 1, Room a447a1bd-b1e0-45c6-ac65-b49c1fd47b23, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:10:28+00:00",
+            "end": "2020-02-12T05:15:28+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "619787",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T05:30:28.934+00:00",
+        "source": "#kuq5rlkT6fuPmjoF"
+      },
+      "subject": {
+        "reference": "Patient/619782"
+      },
+      "period": {
+        "start": "2020-02-12T05:20:28+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/619784",
+            "display": "ER, 21f335a8-6b65-4762-943e-febdcfcb732f"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:20:28+00:00",
+            "end": "2020-02-12T05:25:28+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/619785",
+            "display": "Ward 1, Room a447a1bd-b1e0-45c6-ac65-b49c1fd47b23, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:25:28+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "619794",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T05:30:29.571+00:00",
+        "source": "#1dg0uArrvlRsosRC"
+      },
+      "subject": {
+        "reference": "Patient/619789"
+      },
+      "period": {
+        "start": "2020-02-12T05:10:29+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/619793",
+            "display": "Ward 1, Room 7b6d441f-6eca-48e7-b564-215905459d5e, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:10:29+00:00",
+            "end": "2020-02-12T05:15:29+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "619795",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T05:30:29.636+00:00",
+        "source": "#auaDEGvaJqhcpg9j"
+      },
+      "subject": {
+        "reference": "Patient/619790"
+      },
+      "period": {
+        "start": "2020-02-12T05:20:29+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/619792",
+            "display": "ER, de62551e-658b-4495-a9cf-e08da3e3fa34"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:20:29+00:00",
+            "end": "2020-02-12T05:25:29+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/619793",
+            "display": "Ward 1, Room 7b6d441f-6eca-48e7-b564-215905459d5e, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-12T05:25:29+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "encounter",
+      "meta": {
+        "versionId": "6",
+        "lastUpdated": "2020-02-12T05:55:39.884+00:00",
+        "source": "#KHND491Iv1g2y1F2"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/patient"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/practitioner"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/appointment"
+        }
+      ],
+      "period": {
+        "start": "2020-02-07T08:07:00+10:00",
+        "end": "2020-02-07T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/hospital-organization"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "Tina",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T06:51:34.489+00:00",
+        "source": "#0svWtIONOnvDsntj"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/Tina"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/Suraj"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/Tina"
+        }
+      ],
+      "period": {
+        "start": "2020-02-07T08:07:00+10:00",
+        "end": "2020-02-07T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/Tina"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620039",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-12T15:25:55.234+00:00",
+        "source": "#NrSqQqYBirtUZHos"
+      },
+      "status": "finished",
+      "statusHistory": [
+        {
+          "status": "arrived",
+          "period": {
+            "start": "2020-12-08"
+          }
+        }
+      ],
+      "class": {
+        "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+        "code": "HH",
+        "display": "home health"
+      },
+      "subject": {
+        "reference": "Patient/619225"
+      },
+      "participant": [
+        {
+          "individual": {
+            "reference": "Practitioner/1058",
+            "display": "Guru Practitioner"
+          }
+        }
+      ],
+      "serviceProvider": {
+        "reference": "Organization/1621",
+        "display": "CAPE COD HOSPITAL"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620093",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:52.332+00:00",
+        "source": "#fFq4sKIhF3eOLPNz"
+      },
+      "subject": {
+        "reference": "Patient/620088"
+      },
+      "period": {
+        "start": "2020-02-13T05:09:51+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620092",
+            "display": "Ward 1, Room af056815-8397-4107-a065-d8915da231f1, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:09:51+00:00",
+            "end": "2020-02-13T05:14:51+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620094",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:52.554+00:00",
+        "source": "#eD7zKHwz6nxM6GpB"
+      },
+      "subject": {
+        "reference": "Patient/620089"
+      },
+      "period": {
+        "start": "2020-02-13T05:19:52+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620091",
+            "display": "ER, f9b32343-416a-4de8-b1fe-3c086fc01a19"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:19:52+00:00",
+            "end": "2020-02-13T05:24:52+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620092",
+            "display": "Ward 1, Room af056815-8397-4107-a065-d8915da231f1, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:24:52+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620105",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:53.924+00:00",
+        "source": "#568ffLvXK0rFk0cO"
+      },
+      "subject": {
+        "reference": "Patient/620100"
+      },
+      "period": {
+        "start": "2020-02-13T05:09:53+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620104",
+            "display": "Ward 1, Room b2b50e81-d526-483c-8d97-32d6386cbb8b, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:09:53+00:00",
+            "end": "2020-02-13T05:14:53+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620106",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:53.998+00:00",
+        "source": "#kAFC4JPFxQX7afGg"
+      },
+      "subject": {
+        "reference": "Patient/620101"
+      },
+      "period": {
+        "start": "2020-02-13T05:19:53+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620103",
+            "display": "ER, 603c99e6-624b-44ee-a381-c5e2a2f1868c"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:19:53+00:00",
+            "end": "2020-02-13T05:24:53+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620104",
+            "display": "Ward 1, Room b2b50e81-d526-483c-8d97-32d6386cbb8b, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:24:53+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620113",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:54.737+00:00",
+        "source": "#3xNXdinXYywda7TD"
+      },
+      "subject": {
+        "reference": "Patient/620108"
+      },
+      "period": {
+        "start": "2020-02-13T05:09:54+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620112",
+            "display": "Ward 1, Room d0ee65bb-9387-4aec-a0e5-b37bb824a859, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:09:54+00:00",
+            "end": "2020-02-13T05:14:54+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620114",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:54.815+00:00",
+        "source": "#5QmrdK5YZXjvtGlL"
+      },
+      "subject": {
+        "reference": "Patient/620109"
+      },
+      "period": {
+        "start": "2020-02-13T05:19:54+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620111",
+            "display": "ER, 61693a66-7693-4f25-9e0c-088d9a4d3741"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:19:54+00:00",
+            "end": "2020-02-13T05:24:54+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620112",
+            "display": "Ward 1, Room d0ee65bb-9387-4aec-a0e5-b37bb824a859, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:24:54+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620121",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:58.070+00:00",
+        "source": "#jjl6MHVt1vztN7U4"
+      },
+      "subject": {
+        "reference": "Patient/620116"
+      },
+      "period": {
+        "start": "2020-02-13T05:09:58+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620120",
+            "display": "Ward 1, Room 629500a6-3916-43d0-9546-702d68751bd6, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:09:58+00:00",
+            "end": "2020-02-13T05:14:58+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620122",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:58.135+00:00",
+        "source": "#VXzMxLBT1VGevFOS"
+      },
+      "subject": {
+        "reference": "Patient/620117"
+      },
+      "period": {
+        "start": "2020-02-13T05:19:58+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620119",
+            "display": "ER, bf1f230b-dee9-478a-9c5b-3e73720d4215"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:19:58+00:00",
+            "end": "2020-02-13T05:24:58+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620120",
+            "display": "Ward 1, Room 629500a6-3916-43d0-9546-702d68751bd6, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:24:58+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620129",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:58.859+00:00",
+        "source": "#XmatDxeqNDCsfkyb"
+      },
+      "subject": {
+        "reference": "Patient/620124"
+      },
+      "period": {
+        "start": "2020-02-13T05:09:58+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620128",
+            "display": "Ward 1, Room 68e2059b-6626-4c9f-b856-b34874ef0fb4, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:09:58+00:00",
+            "end": "2020-02-13T05:14:58+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620130",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:58.929+00:00",
+        "source": "#NzQjjEGdyVugJGKt"
+      },
+      "subject": {
+        "reference": "Patient/620125"
+      },
+      "period": {
+        "start": "2020-02-13T05:19:58+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620127",
+            "display": "ER, 6522831a-50cc-4bef-859b-c3d8eb2caf76"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:19:58+00:00",
+            "end": "2020-02-13T05:24:58+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620128",
+            "display": "Ward 1, Room 68e2059b-6626-4c9f-b856-b34874ef0fb4, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:24:58+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620137",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:59.630+00:00",
+        "source": "#zwaY8UH98JC6E5we"
+      },
+      "subject": {
+        "reference": "Patient/620132"
+      },
+      "period": {
+        "start": "2020-02-13T05:09:59+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620136",
+            "display": "Ward 1, Room 59f2fda8-0414-4090-add6-4d345ab7183d, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:09:59+00:00",
+            "end": "2020-02-13T05:14:59+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620138",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:29:59.702+00:00",
+        "source": "#GlqcxSMfknV1UWmp"
+      },
+      "subject": {
+        "reference": "Patient/620133"
+      },
+      "period": {
+        "start": "2020-02-13T05:19:59+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620135",
+            "display": "ER, 8f255e47-c90c-43b7-8b8d-8b13486076d5"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:19:59+00:00",
+            "end": "2020-02-13T05:24:59+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620136",
+            "display": "Ward 1, Room 59f2fda8-0414-4090-add6-4d345ab7183d, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:24:59+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620145",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:30:00.472+00:00",
+        "source": "#66y1pQOZpiyD9H7l"
+      },
+      "subject": {
+        "reference": "Patient/620140"
+      },
+      "period": {
+        "start": "2020-02-13T05:10:00+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620144",
+            "display": "Ward 1, Room c4830d24-f380-49a0-a3c4-ac10629fbc5f, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:10:00+00:00",
+            "end": "2020-02-13T05:15:00+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620146",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T05:30:00.535+00:00",
+        "source": "#oLK1yAHp8OhlY2d7"
+      },
+      "subject": {
+        "reference": "Patient/620141"
+      },
+      "period": {
+        "start": "2020-02-13T05:20:00+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620143",
+            "display": "ER, f4712136-8f40-4172-9b17-7614bbc27135"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:20:00+00:00",
+            "end": "2020-02-13T05:25:00+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/620144",
+            "display": "Ward 1, Room c4830d24-f380-49a0-a3c4-ac10629fbc5f, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-13T05:25:00+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "Shyam",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T06:22:31.972+00:00",
+        "source": "#CCphHCBYXHQBZVUx"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/Shyam"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/chandu"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/Shyam"
+        }
+      ],
+      "period": {
+        "start": "2020-02-13T08:07:00+10:00",
+        "end": "2020-02-15T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/Shyam"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "Charan",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T06:50:12.327+00:00",
+        "source": "#6Iow1vGVViEUom76"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/Charan"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/chandu"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/Charan"
+        }
+      ],
+      "period": {
+        "start": "2020-02-07T08:07:00+10:00",
+        "end": "2020-02-07T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/Charan"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "Sravu",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T08:14:44.203+00:00",
+        "source": "#JArO9uQgVKVZqMkp"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/Sravu"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/chandu"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/Sravu"
+        }
+      ],
+      "period": {
+        "start": "2020-02-07T08:07:00+10:00",
+        "end": "2020-02-07T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/Sravu"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "sid",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T08:59:30.086+00:00",
+        "source": "#Nb62JtrnoQmTcFCI"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "outpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/sid"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/sheetal"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/sid"
+        }
+      ],
+      "period": {
+        "start": "2020-01-08T08:07:00+10:00",
+        "end": "2020-01-08T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/sid"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "ashy",
+      "meta": {
+        "versionId": "2",
+        "lastUpdated": "2020-02-13T09:35:11.905+00:00",
+        "source": "#MYjyBkUWuQDWtp40"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "outpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/ashy"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/practitoner"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/ashy"
+        }
+      ],
+      "period": {
+        "start": "2020-02-07T08:07:00+10:00",
+        "end": "2020-02-07T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/ashy"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "Ramu",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T10:41:52.136+00:00",
+        "source": "#manUDdINWsmc7hob"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/Ramu"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/chandu"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/Ramu"
+        }
+      ],
+      "period": {
+        "start": "2020-02-07T08:07:00+10:00",
+        "end": "2020-02-07T08:28:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/Ramu"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "Titus",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T11:30:05.226+00:00",
+        "source": "#5KjUktmMzglBpkPZ"
+      },
+      "status": "finished",
+      "class": {
+        "system": "http://hl7.org/fhir/ValueSet/v3-ActEncounterCode",
+        "code": "NONAC",
+        "display": "inpatient non-acute"
+      },
+      "priority": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/ValueSet/v3-ActPriority",
+            "code": "R",
+            "display": "routine"
+          }
+        ]
+      },
+      "subject": {
+        "reference": "Patient/Titus"
+      },
+      "participant": [
+        {
+          "type": [
+            {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/ValueSet/encounter-participant-type",
+                  "code": "PPRF",
+                  "display": "primary performer"
+                }
+              ]
+            }
+          ],
+          "individual": {
+            "reference": "Practitioner/Vinod"
+          }
+        }
+      ],
+      "appointment": [
+        {
+          "reference": "Appointment/Titus"
+        }
+      ],
+      "period": {
+        "start": "2020-02-10T11:11:00+10:00",
+        "end": "2020-02-10T12:10:00+10:00"
+      },
+      "serviceProvider": {
+        "reference": "Organization/Titus"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620360",
+      "meta": {
+        "versionId": "2",
+        "lastUpdated": "2020-02-13T12:54:50.752+00:00",
+        "source": "#NxALTB1CQyXm4OLS"
+      },
+      "identifier": [
+        {
+          "use": "official",
+          "value": "123451177"
+        }
+      ],
+      "status": "arrived",
+      "class": {
+        "code": "inpatient"
+      },
+      "subject": {
+        "reference": "Patient/620357",
+        "display": "Roy Tina A"
+      },
+      "participant": [
+        {
+          "individual": {
+            "reference": "Practitioner/620361"
+          }
+        },
+        {
+          "individual": {
+            "reference": "Practitioner/620363"
+          }
+        },
+        {
+          "individual": {
+            "reference": "Practitioner/620365"
+          }
+        },
+        {
+          "individual": {
+            "reference": "Practitioner/620367"
+          }
+        }
+      ],
+      "period": {
+        "start": "2010-11-11T11:12:14.450",
+        "end": "2010-11-11T11:12:14.450"
+      },
+      "reasonCode": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "122003",
+              "display": "Choroidal hemorrhage (disorder)"
+            }
+          ]
+        }
+      ],
+      "hospitalization": {
+        "preAdmissionIdentifier": {
+          "use": "official",
+          "value": "1234"
+        },
+        "admitSource": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/admit-source",
+              "code": "emd",
+              "display": "From accident/emergency department"
+            }
+          ]
+        },
+        "reAdmission": {
+          "coding": [
+            {
+              "userSelected": true
+            }
+          ]
+        },
+        "dietPreference": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/diet",
+                "code": "vegetarian",
+                "display": "Vegetarian"
+              }
+            ]
+          }
+        ],
+        "dischargeDisposition": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/discharge-disposition",
+              "code": "home",
+              "display": "Home"
+            }
+          ]
+        }
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620372"
+          },
+          "status": "active"
+        },
+        {
+          "location": {
+            "reference": "Location/620373"
+          },
+          "status": "active"
+        },
+        {
+          "location": {
+            "reference": "Location/620374"
+          },
+          "status": "active"
+        }
+      ],
+      "serviceProvider": {
+        "reference": "Organization/69867"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "620394",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-13T13:46:14.133+00:00",
+        "source": "#kvJv0bqSnNUWBZse"
+      },
+      "identifier": [
+        {
+          "use": "official",
+          "value": "12345888"
+        }
+      ],
+      "status": "arrived",
+      "class": {
+        "code": "inpatient"
+      },
+      "subject": {
+        "reference": "Patient/620357",
+        "display": "Roy Tina A"
+      },
+      "participant": [
+        {
+          "individual": {
+            "reference": "Practitioner/620361"
+          }
+        },
+        {
+          "individual": {
+            "reference": "Practitioner/620363"
+          }
+        },
+        {
+          "individual": {
+            "reference": "Practitioner/620365"
+          }
+        },
+        {
+          "individual": {
+            "reference": "Practitioner/620367"
+          }
+        }
+      ],
+      "period": {
+        "start": "2010-11-11T11:12:14.450",
+        "end": "2010-11-11T11:12:14.450"
+      },
+      "reasonCode": [
+        {
+          "coding": [
+            {
+              "system": "http://snomed.info/sct",
+              "code": "122003",
+              "display": "Choroidal hemorrhage (disorder)"
+            }
+          ]
+        }
+      ],
+      "hospitalization": {
+        "preAdmissionIdentifier": {
+          "use": "official",
+          "value": "1234"
+        },
+        "admitSource": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/admit-source",
+              "code": "emd",
+              "display": "From accident/emergency department"
+            }
+          ]
+        },
+        "reAdmission": {
+          "coding": [
+            {
+              "userSelected": true
+            }
+          ]
+        },
+        "dietPreference": [
+          {
+            "coding": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/diet",
+                "code": "vegetarian",
+                "display": "Vegetarian"
+              }
+            ]
+          }
+        ],
+        "dischargeDisposition": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/discharge-disposition",
+              "code": "home",
+              "display": "Home"
+            }
+          ]
+        }
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/620390"
+          },
+          "status": "active"
+        },
+        {
+          "location": {
+            "reference": "Location/620391"
+          },
+          "status": "active"
+        },
+        {
+          "location": {
+            "reference": "Location/620392"
+          },
+          "status": "active"
+        }
+      ],
+      "serviceProvider": {
+        "reference": "Organization/69867"
+      }
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622279",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:29:52.642+00:00",
+        "source": "#DZSZbH67A3YqLU2q"
+      },
+      "subject": {
+        "reference": "Patient/622274"
+      },
+      "period": {
+        "start": "2020-02-14T05:09:52+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622278",
+            "display": "Ward 1, Room d5255370-71e4-47e8-960f-5958810d57d6, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:09:52+00:00",
+            "end": "2020-02-14T05:14:52+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622280",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:29:52.864+00:00",
+        "source": "#PjiLqF8JxtZND9ZE"
+      },
+      "subject": {
+        "reference": "Patient/622275"
+      },
+      "period": {
+        "start": "2020-02-14T05:19:52+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622277",
+            "display": "ER, 5ff614f4-2222-474b-8541-86195f111a3b"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:19:52+00:00",
+            "end": "2020-02-14T05:24:52+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622278",
+            "display": "Ward 1, Room d5255370-71e4-47e8-960f-5958810d57d6, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:24:52+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622291",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:29:54.277+00:00",
+        "source": "#82T9JM76rq0v15em"
+      },
+      "subject": {
+        "reference": "Patient/622286"
+      },
+      "period": {
+        "start": "2020-02-14T05:09:54+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622290",
+            "display": "Ward 1, Room 9d7793fd-421b-4f34-baa6-1a70d179304d, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:09:54+00:00",
+            "end": "2020-02-14T05:14:54+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622292",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:29:54.361+00:00",
+        "source": "#ZHiYSyJEJkT5mLcL"
+      },
+      "subject": {
+        "reference": "Patient/622287"
+      },
+      "period": {
+        "start": "2020-02-14T05:19:54+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622289",
+            "display": "ER, cda9d267-3a26-4af1-b3dd-2ae70b21ced0"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:19:54+00:00",
+            "end": "2020-02-14T05:24:54+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622290",
+            "display": "Ward 1, Room 9d7793fd-421b-4f34-baa6-1a70d179304d, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:24:54+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622299",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:29:55.091+00:00",
+        "source": "#A3jKDCrpOQwDxYEm"
+      },
+      "subject": {
+        "reference": "Patient/622294"
+      },
+      "period": {
+        "start": "2020-02-14T05:09:55+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622298",
+            "display": "Ward 1, Room 2bd68427-7ce7-4f1e-a29d-b4ba1ef428f0, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:09:55+00:00",
+            "end": "2020-02-14T05:14:55+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622300",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:29:55.177+00:00",
+        "source": "#IEbtwOqdHm8kR28f"
+      },
+      "subject": {
+        "reference": "Patient/622295"
+      },
+      "period": {
+        "start": "2020-02-14T05:19:55+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622297",
+            "display": "ER, 1e5df207-c310-468e-adf0-1074bc7c8876"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:19:55+00:00",
+            "end": "2020-02-14T05:24:55+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622298",
+            "display": "Ward 1, Room 2bd68427-7ce7-4f1e-a29d-b4ba1ef428f0, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:24:55+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622307",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:00.034+00:00",
+        "source": "#0TnizSD2zY0NizWr"
+      },
+      "subject": {
+        "reference": "Patient/622302"
+      },
+      "period": {
+        "start": "2020-02-14T05:10:00+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622306",
+            "display": "Ward 1, Room 52e9153c-6f4b-41d2-aa47-592be46f293a, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:10:00+00:00",
+            "end": "2020-02-14T05:15:00+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622308",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:00.114+00:00",
+        "source": "#kfNvtqnrhbrL3E9F"
+      },
+      "subject": {
+        "reference": "Patient/622303"
+      },
+      "period": {
+        "start": "2020-02-14T05:20:00+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622305",
+            "display": "ER, 527ffd87-b4dd-43b5-a1a1-29d74bfa88f3"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:20:00+00:00",
+            "end": "2020-02-14T05:25:00+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622306",
+            "display": "Ward 1, Room 52e9153c-6f4b-41d2-aa47-592be46f293a, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:25:00+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622315",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:00.921+00:00",
+        "source": "#bcN80NgSdRSuAkbQ"
+      },
+      "subject": {
+        "reference": "Patient/622310"
+      },
+      "period": {
+        "start": "2020-02-14T05:10:00+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622314",
+            "display": "Ward 1, Room a6d26ba6-2341-45ad-97f6-161a52c94153, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:10:00+00:00",
+            "end": "2020-02-14T05:15:00+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622316",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:01.014+00:00",
+        "source": "#vbbjlj2yuyOuNmG5"
+      },
+      "subject": {
+        "reference": "Patient/622311"
+      },
+      "period": {
+        "start": "2020-02-14T05:20:01+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622313",
+            "display": "ER, 2eb6aab0-349c-4485-adbb-d81dadc83ad6"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:20:01+00:00",
+            "end": "2020-02-14T05:25:01+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622314",
+            "display": "Ward 1, Room a6d26ba6-2341-45ad-97f6-161a52c94153, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:25:01+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622323",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:01.797+00:00",
+        "source": "#KbiEKifL03TXtAXN"
+      },
+      "subject": {
+        "reference": "Patient/622318"
+      },
+      "period": {
+        "start": "2020-02-14T05:10:01+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622322",
+            "display": "Ward 1, Room 0178ff1e-b465-43c9-8041-97d338608ca5, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:10:01+00:00",
+            "end": "2020-02-14T05:15:01+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622324",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:01.880+00:00",
+        "source": "#iKd9jBUPElLyfELK"
+      },
+      "subject": {
+        "reference": "Patient/622319"
+      },
+      "period": {
+        "start": "2020-02-14T05:20:01+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622321",
+            "display": "ER, 7350f37c-57fc-4a44-97ce-91decd311831"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:20:01+00:00",
+            "end": "2020-02-14T05:25:01+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622322",
+            "display": "Ward 1, Room 0178ff1e-b465-43c9-8041-97d338608ca5, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:25:01+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622331",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:02.534+00:00",
+        "source": "#72QvhmagVOFg7N1P"
+      },
+      "subject": {
+        "reference": "Patient/622326"
+      },
+      "period": {
+        "start": "2020-02-14T05:10:02+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622330",
+            "display": "Ward 1, Room bee2b959-0c31-47fb-9839-695f933016c1, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:10:02+00:00",
+            "end": "2020-02-14T05:15:02+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622332",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-14T05:30:02.606+00:00",
+        "source": "#XtdJAM6dm45OfbwI"
+      },
+      "subject": {
+        "reference": "Patient/622327"
+      },
+      "period": {
+        "start": "2020-02-14T05:20:02+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622329",
+            "display": "ER, 03f20e5b-ff58-416b-b7ef-910908d24b6e"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:20:02+00:00",
+            "end": "2020-02-14T05:25:02+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622330",
+            "display": "Ward 1, Room bee2b959-0c31-47fb-9839-695f933016c1, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-14T05:25:02+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622453",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-15T05:29:51.701+00:00",
+        "source": "#ecyuNGl1MoKTPcFf"
+      },
+      "subject": {
+        "reference": "Patient/622448"
+      },
+      "period": {
+        "start": "2020-02-15T05:09:51+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622452",
+            "display": "Ward 1, Room e81455b4-d30c-48d4-bee1-9c2b77de041c, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:09:51+00:00",
+            "end": "2020-02-15T05:14:51+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622454",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-15T05:29:51.885+00:00",
+        "source": "#A2OYCskguQ0ViNxL"
+      },
+      "subject": {
+        "reference": "Patient/622449"
+      },
+      "period": {
+        "start": "2020-02-15T05:19:51+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622451",
+            "display": "ER, 07f2e7ea-5c83-4db8-a510-0ecb939b725e"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:19:51+00:00",
+            "end": "2020-02-15T05:24:51+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622452",
+            "display": "Ward 1, Room e81455b4-d30c-48d4-bee1-9c2b77de041c, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:24:51+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622465",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-15T05:29:53.112+00:00",
+        "source": "#5uT3XTX5emTmjCPd"
+      },
+      "subject": {
+        "reference": "Patient/622460"
+      },
+      "period": {
+        "start": "2020-02-15T05:09:53+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622464",
+            "display": "Ward 1, Room 95d3a441-de10-4a19-a4e6-0d70abce387d, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:09:53+00:00",
+            "end": "2020-02-15T05:14:53+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622466",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-15T05:29:53.180+00:00",
+        "source": "#t5v699jFjWPPT9oY"
+      },
+      "subject": {
+        "reference": "Patient/622461"
+      },
+      "period": {
+        "start": "2020-02-15T05:19:53+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622463",
+            "display": "ER, 5cbcd964-49cf-46e8-bd3f-296f6f4e447e"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:19:53+00:00",
+            "end": "2020-02-15T05:24:53+00:00"
+          }
+        },
+        {
+          "location": {
+            "reference": "Location/622464",
+            "display": "Ward 1, Room 95d3a441-de10-4a19-a4e6-0d70abce387d, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:24:53+00:00"
+          }
+        }
+      ]
+    },
+    {
+      "resourceType": "Encounter",
+      "id": "622473",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2020-02-15T05:29:53.833+00:00",
+        "source": "#Vh5xVmgyGL1tgPS0"
+      },
+      "subject": {
+        "reference": "Patient/622468"
+      },
+      "period": {
+        "start": "2020-02-15T05:09:53+00:00"
+      },
+      "location": [
+        {
+          "location": {
+            "reference": "Location/622472",
+            "display": "Ward 1, Room 25d23466-fb04-43c4-bba2-ef7c95499ce3, Bed 1"
+          },
+          "status": "active",
+          "period": {
+            "start": "2020-02-15T05:09:53+00:00",
+            "end": "2020-02-15T05:14:53+00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "queryParams": {
+    "_count": "50"
+  },
+  "executionTime": 1003
+}

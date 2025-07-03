@@ -1,0 +1,27 @@
+RESEARCH PROTOCOL: Pediatric Study
+
+PRINCIPAL INVESTIGATOR: Dr. Lisa Thompson
+Department of Pediatrics
+
+STUDY TITLE: Childhood Vaccination Study
+
+STUDY OBJECTIVES:
+Study childhood vaccination patterns.
+
+TARGET POPULATION:
+Children under 18 years.
+
+DATA REQUIREMENTS:
+Vaccination records.
+
+RESOURCE TYPES NEEDED:
+Patient, Observation, Procedure
+
+FILTERS AND CRITERIA:
+Age under 18, vaccination procedures.
+
+DATA SECURITY:
+Secure storage.
+
+MONITORING:
+Regular review. 
