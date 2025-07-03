@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 import { call } from "@/lib/utils";
-import { mockPatientBundleFile } from "@/app/mock-file";
 
 const queryKey = (table: string) => ["workspaceData", table];
 
@@ -22,9 +21,10 @@ export function useWorkspaceData() {
     type: "application/json",
     lastModified: Date.now(),
   });
+  console.log("file size", file.size)
   const fileName = "foo.db"
 
-  const dialect = medfetch(mockPatientBundleFile, {
+  const dialect = medfetch(file, {
     filename: fileName
   });
   const db = new Kysely<any>({
