@@ -1,4 +1,4 @@
-import { migrationsFromJson } from "./sql.js";
+import { migrationsFromJson } from "./json/sql.js";
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { type FetchTextSync, Page } from "./json/page.js";
 import { Counter } from "./sqlite-wasm/counter.js";
@@ -72,7 +72,7 @@ export function loadExtension(
                 "sqlite",
                 aux.schema,
                 {
-                    "/Condition/subject": "/Condition/subject/reference"
+                    "#/definitions/Reference": "#/definitions/Reference/properties/reference"
                 }
             );
             // Map database index to medfetch_module "instance"

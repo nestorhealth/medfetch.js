@@ -6,7 +6,7 @@ import type {
 import type { Resource } from "fhir/r4";
 import { Page } from "../json/page.js";
 import { Sqlite3, Sqlite3Module } from "./types.js";
-import type { ResolveColumn, SQLResolver } from "../sql.js";
+import type { ResolveColumn, SQLResolver } from "../json/sql.js";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor

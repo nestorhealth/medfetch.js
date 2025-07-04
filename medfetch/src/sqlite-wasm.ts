@@ -1,4 +1,4 @@
-import { dummy } from "./sql.js";
+import { dummy } from "./json/sql.js";
 import { Worker1DB, Worker1PromiserDialect } from "./sqlite-wasm/dialect.js";
 import { BROWSER } from "esm-env";
 import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/types.js";
@@ -60,6 +60,17 @@ type ClientOptions = {
     schema?: JSONSchema7 | (() => Promise<JSONSchema7>);
     worker?: Worker;
     filename?: string;
+    
+    /**
+     * Rewrite a JSON schema child (object type) path get with one of its children
+     * 
+     * @example
+     * 
+     * const ReferenceRewrites: {
+     *   "#/definitions/Reference": "#/definitions/Reference/properties/reference"
+     * }
+     */
+    rewrites?: Record<string, string>;
 };
 
 /**

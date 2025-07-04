@@ -15,7 +15,7 @@ import {
     type ColumnDataType,
     type Expression,
 } from "kysely";
-import { get } from "jsonpointer";
+import { get, set } from "jsonpointer";
 
 type DataTypeExpression = ColumnDataType | Expression<any>;
 
@@ -187,27 +187,6 @@ interface JsonTableMigration {
 export type ResolveColumn = (resource: any, index: number) => ColumnValue;
 
 /**
- * Checks an arbitrary object and asserts that "id" in resource and "resourceType" in resource. That's it.
- * @param resource Some arbitrary js value
- * @returns Itself if it is a resource
- */
-function checkResource(
-    resource: any,
-): { id: string; resourceType: string } & Record<string, any> {
-    if (typeof resource !== "object") {
-        throw new Error(
-            `migrations.preprocess: That's not an object: ${typeof resource}`,
-        );
-    }
-    if (!("id" in resource && "resourceType" in resource)) {
-        throw new Error(
-            `migrations.preprocess: I don't know how to preprocess that: (has_id=${"id" in resource}, has_resourceType=${"resourceType" in resource})`,
-        );
-    }
-    return resource;
-}
-
-/**
  * Default key filter callback for JSON schema. Removes extension keys
  * (those that begin with '_') and isn't equal to "id" (this by default sets that to the primary key)
  * @param key The JSON key name
@@ -230,7 +209,7 @@ function jsonTableMigration(
     tableName: string,
     root: JSONSchema7,
     keyFilter: (key: string) => boolean = defaultKeyFilter,
-    rewritePaths?: Record<string, string>
+    rewrites?: Record<string, string>
 ): JsonTableMigration {
     const tb = db.schema
         .createTable(tableName)
@@ -261,17 +240,20 @@ function jsonTableMigration(
         }
         
         let columnSchema = value;
-        const rewriteKey = `/${tableName}/${key}`;
-        if (rewritePaths?.[rewriteKey]) {
-            const columnKey = tail(rewritePaths[rewriteKey]);
-            if (!value.$ref && value.type !== "object") {
-                throw new Error(`Can't rewrite that path "${rewriteKey}": it doesn't have an object schema`);
+        let rewritten: string | null = null;
+        if (value.$ref && rewrites?.[value.$ref]) {
+            rewritten = rewrites[value.$ref];
+            const resolved = resolveRef(rewritten, root);
+            if (!resolved) {
+                throw new Error(`That json pointer doesn't exist for rewrite ${value.$ref}: ${resolved}`);
             }
-            columnSchema = value.$ref ? get(resolveRef(value.$ref, root) ?? {}, `/properties/${columnKey}`) : get(value, `/properties/${columnKey}`)
+            columnSchema = resolved;
         }
+        
+        // Column key remains the same!!
         let column = resolveColumnMetadata(key, columnSchema, root);
-        if (rewritePaths?.[rewriteKey]) {
-            (column as any as {rewrite: string;}).rewrite = rewritePaths[rewriteKey].split("/").slice(2).join("/")
+        if (rewritten) {
+            set(column, "/rewrite", `${key}/${tail(rewritten)}`);
         }
         columnsMetadata.push(column)
         return tb.addColumn(

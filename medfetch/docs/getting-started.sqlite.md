@@ -33,7 +33,7 @@ const dialect = medfetch("https://my.fhir.api.com");
 Then `medfetch` will attempt to make a Virtual Table for every Resource listed in the base FHIR JSON schema
 that the database will a fetch call to internally at query-time. 
 
-<<< ../src/sql.ts#snippet{3-5}
+<<< ../src/json/sql.ts#snippet{3-5}
 
 This on its own won't (shouldn't) break the client instantiation flow, since the database will only throw on query-time of the 404 Resource.
 But if you know what Resources your app needs ahead of time, you should always specify the scope to speedup the schema lookup time since
