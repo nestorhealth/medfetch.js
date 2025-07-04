@@ -22,19 +22,12 @@ import {
   Users,
   AlertCircle,
 } from "lucide-react";
-import {
-  saveWorkspaceName,
-  listWorkspaceNames,
-} from "@/lib/workspaceopfs";
+import { saveWorkspaceName, listWorkspaceNames } from "@/lib/workspaceopfs";
 import type { FhirResource, Bundle } from "fhir/r5";
 
-const getResourceCount = (
-  bundle: Bundle<FhirResource>,
-  resourceType: string
-) =>
-  bundle.entry?.filter(
-    (entry) => entry.resource?.resourceType === resourceType
-  ).length ?? 0;
+const getResourceCount = (bundle: Bundle<FhirResource>, resourceType: string) =>
+  bundle.entry?.filter((entry) => entry.resource?.resourceType === resourceType)
+    .length ?? 0;
 
 interface CreateWorkspaceFormProps {
   demoBundle: Bundle<FhirResource> | null;
@@ -46,16 +39,16 @@ interface Workspace {
   patientCount: number;
 }
 
-export function CreateWorkspaceForm({
-  demoBundle,
-}: CreateWorkspaceFormProps) {
+export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
   const [workspaceName, setWorkspaceName] = useState("");
   const [description, setDescription] = useState("");
   const [dataSource, setDataSource] = useState<"none" | "demo" | "upload">(
-    "none"
+    "none",
   );
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [bundleData, setBundleData] = useState<Bundle<FhirResource> | null>(null);
+  const [bundleData, setBundleData] = useState<Bundle<FhirResource> | null>(
+    null,
+  );
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [patientCount, setPatientCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -98,9 +91,7 @@ export function CreateWorkspaceForm({
     setError(null);
   };
 
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadedFile(file);
@@ -146,7 +137,7 @@ export function CreateWorkspaceForm({
         workspaceName,
         description,
         jsonData: bundleData,
-      })
+      }),
     );
     setTimeout(() => {
       router.push("/showcase/researcher");
@@ -349,8 +340,8 @@ export function CreateWorkspaceForm({
                           {dataSource === "demo"
                             ? "Demo Data Selected"
                             : uploadSuccess
-                            ? "Upload successful!"
-                            : "File Uploaded"}
+                              ? "Upload successful!"
+                              : "File Uploaded"}
                         </p>
                         <p
                           className={`text-xs mt-1 ${
@@ -364,10 +355,10 @@ export function CreateWorkspaceForm({
                                 patientCount !== 1 ? "s" : ""
                               } in demo bundle`
                             : uploadSuccess
-                            ? `Found ${patientCount} patient${
-                                patientCount !== 1 ? "s" : ""
-                              } in your data`
-                            : `File: ${uploadedFile?.name ?? "Unknown"}`}
+                              ? `Found ${patientCount} patient${
+                                  patientCount !== 1 ? "s" : ""
+                                } in your data`
+                              : `File: ${uploadedFile?.name ?? "Unknown"}`}
                         </p>
                       </div>
                     </div>
@@ -448,7 +439,10 @@ export function CreateWorkspaceForm({
 
         <AnimatePresence mode="popLayout">
           {workspaces.length ? (
-            <motion.div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" layout>
+            <motion.div
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              layout
+            >
               {workspaces.map((ws, i) => (
                 <motion.div
                   key={ws.name}
@@ -482,7 +476,8 @@ export function CreateWorkspaceForm({
 
                     <div className="flex items-center text-sm text-slate-400 mt-2">
                       <Users className="w-4 h-4 mr-1" />
-                      {ws.patientCount} patient{ws.patientCount !== 1 ? "s" : ""}
+                      {ws.patientCount} patient
+                      {ws.patientCount !== 1 ? "s" : ""}
                     </div>
 
                     <motion.div
@@ -502,7 +497,11 @@ export function CreateWorkspaceForm({
               ))}
             </motion.div>
           ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
               <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-800/50 rounded-full mb-4">
                 <Folder className="w-8 h-8 text-slate-600" />
               </div>

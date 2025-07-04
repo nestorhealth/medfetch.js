@@ -4,43 +4,42 @@ import { api } from "@/lib/api";
 import { Bundle } from "fhir/r5";
 
 const searchAll = (resourceType: "Patient" | "Procedure" | "Condition") =>
-  api.GET("/fhir/{resourceType}", {
-    params: {
-      path: {
-        resourceType: resourceType
-      }
-    }
-  })
-  .then(
-    (res) => {
+  api
+    .GET("/fhir/{resourceType}", {
+      params: {
+        path: {
+          resourceType: resourceType,
+        },
+      },
+    })
+    .then((res) => {
       if (res.error || !res.data) {
         return null;
       }
       return res.data;
-    }
-  );
-  
+    });
+
 const getDemoBundle = async () => {
   const patients = await searchAll("Patient");
   const conditions = await searchAll("Condition");
   const procedures = await searchAll("Procedure");
-  
-  const merged: Bundle<{resourceType: string}> = {
+
+  const merged: Bundle<{ resourceType: string }> = {
     id: crypto.randomUUID(),
     type: "searchset",
     resourceType: "Bundle",
     entry: [
       ...(patients?.entry ?? []),
       ...(conditions?.entry ?? []),
-      ...(procedures?.entry ?? [])
-    ]
+      ...(procedures?.entry ?? []),
+    ],
   };
   return merged;
-}
+};
 
 export default async function CreateWorkspacePage() {
   const demoBundle = await getDemoBundle();
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 px-4 py-8 flex items-center justify-center">
       <div className="w-full max-w-3xl">

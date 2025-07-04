@@ -61,13 +61,16 @@ export default function SanityCheck() {
     async function foo() {
       const dialect = medfetch(mockPatientBundleFile);
       const db = new Kysely<any>({
-        dialect
+        dialect,
       });
-      const result = await db.selectFrom("Patient").selectAll("Patient").execute();
-      console.log("Sanity Check from File results:", result)
-      
+      const result = await db
+        .selectFrom("Patient")
+        .selectAll("Patient")
+        .execute();
+      console.log("Sanity Check from File results:", result);
+
       const pragma = await sql.raw(`pragma table_info("Patient")`).execute(db);
-      console.log("Sanity Check Pragma:", pragma)
+      console.log("Sanity Check Pragma:", pragma);
     }
     foo();
   }, []);

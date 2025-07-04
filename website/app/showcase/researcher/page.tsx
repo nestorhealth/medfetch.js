@@ -309,7 +309,7 @@ export default function WorkspacePage() {
 
   const db = new Kysely({
     dialect: medfetch(file, {
-      filename: workspaceName
+      filename: workspaceName,
     }),
   });
 
@@ -328,7 +328,7 @@ export default function WorkspacePage() {
     tableName: viewName,
     virtualTableName: initialResource,
   });
-  console.log("right", rows)
+  console.log("right", rows);
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);

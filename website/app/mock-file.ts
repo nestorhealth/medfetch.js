@@ -11,12 +11,12 @@ const mockPatientBundle = {
           {
             use: "official",
             family: "Doe",
-            given: ["John"]
-          }
+            given: ["John"],
+          },
         ],
         gender: "male",
-        birthDate: "1980-01-01"
-      }
+        birthDate: "1980-01-01",
+      },
     },
     {
       fullUrl: "urn:uuid:patient-2",
@@ -27,24 +27,24 @@ const mockPatientBundle = {
           {
             use: "official",
             family: "Smith",
-            given: ["Jane"]
-          }
+            given: ["Jane"],
+          },
         ],
         gender: "female",
-        birthDate: "1990-05-12"
-      }
-    }
-  ]
+        birthDate: "1990-05-12",
+      },
+    },
+  ],
 };
 
 const jsonBlob = new Blob([JSON.stringify(mockPatientBundle, null, 2)], {
-  type: "application/json"
+  type: "application/json",
 });
 
 export const mockPatientBundleFile = new File(
   [jsonBlob],
   "mock-patient-bundle.json",
   {
-    type: "application/json"
-  }
+    type: "application/json",
+  },
 );
