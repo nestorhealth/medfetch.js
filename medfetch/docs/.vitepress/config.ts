@@ -5,9 +5,7 @@ import { fileURLToPath } from "url";
 export default defineConfig({
   title: "Medfetch.js",
   description: "SQL on FHIR for the Web",
-  head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
-  ],
+  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -19,15 +17,36 @@ export default defineConfig({
       {
         text: "Getting Started",
         items: [
-          { text: "What is Medfetch.js?", link: "/getting-started.what-is-medfetch-js" },
-          { text: "SQLite on FHIR", link: "/getting-started.sqlite" }
+          {
+            text: "What is Medfetch.js?",
+            link: "/getting-started.what-is-medfetch-js",
+          },
+          { text: "SQLite on FHIR", link: "/getting-started.sqlite" },
         ],
       },
       {
         text: "Examples",
+        items: [{ text: "Filter by ICD Codes", link: "/examples.filter-icd" }],
+      },
+      {
+        text: "Functions",
+        collapsed: true,
         items: [
-          { text: "Filter by ICD Codes", link: "/examples.filter-icd" },
-          { text: "Runtime API Examples", link: "/api-examples" },
+          {
+            text: "block",
+            link: "/functions.block"
+          },
+          {
+            text: "React",
+            link: "/functions.react",
+            collapsed: false,
+            items: [
+              {
+                text: "view",
+                link: "/functions.react.view"
+              }
+            ]
+          },
         ],
       },
     ],
@@ -57,6 +76,6 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ["@sqlite.org/sqlite-wasm"],
     },
-    envDir: fileURLToPath(new URL("../", import.meta.url))
+    envDir: fileURLToPath(new URL("../", import.meta.url)),
   },
 });

@@ -2,8 +2,9 @@ import patients from "~/../public/researcher-demo/Patient.json";
 import conditions from "~/../public/researcher-demo/Condition.json";
 import procedures from "~/../public/researcher-demo/Procedure.json";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import type { BundleEntry } from "fhir/r4";
+import type { Address, BundleEntry } from "fhir/r4";
 import { Search } from "~/routes/fhir/schema";
+import { faker } from "@faker-js/faker";
 
 const fhir = new OpenAPIHono<{ Bindings: Env; Variables: Vars }>();
 
@@ -14,6 +15,21 @@ function cases(
   },
 ) {
   return caseMap[resourceType];
+}
+
+function fakeFhirAddresses(max = 5): Address[] {
+  const count = faker.number.int({ min: 1, max });
+  return Array.from({ length: count }).map(() => ({
+    use: faker.helpers.arrayElement(['home', 'work', 'temp', 'old']),
+    type: faker.helpers.arrayElement(['postal', 'physical', 'both']),
+    text: faker.location.streetAddress({ useFullAddress: true }),
+    line: [faker.location.streetAddress()],
+    city: faker.location.city(),
+    district: faker.location.county(),
+    state: faker.location.state(),
+    postalCode: faker.location.zipCode(),
+    country: faker.location.country(),
+  }));
 }
 
 const validateResourceType = (s: string) =>
@@ -33,7 +49,10 @@ fhir.openapi(Search.type, async (c) => {
 
   const payload = cases(resourceType, {
     Patient: (patients as unknown[] as BundleEntry[]).map((p) => ({
-      resource: p,
+      resource: {
+        ...p,
+        address: fakeFhirAddresses(5)
+      },
     })),
     Condition: (conditions as unknown[] as BundleEntry[]).map((p) => ({
       resource: p,

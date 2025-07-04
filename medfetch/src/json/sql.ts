@@ -55,11 +55,11 @@ function resolveColumnMetadata(
     } else {
         throw new Error(`I don't know how to get the type from that JSON schema: ${name}`)
     }
+    
+    // #region data-types
     const types = [schema.type, schema.const, schema.enum].filter(Boolean)
-
     const baseType = types.find((type) => type !== "null"); // First type that is not null
     let dataType: ColumnMetadata["dataType"] = "text"; // fallback
-
     switch (baseType) {
         case "string":
             dataType = "text";
@@ -86,6 +86,7 @@ function resolveColumnMetadata(
         isAutoIncrementing: false,
         hasDefaultValue: false,
     };
+    // #endregion data-types
 }
 
 

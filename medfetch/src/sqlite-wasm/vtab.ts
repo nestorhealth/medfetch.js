@@ -88,6 +88,7 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
         ? sqlite3_module[Key]
         : never
 >;
+
 /**
  * The xConnect method factory function
  * @param sqlite3 The database instance
@@ -101,6 +102,9 @@ export function x_connect(
     tableName: string,
 ) {
     let sqlite3 = _sqlite3;
+
+    // #region vtab-factory
+    // This is the xConnect function with the migrationText in closure
     return (...args: Params<"xConnect">) => {
         let [pdb, _paux, _argc, _argv, ppvtab] = args;
         let rc = sqlite3.capi.SQLITE_OK;
@@ -113,7 +117,9 @@ export function x_connect(
         }
         return rc;
     };
+    // #endregion vtab-factory
 }
+
 export function x_best_index(_sqlite3: Sqlite3Static) {
     const sqlite3 = _sqlite3 as Sqlite3;
 

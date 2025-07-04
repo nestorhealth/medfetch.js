@@ -85,19 +85,24 @@ type ClientOptions = {
  * @example 
  * From a FHIR server
  * ```ts
- * const dialect = medfetch("https://my.fhir.api.com", {
- * });
+ * const dialect = medfetch("https://my.fhir.api.com");
  * ```
  * 
  * @example
  * From a File
  * ```ts
  * const file = new File(...)
- * const dialect = medfetch(file, [
- *   "Patient",
- *   "Condition",
- *   "Encounter"
- * ]);
+ * const dialect = medfetch(file);
+ * ```
+ *
+ * @example
+ * With a path rewrite
+ * ```ts
+ * const dialect = medfetch("...", {
+ *   rewrites: {
+ *     "#/definitions/Reference": "/#definitions/Reference/properties/reference"
+ *   }
+ * })
  * ```
  */
 export default function medfetch(

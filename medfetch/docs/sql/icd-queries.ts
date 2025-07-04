@@ -1,5 +1,13 @@
 import type { Condition, Patient } from "fhir/r4";
-import { sql, Kysely, CompiledQuery, DummyDriver, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from "kysely";
+import {
+  sql,
+  Kysely,
+  CompiledQuery,
+  DummyDriver,
+  SqliteAdapter,
+  SqliteIntrospector,
+  SqliteQueryCompiler,
+} from "kysely";
 
 type UserDB = {
   Patient: Patient;
@@ -23,27 +31,32 @@ const db = new Kysely<UserDB>({
   },
 });
 
-const initial = db.schema.createTable("patients").ifNotExists().as(
-  db
-    .selectFrom("Patient")
-    .innerJoin("Condition", "Condition.subject", "Patient.id")
-    .select([
-      "Patient.id as patient_id",
-      sql<string>`strftime('%Y', "Condition"."onsetDateTime")`.as("onset_year"),
-      sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`.as(
-        "icd_code",
-      ),
-      sql<string>`"Patient"."name" -> 0 -> 'given' ->> 0`.as("first_name"),
-      sql<string>`"Patient"."name" -> 0 ->> 'family'`.as("last_name"),
-      sql<number>`
+const initial = db.schema
+  .createTable("patients")
+  .ifNotExists()
+  .as(
+    db
+      .selectFrom("Patient")
+      .innerJoin("Condition", "Condition.subject", "Patient.id")
+      .select([
+        "Patient.id as patient_id",
+        sql<string>`strftime('%Y', "Condition"."onsetDateTime")`.as(
+          "onset_year",
+        ),
+        sql<string>`"Condition"."code" -> 'coding' -> 0 ->> 'code'`.as(
+          "icd_code",
+        ),
+        sql<string>`"Patient"."name" -> 0 -> 'given' ->> 0`.as("first_name"),
+        sql<string>`"Patient"."name" -> 0 ->> 'family'`.as("last_name"),
+        sql<number>`
         CAST(
         (strftime('%Y', 'now') - strftime('%Y', "Patient"."birthDate")) 
         - (strftime('%m-%d', 'now') < strftime('%m-%d', "Patient"."birthDate"))
         AS INTEGER
       )
         `.as("age"),
-    ]),
-);
+      ]),
+  );
 
 const initialQuery = initial.compile();
 

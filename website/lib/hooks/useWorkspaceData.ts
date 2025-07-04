@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useMutation,
   useQueryClient,
@@ -13,7 +13,7 @@ export function useWorkspaceData(
     virtualTableName: string;
   },
 ) {
-  const db = new Kysely<any>({ dialect });
+  const db = useMemo(() =>  new Kysely<any>({ dialect }), []);
   const [currentTableName, setCurrentTableName] = useState<string>(
     viewOpts.tableName,
   );
@@ -100,14 +100,6 @@ export function useWorkspaceData(
     onError: (e: any) => setError(e instanceof Error ? e.message : String(e)),
   });
 
-  // const rawData =
-  //   uploadedBundle && currentTableName === "Patient"
-  //     ? derivedPatients
-  //     : uploadedBundle && currentTableName === "Procedure"
-  //       ? derivedProcedures
-  //       : sqlRows;
-  //
-
   const stats = {
     total: workspaceView.data?.resultRows.length ?? 0,
     active:
@@ -119,7 +111,7 @@ export function useWorkspaceData(
   return {
     currentTableName,
     setCurrentTableName,
-    isLoading: workspaceView.isLoading,
+    isLoading: workspaceView.isLoading || workspaceView.isMutating,
     error,
     setError,
     executeQuery: {

@@ -14,40 +14,19 @@ pnpm add medfetch kysely @sqlite.org/sqlite-wasm
 ```ts
 import medfetch from "medfetch/sqlite-wasm";
 
-const dialect = medfetch("https://my.fhir.api.com", [
-    /* There are over a lot of resources so you are in charge
-       of picking which ones you care about. */
-    "Patient",
-    "Condition",
-    "Encounter"
-]);
-```
-::: tip
-If you don't specify the scope (2nd array arg of resources):
-```ts
-import medfetch from "medfetch/sqlite-wasm";
-
 const dialect = medfetch("https://my.fhir.api.com");
 ```
 
-Then `medfetch` will attempt to make a Virtual Table for every Resource listed in the base FHIR JSON schema
-that the database will a fetch call to internally at query-time. 
-
-<<< ../src/json/sql.ts#snippet{3-5}
-
-This on its own won't (shouldn't) break the client instantiation flow, since the database will only throw on query-time of the 404 Resource.
-But if you know what Resources your app needs ahead of time, you should always specify the scope to speedup the schema lookup time since
-that *isn't* an insignificant cost.
-:::
+By default this will use the [CI FHIR Master JSON schema](https://build.fhir.org/downloads.html)
+to generate the Virtual Table `CREATE TABLE` statements that SQLite3 needs upfront from the
+Medfetch extension.
 
 
 3. Instantiate ORM interface:
 ```ts
 import { sql, Kysely } from "kysely";
 
-const dialect = medfetch("https://my.fhir.api.com", [
-    "Patient", "Condition", "Encounter"
-]);
+const dialect = medfetch("https://my.fhir.api.com");
 const db = new Kysely<any>({ dialect: dialect });
 
 // This is just a kysely orm instance
@@ -62,21 +41,35 @@ const patientsFromRawQuery = await sql
     .then(result => result.rows);
 ```
 
-You can infer the resolved database type using the infer field `.$db` from the dialect if you're using typescript:
-```ts
-export const db = new Kysely<typeof dialect.$db>({ dialect });
-```
-
 See the Kysely [docs](https://kysely.dev/) for details on usage.
 
 ## Persistence
-If you want to persist the database to [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system),
-pass an object as arg1 instead of an array. The resources list will now be specified in the `scope` field:
+If you want to persist the database to [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system), pass in a `filename`
+field to the options arg1:
+
 ```ts
 const dialect = medfetch("https://my.fhir.api.com", {
-    scope: ["Patient", "Condition", "Encounter"],
     filename: "my-fhir.db"
 })
 ```
+
 This only makes a difference if you choose to "materialize" the virtual tables into real tables, otherwise, you're saving nothing
-since the data from the virtual tables only exist at runtime.
+since the data from the virtual tables only exist at runtime:
+
+## Data Types
+Runtime data of Resources is determined by the `migrationText` 
+plaintext value medfetch provides to sqlite3:
+::: code-group
+<<< ../src/sqlite-wasm/vtab.ts#vtab-factory{5}
+:::
+
+`migrationText` is determined by the `schema` argument passed into medfetch:
+
+```ts
+const myJSONSchema = {...}
+const dialect = medfetch("...", {
+    schema: myJSONSchema
+})
+```
+
+See the [About](./getting-started.what-is-medfetch-js.md#jsons-and-schemas) section for more info on JSON schema usage.
