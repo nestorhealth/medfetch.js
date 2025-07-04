@@ -5,10 +5,7 @@ const globalMeta: MetaRecord = {
     type: "page",
     display: "hidden",
   },
-  docs: {
-    type: "page",
-    title: "Documentation",
-  },
+
   showcase: {
     type: "page",
     title: "Showcase",

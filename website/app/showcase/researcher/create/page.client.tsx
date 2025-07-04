@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { UploadIcon, FileJson2, Sparkles, Users } from "lucide-react";
 import type { Bundle } from "fhir/r5";
+import { saveWorkspaceName } from "@/lib/workspaceopfs";
 
 /**
  * Filter through resources with resourceType key equal to {@link resourceType}. If anything coallesces to undefined, then this returns 0
@@ -60,7 +61,7 @@ export function CreateWorkspaceForm(props: {
     setUploadSuccess(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!workspaceName) {
       setError("Please enter a workspace name.");
       return;
@@ -74,7 +75,16 @@ export function CreateWorkspaceForm(props: {
     payload.demo = false;
     payload.jsonData = jsonData;
 
-    localStorage.setItem("workspaceData", JSON.stringify(payload));
+    try {
+      await saveWorkspaceName(workspaceName);  
+    } catch (e) {
+      console.error("OPFS save failed; falling back to localStorage", e);
+    }
+    
+    localStorage.setItem(
+      "workspaceData",
+      JSON.stringify({ workspaceName, jsonData })
+    );
     router.push("/showcase/researcher");
   };
   return (
