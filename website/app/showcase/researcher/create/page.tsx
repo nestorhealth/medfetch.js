@@ -57,7 +57,7 @@ export default async function CreateWorkspacePage() {
             Set up your own research environment with real clinical data
           </p>
         </div>
-        <CreateWorkspaceForm demoBundle={demoBundle} />
+        <CreateWorkspaceForm demoBundle={demoBundle as Bundle<FhirResource>} />
         <div className="text-center mt-6">
           <p className="text-slate-400 text-sm">
             Your workspace will be created with the selected data and settings

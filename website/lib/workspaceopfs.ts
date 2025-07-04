@@ -22,12 +22,12 @@ export async function saveWorkspaceName(name: string) {
     try {
       const workspaces = await root
         .getDirectoryHandle("medfetch")
-        .then(d => d.getDirectoryHandle("workspaces"));
+        .then((d: { getDirectoryHandle: (arg0: string) => any; }) => d.getDirectoryHandle("workspaces"));
   
       const results: { name: string; createdAt: number }[] = [];
       for await (const entry of workspaces.values()) {
         if (entry.kind === "directory") {
-          const meta = await entry.getFileHandle("meta.json").then(fh => fh.getFile());
+          const meta = await entry.getFileHandle("meta.json").then((fh: { getFile: () => any; }) => fh.getFile());
           results.push(JSON.parse(await meta.text()));
         }
       }
