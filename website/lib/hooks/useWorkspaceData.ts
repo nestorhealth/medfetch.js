@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useMutation,
   useQueryClient,
@@ -13,7 +13,7 @@ export function useWorkspaceData(
     virtualTableName: string;
   },
 ) {
-  const db = useMemo(() =>  new Kysely<any>({ dialect }), []);
+  const db = new Kysely({ dialect });
   const [currentTableName, setCurrentTableName] = useState<string>(
     viewOpts.tableName,
   );
@@ -93,9 +93,9 @@ export function useWorkspaceData(
       await db.transaction().execute(async (tx) => {
         sql.raw(updateSQL).execute(tx);
       });
-      console.log("Transaction update complete");
+      console.log("Transaction update complete", updateSQL);
       await queryClient.invalidateQueries({
-        queryKey: [db, viewOpts],
+        queryKey: ["db"],
       });
     },
     onError: (e: any) => setError(e instanceof Error ? e.message : String(e)),

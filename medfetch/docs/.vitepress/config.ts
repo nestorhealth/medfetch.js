@@ -5,14 +5,17 @@ import { fileURLToPath } from "url";
 export default defineConfig({
   title: "Medfetch.js",
   description: "SQL on FHIR for the Web",
-  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }]],
+  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/logo-dark.svg" }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: "Home", link: "/" },
       { text: "Examples", link: "/examples.filter-icd" },
     ],
-    logo: "/logo.svg",
+    logo: {
+      light: "logo.svg",
+      dark: "logo-dark.svg",
+    },
     sidebar: [
       {
         text: "Getting Started",
@@ -42,8 +45,8 @@ export default defineConfig({
             collapsed: false,
             items: [
               {
-                text: "view",
-                link: "/functions.react.view"
+                text: "useDatabase",
+                link: "/functions.react.useDatabase"
               }
             ]
           },

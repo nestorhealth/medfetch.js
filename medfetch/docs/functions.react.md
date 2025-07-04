@@ -15,4 +15,11 @@ And then [setup](https://tanstack.com/query/v5/docs/framework/react/quick-start)
 
 That's it!
 
+::: tip
+Our apps are written using [Next.js](https://nextjs.org/), so even though
+the client functions inside `medfetch/next.client` specifically do **NOT** use any Next.js specific
+functions, we can only promise that our React hooks will run smoothly on Next.js based projects since
+that's what we test on.
+:::
+
 <ReactFunctionsList />
