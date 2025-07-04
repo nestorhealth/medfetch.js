@@ -25,6 +25,11 @@
             "import": "./dist/dialects.js",
             "default": "./dist/dialects.js"
         },
+        "./react": {
+            "types": "./dist/react.d.ts",
+            "import": "./dist/react.js",
+            "default": "./dist/react.js"
+        },
         "./sqlite-wasm": {
             "types": "./dist/sqlite-wasm.d.ts",
             "import": "./dist/sqlite-wasm.js",
@@ -53,6 +58,7 @@
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20250605.0",
         "@hono/vite-dev-server": "^0.19.1",
+        "@tanstack/react-query": "^5.67.2",
         "@types/clarinet": "^0.12.3",
         "@types/fhir": "^0.0.41",
         "@types/json-schema": "^7.0.15",

@@ -19,7 +19,7 @@ import {
   Trash2,
   CheckCircle,
 } from "lucide-react";
-import { Kysely } from "kysely";
+import { Dialect } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 
 function WorkspaceHeader({
@@ -194,9 +194,9 @@ function DataTableSection({
   onCellEdit,
   selectedRows,
   onSelectionChange,
-  db,
+  dialect,
 }: {
-  db: Kysely<any>;
+  dialect: Dialect,
   currentTableName: string;
   rawData: any[];
   error: string | null;
@@ -241,7 +241,7 @@ function DataTableSection({
         )}
         <div className="flex-1 p-6">
           <AGGridTable
-            db={db}
+            dialect={dialect}
             resource={currentTableName}
             rowData={rawData}
             onCellEdit={onCellEdit}
@@ -306,11 +306,8 @@ export default function WorkspacePage() {
     type: "application/json",
     lastModified: Date.now(),
   });
-
-  const db = new Kysely({
-    dialect: medfetch(file, {
-      filename: workspaceName,
-    }),
+  const dialect = medfetch(file, {
+    filename: workspaceName
   });
 
   const {
@@ -324,11 +321,10 @@ export default function WorkspacePage() {
     executeQuery,
     editCell,
     stats,
-  } = useWorkspaceData(db, {
+  } = useWorkspaceData(dialect, {
     tableName: viewName,
     virtualTableName: initialResource,
   });
-  console.log("right", rows);
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -528,7 +524,7 @@ export default function WorkspacePage() {
       <div className="flex h-[calc(100vh-120px)]">
         {!isLoading && (
           <DataTableSection
-            db={db}
+            dialect={dialect}
             currentTableName={currentTableName}
             rawData={rows}
             error={error}

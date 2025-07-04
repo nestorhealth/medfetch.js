@@ -36,7 +36,7 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["@sqlite.org/sqlite-wasm", "kysely", "node:worker_threads", "react", "react-dom"],
+            external: ["@sqlite.org/sqlite-wasm", "kysely", "node:worker_threads", "@tanstack/react-query"],
             output: {
                 manualChunks: undefined,
                 entryFileNames: `[name].js`,
@@ -49,6 +49,7 @@ export default defineConfig({
                 "block": "src/block.ts",
                 "block.node": "src/block.node.ts",
                 "dialects": "src/dialects.ts",
+                "react": "src/react.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
                 "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
                 "threads/sqlite-wasm.db": "src/threads/sqlite-wasm.db.ts",

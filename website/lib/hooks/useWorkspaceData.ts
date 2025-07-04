@@ -1,41 +1,38 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Kysely, sql } from "kysely";
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { Dialect, Kysely, sql } from "kysely";
+import { view } from "medfetch/react";
 
 export function useWorkspaceData(
-  db: Kysely<any>,
-  view: {
+  dialect: Dialect,
+  viewOpts: {
     tableName: string;
     virtualTableName: string;
   },
 ) {
+  const db = new Kysely<any>({ dialect });
   const [currentTableName, setCurrentTableName] = useState<string>(
-    view.tableName,
+    viewOpts.tableName,
   );
   const [error, setError] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-  const {
-    data: sqlRows = {
-      resultRows: [],
-      ctas: "",
-    },
-    isLoading: sqlLoading,
-  } = useQuery({
-    queryKey: [db, view],
-    queryFn: async () => {
+  const workspaceView = view(dialect)(
+    async (db) => {
       await db.schema
-        .createTable(view.tableName)
+        .createTable(viewOpts.tableName)
         .ifNotExists()
-        .as(db.selectFrom(view.virtualTableName).selectAll())
+        .as(db.selectFrom(viewOpts.virtualTableName).selectAll())
         .execute();
       const { sql } = await db
         .selectFrom("sqlite_master")
         .select("sql")
-        .where("name", "=", view.tableName)
+        .where("name", "=", viewOpts.tableName)
         .executeTakeFirstOrThrow();
       const resultRows = await db
-        .selectFrom(view.tableName)
+        .selectFrom(viewOpts.tableName)
         .selectAll()
         .execute();
       return {
@@ -43,13 +40,7 @@ export function useWorkspaceData(
         ctas: sql as string,
       };
     },
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    staleTime: Infinity,
-  });
-
-  const executeQuery = useMutation({
-    mutationFn: async (sqlText: string) => {
+    (db, set) => async (sqlText: string) => {
       const stmts = sqlText
         .split(";")
         .map((s) => s.trim())
@@ -61,28 +52,29 @@ export function useWorkspaceData(
           .raw(sqlText)
           .execute(db)
           .then((result) => result.rows);
-      } else
+      } else {
         await db.transaction().execute(async (tx) => {
           await sql.raw(sqlText).execute(tx);
         });
-      if (isSelect) {
-        const currentData = queryClient.getQueryData([db, view]) as {
-          resultRows: any[];
-          ctas: string;
-        };
-        queryClient.setQueryData([db, view], {
+      }
+      const {sql:ctas}= await db
+        .selectFrom("sqlite_master")
+        .select("sql")
+        .where("name", "=", viewOpts.tableName)
+        .executeTakeFirstOrThrow();
+      set(prev => {
+        if (!isSelect) {
+          return prev;
+        }
+        return {
           resultRows: results,
-          ctas: currentData.ctas
-        });
-      } else
-        await queryClient.invalidateQueries({
-          queryKey: [db, view],
-        });
-      return results;
+          ctas
+        }
+      })
     },
-    onError: (e: any) => setError(e instanceof Error ? e.message : String(e)),
-  });
+  );
 
+  const queryClient = useQueryClient();
   const editCell = useMutation({
     mutationFn: async ({
       rowId,
@@ -102,7 +94,7 @@ export function useWorkspaceData(
       });
       console.log("Transaction update complete");
       await queryClient.invalidateQueries({
-        queryKey: [db, view]
+        queryKey: [db, viewOpts],
       });
     },
     onError: (e: any) => setError(e instanceof Error ? e.message : String(e)),
@@ -115,28 +107,28 @@ export function useWorkspaceData(
   //       ? derivedProcedures
   //       : sqlRows;
   //
-  const rawData = sqlRows.resultRows;
 
   const stats = {
-    total: rawData?.length ?? 0,
+    total: workspaceView.data?.resultRows.length ?? 0,
     active:
       currentTableName === "Patient"
-        ? rawData.filter((r: any) => r.status === "Active").length
+        ? workspaceView.data?.resultRows.filter((r: any) => r.status === "Active").length
         : 0,
   };
-
-  const isLoading = sqlLoading;
 
   return {
     currentTableName,
     setCurrentTableName,
-    isLoading,
+    isLoading: workspaceView.isLoading,
     error,
     setError,
-    executeQuery,
+    executeQuery: {
+      mutate: workspaceView.mutate,
+      mutateAsync: workspaceView.mutateAsync,
+    },
     editCell,
     stats,
-    rows: sqlRows?.resultRows ?? [],
-    ctas: sqlRows?.ctas ?? "",
+    rows: workspaceView.data?.resultRows ?? [],
+    ctas: workspaceView.data?.ctas ?? "",
   };
 }

@@ -32,11 +32,10 @@
     "include": [
         "src/block.ts",
         "src/block.node.ts",
-
+        "src/react.ts",
         "src/sqlite-wasm.ts",
         "src/dialects.ts",
-        "src/json/*.ts",
-        "src/sql.ts"
+        "src/json/*.ts"
     ],
     "exclude": [
         "/**/*.test.ts",
