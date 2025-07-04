@@ -4,9 +4,9 @@ import type {
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
 import type { Resource } from "fhir/r4";
-import { Page } from "../json/json.page.js";
-import { Sqlite3, Sqlite3Module } from "../sqlite-wasm/worker1.types.js";
-import type { ResolveColumn, SQLResolver } from "../sql.js";
+import { Page } from "../json/page.js";
+import { Sqlite3, Sqlite3Module } from "./types.js";
+import type { ResolveColumn, SQLResolver } from "../json/sql.js";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -55,11 +55,11 @@ const log = {
 export function medfetch_module_alloc(
     loadPage: PageLoaderFn,
     sqlite3: Sqlite3Static,
-    sof: SQLResolver,
+    resolver: SQLResolver,
 ): Record<string, Sqlite3Module> {
     const modules: Record<string, Sqlite3Module> = {};
 
-    for (const [resourceType, migrationText] of sof.migrations) {
+    for (const [resourceType, migrationText] of resolver.migrations) {
         const mod: sqlite3_module = (sqlite3.vtab as any).setupModule({
             methods: {
                 xCreate: 0,
@@ -69,7 +69,7 @@ export function medfetch_module_alloc(
                 xOpen: x_open(sqlite3, loadPage, resourceType),
                 xClose: x_close(sqlite3),
                 xNext: x_next(sqlite3),
-                xColumn: x_column(sqlite3, sof.index),
+                xColumn: x_column(sqlite3, resolver.index),
                 xEof: x_eof(sqlite3),
                 xFilter: x_filter(sqlite3),
             },

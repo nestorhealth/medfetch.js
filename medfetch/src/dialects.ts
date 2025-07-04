@@ -3,13 +3,9 @@ import {
     buildQueryFn,
     GenericSqliteDialect,
     type IGenericSqlite,
-    type Promisable,
 } from "kysely-generic-sqlite";
-import type { Worker1Promiser } from "./sqlite-wasm/worker1.types.js";
+import type { PromiserResult, Worker1Promiser } from "./sqlite-wasm/types.js";
 import { check } from "./sqlite-wasm/worker1.main.js";
-
-/* Its `db` field is a string */
-type Worker1DB = IGenericSqlite<string>;
 
 function fromNullableOrThrow<T>(t: T): NonNullable<T> {
     if (!t) {
@@ -19,73 +15,84 @@ function fromNullableOrThrow<T>(t: T): NonNullable<T> {
 }
 
 /**
- * Database interface
- * @param promiser Main thread messenger for worker1 thread (sqlite3 calls their messenger interface the "Promiser")
- * @returns {@link IGenericSqlite} implementation using promiser
+ * Implementation of {@link IGenericSqlite} where the {@link IGenericSqlite["db"]}
+ * field is set to `dbId` of the worker1 promiser database.
  */
-export async function worker1DB(
-    dbId: string,
-    promiser: Worker1Promiser,
-): Promise<Worker1DB> {
-    return {
-        db: dbId,
-        close() {
-            return promiser({
-                type: "close",
-                dbId,
-            });
-        },
-        query(
-            isSelect: boolean,
-            sql: string,
-            parameters?: any[] | readonly any[],
-        ): Promisable<QueryResult<any>> {
-            if (!isSelect) {
-                return promiser({
-                    type: "exec",
-                    dbId,
-                    args: {
-                        rowMode: "array",
-                        sql,
-                        bind: parameters ?? [],
-                    },
-                })
-                    .then(check)
-                    .then((response): QueryResult<any> => {
-                        const [resultRows] = fromNullableOrThrow(
-                            response.result.resultRows,
-                        );
-                        const numAffectedRows = BigInt(resultRows);
-                        let queryResult: QueryResult<any> = {
-                            rows: resultRows,
+export class Worker1DB implements IGenericSqlite<string> {
+    readonly db: string;
+
+    /**
+     * @param dbId
+     * @param promiser Main thread messenger function for worker1 thread (sqlite3 calls their messenger interface "Promiser")
+     */
+    constructor(db: string, private promiser: Worker1Promiser) {
+        this.db = db;
+    }
+
+    async close(): Promise<PromiserResult<"close">> {
+        return await this.promiser({
+            type: "close",
+            dbId: this.db,
+        });
+    }
+
+    /**
+     * Arbitrary SQL query function handler
+     * @param isSelect If the query is a select
+     * @param sql Querytext
+     * @param parameters Any bindable parameters
+     * @returns
+     */
+    async query(
+        isSelect: boolean,
+        sql: string,
+        parameters?: readonly any[],
+    ): Promise<QueryResult<any>> {
+        if (!isSelect) {
+            return this.promiser({
+                type: "exec",
+                dbId: this.db,
+                args: {
+                    rowMode: "array",
+                    sql,
+                    bind: parameters ?? [],
+                },
+            })
+                .then(check)
+                .then((response): QueryResult<any> => {
+                    const [resultRows] = fromNullableOrThrow(
+                        response.result.resultRows,
+                    );
+                    const numAffectedRows = BigInt(resultRows);
+                    let queryResult: QueryResult<any> = {
+                        rows: resultRows,
+                    };
+                    if (!isSelect) {
+                        queryResult = {
+                            ...queryResult,
+                            numAffectedRows,
                         };
-                        if (!isSelect) {
-                            queryResult = {
-                                ...queryResult,
-                                numAffectedRows,
-                            };
-                        }
-                        return queryResult;
-                    });
-            } else {
-                return promiser({
-                    type: "exec",
-                    dbId,
-                    args: {
-                        rowMode: "object",
-                        sql,
-                        bind: parameters ?? [],
-                    },
-                })
-                    .then(check)
-                    .then((response): QueryResult<any> => {
-                        return {
-                            rows: response.result.resultRows ?? [],
-                        };
-                    })
-            }
-        },
-    };
+                    }
+                    return queryResult;
+                });
+        } else {
+            return this.promiser({
+                type: "exec",
+                dbId: this.db,
+                args: {
+                    rowMode: "object",
+                    sql,
+                    bind: parameters ?? [],
+                },
+            })
+                .then(check)
+                .then((response): QueryResult<any> => {
+                    return {
+                        rows: response.result.resultRows ?? [],
+                    };
+                });
+        }
+    }
 }
 
 async function accessDB<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
@@ -99,14 +106,15 @@ async function accessDB<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
 
 /**
  * {@link GenericSqliteDialect} implementation for the worker1promiser api
- * from @sqlite.org/sqlite-wasm
+ * from [`@sqlite.org/sqlite-wasm`](https://github.com/sqlite/sqlite-wasm) for a db interface proxy for
+ * querying a sqlite-wasm db thread running on the Worker1 message API.
  */
 export class Worker1PromiserDialect extends GenericSqliteDialect {
     constructor(config: {
-        database: Worker1DB | (() => Promise<Worker1DB>) | (() => Worker1DB);
+        database: IGenericSqlite<string> | (() => Promise<IGenericSqlite<string>>) | (() => IGenericSqlite<string>);
     }) {
         super(async () => {
-            const db = await accessDB<Worker1DB>(config.database);
+            const db = await accessDB<IGenericSqlite<string>>(config.database);
             return {
                 db,
                 close: () => db.close(),

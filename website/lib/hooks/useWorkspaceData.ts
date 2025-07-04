@@ -27,7 +27,7 @@ export function useWorkspaceData(
       await db.schema
         .createTable(view.tableName)
         .ifNotExists()
-        .as(db.selectFrom(view.tableName).selectAll())
+        .as(db.selectFrom(view.virtualTableName).selectAll())
         .execute();
       const { sql } = await db
         .selectFrom("sqlite_master")

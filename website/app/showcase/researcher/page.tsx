@@ -75,7 +75,7 @@ function WorkspaceHeader({
               <Database className="w-6 h-6 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white flex items-center space-x-2">
+              <h1 className="flex items-center space-x-2 text-xl font-bold text-white">
                 <span>Medical Data Workspace</span>
                 {hasUnsavedChanges && (
                   <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
@@ -132,19 +132,19 @@ function WorkspaceHeader({
               </button>
               <button
                 onClick={onDownload}
-                className="p-3 transition-all rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30"
+                className="p-3 text-blue-400 transition-all border rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30"
               >
                 <Download className="w-4 h-4" />
               </button>
               <button
                 onClick={onDelete}
-                className="p-3 transition-all rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30"
+                className="p-3 text-red-400 transition-all border rounded-xl bg-red-500/20 hover:bg-red-500/30 border-red-500/30"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
               <button
                 onClick={handleUploadClick}
-                className="p-3 transition-all rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30"
+                className="p-3 text-orange-400 transition-all border rounded-xl bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/30"
               >
                 <Upload className="w-4 h-4" />
               </button>
@@ -219,7 +219,7 @@ function DataTableSection({
                 {currentTableName} Data
               </h2>
               {selectedRows.length > 0 && (
-                <span className="px-2 py-1 text-xs bg-blue-500/20 text-blue-400 rounded">
+                <span className="px-2 py-1 text-xs text-blue-400 rounded bg-blue-500/20">
                   {selectedRows.length} selected
                 </span>
               )}
@@ -293,7 +293,7 @@ function StatusNotification({
 }
 
 export default function WorkspacePage() {
-  const workspaceName = "my-cool-workspace";
+  const workspaceName = "my-cool-workspace2";
   const viewName = "patients";
   const initialResource = "Patient";
 
@@ -484,7 +484,7 @@ export default function WorkspacePage() {
   if (isLoading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="p-8 border bg-slate-800/50 backdrop-blur-sm border-slate-700 rounded-2xl text-center">
+        <div className="p-8 text-center border bg-slate-800/50 backdrop-blur-sm border-slate-700 rounded-2xl">
           <div className="w-12 h-12 mx-auto mb-4 border-2 border-blue-500 rounded-full animate-spin border-t-transparent" />
           <h3 className="mb-2 text-lg font-semibold text-white">
             Initializing Workspace

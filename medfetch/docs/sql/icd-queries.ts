@@ -23,7 +23,7 @@ const db = new Kysely<UserDB>({
   },
 });
 
-const initial = db.schema.createTable("patients").as(
+const initial = db.schema.createTable("patients").ifNotExists().as(
   db
     .selectFrom("Patient")
     .innerJoin("Condition", "Condition.subject", "Patient.id")
@@ -83,9 +83,6 @@ export async function table0(db: Kysely<any>) {
   const columns =
     (await db.introspection.getTables()).find((t) => t.name === "patients")
       ?.columns ?? [];
-  
-  const pragma = await sql.raw(`PRAGMA table_info('patients')`).execute(db).then(r => r.rows);
-  console.log("PRAGMA", pragma)
 
   return {
     rows,

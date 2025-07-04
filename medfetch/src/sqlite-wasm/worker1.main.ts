@@ -6,8 +6,8 @@ import type {
     Worker1Promiser,
     Worker1Response,
     Worker1ResponseError,
-} from "./worker1.types.js";
-import { Worker1Error } from "./worker1.types.js";
+} from "./types.js";
+import { Worker1Error } from "./types.js";
 import "@sqlite.org/sqlite-wasm";
 
 /**
