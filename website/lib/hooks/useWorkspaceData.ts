@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { Dialect, Kysely, sql } from "kysely";
-import { view } from "medfetch/react";
+import { useDatabase } from "medfetch/next";
 
 export function useWorkspaceData(
   dialect: Dialect,
@@ -19,8 +19,8 @@ export function useWorkspaceData(
   );
   const [error, setError] = useState<string | null>(null);
 
-  const workspaceView = view(dialect)(
-    async (db) => {
+  const workspaceView = useDatabase(dialect,
+    async (db: Kysely<any>) => {
       await db.schema
         .createTable(viewOpts.tableName)
         .ifNotExists()
@@ -40,7 +40,7 @@ export function useWorkspaceData(
         ctas: sql as string,
       };
     },
-    (db, set) => async (sqlText: string) => {
+    (db: Kysely<any>, {set}) => async (sqlText: string) => {
       const stmts = sqlText
         .split(";")
         .map((s) => s.trim())
@@ -66,6 +66,7 @@ export function useWorkspaceData(
         if (!isSelect) {
           return prev;
         }
+        console.log("SETTING TO", results)
         return {
           resultRows: results,
           ctas
@@ -101,17 +102,17 @@ export function useWorkspaceData(
   });
 
   const stats = {
-    total: workspaceView.data?.resultRows.length ?? 0,
+    total: workspaceView.queryData?.resultRows.length ?? 0,
     active:
       currentTableName === "Patient"
-        ? workspaceView.data?.resultRows.filter((r: any) => r.status === "Active").length
+        ? workspaceView.queryData?.resultRows.filter((r: any) => r.status === "Active").length
         : 0,
   };
 
   return {
     currentTableName,
     setCurrentTableName,
-    isLoading: workspaceView.isLoading || workspaceView.isMutating,
+    isLoading: workspaceView.isQueryLoading || workspaceView.isMutationPending,
     error,
     setError,
     executeQuery: {
@@ -120,7 +121,7 @@ export function useWorkspaceData(
     },
     editCell,
     stats,
-    rows: workspaceView.data?.resultRows ?? [],
-    ctas: workspaceView.data?.ctas ?? "",
+    rows: workspaceView.queryData?.resultRows ?? [],
+    ctas: workspaceView.queryData?.ctas ?? "",
   };
 }

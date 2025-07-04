@@ -32,7 +32,7 @@
     "include": [
         "src/block.ts",
         "src/block.node.ts",
-        "src/react.ts",
+        "src/next.ts",
         "src/sqlite-wasm.ts",
         "src/dialects.ts",
         "src/json/*.ts"

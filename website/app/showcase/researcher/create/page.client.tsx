@@ -175,12 +175,12 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
           className="relative"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 blur-xl rounded-3xl" />
-          <div className="relative bg-slate-900/70 border border-slate-800/50 rounded-xl p-6 hover:border-slate-700/50 transition-all duration-300">
+          <div className="relative p-6 transition-all duration-300 border bg-slate-900/70 border-slate-800/50 rounded-xl hover:border-slate-700/50">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label
                   htmlFor="workspace-name"
-                  className="text-sm font-medium text-slate-300 flex items-center gap-2"
+                  className="flex items-center gap-2 text-sm font-medium text-slate-300"
                 >
                   <Sparkles className="w-4 h-4 text-blue-400" />
                   Workspace Name
@@ -191,7 +191,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                   value={workspaceName}
                   onChange={(e) => setWorkspaceName(e.target.value)}
                   placeholder="e.g., Pediatric Tibial Fractures Q1"
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
+                  className="w-full px-4 py-3 text-white transition-all duration-200 border rounded-lg bg-slate-800/50 border-slate-700/50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   required
                 />
               </div>
@@ -208,7 +208,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe your workspace purpose..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 resize-none"
+                  className="w-full px-4 py-3 text-white transition-all duration-200 border rounded-lg resize-none bg-slate-800/50 border-slate-700/50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 />
               </div>
               <div className="space-y-3">
@@ -372,7 +372,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                   exit={{ opacity: 0, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="rounded-lg p-4 bg-rose-950/20 border border-rose-800/30">
+                  <div className="p-4 border rounded-lg bg-rose-950/20 border-rose-800/30">
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 mt-0.5 text-rose-400" />
                       <p className="text-sm text-rose-300">{error}</p>
@@ -385,11 +385,11 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                 disabled={isCreating || !workspaceName.trim() || !bundleData}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+                className="flex items-center justify-center w-full gap-2 px-4 py-3 font-medium text-white transition-all duration-200 rounded-lg shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isCreating ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 rounded-full border-white/30 border-t-white animate-spin" />
                     Creating Workspace...
                   </>
                 ) : (
@@ -425,9 +425,9 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-center mb-8"
+          className="mb-8 text-center"
         >
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="mb-2 text-2xl font-bold text-white">
             Your Workspaces
           </h2>
           <p className="text-slate-400">
@@ -452,20 +452,20 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.1 }}
                   whileHover={{ y: -4 }}
-                  className="group relative"
+                  className="relative group"
                 >
-                  <div className="relative bg-slate-900/90 border border-slate-700 rounded-xl p-6 hover:border-slate-600 transition-all duration-300">
+                  <div className="relative p-6 transition-all duration-300 border bg-slate-900/90 border-slate-700 rounded-xl hover:border-slate-600">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                      <div className="p-3 border rounded-lg bg-blue-500/10 border-blue-500/20">
                         <Folder className="w-6 h-6 text-blue-400" />
                       </div>
-                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs text-slate-500">
                         <Clock className="w-3 h-3" />
                         {formatDate(ws.createdAt)}
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors">
+                    <h3 className="mb-2 text-lg font-semibold text-white transition-colors group-hover:text-blue-300">
                       {ws.name}
                     </h3>
 
@@ -474,7 +474,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                       Created {new Date(ws.createdAt).toLocaleDateString()}
                     </div>
 
-                    <div className="flex items-center text-sm text-slate-400 mt-2">
+                    <div className="flex items-center mt-2 text-sm text-slate-400">
                       <Users className="w-4 h-4 mr-1" />
                       {ws.patientCount} patient
                       {ws.patientCount !== 1 ? "s" : ""}
@@ -483,11 +483,11 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                     <motion.div
                       initial={{ opacity: 0 }}
                       whileHover={{ opacity: 1 }}
-                      className="absolute inset-0 flex items-center justify-center bg-slate-900/80 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:backdrop-blur-sm group-hover:pointer-events-auto transition-all duration-200 rounded-xl"
+                      className="absolute inset-0 flex items-center justify-center transition-all duration-200 opacity-0 pointer-events-none bg-slate-900/80 group-hover:opacity-100 group-hover:backdrop-blur-sm group-hover:pointer-events-auto rounded-xl"
                     >
                       <button
                         onClick={() => router.push("/showcase/researcher")}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        className="px-4 py-2 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                       >
                         Open Workspace
                       </button>
@@ -500,13 +500,13 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className="py-12 text-center"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-800/50 rounded-full mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-slate-800/50">
                 <Folder className="w-8 h-8 text-slate-600" />
               </div>
               <p className="text-slate-400">No workspaces yet</p>
-              <p className="text-sm text-slate-500 mt-2">
+              <p className="mt-2 text-sm text-slate-500">
                 Create your first workspace above to start researching
               </p>
             </motion.div>

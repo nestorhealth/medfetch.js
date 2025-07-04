@@ -7,7 +7,7 @@ export const [syncFetch, setSyncFetch] = block(
     (...args: Parameters<typeof fetch>) => fetch(...args)
         .then(response => response.text()),
     {
-        byteSize: 1024 * 1024 // 1 MB
+        byteSize: 5 * 1024 * 1024 // 5 MB
     }
 );
 

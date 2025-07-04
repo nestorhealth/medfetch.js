@@ -4,7 +4,7 @@ import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
 import { ExportModal } from "@/components/ExportModal";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Database,
@@ -306,9 +306,9 @@ export default function WorkspacePage() {
     type: "application/json",
     lastModified: Date.now(),
   });
-  const dialect = medfetch(file, {
+  const dialect = useMemo(() =>  medfetch(file, {
     filename: workspaceName
-  });
+  }), []);
 
   const {
     currentTableName,
