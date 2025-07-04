@@ -77,8 +77,6 @@ function makeQueryState(query: CompiledQuery<any>, isMutation = false) {
 }
 
 export async function table0(db: Kysely<any>) {
-  const patients = await db.selectFrom("Condition").selectAll("Condition").execute();
-  console.log("GOT", patients)
   const rows = await db
     .executeQuery(initialQuery)
     .then(() => db.selectFrom("patients").selectAll("patients").execute());

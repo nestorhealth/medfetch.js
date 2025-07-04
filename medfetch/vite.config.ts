@@ -48,6 +48,7 @@ export default defineConfig({
             entry: {
                 "block": "src/block.ts",
                 "block.node": "src/block.node.ts",
+                "dialects": "src/dialects.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
                 "sqlite-wasm.worker": "src/sqlite-wasm.worker.ts",
                 "threads/sqlite-wasm.db": "src/threads/sqlite-wasm.db.ts",

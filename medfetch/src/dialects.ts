@@ -4,8 +4,8 @@ import {
     GenericSqliteDialect,
     type IGenericSqlite,
 } from "kysely-generic-sqlite";
-import type { PromiserResult, Worker1Promiser } from "./types.js";
-import { check } from "./worker1.main.js";
+import type { PromiserResult, Worker1Promiser } from "./sqlite-wasm/types.js";
+import { check } from "./sqlite-wasm/worker1.main.js";
 
 function fromNullableOrThrow<T>(t: T): NonNullable<T> {
     if (!t) {

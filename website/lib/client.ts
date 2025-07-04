@@ -1,5 +1,4 @@
 import { Kysely, sql } from "kysely";
-import type { Condition, Patient, Practitioner } from "fhir/r5";
 import medfetch from "medfetch/sqlite-wasm";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
@@ -19,7 +18,6 @@ export async function openDB(baseURL: string | File, filename?: string) {
   const cacheKey = `${filename}`;
   if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
   const dialect = medfetch(baseURL, {
-    scope: ["Patient", "Condition", "Practitioner"],
     filename: filename
   });
 
@@ -28,12 +26,9 @@ export async function openDB(baseURL: string | File, filename?: string) {
   return db;
 }
 
-type RESOURCES = Patient | Condition | Practitioner;
-const dialect = medfetch<RESOURCES>(`${API_URL}/fhir`, {
-  scope: ["Patient", "Condition", "Practitioner"],
-});
+const dialect = medfetch(`${API_URL}/fhir`);
 
-export const memoryDB = new Kysely<typeof dialect.$db>({
+export const memoryDB = new Kysely<any>({
   dialect,
 });
 

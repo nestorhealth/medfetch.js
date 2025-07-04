@@ -124,7 +124,7 @@ export function loadExtension(
     });
 
     if (rc) {
-        console.error(`[${tag}] > Fatal error loading sqlite-wasm binary.`);
+        console.error(`[${tag}] > Unknown fatal error loading sqlite-wasm binary.`);
     } else {
         console.log(`[${tag}] > sqlite-wasm binary + medfetch vtab loaded .`);
     }

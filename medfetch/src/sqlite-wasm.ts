@@ -1,5 +1,5 @@
 import { dummy } from "./json/sql.js";
-import { Worker1DB, Worker1PromiserDialect } from "./sqlite-wasm/dialect.js";
+import { Worker1DB, Worker1PromiserDialect } from ".//dialects.js";
 import { BROWSER } from "esm-env";
 import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/types.js";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
@@ -57,20 +57,21 @@ const accessWorker = (userWorker?: Worker) => {
 };
 
 type ClientOptions = {
-    schema?: JSONSchema7 | (() => Promise<JSONSchema7>);
-    worker?: Worker;
     filename?: string;
     
     /**
-     * Rewrite a JSON schema child (object type) path get with one of its children
+     * Rewrite a JSON schema child (object type) path get with one of its children schemas
      * 
      * @example
-     * 
-     * const ReferenceRewrites: {
+     * ```ts
+     * const myRewrites = {
      *   "#/definitions/Reference": "#/definitions/Reference/properties/reference"
-     * }
+     * };
+     * ```
      */
     rewrites?: Record<string, string>;
+    schema?: JSONSchema7 | (() => Promise<JSONSchema7>);
+    worker?: Worker;
 };
 
 /**
@@ -105,8 +106,8 @@ export default function medfetch(
         filename = ":memory:",
         schema = unzipJSONSchema,
         worker,
-    }: ClientOptions
-) {
+    }: ClientOptions = {}
+): Worker1PromiserDialect {
     if (!BROWSER) {
         console.warn(
             `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
