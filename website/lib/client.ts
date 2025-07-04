@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
 import { Kysely, sql } from "kysely";
 import type { Condition, Patient, Practitioner } from "fhir/r5";
 import medfetch from "medfetch/sqlite-wasm";
-import { call } from "@/lib/utils";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
 const API_URL = apiURL.endsWith("/")

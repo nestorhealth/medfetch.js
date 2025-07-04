@@ -1,5 +1,5 @@
 import type { Resource } from "fhir/r4.js";
-import { kdvParser, type PathValue } from "./json.parse.js";
+import { kdvParser, type PathValue } from "./parse.js";
 import { strFromU8, unzipSync } from "fflate";
 import type { JSONSchema7 } from "json-schema";
 import type { Bundle } from "fhir/r5.js";
@@ -13,6 +13,10 @@ type Entry = PathValue<Bundle, "Bundle">["entry"];
 const parseLink = kdvParser<Link[]>("link", 1);
 const parseEntry = kdvParser<Entry[]>("entry", 1);
 
+/**
+ * Function that looks like fetch in its args and returns a plaintext string
+ * synchronously.
+ */
 export type FetchTextSync = (...args: Parameters<typeof fetch>) => string;
 
 /**
@@ -186,8 +190,8 @@ export class Page {
  * @returns The JSON parsed JSON schema object
  */
 export async function unzipJSONSchema(
-    zipURL: string,
-    filename: string,
+    zipURL: string = "https://build.fhir.org/fhir.schema.json.zip",
+    filename: string = "fhir.schema.json",
 ): Promise<JSONSchema7> {
     const response = await fetch(zipURL).catch((error) => {
         console.error(`Couldn't handle "fetch" request: ${error}`);

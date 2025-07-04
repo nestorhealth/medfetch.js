@@ -88,11 +88,6 @@ export type StructKey = ValueKeyType<
 >;
 
 /**
- * Fhir datatypename union
- */
-export type FhirDataType = PrimitiveKey | StructKey;
-
-/**
  * Unwrapped return type of calling the parser returned by {@link kdvParser()}
  * @template Value The expected type of value at key `k`. This is *NOT* a runtime type:
  * you must validate the payload yourself if you're unsure about type at key `k`.

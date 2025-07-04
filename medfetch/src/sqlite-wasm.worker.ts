@@ -1,21 +1,39 @@
-import { DEFAULT_SQLITE_FROM_FHIR, fromFhir } from "./sql.js";
+import { migrationsFromJson } from "./sql.js";
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
-import { type FetchTextSync, Page } from "./json/json.page.js";
+import { type FetchTextSync, Page } from "./json/page.js";
 import { Counter } from "./sqlite-wasm/counter.js";
 import { medfetch_module_alloc } from "./sqlite-wasm/vtab.js";
 import { attach, index, pointer } from "./sqlite-wasm/worker1.js";
-import type { Sqlite3Module } from "./sqlite-wasm/worker1.types.js";
+import type { Sqlite3Module } from "./sqlite-wasm/types.js";
+import { JSONSchema7 } from "json-schema";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
 const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
 
-
-type LoadExtensionConfig = {
-    fetch: FetchTextSync;
-    jsonSchemaURL?: string;
-    jsonSchemaFilename?: string;
-};
+/**
+ * The expected "aux" data shape from the main thread in js land, NOT
+ * pAux for the sqlite vtab
+ */
+interface AuxJS {
+    /**
+     * The data source root. Either a FHIR server base URL or a plain
+     * Bundle File instance
+     */
+    readonly baseURL: string | File;
+    
+    /**
+     * The JSON schema of the resources found at {@link baseURL}
+     */
+    readonly schema: JSONSchema7;
+    
+    /**
+     * For each object schema path that will be read as a column from 
+     * the json schema dictionary, provide an alternative "deeper" 
+     * childpath in '/' json-ptr notation in the record
+     */
+    readonly rewriteObjectPaths?: Record<string, string>;
+}
 
 /**
  * Attach the message handler to the *worker* thread that has {@link Sqlite3Static} loaded.
@@ -29,9 +47,8 @@ type LoadExtensionConfig = {
  */
 export function loadExtension(
     sqlite3Wasm: Sqlite3Static,
-    config: LoadExtensionConfig,
+    syncFetch: FetchTextSync,
 ): 0 | 1 {
-    const syncFetch = config.fetch;
     const sqlite3 = sqlite3Wasm;
     const dbCount = new Counter();
     const modules: Record<string, Sqlite3Module>[] = [];
@@ -40,52 +57,31 @@ export function loadExtension(
     const rc = attach(sqlite3, async (msg, next) => {
         if (msg.data?.type === "open") {
             // Get baseURL
-            const baseURL = msg.data.aux?.baseURL;
-            const scope = msg.data.aux?.scope;
-
-            if (!baseURL) {
-                throw new Error(taggedMessage(`You have no base URL lol`));
+            const aux: AuxJS = msg.data.aux as AuxJS;
+            if (!aux.baseURL) {
+                throw new Error(`You have no base URL lol`);
             }
-            if (scope) {
-                if (!Array.isArray(scope)) {
-                    throw new Error(
-                        taggedMessage(
-                            `That's not an array: (scope = ${typeof scope === "string" || typeof scope === "number" ? scope.toString() : "unknown"})`,
-                        ),
-                    );
-                }
-            }
-
-            const resourcesToRows = await fromFhir(
-                "sqlite",
-                DEFAULT_SQLITE_FROM_FHIR,
-                {
-                    scope: scope,
-                    jsonSchemaURL: config.jsonSchemaURL,
-                    jsonSchemaFilename: config.jsonSchemaFilename,
-                },
-            );
-            if (typeof baseURL !== "string" && !(baseURL instanceof File)) {
+            if (typeof aux.baseURL !== "string" && !(aux.baseURL instanceof File)) {
                 throw new Error(
-                    taggedMessage(`Can't handle that: baseURL = ${baseURL}`),
+                    taggedMessage(`Can't handle that "baseURL" = ${aux.baseURL}`),
                 );
             }
 
-            const pageLoader = Page.createLoader(baseURL, syncFetch);
+            const pageLoader = Page.createLoader(aux.baseURL, syncFetch);
+            const resolver = migrationsFromJson(
+                "sqlite",
+                aux.schema,
+                {
+                    "/Condition/subject": "/Condition/subject/reference"
+                }
+            );
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
             modules[dbIndex] = medfetch_module_alloc(
                 pageLoader,
                 sqlite3,
-                resourcesToRows,
+                resolver,
             );
-
-            let scopeMsg: string;
-            if (!!scope) {
-                scopeMsg = `Fetch set is scoped to ${scope.map((s: string) => `"${s}"`)}`;
-            } else
-                [(scopeMsg = `No scope was provided, so fetch set is scoped to all.`)];
-            console.log(taggedMessage(`Connected to ${baseURL}. ${scopeMsg}`));
         }
 
         // We don't get the dbId until after "open"

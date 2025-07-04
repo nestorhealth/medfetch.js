@@ -4,7 +4,7 @@ export type SetWorker<TWorker = Worker> = {
 };
 
 /**
- * The 2-tuple returned by [block()](./block.browser.ts)
+ * The 2-tuple returned by {@link block}
  *
  * @template Args the arguments the original function takes
  * @template Result the awaited return type of the original function
@@ -357,6 +357,8 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  * Inside sync-worker file
  * ```ts
  * // worker.ts -- Block Fn declaration
+ * import block from "medfetch/block";
+ *
  * export const [getTodos, handleGetTodos] = block(
  *   ["getTodos"],
  *   async (n: number) => {

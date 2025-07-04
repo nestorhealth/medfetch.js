@@ -18,7 +18,10 @@ export default defineConfig({
     sidebar: [
       {
         text: "Getting Started",
-        items: [{ text: "SQLite on FHIR", link: "/getting-started.sqlite" }],
+        items: [
+          { text: "What is Medfetch.js?", link: "/getting-started.what-is-medfetch-js" },
+          { text: "SQLite on FHIR", link: "/getting-started.sqlite" }
+        ],
       },
       {
         text: "Examples",

@@ -6,8 +6,6 @@ import { setSyncFetch, syncFetch } from "./db.block";
 sqlite3InitModule().then(
   async sqlite3 => {
     await setSyncFetch(new BlockWorker({ name: "db.block"}));
-    loadExtension(sqlite3, {
-      fetch: syncFetch
-    });
+    loadExtension(sqlite3, syncFetch);
   }
 );

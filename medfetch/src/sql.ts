@@ -1,8 +1,6 @@
 import type { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import type { Reference } from "fhir/r4";
 import {
     DummyDriver,
-    ColumnDataType,
     Kysely,
     PostgresAdapter,
     PostgresIntrospector,
@@ -11,71 +9,85 @@ import {
     SqliteIntrospector,
     SqliteQueryCompiler,
     Dialect,
+    ColumnMetadata,
+    isColumnDataType,
+    isExpression,
+    type ColumnDataType,
+    type Expression,
 } from "kysely";
-import type { FhirDataType, PrimitiveKey } from "./json/json.parse.js";
-import { unzipJSONSchema } from "./json/json.page.js";
+import { get } from "jsonpointer";
 
-/**
- * Default column map of FHIR type to SQL type for SQLite
- */
-export const DEFAULT_SQLITE_FROM_FHIR = {
-    boolean: "integer", // SQLite has no native boolean; use 0/1
-    base64Binary: "blob", // binary content
-    canonical: "text", // like a URI
-    code: "text", // constrained string
-    id: "text", // short string, but still text
-    oid: "text", // e.g., "urn:oid:1.2.3"
-    string: "text",
-    url: "text",
-    uri: "text",
-    uuid: "text", // SQLite has no native UUID type
+type DataTypeExpression = ColumnDataType | Expression<any>;
 
-    date: "text", // stored as ISO 8601 string
-    dateTime: "text",
-    instant: "text", // precise ISO timestamp
-    time: "text",
+function tail(s: string) {
+    return s.split("/").pop()!;
+}
 
-    decimal: "real", // SQLite uses REAL for float-like values
-    integer: "integer",
-    positiveInt: "integer",
-    unsignedInt: "integer",
-} satisfies Record<PrimitiveKey, ColumnDataType>;
+function resolveRef(ref: string, rootSchema: JSONSchema7): JSONSchema7 | null {
+    if (!ref.startsWith("#")) {
+        throw new Error(
+            `resolveRef() can only handle local references right now!`,
+        );
+    }
+    const pointer = ref.slice(1); // gets rid of leading #
+    const resolved = get(rootSchema, pointer);
+    return resolved ?? null;
+}
 
-/**
- * Default column map of FHIR type to SQL type for Postgresql
- */
-export const DEFAULT_POSTGRESQL_FROM_FHIR = {
-    base64Binary: "bytea", // PostgreSQL binary
-    canonical: "text", // FHIR URI-like string
-    code: "text", // Enumerated string
-    id: "text", // Short string
-    oid: "text", // FHIR OID (not PG OID type)
-    string: "text",
-    uri: "text",
-    url: "text",
-    uuid: "uuid", // PostgreSQL has native UUID type
+export function isDataTypeExpression(t: unknown): t is DataTypeExpression {
+    return (typeof t === "string" && isColumnDataType(t)) || isExpression(t);
+}
 
-    // Boolean and integer types
-    boolean: "boolean",
-    integer: "integer",
-    positiveInt: "integer", // PostgreSQL doesn't distinguish unsigned
-    unsignedInt: "integer",
+function resolveColumnMetadata(
+    name: string,
+    columnSchema: JSONSchema7,
+    root: JSONSchema7,
+): ColumnMetadata {
+    let schema: JSONSchema7;
+    // at leaf
+    if (columnSchema.type || columnSchema.const || columnSchema.enum) {
+        schema = columnSchema;
+    } else if (columnSchema.$ref) {
+        schema = resolveRef(columnSchema.$ref, root) ?? {
+            type: "string",
+            description: `Unresolveable $ref defaulted type`
+        };
+    } else {
+        throw new Error(`I don't know how to get the type from that JSON schema: ${name}`)
+    }
+    const types = [schema.type, schema.const, schema.enum].filter(Boolean)
 
-    // Decimal (floating point)
-    decimal: "numeric", // Arbitrary precision decimal (better than float)
+    const baseType = types.find((type) => type !== "null"); // First type that is not null
+    let dataType: ColumnMetadata["dataType"] = "text"; // fallback
 
-    // Temporal types
-    date: "date", // Calendar date
-    dateTime: "timestamptz", // Timestamp with time zone
-    instant: "timestamptz", // FHIR Instant → PostgreSQL timestamp
-    time: "time", // Time without date
-} satisfies Record<PrimitiveKey, ColumnDataType>;
+    switch (baseType) {
+        case "string":
+            dataType = "text";
+            break;
+        case "integer":
+            dataType = "integer";
+            break;
+        case "number":
+            dataType = "real";
+            break;
+        case "boolean":
+            dataType = "integer";
+            break;
+        case "array":
+        case "object":
+        default:
+            dataType = "text";
+            break;
+    }
+    return {
+        name: name,
+        dataType: dataType,
+        isNullable: types.includes("null"),
+        isAutoIncrementing: false,
+        hasDefaultValue: false,
+    };
+}
 
-const DEFAULT_JSON_SCHEMA_OPTIONS = {
-    jsonSchemaURL: "https://build.fhir.org/fhir.schema.json.zip",
-    jsonSchemaFilename: "fhir.schema.json",
-    scope: [],
-} satisfies JSONSchemaOptions;
 
 /**
  * The sql text syntaxes the fetcher works with
@@ -91,32 +103,18 @@ type ScalarColumnFrom<T> =
  * Turn some type T into something that looks like a row
  * (a 1-level record with objects / arrays turned into strings)
  */
-type Rowify<T> = {
+export type Rowify<T> = {
     [K in keyof T]-?: undefined extends T[K]
         ? NonNullable<ScalarColumnFrom<T[K]>> | null
         : ScalarColumnFrom<T[K]>;
 };
 
 /**
- * Generic for a sql on fhir "dialect"
- */
-export interface SqlOnFhirDialect<Resources extends { resourceType: string }>
-    extends Dialect {
-    readonly $db: {
-        [R in Resources["resourceType"]]: Rowify<
-            Extract<Resources, { resourceType: R }> & {
-                id: string;
-            }
-        >;
-    };
-}
-
-/**
  * The JSON field presented as a "column" with an
  * additional {@link dataType} field attached
  */
 interface ColumnValue {
-    dataType: ColumnDataType;
+    dataType: string;
     value: any | null;
 }
 
@@ -128,7 +126,7 @@ export interface SQLResolver {
     /**
      * List of resource type to sql migration text associations held in a 2-tuple
      */
-    migrations: Array<
+    readonly migrations: ReadonlyArray<
         [
             string, // ResourceType
             string, // Migration Text
@@ -143,12 +141,14 @@ export interface SQLResolver {
      * @param index The column index
      * @returns The sql data type the map has saved for this resource and this index
      */
-    index: (resource: unknown, index: number) => ColumnValue;
+    readonly index: (resource: unknown, index: number) => ColumnValue;
 }
 
 /**
  * Static dummy kysely orm object
  * @param sqlFlavor The dialect enum
+ *
+ * @internal
  */
 export function dummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
     switch (sqlFlavor) {
@@ -171,30 +171,14 @@ export function dummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
     }
 }
 
-/**
- * Expects the JSON schema $ref word after the last '/' character
- * to be a {@link FhirDataType}
- * @param $ref The refstring
- * @returns Coerced as a FhirDataType string literal
- */
-function typenameFromRef($ref: string): FhirDataType {
-    return $ref.split("/").pop()! as any;
-}
-
-interface ColumnKey {
-    name: string;
-    fhirType: FhirDataType;
-    dataType: ColumnDataType;
-}
-
 interface ColumnValue {
-    dataType: ColumnDataType;
+    dataType: string;
     value: any | null;
 }
 
-interface FhirTableMigration {
+interface JsonTableMigration {
     sql: string;
-    columnKeys: Array<ColumnKey>;
+    columnsMetadata: Array<ColumnMetadata>;
 }
 
 /**
@@ -241,45 +225,63 @@ const defaultKeyFilter = (key: string) =>
  * @param keyFilter What keys to take out? Default to extended fields (start with "_") and filters out "resourceType"
  * @returns The table migration text
  */
-function generateFhirTableMigration(
-    resourceType: string,
-    columns: [string, JSONSchema7Definition][],
+function jsonTableMigration(
     db: Kysely<any>,
-    sqlColumnMap: Record<string, ColumnDataType>,
+    tableName: string,
+    root: JSONSchema7,
     keyFilter: (key: string) => boolean = defaultKeyFilter,
-): FhirTableMigration {
+    rewritePaths?: Record<string, string>
+): JsonTableMigration {
     const tb = db.schema
-        .createTable(resourceType)
+        .createTable(tableName)
         .ifNotExists()
         .addColumn("id", "text", (col) => col.primaryKey());
 
-    const columnKeys = new Array<ColumnKey>();
-    columnKeys.push({ name: "id", dataType: "text", fhirType: "string" });
+    const columnsMetadata = new Array<ColumnMetadata & {map?: string;}>();
+    columnsMetadata.push({
+        name: "id",
+        dataType: "text",
+        isAutoIncrementing: false,
+        isNullable: false,
+        hasDefaultValue: false,
+    });
+    const jsonObjectProps = get(root, `/definitions/${tableName}/properties`);
+    if (!jsonObjectProps) {
+        throw new Error(`That json object schema doesn't exist: "${tableName}"`);
+    }
+    const columns: [string, JSONSchema7][] = Object.entries(jsonObjectProps);
     const finalTb = columns.reduce((tb, [key, value]) => {
         if (typeof value === "boolean") {
-            throw new Error();
+            throw new Error(
+                `Unexpected boolean JSON schema for column ${tableName}.${key}`,
+            );
         }
         if (!keyFilter(key)) {
             return tb;
         }
-
-        let columnDataType: ColumnDataType = "text";
-        let typename: FhirDataType = "string";
-        if (value.$ref) {
-            typename = typenameFromRef(value.$ref);
-            columnDataType = sqlColumnMap[typename] ?? "text";
+        
+        let columnSchema = value;
+        const rewriteKey = `/${tableName}/${key}`;
+        if (rewritePaths?.[rewriteKey]) {
+            const columnKey = tail(rewritePaths[rewriteKey]);
+            if (!value.$ref && value.type !== "object") {
+                throw new Error(`Can't rewrite that path "${rewriteKey}": it doesn't have an object schema`);
+            }
+            columnSchema = value.$ref ? get(resolveRef(value.$ref, root) ?? {}, `/properties/${columnKey}`) : get(value, `/properties/${columnKey}`)
         }
-
-        columnKeys.push({
-            name: key,
-            dataType: columnDataType,
-            fhirType: typename,
-        });
-        return tb.addColumn(key, columnDataType);
+        let column = resolveColumnMetadata(key, columnSchema, root);
+        if (rewritePaths?.[rewriteKey]) {
+            (column as any as {rewrite: string;}).rewrite = rewritePaths[rewriteKey].split("/").slice(2).join("/")
+        }
+        columnsMetadata.push(column)
+        return tb.addColumn(
+            key,
+            isDataTypeExpression(column.dataType) ? column.dataType : "text",
+        );
     }, tb);
     return {
         sql: finalTb.compile().sql + ";\n",
-        columnKeys: columnKeys,
+        columnsMetadata: columnsMetadata,
     };
 }
 
@@ -288,14 +290,13 @@ function generateFhirTableMigration(
  * @param db A dummy kysely querybuilder
  * @param jsonSchema The master JSON schema
  * @param sqlColumnMap FHIR type -> SQL column data type
- * @param resourceScope Scope 
+ * @param resourceScope Scope
  * @returns An object with a migrations array listen in order of the {@link resourceScope} field in its `migrations` field and a `index` function that indexes a given Resource with the corresponding column number
  */
-function generateMigrations(
-    db: Kysely<any>,
+export function migrationsFromJson(
+    dialect: "sqlite" | "postgresql",
     jsonSchema: JSONSchema7,
-    sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    resourceScope?: string[],
+    rewrites?: Record<string, string>
 ): SQLResolver {
     const definitions = jsonSchema["definitions"] as Record<
         string,
@@ -305,99 +306,66 @@ function generateMigrations(
         throw new Error("Bad json schema");
     }
     // #region snippet
-    if (!resourceScope || resourceScope.length === 0) {
-        // Default to EVERY resource type if nothing is passed!
-        resourceScope = Object.keys(
-            (jsonSchema as any)["discriminator"]["mapping"],
-        );
-    }
+    const jsonTables: string[] = Object.keys(get(jsonSchema, "/discriminator/mapping"));
+    const discriminatorKey: string = get(jsonSchema, "/discriminator/propertyName");
     // #endregion snippet
 
-    const columnMap = new Map<string, Array<ColumnKey>>();
-    const schemaEntries = resourceScope.map((resourceType) => {
-        const resourceDefinition = definitions[resourceType];
-        if (!resourceDefinition || !resourceDefinition["properties"]) {
-            throw new Error(
-                `That resource key doesn't exist: "${resourceType}"`,
-            );
-        }
-        const resourceProperties = resourceDefinition["properties"];
-        const migration = generateFhirTableMigration(
-            resourceType,
-            Object.entries(resourceProperties),
-            db,
-            sqlColumnMap,
-        );
-        columnMap.set(resourceType, migration.columnKeys);
-        return [resourceType, migration.sql] as const;
-    });
-
-    const resolveColumn = (resource: any, index: number): ColumnValue => {
-        checkResource(resource);
-        if (!columnMap.has(resource["resourceType"])) {
-            return { value: null, dataType: "text" };
-        }
-        const columnKeys = columnMap.get(resource["resourceType"])!;
-        const orderedRecord = columnKeys.map((column) => {
-            let value = resource[column.name];
-            if (value) {
-                if (typeof value === "object") {
-                    switch (column.fhirType) {
-                        // Just take its
-                        case "Reference": {
-                            value = (value as Reference).reference ?? null;
-                            break;
-                        }
-                        default: {
-                            value = JSON.stringify(value);
-                        }
-                    }
-                }
-            }
-            return { value: value ?? null, dataType: column.dataType };
-        });
-        return orderedRecord[index];
-    };
-
-    return {
-        migrations: schemaEntries as any,
-        index: resolveColumn,
-    };
-}
-
-type JSONSchemaOptions = {
-    jsonSchemaURL: string | undefined;
-    jsonSchemaFilename: string | undefined;
-    scope: string[];
-};
-
-/**
- * Create a FHIR to SQL database schema
- * @param sqlFlavor The sql text dialect
- * @param resourceTypes The resource types to include
- * @param config Optional options. From {@link JSONSchemaOptions}
- * @returns A SQL on FHIR view for the given schema
- */
-export async function fromFhir(
-    dialect: SqlFlavor,
-    sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    jsonSchemaOptions: Partial<JSONSchemaOptions>,
-): Promise<SQLResolver> {
-    const { jsonSchemaURL, jsonSchemaFilename, scope } = jsonSchemaOptions;
     const db = new Kysely({
         dialect: dummy(dialect),
     });
-    return unzipJSONSchema(
-        jsonSchemaURL ?? DEFAULT_JSON_SCHEMA_OPTIONS.jsonSchemaURL,
-        jsonSchemaFilename ?? DEFAULT_JSON_SCHEMA_OPTIONS.jsonSchemaFilename,
-    ).then((schema) => generateMigrations(db, schema, sqlColumnMap, scope));
+    const resolveMap = new Map<
+        string,
+        (ColumnMetadata & {rewrite?: string;})[]
+    >();
+    const tableMigrations = jsonTables.map((jsonTableName) => {
+        const migration = jsonTableMigration(
+            db,
+            jsonTableName,
+            jsonSchema,
+            defaultKeyFilter,
+            rewrites
+        );
+        resolveMap.set(jsonTableName, migration.columnsMetadata);
+        return [jsonTableName, migration.sql] as const;
+    });
+
+    /**
+     * 
+     * @param resource 
+     * @param iCol The 0-based index of the column as it appeared in the underlying vtab create table statement, so you need to have kept track of that
+     * @returns 
+     */
+    const index = (resource: any, iCol: number) => {
+        if (!resolveMap.has(resource[discriminatorKey])) {
+            return { value: null, dataType: "text" };
+        }
+        const metadata = resolveMap.get(resource[discriminatorKey])!;
+        const columnMetadata = metadata[iCol];
+        let value = get(resource, `/${columnMetadata.name}`);
+        if (columnMetadata.rewrite) {
+            value = get(resource, `/${columnMetadata.rewrite}`);
+        }
+        
+        if (typeof value === "object") {
+            value = JSON.stringify(value);
+        }
+        return {
+            value,
+            dataType: columnMetadata.dataType
+        }
+    };
+
+    return {
+        migrations: tableMigrations as any,
+        index: index,
+    };
 }
 
 /**
  * 2-tuple for defining a table {@link SqlView.tableName} derived from a virtual table {@link SqlView.virtualTableName}
- * 
+ *
  * @example
- * 
+ *
  * type PatientView = SqlView<{
  *   Patient: {...};
  *   patients: {...};
@@ -416,4 +384,4 @@ export type SqlView<T> = {
 export type SqlViewData<T> = {
     rows: T[];
     ctasStatement: string;
-}
+};

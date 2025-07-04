@@ -211,6 +211,11 @@ type _Worker1Response =
 export type Worker1Response<
     MessageType extends Worker1MessageType = Worker1MessageType,
 > = Extract<_Worker1Response, { type: MessageType }>;
+    
+export type PromiserResult<
+    Type extends string,
+    OK extends {type: string;} = Worker1Request,
+> = Extract<OK, {type: Type}> | Worker1ResponseError<Type>;
 
 type TPromiser<
     AllRequest extends { type: string; args?: any },
@@ -219,7 +224,7 @@ type TPromiser<
     <T extends AllRequest["type"]>(
         message: Extract<AllRequest, { type: T }>,
         transfer?: StructuredSerializeOptions | Transferable[],
-    ): Promise<Extract<AllResponse, { type: T }> | Worker1ResponseError<T>>;
+    ): Promise<PromiserResult<T, AllResponse>>
 
     <T extends AllRequest["type"]>(
         type: T,

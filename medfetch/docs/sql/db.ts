@@ -1,6 +1,7 @@
 import { Kysely } from "kysely";
 import DBWorker from "./db.worker?worker";
 import medfetch from "~/sqlite-wasm";
+import { unzipJSONSchema } from "~/json/page";
 
 const worker = new DBWorker({
   name: "db.worker",
@@ -13,7 +14,7 @@ export const db = new Kysely<any>({
       : "https://api.medfetch.io/fhir",
     {
       worker,
-      scope: ["Patient", "Condition"],
+      schema: () => unzipJSONSchema()
     },
   )
 });

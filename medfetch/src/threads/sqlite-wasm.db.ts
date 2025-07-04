@@ -18,9 +18,7 @@ sqlite3InitModule().then(
       }
     );
     await setSyncFetch(fetchWorker);
-    const rc = loadExtension(sqlite3, {
-      fetch: syncFetch
-    });
+    const rc = loadExtension(sqlite3, syncFetch);
     if (rc) {
       console.error("Oops... Error loading in sqlite-wasm extension");
     } else {
