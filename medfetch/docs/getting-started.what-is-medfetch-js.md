@@ -285,7 +285,7 @@ export default async function UsersTodosPage() {
 ```
 
 So thank you to the maintainers over at [Kysely](https://kysely.dev/) and [Sqlite](https://sqlite.org/) for answering **yes**
-instead for us, allowing us (and hopefully others!) to build our FHIR data queries with more confidence!
+instead for us, allowing us to build better FHIR data queries.
 
 ## SQL on FHIR
 Medfetch was specifically built for pulling [FHIR JSON](https://www.hl7.org/fhir/json.html), but it can* work
