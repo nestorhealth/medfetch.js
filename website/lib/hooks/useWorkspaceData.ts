@@ -102,10 +102,10 @@ export function useWorkspaceData(
   });
 
   const stats = {
-    total: workspaceView.queryData?.resultRows.length ?? 0,
+    total: workspaceView.queryData?.resultRows?.length ?? 0,
     active:
       currentTableName === "Patient"
-        ? workspaceView.queryData?.resultRows.filter((r: any) => r.status === "Active").length
+        ? workspaceView.queryData?.resultRows?.filter((r: any) => r.status === "Active").length
         : 0,
   };
 

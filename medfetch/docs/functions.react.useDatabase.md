@@ -141,7 +141,6 @@ This is just at the compile-level though, so you
 can pass in whatever you want, though don't expect things to work if you just pass in whatever!
 
 ## Example with Mutation
-We might use the `writeBack` from above like this:
 
 ::: code-group
 <<< ../../website/app/sanity-checks/useDatabase2/page.tsx{44-54}
