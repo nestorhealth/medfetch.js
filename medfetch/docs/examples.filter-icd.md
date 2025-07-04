@@ -4,7 +4,9 @@ import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
 import { Kysely } from "kysely";
 import { mockPatientBundleFile } from "./data/bundles.Patient"
-import { db } from "./sql/db"
+import DBWorker from "./sql/db.worker?worker";
+import medfetch from "~/sqlite-wasm";
+import { unzipJSONSchema } from "~/json/page";
 
 type Column = {
   name: string;
@@ -15,6 +17,21 @@ type ViewState = { rows: Record<string, unknown>[]; columns: Column[] }
 const viewStates = ref<ViewState[]>([]);
 onMounted(async () => {
   try {
+  const worker = new DBWorker({
+    name: "db.worker",
+  });
+
+  const db = new Kysely<any>({
+    dialect: medfetch(
+      import.meta.env.DEV
+        ? "http://localhost:8787/fhir"
+        : "https://api.medfetch.io/fhir",
+      {
+        worker,
+        schema: () => unzipJSONSchema()
+      },
+    )
+  });
   const result = await db.selectFrom("Patient").selectAll("Patient").execute().then(
     () => db.selectFrom("Patient").selectAll("Patient").execute()
   );
