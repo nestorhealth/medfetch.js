@@ -28,22 +28,48 @@ export async function forMessage<Message = MessageEvent<any>>(
     });
 }
 
+// #region SetWorker
 export type SetWorker<TWorker = Worker> = {
+    /**
+     * Called by the thread that has a {@link Worker}
+     * instance context.
+     */
     (worker: TWorker): Promise<void>;
+    
+    /**
+     * Called by the thread that doesn't have a {@link Worker} 
+     * instance context.
+     */
     (): void;
 };
+// #endregion SetWorker
 
 /**
  * The 2-tuple returned by {@link unpromisify}
  *
  * @template Args the arguments the original function takes
  * @template Result the awaited return type of the original function
+ * @template TWorker The worker type. Defaults to Browser {@link Worker}
  */
+// #region Unpromisified
 export type Unpromisified<
     Args extends any[],
     Result,
     TWorker = Worker,
-> = readonly [(...args: Args) => Result, SetWorker<TWorker>];
+> = readonly [
+    /**
+     * Literally just takes asyncFn's {@link ReturnType} out of the
+     * {@link Promise}
+     */
+    syncFn: (...args: Args) => Result,
+        
+    /**
+     * Setup message event listeners to allow for blocking on
+     * {@link syncFn}.
+     */
+    setWorker: SetWorker<TWorker>
+];
+// #endregion Unpromisified
 
 export type CreateSyncPromise<TWorker = Worker> = <Args extends any[], Result>(
     names: [string] | [string, string],
@@ -56,7 +82,8 @@ export type CreateSyncPromise<TWorker = Worker> = <Args extends any[], Result>(
  *
  * @template Result The awaited return type of the deferred async function
  */
-export interface MessageConfig<Result> {
+// #region PayloadConfig
+export interface PayloadConfig<Result> {
     /**
      * How to serialize the return type into a plaintext string? Defaults to
      * {@link JSON.stringify}
@@ -86,6 +113,7 @@ export interface MessageConfig<Result> {
      */
     byteSize: number;
 }
+// #endregion PayloadConfig
 
 /**
  * Returns a plain 2-tuple {@link Array} "view" of a given SharedArrayBuffer
@@ -373,10 +401,10 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
 }
 
 /**
- * Block a worker when it calls the returned sync handle (element 0 in {@link Unpromisified}) on the provided {@link promiseFn}
- * @param name The name of the *deferrer*, meaning the worker that needs to block.
- * @param promiseFn The async function to block on
- * @param config The optional configuration, see {@link MessageConfig}
+ * Block a worker when it calls the returned sync handle (element 0 in {@link Unpromisified}) on the provided {@link asyncFn}
+ * @param syncWorkerName The name of the *deferrer*, meaning the worker that needs to block.
+ * @param asyncFn The async function to block on
+ * @param config The optional configuration, see {@link PayloadConfig}
  * @returns A {@link Unpromisified} 2 tuple.
  *
  * Pay attention to how the 2nd element returned (index 1) in the 2-tuple needs to be called.
@@ -463,7 +491,7 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  */
 export default function unpromisify<Args extends any[], Result>(
     syncWorkerName: string,
-    promiseFn: (...args: Args) => Promise<Result>,
+    asyncFn: (...args: Args) => Promise<Result>,
     {
         encode = (result) => {
             const plaintext = JSON.stringify(result);
@@ -476,7 +504,7 @@ export default function unpromisify<Args extends any[], Result>(
             return parsed;
         },
         byteSize = 500_000,
-    }: Partial<MessageConfig<Result>> = {},
+    }: Partial<PayloadConfig<Result>> = {},
 ): Unpromisified<Args, Result> {
     let workerPort: Worker | MessagePort | undefined = undefined;
 
@@ -511,7 +539,7 @@ export default function unpromisify<Args extends any[], Result>(
         {
             thread: threadContext as any,
             encoder: {
-                blockingFn: promiseFn,
+                blockingFn: asyncFn,
                 encode: encode,
             },
         },

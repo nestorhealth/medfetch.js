@@ -2,7 +2,7 @@
 import ReactFunctionsList from "./components/ReactFunctionsList.vue";
 </script>
 
-# React
+# Medfetch.js x `React`
 You don't need [React](https://react.dev/) to run Medfetch, but if you are using
 a React based frontend, then we have some helper functions available to use.
 

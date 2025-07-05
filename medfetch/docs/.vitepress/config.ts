@@ -36,8 +36,19 @@ export default defineConfig({
         collapsed: true,
         items: [
           {
-            text: "block",
-            link: "/functions.block"
+            text: "sqlite-wasm",
+            collapsed: false,
+            link: "/functions.sqlite-wasm",
+            items: [
+              {
+                text: "medfetch",
+                link: "/functions.sqlite-wasm.medfetch"
+              },
+              {
+                text: "loadExtension",
+                link: "/functions.sqlite-wasm.loadExtension"
+              }
+            ]
           },
           {
             text: "React",
@@ -49,6 +60,10 @@ export default defineConfig({
                 link: "/functions.react.useDatabase"
               }
             ]
+          },
+          {
+            text: "unpromisify",
+            link: "/functions.unpromisify"
           },
         ],
       },

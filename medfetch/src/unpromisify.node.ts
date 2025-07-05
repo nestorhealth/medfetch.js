@@ -1,5 +1,5 @@
 import {
-    type MessageConfig,
+    type PayloadConfig,
     type Unpromisified,
     syncProxy,
     ThreadContext,
@@ -18,7 +18,7 @@ import {
  * Block a worker when it calls the returned sync handle (element 0 in {@link Unpromisified}) on the provided {@link blockingFn}
  * @param name The name of the *deferrer*, meaning the worker that needs to block.
  * @param blockingFn The async function to block on
- * @param config The optional configuration, see {@link MessageConfig}
+ * @param config The optional configuration, see {@link PayloadConfig}
  * @returns A {@link Unpromisified} 2 tuple.
  *
  * Pay attention to how the 2nd element returned (index 1) in the 2-tuple needs to be called.
@@ -118,7 +118,7 @@ export default function unpromisify<Args extends any[], Result>(
             return parsed;
         },
         byteSize = 500_000,
-    }: Partial<MessageConfig<Result>> = {},
+    }: Partial<PayloadConfig<Result>> = {},
 ): Unpromisified<Args, Result, Worker> {
     let workerPort: Worker | MessagePort | undefined = undefined;
     const threadContext: ThreadContext<MessagePort, MessagePort> = {
