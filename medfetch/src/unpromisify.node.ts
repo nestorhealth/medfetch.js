@@ -1,10 +1,10 @@
 import {
     type MessageConfig,
-    type Block,
-    createSyncHandler,
+    type Unpromisified,
+    syncProxy,
     ThreadContext,
-    createSetBlock,
-} from "./block.js";
+    syncSetter,
+} from "./unpromisify.js";
 import {
     Worker,
     MessageChannel,
@@ -15,11 +15,11 @@ import {
 } from "node:worker_threads";
 
 /**
- * Block a worker when it calls the returned sync handle (element 0 in {@link Block}) on the provided {@link blockingFn}
+ * Block a worker when it calls the returned sync handle (element 0 in {@link Unpromisified}) on the provided {@link blockingFn}
  * @param name The name of the *deferrer*, meaning the worker that needs to block.
  * @param blockingFn The async function to block on
  * @param config The optional configuration, see {@link MessageConfig}
- * @returns A {@link Block} 2 tuple.
+ * @returns A {@link Unpromisified} 2 tuple.
  *
  * Pay attention to how the 2nd element returned (index 1) in the 2-tuple needs to be called.
  * @example
@@ -27,8 +27,10 @@ import {
  * Inside sync-worker file
  * ```ts
  * // worker.ts -- Block Fn declaration
- * export const [getTodos, handleGetTodos] = block(
- *   ["getTodos"],
+ * import unpromisify from "medfetch/unpromisify";
+ *
+ * export const [getTodos, handleGetTodos] = unpromisify(
+ *   "getTodos",
  *   async (n: number) => {
  *     const response = await fetch("https://dummyjson.com/todos");
  *     const payload = await response.json();
@@ -59,8 +61,8 @@ import {
  * 2. Child of Sync Worker is Async Handler
  * ```ts
  * // worker-sync.ts -- Block Fn declaration
- * export const [getTodos, handleGetTodos] = block(
- *   ["getTodos", "getTodosHandler"],
+ * export const [getTodos, handleGetTodos] = unpromisify(
+ *   "getTodos",
  *   async (n: number) => {
  *     const response = await fetch("https://dummyjson.com/todos");
  *     const payload = await response.json();
@@ -69,9 +71,9 @@ import {
  *
  * if (self.name === "getTodos") {
  *   const workerAsync = new Worker(new URL("./worker-async.js", import.meta.url), {
- *   type: "module",
- *   name: "getTodosHandler" // Name matters!
- * })
+ *     type: "module",
+ *     name: "getTodosHandler" // This doesn't matter, but it's always helpful to give descriptive names to workers
+ *   })
  *   handleGetTodos(workerAsync).then(
  *     () => {
  *       console.log("For the sync-worker thread to defer promise to child...")
@@ -96,13 +98,13 @@ import {
  * ```ts
  * /// main.ts -- Your main thread file
  * const worker = new Worker("./worker-sync.js", {
- *   name: "getTodos" // Name **still** matters!!
+ *   name: "getTodos" 
  * });
  * console.log("Main thread isn't participating in the Block here, so it just needs to spawn the worker. No need to call the setter function!");
  * ```
  */
-export default function block<Args extends any[], Result>(
-    name: [string] | [string, string],
+export default function unpromisify<Args extends any[], Result>(
+    syncWorkerName: string,
     blockingFn: (...args: Args) => Promise<Result>,
     {
         encode = (result) => {
@@ -117,20 +119,16 @@ export default function block<Args extends any[], Result>(
         },
         byteSize = 500_000,
     }: Partial<MessageConfig<Result>> = {},
-): Block<Args, Result, Worker> {
+): Unpromisified<Args, Result, Worker> {
     let workerPort: Worker | MessagePort | undefined = undefined;
-
-    const syncWorkerName = name[0];
-    const asyncWorkerName = name[1] ?? null;
     const threadContext: ThreadContext<MessagePort, MessagePort> = {
         syncWorkerName,
-        asyncWorkerName,
-        currentThread: isMainThread ? null : workerData?.name,
+        currentWorkerThread: isMainThread ? null : workerData?.name,
         parentPort: parentPort,
         createMessageChannel: () => new MessageChannel(),
     }
 
-    const blockFn = createSyncHandler(
+    const blockFn = syncProxy(
         {
             thread: threadContext,
             decoder: {
@@ -146,7 +144,7 @@ export default function block<Args extends any[], Result>(
             }
         },
     );
-    const set = createSetBlock<Args, Result, Worker, MessagePort>(
+    const set = syncSetter<Args, Result, Worker, MessagePort>(
         {
             thread: threadContext,
             encoder: {

@@ -1,10 +1,10 @@
 {
     "name": "medfetch",
-    "version": "0.5.0",
+    "version": "0.7.0",
     "type": "module",
     "description": "sql on fhir database runner implementation",
     "scripts": {
-        "test": "vitest run --coverage",
+        "test": "vitest --browser=chromium",
         "build": "rm -rf dist && npx concurrently \"npx vite build\" \"npx tsc -p tsconfig.build.json && npx tsc-alias -p tsconfig.build.json\"",
         "unit": "vitest src",
         "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
@@ -14,11 +14,11 @@
         "docs:preview": "vitepress preview docs"
     },
     "exports": {
-        "./block": {
-            "types": "./dist/block.d.ts",
-            "import": "./dist/block.js",
-            "node": "./dist/block.node.js",
-            "default": "./dist/block.js"
+        "./unpromisify": {
+            "types": "./dist/unpromisify.d.ts",
+            "import": "./dist/unpromisify.js",
+            "node": "./dist/unpromisify.node.js",
+            "default": "./dist/unpromisify.js"
         },
         "./dialects": {
             "types": "./dist/dialects.d.ts",
@@ -65,8 +65,10 @@
         "@types/node": "^22.13.1",
         "@types/react": "18.2.0",
         "@types/react-dom": "^19.1.6",
-        "@vitest/browser": "^3.1.2",
+        "@vitest/browser": "^3.2.4",
+        "@vitest/coverage-istanbul": "3.1.2",
         "@vitest/coverage-v8": "2.1.9",
+        "@vitest/web-worker": "^3.2.4",
         "concurrently": "^9.1.2",
         "hono": "^4.7.11",
         "inquirer": "^12.6.3",
@@ -84,7 +86,7 @@
         "typescript": "^5.7.3",
         "vite": "^6.2.2",
         "vitepress": "^1.6.3",
-        "vitest": "^3.1.2",
+        "vitest": "^3.2.4",
         "wrangler": "^4.4.0"
     },
     "packageManager": "pnpm@9.12.2+sha512.22721b3a11f81661ae1ec68ce1a7b879425a1ca5b991c975b074ac220b187ce56c708fe5db69f4c962c989452eee76c82877f4ee80f474cebd61ee13461b6228",

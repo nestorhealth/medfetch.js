@@ -30,8 +30,8 @@
         }
     },
     "include": [
-        "src/block.ts",
-        "src/block.node.ts",
+        "src/unpromisify.ts",
+        "src/unpromisify.node.ts",
         "src/next.ts",
         "src/sqlite-wasm.ts",
         "src/dialects.ts",

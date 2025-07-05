@@ -282,6 +282,11 @@ export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
 }
 
 const dbCache = new WeakMap<Dialect, Kysely<any>>();
+/**
+ * Index a Kysely ORM instance by its dialect
+ * @param dialect 
+ * @returns 
+ */
 function accessDB(dialect: Dialect): Kysely<any> {
     const cached = dbCache.get(dialect);
     if (cached) return cached;

@@ -1,24 +1,54 @@
+/**
+ * Wait on a specific response from the provided {@link Emitter}
+ * @param check When the promise should resolve
+ * @param addEventListener Callback to add the promise wrapping handler
+ * @param removeEventListener Callback to remove the handler
+ * @returns The {@link MessageEvent} in a Promise
+ * 
+ * @example
+ */
+export async function forMessage<Message = MessageEvent<any>>(
+    check: (event: Message) => boolean,
+    addEventListener: (handler: (event: Message) => any) => void,
+    removeEventListener: (
+        handler: (event: Message) => any,
+    ) => void,
+): Promise<Message> {
+    return new Promise((resolve, reject) => {
+        const handler = (event: Message) => {
+            if (check(event)) {
+                removeEventListener(handler);
+                resolve(event);
+            } else {
+                removeEventListener(handler);
+                reject(`forMessage > check(${event}) === false`);
+            }
+        };
+        addEventListener(handler);
+    });
+}
+
 export type SetWorker<TWorker = Worker> = {
     (worker: TWorker): Promise<void>;
     (): void;
 };
 
 /**
- * The 2-tuple returned by {@link block}
+ * The 2-tuple returned by {@link unpromisify}
  *
  * @template Args the arguments the original function takes
  * @template Result the awaited return type of the original function
  */
-export type Block<Args extends any[], Result, TWorker = Worker> = readonly [
-    (...args: Args) => Result,
-    SetWorker<TWorker>,
-];
+export type Unpromisified<
+    Args extends any[],
+    Result,
+    TWorker = Worker,
+> = readonly [(...args: Args) => Result, SetWorker<TWorker>];
 
-export type CreateBlock<TWorker = Worker> =
-    <Args extends any[], Result>(
-        names: [string] | [string, string],
-        fn: (...args: Args) => Promise<Result>
-    ) => Block<Args, Result, TWorker>;
+export type CreateSyncPromise<TWorker = Worker> = <Args extends any[], Result>(
+    names: [string] | [string, string],
+    fn: (...args: Args) => Promise<Result>,
+) => Unpromisified<Args, Result, TWorker>;
 
 /**
  * Set the encoder and decoder pairs along with
@@ -140,20 +170,20 @@ function createAsyncHandlers<Args extends any[], Port = MessagePort>(
     setOnMessage: EvEmitterCallback<Port>,
 ) {
     async function resolveBlock(e: MessageEventLike<Args, Port>) {
-        let { sab, args } = e.data;
-        if (!sab) {
-            throw new Error(
-                `Can't resolve that block > No SharedArrayBuffer found!`,
-            );
+        if (e.data.sab) {
+            let { sab, args } = e.data;
+            if (
+                typeof sab !== "object" ||
+                !(sab instanceof SharedArrayBuffer)
+            ) {
+                throw new Error(
+                    `Can't resolve that block > Unexpected "sab" payload type.`,
+                );
+            }
+            args = args || [];
+            const result = await deferredFn(...args);
+            up(sab, result);
         }
-        if (typeof sab !== "object" || !(sab instanceof SharedArrayBuffer)) {
-            throw new Error(
-                `Can't resolve that block > Unexpected "sab" payload type.`,
-            );
-        }
-        args = args || [];
-        const result = await deferredFn(...args);
-        up(sab, result);
     }
 
     function acceptBlock(e: MessageEventLike<Args, Port>) {
@@ -175,7 +205,19 @@ type MessageEventLike<Args extends any[], TPort = MessagePort> = {
     readonly data: BlockMessageData<Args, TPort>;
 };
 
-export function createSetBlock<
+/**
+ * Create the accept handler for both parties of the block to allow
+ * the synchronous proxy function to run.
+ * @param context The web worker context
+ * @param start Port start function
+ * @param postMessage The postMessage callback
+ * @param addWorkerHandler The add worker handler callback
+ * @param addMessageHandler How to add a message handler
+ * @param removeMessageHandler How to remove a message handler
+ * @param onHandshakeComplete What side effect to run after handshake is complete
+ * @returns A {@link SetWorker} accept function
+ */
+export function syncSetter<
     Args extends any[],
     Result,
     TWorker = Worker,
@@ -183,10 +225,10 @@ export function createSetBlock<
 >(
     context: {
         thread: ThreadContext<TPort, TPort>;
-        encoder: EncoderContext<Args, Result>
+        encoder: EncoderContext<Args, Result>;
     },
     start: (port: TPort) => void,
-    postMessage: EvEmitterCallback<TWorker, {ports: ReadonlyArray<TPort>}>,
+    postMessage: EvEmitterCallback<TWorker, { ports: ReadonlyArray<TPort> }>,
     addWorkerHandler: EvEmitterCallback<
         TWorker,
         (e: MessageEventLike<Args>) => void
@@ -204,7 +246,7 @@ export function createSetBlock<
 
     async function setChildAsync(worker: TWorker): Promise<void> {
         const ports = thread.createMessageChannel();
-        if (thread.currentThread === thread.syncWorkerName) {
+        if (thread.currentWorkerThread === thread.syncWorkerName) {
             const port = await handshake(
                 worker,
                 ports,
@@ -228,13 +270,10 @@ export function createSetBlock<
     function set(): void;
     function set(worker?: TWorker): void | Promise<void> {
         if (!worker) {
-            if (
-                thread.currentThread === thread.syncWorkerName ||
-                thread.currentThread === thread.asyncWorkerName
-            ) {
+            if (thread.currentWorkerThread !== null) {
                 addWorkerHandler(thread.parentPort as any, accept);
             } else {
-                throw new Error(`Wrong thread called "set()": ${self.name}`);
+                console.warn(`[sync.syncSetter] > Main thread called synchronous set: ${self.name}`);
             }
         } else {
             return setChildAsync(worker);
@@ -250,50 +289,48 @@ export type ThreadContext<ParentPort = Worker, TMessagePort = MessagePort> = {
      * Assigned static name for the sync-worker that will be blocking.
      */
     syncWorkerName: string;
-    
-    /**
-     * Assigned static name for the async-worker that will be resolving
-     * it's *parent*'s promise if assigned.
-     */
-    asyncWorkerName: Nullish<string>;
 
     /**
      * Null on main. Some string otherwise
      */
-    currentThread: Nullish<string>;
-    
+    currentWorkerThread: Nullish<string>;
+
     parentPort: Nullish<ParentPort>;
-    
-    createMessageChannel: () => {port1: TMessagePort; port2: TMessagePort}
+
+    createMessageChannel: () => { port1: TMessagePort; port2: TMessagePort };
 };
 
 type DecoderContext<Result> = {
     byteSize: number;
     decode: (buffer: Uint8Array) => Result;
-}
+};
 
 type EncoderContext<Args extends any[], Result> = {
     blockingFn: (...args: Args) => Promise<Result>;
     encode: (result: Result) => Uint8Array;
-}
+};
 
-
-export function createSyncHandler<Args extends any[], Result, ParentPort = MessagePort, TMessagePort = MessagePort>(
+export function syncProxy<
+    Args extends any[],
+    Result,
+    ParentPort = MessagePort,
+    TMessagePort = MessagePort,
+>(
     context: {
         thread: ThreadContext<ParentPort, TMessagePort>;
-        decoder: DecoderContext<Result>
+        decoder: DecoderContext<Result>;
     },
     semaphoreDown: (data: { args: Args; sab: SharedArrayBuffer }) => void,
-) {
+): (...args: Args) => Result {
     const { thread, decoder } = context;
     function syncHandler(...args: Args): Result {
-        if (thread.currentThread === thread.syncWorkerName) {
+        if (thread.currentWorkerThread === thread.syncWorkerName) {
             const upResult = down(8 + decoder.byteSize, (sab) => {
                 semaphoreDown({ sab, args });
             });
             if (upResult[0] <= 0) {
                 throw new Error(
-                    `[block.syncHandler] > "semaphore_down()" returned 0 bytes written back, returning null...`,
+                    `[sync.syncHandler] > "semaphore_down()" returned 0 bytes written back`,
                 );
             } else {
                 const [len, buffer] = upResult;
@@ -301,9 +338,10 @@ export function createSyncHandler<Args extends any[], Result, ParentPort = Messa
                 return decoded;
             }
         } else {
-            throw new Error(
-                `[block.syncHandler] > Can't block on that thread "${thread.currentThread}". Can only block on ${thread.syncWorkerName}. Returning empty as a result...`,
+            console.error(
+                `[sync.syncHandler] > Can't block on that thread "${thread.currentWorkerThread}". Can only block on ${thread.syncWorkerName}.`,
             );
+            return void 0 as any;
         }
     }
     return syncHandler;
@@ -325,31 +363,21 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
     >,
 ): Promise<TMessagePort> {
     const { port1, port2 } = messageChannelLike;
-    return new Promise<TMessagePort>((resolve, reject) => {
-        const handleHandshakeResponse = (e: MessageEvent) => {
-            if (e.data === 0) {
-                removeHandler(port1, handleHandshakeResponse);
-                resolve(port1);
-            } else {
-                removeHandler(port1, handleHandshakeResponse);
-                reject(
-                    new Error(`Unexpected message: ${JSON.stringify(e.data)}`),
-                );
-            }
-        };
-        addHandler(port1, handleHandshakeResponse);
-        postMessage(worker, {
-            ports: [port2],
-        });
-    });
+    postMessage(worker, { ports: [port2] });
+    await forMessage(
+        (e) => e.data === 0,
+        (f) => addHandler(port1, f),
+        (f) => removeHandler(port1, f)
+    );
+    return port1;
 }
 
 /**
- * Block a worker when it calls the returned sync handle (element 0 in {@link Block}) on the provided {@link blockingFn}
+ * Block a worker when it calls the returned sync handle (element 0 in {@link Unpromisified}) on the provided {@link promiseFn}
  * @param name The name of the *deferrer*, meaning the worker that needs to block.
- * @param blockingFn The async function to block on
+ * @param promiseFn The async function to block on
  * @param config The optional configuration, see {@link MessageConfig}
- * @returns A {@link Block} 2 tuple.
+ * @returns A {@link Unpromisified} 2 tuple.
  *
  * Pay attention to how the 2nd element returned (index 1) in the 2-tuple needs to be called.
  * @example
@@ -357,10 +385,10 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  * Inside sync-worker file
  * ```ts
  * // worker.ts -- Block Fn declaration
- * import block from "medfetch/block";
+ * import unpromisify from "medfetch/unpromisify";
  *
- * export const [getTodos, handleGetTodos] = block(
- *   ["getTodos"],
+ * export const [getTodos, handleGetTodos] = unpromisify(
+ *   "getTodos",
  *   async (n: number) => {
  *     const response = await fetch("https://dummyjson.com/todos");
  *     const payload = await response.json();
@@ -391,8 +419,8 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  * 2. Child of Sync Worker is Async Handler
  * ```ts
  * // worker-sync.ts -- Block Fn declaration
- * export const [getTodos, handleGetTodos] = block(
- *   ["getTodos", "getTodosHandler"],
+ * export const [getTodos, handleGetTodos] = unpromisify(
+ *   "getTodos",
  *   async (n: number) => {
  *     const response = await fetch("https://dummyjson.com/todos");
  *     const payload = await response.json();
@@ -401,9 +429,9 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  *
  * if (self.name === "getTodos") {
  *   const workerAsync = new Worker(new URL("./worker-async.js", import.meta.url), {
- *   type: "module",
- *   name: "getTodosHandler" // Name matters!
- * })
+ *     type: "module",
+ *     name: "getTodosHandler" // This doesn't matter, but it's always helpful to give descriptive names to workers
+ *   })
  *   handleGetTodos(workerAsync).then(
  *     () => {
  *       console.log("For the sync-worker thread to defer promise to child...")
@@ -428,14 +456,14 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  * ```ts
  * /// main.ts -- Your main thread file
  * const worker = new Worker("./worker-sync.js", {
- *   name: "getTodos" // Name **still** matters!!
+ *   name: "getTodos" 
  * });
  * console.log("Main thread isn't participating in the Block here, so it just needs to spawn the worker. No need to call the setter function!");
  * ```
  */
-export default function block<Args extends any[], Result>(
-    name: [string] | [string, string],
-    blockingFn: (...args: Args) => Promise<Result>,
+export default function unpromisify<Args extends any[], Result>(
+    syncWorkerName: string,
+    promiseFn: (...args: Args) => Promise<Result>,
     {
         encode = (result) => {
             const plaintext = JSON.stringify(result);
@@ -449,28 +477,26 @@ export default function block<Args extends any[], Result>(
         },
         byteSize = 500_000,
     }: Partial<MessageConfig<Result>> = {},
-): Block<Args, Result> {
+): Unpromisified<Args, Result> {
     let workerPort: Worker | MessagePort | undefined = undefined;
 
-    const syncWorkerName = name[0];
-    const asyncWorkerName = name[1] ?? null;
     const currentThread =
         typeof WorkerGlobalScope === "undefined" ? null : self.name;
     const threadContext: ThreadContext = {
-        currentThread: currentThread,
+        currentWorkerThread: currentThread,
         syncWorkerName: syncWorkerName,
-        asyncWorkerName: asyncWorkerName,
         parentPort: self as any as Worker,
-        createMessageChannel: () => new MessageChannel()
+        createMessageChannel: () => new MessageChannel(),
     };
     const decoderContext: DecoderContext<Result> = {
         decode: decode,
         byteSize: byteSize,
     };
-    const blockFn = createSyncHandler(
+
+    const syncFn = syncProxy(
         {
             thread: threadContext,
-            decoder: decoderContext
+            decoder: decoderContext,
         },
         (data) => {
             if (workerPort) {
@@ -481,13 +507,13 @@ export default function block<Args extends any[], Result>(
         },
     );
 
-    const set = createSetBlock<Args, Result>(
+    const handleSyncPromise = syncSetter<Args, Result>(
         {
             thread: threadContext as any,
             encoder: {
-                blockingFn: blockingFn,
-                encode: encode
-            }
+                blockingFn: promiseFn,
+                encode: encode,
+            },
         },
         (port) => port.start(),
         (ee, v) => ee.postMessage(v, v.ports as any),
@@ -498,5 +524,5 @@ export default function block<Args extends any[], Result>(
             workerPort = port;
         },
     );
-    return [blockFn, set];
+    return [syncFn, handleSyncPromise];
 }
