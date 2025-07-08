@@ -6,7 +6,8 @@ import type {
 import type { Resource } from "fhir/r4";
 import { Page } from "../json/page.js";
 import { Sqlite3, Sqlite3Module } from "./types.js";
-import type { ResolveColumn, SQLResolver } from "../json/sql.js";
+import type { ResolveColumn, SQLResolver } from "../sql/schema.js";
+import { getTableName } from "../sql/plaintext.js";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -63,7 +64,7 @@ export function medfetch_module_alloc(
         const mod: sqlite3_module = (sqlite3.vtab as any).setupModule({
             methods: {
                 xCreate: 0,
-                xConnect: x_connect(sqlite3, migrationText, resourceType),
+                xConnect: x_connect(sqlite3, migrationText),
                 xBestIndex: x_best_index(sqlite3),
                 xDisconnect: x_disconnect(sqlite3),
                 xOpen: x_open(sqlite3, loadPage, resourceType),
@@ -90,19 +91,16 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
 >;
 
 /**
- * The xConnect method factory function
- * @param sqlite3 The database instance
+ * The [xConnect](https://www.sqlite.org/vtab.html#the_xconnect_method) method factory function
+ * @param sqlite3 The {@link Sqlite3Static} wasm api object
  * @param baseURL Base URL of the FHIR server
  * @param args {@link Params<"xConnect">}
  * @returns The x_connect method
  */
 export function x_connect(
-    _sqlite3: Sqlite3Static,
+    sqlite3: Sqlite3Static,
     migrationText: string,
-    tableName: string,
 ) {
-    let sqlite3 = _sqlite3;
-
     // #region vtab-factory
     // This is the xConnect function with the migrationText in closure
     return (...args: Params<"xConnect">) => {
@@ -110,6 +108,7 @@ export function x_connect(
         let rc = sqlite3.capi.SQLITE_OK;
         rc += sqlite3.capi.sqlite3_declare_vtab(pdb, migrationText);
         if (!rc) {
+            const tableName = getTableName(migrationText);
             sqlite3.vtab.xVtab.create(ppvtab);
             log.info(
                 `medfetch virtual table ${tableName} xConnect() to ${tableName} OK`,
@@ -120,9 +119,7 @@ export function x_connect(
     // #endregion vtab-factory
 }
 
-export function x_best_index(_sqlite3: Sqlite3Static) {
-    const sqlite3 = _sqlite3 as Sqlite3;
-
+export function x_best_index(sqlite3: Sqlite3Static) {
     return (...args: Params<"xBestIndex">) => {
         const [, pIdxInfo] = args;
         const index = sqlite3.vtab.xIndexInfo(pIdxInfo);
@@ -206,6 +203,13 @@ export function x_next(_sqlite3: Sqlite3Static) {
     };
 }
 
+/**
+ * Get back the [xColumn](https://www.sqlite.org/vtab.html#the_xcolumn_method) function sqlite3 calls which figures out 
+ * how to display a given column at index `iCol`.
+ * @param _sqlite3 The {@link Sqlite3Static} web assembly api object
+ * @param resolveColumn The column resolver function
+ * @returns `xColumn()` vtab callback implementation
+ */
 export function x_column(
     _sqlite3: Sqlite3Static,
     resolveColumn: ResolveColumn,
@@ -272,13 +276,12 @@ export function x_eof(sqlite3: Sqlite3Static) {
 }
 
 /**
- * @param _sqlite3
- * @param getPage
- * @param resourceType
- * @returns
+ * Create the [xFilter](https://www.sqlite.org/vtab.html#the_xfilter_method)
+ * callback sqlite3 calls to begin a search of a virtual table
+ * @param sqlite3 The {@link Sqlite3} static web assembly helper object
+ * @returns `xFilter()` vtab implementation
  */
-export function x_filter(_sqlite3: Sqlite3Static) {
-    let sqlite3 = _sqlite3 as Sqlite3;
+export function x_filter(sqlite3: Sqlite3Static) {
     let { capi, vtab } = sqlite3;
 
     return (..._args: Params<"xFilter">) => {

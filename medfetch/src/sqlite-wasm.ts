@@ -1,4 +1,4 @@
-import { dummy } from "./json/sql.js";
+import { dummy } from "./sql/schema.js";
 import { Worker1DB, Worker1PromiserDialect } from ".//dialects.js";
 import { BROWSER } from "esm-env";
 import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/types.js";

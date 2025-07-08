@@ -111,7 +111,7 @@ export class Worker1DB implements IGenericSqlite<string> {
     }
 }
 
-async function accessDB<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
+async function access<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
     if (typeof t === "function") {
         const result = (t as () => T | Promise<T>)(); // call the function
         return await result;
@@ -130,7 +130,7 @@ export class Worker1PromiserDialect extends GenericSqliteDialect {
         database: IGenericSqlite<string> | (() => Promise<IGenericSqlite<string>>) | (() => IGenericSqlite<string>);
     }) {
         super(async () => {
-            const db = await accessDB<IGenericSqlite<string>>(config.database);
+            const db = await access<IGenericSqlite<string>>(config.database);
             return {
                 db,
                 close: () => db.close(),

@@ -1,4 +1,4 @@
-import { migrationsFromJson } from "./json/sql.js";
+import { migrationsFromJson } from "./sql/schema.js";
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { type FetchTextSync, Page } from "./json/page.js";
 import { Counter } from "./sqlite-wasm/counter.js";
