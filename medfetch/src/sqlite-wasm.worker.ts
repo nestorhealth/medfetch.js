@@ -1,11 +1,9 @@
-import { migrationsFromJson } from "./sql/schema.js";
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
 import { type FetchTextSync, Page } from "./json/page.js";
 import { Counter } from "./sqlite-wasm/counter.js";
 import { medfetch_module_alloc } from "./sqlite-wasm/vtab.js";
 import { attach, index, pointer } from "./sqlite-wasm/worker1.js";
 import type { Sqlite3Module } from "./sqlite-wasm/types.js";
-import { JSONSchema7 } from "json-schema";
 
 // Logs
 const tag = "medfetch/sqlite-wasm";
@@ -21,18 +19,11 @@ interface AuxJS {
      * Bundle File instance
      */
     readonly baseURL: string | File;
-    
+
     /**
-     * The JSON schema of the resources found at {@link baseURL}
+     * The table migrations of the virtual tables to register
      */
-    readonly schema: JSONSchema7;
-    
-    /**
-     * For each object schema path that will be read as a column from 
-     * the json schema dictionary, provide an alternative "deeper" 
-     * childpath in '/' json-ptr notation in the record
-     */
-    readonly rewriteObjectPaths?: Record<string, string>;
+    readonly virtualMigrations: string;
 }
 
 /**
@@ -61,26 +52,25 @@ export function loadExtension(
             if (!aux.baseURL) {
                 throw new Error(`You have no base URL lol`);
             }
-            if (typeof aux.baseURL !== "string" && !(aux.baseURL instanceof File)) {
+            if (
+                typeof aux.baseURL !== "string" &&
+                !(aux.baseURL instanceof File)
+            ) {
                 throw new Error(
-                    taggedMessage(`Can't handle that "baseURL" = ${aux.baseURL}`),
+                    taggedMessage(
+                        `Can't handle that "baseURL" = ${aux.baseURL}`,
+                    ),
                 );
             }
 
-            const pageLoader = Page.createLoader(aux.baseURL, syncFetch);
-            const resolver = migrationsFromJson(
-                "sqlite",
-                aux.schema,
-                {
-                    "#/definitions/Reference": "#/definitions/Reference/properties/reference"
-                }
-            );
+            const fetchPage = Page.fetcher(aux.baseURL, syncFetch);
+
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
             modules[dbIndex] = medfetch_module_alloc(
-                pageLoader,
+                fetchPage,
                 sqlite3,
-                resolver,
+                aux.virtualMigrations,
             );
         }
 
@@ -106,16 +96,14 @@ export function loadExtension(
                         value.pointer,
                         0,
                     );
-                    if (rc) {
+                    if (_rc) {
                         console.error(
-                            `[medfetch/sqlite-wasm] > ${key} returned error code ${rc}`,
+                            `[medfetch/sqlite-wasm] >> ${key} returned error code ${rc}`,
                         );
                     }
-                    if (import.meta.env.DEV) {
-                        console.log(
-                            `[medfetch/sqlite-wasm] > ${key} rc = ${_rc}`,
-                        );
-                    }
+                    console.log(
+                        `[medfetch/sqlite-wasm] >> "${key}" virtual table module allocated.`,
+                    );
                 }
                 moduleSet.add(pDb);
             }
@@ -124,7 +112,9 @@ export function loadExtension(
     });
 
     if (rc) {
-        console.error(`[${tag}] > Unknown fatal error loading sqlite-wasm binary.`);
+        console.error(
+            `[${tag}] > Unknown fatal error loading sqlite-wasm binary.`,
+        );
     } else {
         console.log(`[${tag}] > sqlite-wasm binary + medfetch vtab loaded .`);
     }

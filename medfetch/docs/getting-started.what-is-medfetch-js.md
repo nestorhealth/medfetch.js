@@ -355,7 +355,7 @@ const dialect = medfetch("...", {
 *As mentioned above, Medfetch still needs to choose JSON Schema properties specific to the FHIR master JSON schema, since that is the fallback:
 
 ::: code-group
-<<< ../src/json/sql.ts#snippet
+<<< ../src/sql/schema.ts#snippet
 We're looking into how to generalize this better in the future for
 other non-FHIR APIs.
 :::

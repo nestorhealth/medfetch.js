@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { getTableName } from "./plaintext.js";
+import { getTableName } from "./table.js";
 
 describe("getTableName", () => {
     it("Succeeds on any plaintext string that contains a \"create table [tblname]\" at the start", () => {

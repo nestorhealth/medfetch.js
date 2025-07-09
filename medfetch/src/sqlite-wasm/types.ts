@@ -84,19 +84,19 @@ export interface Worker1CloseRequest extends Worker1RequestBase {
 }
 export interface Worker1ConfigGetRequest extends Worker1RequestBase {
     type: "config-get";
-    args?: {};
+    args?: any;
 }
 
 export interface Worker1ExecRequest extends Worker1RequestBase {
     type: "exec";
     args: ExecOptions & {
         sql: string;
-        rowMode?: "array" | "object" | "stmt" | `\$${string}` | number;
+        rowMode?: "array" | "object" | "stmt" | `$${string}` | number;
     };
 }
 export interface Worker1ExportRequest extends Worker1RequestBase {
     type: "export";
-    args?: {};
+    args?: any;
 }
 export interface Worker1OpenRequest extends Worker1RequestBase {
     type: "open";

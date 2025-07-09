@@ -2,11 +2,7 @@
 import { table0, table1 } from "./sql/icd-queries";
 import { onMounted, ref } from "vue";
 import DataTable from "./components/DataTable.vue";
-import { Kysely } from "kysely";
-import { mockPatientBundleFile } from "./data/bundles.Patient"
-import DBWorker from "./sql/db.worker?worker";
-import medfetch from "~/sqlite-wasm";
-import { unzipJSONSchema } from "~/json/page";
+import { mount } from "./sql/mount";
 
 type Column = {
   name: string;
@@ -15,37 +11,7 @@ type Column = {
 type ViewState = { rows: Record<string, unknown>[]; columns: Column[] }
 
 const viewStates = ref<ViewState[]>([]);
-onMounted(async () => {
-  try {
-  const worker = new DBWorker({
-    name: "db.worker",
-  });
-
-  const db = new Kysely<any>({
-    dialect: medfetch(
-      import.meta.env.DEV
-        ? "http://localhost:8787/fhir"
-        : "https://api.medfetch.io/fhir",
-      {
-        worker,
-        schema: () => unzipJSONSchema()
-      },
-    )
-  });
-  const result = await db.selectFrom("Patient").selectAll("Patient").execute().then(
-    () => db.selectFrom("Patient").selectAll("Patient").execute()
-  );
-    const t0  = await table0(db);
-    const t1 = await table1(db)
-    const views: ViewState[] = [
-      t0,
-      t1,
-    ];
-    viewStates.value = views
-  } catch (e) {
-    console.error(e);
-  }
-});
+onMounted(mount(viewStates));
 
 </script>
 

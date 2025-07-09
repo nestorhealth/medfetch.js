@@ -1,10 +1,8 @@
-import { dummy } from "./sql/schema.js";
-import { Worker1DB, Worker1PromiserDialect } from ".//dialects.js";
+import { dummy } from "./sql/kysely.js";
+import { Worker1DB, Worker1PromiserDialect } from "./sql.js";
 import { BROWSER } from "esm-env";
 import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/types.js";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
-import { JSONSchema7 } from "json-schema";
-import { unzipJSONSchema } from "~/json/page.js";
 
 // singleton
 let __worker: Worker | null = null;
@@ -56,22 +54,19 @@ const accessWorker = (userWorker?: Worker) => {
     return __worker;
 };
 
-type ClientOptions = {
-    filename?: string;
+/**
+ * Options for sqlite-wasm
+ */
+type SqliteWasmOptions = {
+    /**
+     * Filename of database. Defaults to ":memory:"
+     */
+    readonly filename?: string;
     
     /**
-     * Rewrite a JSON schema child (object type) path get with one of its children schemas
-     * 
-     * @example
-     * ```ts
-     * const myRewrites = {
-     *   "#/definitions/Reference": "#/definitions/Reference/properties/reference"
-     * };
-     * ```
+     * The worker thread running the web assembly binary
      */
-    rewrites?: Record<string, string>;
-    schema?: JSONSchema7 | (() => Promise<JSONSchema7>);
-    worker?: Worker;
+    readonly worker?: Worker;
 };
 
 /**
@@ -107,11 +102,11 @@ type ClientOptions = {
  */
 export default function medfetch(
     baseURL: string | File,
+    virtualMigrations: string | (() => Promise<string>),
     {
         filename = ":memory:",
-        schema = unzipJSONSchema,
         worker,
-    }: ClientOptions = {}
+    }: SqliteWasmOptions = {}
 ): Worker1PromiserDialect {
     if (!BROWSER) {
         console.warn(
@@ -123,7 +118,7 @@ export default function medfetch(
     return new Worker1PromiserDialect({
         database: async () => {
             const sqliteWorker = accessWorker(worker);
-            const schemaValue = typeof schema === "function" ? await schema() : schema;
+            const migrations = typeof virtualMigrations === "function" ? await virtualMigrations() : virtualMigrations;
             const promiserDB = await openPromiserDB(sqliteWorker, {
                 type: "open",
                 args: {
@@ -132,7 +127,7 @@ export default function medfetch(
                 },
                 aux: {
                     baseURL: baseURL,
-                    schema: schemaValue
+                    virtualMigrations: migrations
                 }
             });
             return promiserDB;

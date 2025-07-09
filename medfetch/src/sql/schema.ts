@@ -1,21 +1,14 @@
 import type { JSONSchema7, JSONSchema7Definition } from "json-schema";
 import {
-    DummyDriver,
     Kysely,
-    PostgresAdapter,
-    PostgresIntrospector,
-    PostgresQueryCompiler,
-    SqliteAdapter,
-    SqliteIntrospector,
-    SqliteQueryCompiler,
-    Dialect,
-    ColumnMetadata,
     isColumnDataType,
     isExpression,
+    type ColumnMetadata,
     type ColumnDataType,
     type Expression,
 } from "kysely";
 import { get, set } from "jsonpointer";
+import { dummy } from "~/sql/kysely";
 
 type DataTypeExpression = ColumnDataType | Expression<any>;
 
@@ -50,14 +43,16 @@ function resolveColumnMetadata(
     } else if (columnSchema.$ref) {
         schema = resolveRef(columnSchema.$ref, root) ?? {
             type: "string",
-            description: `Unresolveable $ref defaulted type`
+            description: `Unresolveable $ref defaulted type`,
         };
     } else {
-        throw new Error(`I don't know how to get the type from that JSON schema: ${name}`)
+        throw new Error(
+            `I don't know how to get the type from that JSON schema: ${name}`,
+        );
     }
-    
+
     // #region data-types
-    const types = [schema.type, schema.const, schema.enum].filter(Boolean)
+    const types = [schema.type, schema.const, schema.enum].filter(Boolean);
     const baseType = types.find((type) => type !== "null"); // First type that is not null
     let dataType: ColumnMetadata["dataType"] = "text"; // fallback
     switch (baseType) {
@@ -88,7 +83,6 @@ function resolveColumnMetadata(
     };
     // #endregion data-types
 }
-
 
 /**
  * The sql text syntaxes the fetcher works with
@@ -127,34 +121,7 @@ export interface SQLResolver {
      * @param index The column index
      * @returns The sql data type the map has saved for this resource and this index
      */
-    readonly index: (resource: unknown, index: number) => ColumnValue;
-}
-
-/**
- * Static dummy kysely orm object
- * @param sqlFlavor The dialect enum
- *
- * @internal
- */
-export function dummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
-    switch (sqlFlavor) {
-        case "sqlite": {
-            return {
-                createAdapter: () => new SqliteAdapter(),
-                createDriver: () => new DummyDriver(),
-                createIntrospector: (db) => new SqliteIntrospector(db),
-                createQueryCompiler: () => new SqliteQueryCompiler(),
-            } satisfies Dialect;
-        }
-        case "postgresql": {
-            return {
-                createAdapter: () => new PostgresAdapter(),
-                createDriver: () => new DummyDriver(),
-                createIntrospector: (db) => new PostgresIntrospector(db),
-                createQueryCompiler: () => new PostgresQueryCompiler(),
-            };
-        }
-    }
+    readonly index: LookupColumnFn
 }
 
 interface ColumnValue {
@@ -170,7 +137,7 @@ interface JsonTableMigration {
 /**
  * The type for resolving a resource's field from a column index
  */
-export type ResolveColumn = (resource: any, index: number) => ColumnValue;
+export type LookupColumnFn = (resource: any, index: number) => ColumnValue;
 
 /**
  * Default key filter callback for JSON schema. Removes extension keys
@@ -195,14 +162,14 @@ function jsonTableMigration(
     tableName: string,
     root: JSONSchema7,
     keyFilter: (key: string) => boolean = defaultKeyFilter,
-    rewrites?: Record<string, string>
+    rewrites?: Record<string, string>,
 ): JsonTableMigration {
     const tb = db.schema
         .createTable(tableName)
         .ifNotExists()
         .addColumn("id", "text", (col) => col.primaryKey());
 
-    const columnsMetadata = new Array<ColumnMetadata & {map?: string;}>();
+    const columnsMetadata = new Array<ColumnMetadata & { map?: string }>();
     columnsMetadata.push({
         name: "id",
         dataType: "text",
@@ -212,7 +179,9 @@ function jsonTableMigration(
     });
     const jsonObjectProps = get(root, `/definitions/${tableName}/properties`);
     if (!jsonObjectProps) {
-        throw new Error(`That json object schema doesn't exist: "${tableName}"`);
+        throw new Error(
+            `That json object schema doesn't exist: "${tableName}"`,
+        );
     }
     const columns: [string, JSONSchema7][] = Object.entries(jsonObjectProps);
     const finalTb = columns.reduce((tb, [key, value]) => {
@@ -224,24 +193,26 @@ function jsonTableMigration(
         if (!keyFilter(key)) {
             return tb;
         }
-        
+
         let columnSchema = value;
         let rewritten: string | null = null;
         if (value.$ref && rewrites?.[value.$ref]) {
             rewritten = rewrites[value.$ref];
             const resolved = resolveRef(rewritten, root);
             if (!resolved) {
-                throw new Error(`That json pointer doesn't exist for rewrite ${value.$ref}: ${resolved}`);
+                throw new Error(
+                    `That json pointer doesn't exist for rewrite ${value.$ref}: ${resolved}`,
+                );
             }
             columnSchema = resolved;
         }
-        
+
         // Column key remains the same!!
-        let column = resolveColumnMetadata(key, columnSchema, root);
+        const column = resolveColumnMetadata(key, columnSchema, root);
         if (rewritten) {
             set(column, "/rewrite", `${key}/${tail(rewritten)}`);
         }
-        columnsMetadata.push(column)
+        columnsMetadata.push(column);
         return tb.addColumn(
             key,
             isDataTypeExpression(column.dataType) ? column.dataType : "text",
@@ -264,7 +235,7 @@ function jsonTableMigration(
 export function migrationsFromJson(
     dialect: "sqlite" | "postgresql",
     jsonSchema: JSONSchema7,
-    rewrites?: Record<string, string>
+    rewrites?: Record<string, string>,
 ): SQLResolver {
     const definitions = jsonSchema["definitions"] as Record<
         string,
@@ -274,8 +245,13 @@ export function migrationsFromJson(
         throw new Error("Bad json schema");
     }
     // #region snippet
-    const jsonTables: string[] = Object.keys(get(jsonSchema, "/discriminator/mapping"));
-    const discriminatorKey: string = get(jsonSchema, "/discriminator/propertyName");
+    const jsonTables: string[] = Object.keys(
+        get(jsonSchema, "/discriminator/mapping"),
+    );
+    const discriminatorKey: string = get(
+        jsonSchema,
+        "/discriminator/propertyName",
+    );
     // #endregion snippet
 
     const db = new Kysely({
@@ -283,7 +259,7 @@ export function migrationsFromJson(
     });
     const resolveMap = new Map<
         string,
-        (ColumnMetadata & {rewrite?: string;})[]
+        (ColumnMetadata & { rewrite?: string })[]
     >();
     const tableMigrations = jsonTables.map((jsonTableName) => {
         const migration = jsonTableMigration(
@@ -291,17 +267,17 @@ export function migrationsFromJson(
             jsonTableName,
             jsonSchema,
             defaultKeyFilter,
-            rewrites
+            rewrites,
         );
         resolveMap.set(jsonTableName, migration.columnsMetadata);
         return [jsonTableName, migration.sql] as const;
     });
 
     /**
-     * 
-     * @param resource 
+     *
+     * @param resource
      * @param iCol The 0-based index of the column as it appeared in the underlying vtab create table statement, so you need to have kept track of that
-     * @returns 
+     * @returns
      */
     const index = (resource: any, iCol: number) => {
         if (!resolveMap.has(resource[discriminatorKey])) {
@@ -313,14 +289,14 @@ export function migrationsFromJson(
         if (columnMetadata.rewrite) {
             value = get(resource, `/${columnMetadata.rewrite}`);
         }
-        
+
         if (typeof value === "object") {
             value = JSON.stringify(value);
         }
         return {
             value,
-            dataType: columnMetadata.dataType
-        }
+            dataType: columnMetadata.dataType,
+        };
     };
 
     return {
@@ -328,3 +304,35 @@ export function migrationsFromJson(
         index: index,
     };
 }
+
+export function createColumnLookup(
+    tableName: string,
+    resolveMap: Map<
+        string,
+        (ColumnMetadata & { rewrite?: string })[]
+    >
+): LookupColumnFn {
+    return (resource: unknown, iCol: number) => {
+        if (typeof resource !== "object" || !resource) {
+            throw new Error(`Can't lookup that resource: ${String(resource)}`);
+        }
+        if (!resolveMap.has(tableName)) {
+            return { value: null, dataType: "text" };
+        }
+        const metadata = resolveMap.get(tableName)!;
+        const columnMetadata = metadata[iCol];
+        let value = get(resource, `/${columnMetadata.name}`);
+        if (columnMetadata.rewrite) {
+            value = get(resource, `/${columnMetadata.rewrite}`);
+        }
+
+        if (typeof value === "object") {
+            value = JSON.stringify(value);
+        }
+        return {
+            value,
+            dataType: columnMetadata.dataType,
+        };
+    };
+}
+

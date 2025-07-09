@@ -3,7 +3,7 @@ import { kdvParser, type PathValue } from "./parse.js";
 import { strFromU8, unzipSync } from "fflate";
 import type { JSONSchema7 } from "json-schema";
 import type { Bundle } from "fhir/r5.js";
-import { PageLoaderFn } from "~/sqlite-wasm/vtab.js";
+import { type FetchPageFn } from "~/sqlite-wasm/vtab.js";
 
 /// Implementation level types
 type Link = PathValue<Bundle, "Bundle">["link"];
@@ -23,25 +23,25 @@ export type FetchTextSync = (...args: Parameters<typeof fetch>) => string;
  * Parse a synchronous text generator of a Bundle
  * and yields a generator of its resources
  */
-export class Page {
+export class Page<T = any> {
     #nextURL: string | null;
     #isLinkParsed: boolean;
     #cursor: number;
-    #acc: Resource[];
+    #acc: T[];
     #chunks: Generator<string>;
-    #rows: Generator<Resource> | undefined = undefined;
+    #rows: Generator<T> | undefined = undefined;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
     /**
-     * Create a {@link PageLoaderFn}. You probably won't need to use this yourself
+     * Create a {@link FetchPageFn}. You probably won't need to use this yourself
      * @param baseURL Either a string to indicate the base fhir url or a singular File of a {@link Bundle} that serves as the base of the fhir data
      * @param syncFetch The {@link FetchTextSync} text getter function
-     * @returns A page loader
+     * @returns A page fetcher function
      *
      * @example
      * ```ts
      * // src/sqlite-wasm.worker.ts
-     * const pageLoader = Page.createLoader(baseURL, syncFetch);
+     * const pageLoader = Page.fetcher(baseURL, syncFetch);
      * // Map database index to medfetch_module "instance"
      * const dbIndex = dbCount.set();
      * modules[dbIndex] = medfetch_module_alloc(
@@ -51,10 +51,10 @@ export class Page {
      * );
      * ```
      */
-    static createLoader(
+    static fetcher(
         baseURL: string | File,
         syncFetch: FetchTextSync,
-    ): PageLoaderFn {
+    ): FetchPageFn {
         if (baseURL instanceof File) {
             const url = URL.createObjectURL(baseURL);
             const bundle: Bundle = JSON.parse(syncFetch(url));
@@ -80,7 +80,7 @@ export class Page {
             };
         } else {
             return (resourceType) => {
-                let responseText: string = syncFetch(
+                const responseText: string = syncFetch(
                     `${baseURL}/${resourceType}`,
                 );
                 const generator = function* () {
@@ -143,8 +143,9 @@ export class Page {
                         )
                         .map(({ resource }) => resource);
                     this.#cursor = hd.length - 1;
-                    this.#acc.push(...hd);
-                    let front = this.#acc.shift();
+                    // TODO - Make this more generic (prolly goes for entire Page class...)
+                    this.#acc.push(...hd as any);
+                    const front = this.#acc.shift();
                     if (front) {
                         yield front;
                     }
@@ -213,14 +214,9 @@ export async function unzipJSONSchema(
 
     try {
         const parsed: JSONSchema7 = JSON.parse(strFromU8(schemaFile));
-        parsed.definitions = Object.fromEntries(
-            Object.entries(parsed.definitions!).filter(
-                ([key]) => !key.includes("_"),
-            ),
-        );
         return parsed;
     } catch (error) {
-        console.error(`Couldn't parse the JSON file ${filename}: ${error}`);
-        throw new Error("");
+        const msg = `Couldn't parse the JSON file ${filename}: ${error}`;
+        throw new Error(msg);
     }
 }

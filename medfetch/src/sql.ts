@@ -6,7 +6,82 @@ import {
 } from "kysely-generic-sqlite";
 import type { PromiserResult, Worker1Promiser } from "./sqlite-wasm/types.js";
 import { check } from "./sqlite-wasm/worker1.main.js";
+import type { JSONSchema7 } from "json-schema";
+import { migrations } from "~/sql/json-schema.js";
 
+export type VirtualMigrationsConfig = {
+    dialect: "sqlite" | "postgresql";
+    discriminatorPath: string;
+    rewritePaths: ReadonlyMap<string, string>;
+    drop?: (columnKey: string) => boolean;
+};
+/**
+ * Schemas that we have functions to create sql migrations from
+ */
+type Migrateable = string | JSONSchema7;
+
+const isString = (m: unknown) => typeof m === "string";
+// temp naive check until (if) we implement other schemas
+const isJSONSchema = (m: unknown): m is JSONSchema7 =>
+    !!m && typeof m === "object" && "$schema" in m;
+
+const matchMigrateable = (handlers: {
+    string: (migrationsRaw: string) => string;
+    jsonSchema: (jsonSchema: JSONSchema7) => string;
+}) => {
+    return (m: Migrateable) => {
+        if (isString(m)) {
+            return handlers["string"](m);
+        }
+        if (isJSONSchema(m)) {
+            return handlers["jsonSchema"](m);
+        }
+
+        throw new Error(
+            `matchMigrateable callback failed to match ${String(m)} to any of 'type': 'string' | 'JSONSchema7'`,
+        );
+    };
+};
+
+export function virtualMigrations<T extends Migrateable>(
+    schema: () => Promise<T>,
+    config?: Partial<VirtualMigrationsConfig>,
+): () => Promise<string>;
+export function virtualMigrations<T extends Migrateable>(
+    schema: T,
+    config?: Partial<VirtualMigrationsConfig>,
+): string;
+
+export function virtualMigrations<T extends Migrateable>(
+    schema: T | (() => Promise<T>),
+    {
+        discriminatorPath = "/discriminator/mapping",
+        rewritePaths = new Map([
+            [
+                "#/definitions/Reference",
+                "#/definitions/Reference/properties/reference",
+            ],
+        ]),
+        dialect = "sqlite",
+        drop = (key: string) => key[0] === "_",
+    }: Partial<VirtualMigrationsConfig> = {},
+): string | (() => Promise<string>) {
+    const match = matchMigrateable({
+        string: (s) => s,
+        jsonSchema: (s) =>
+            migrations(s, {
+                discriminatorPath,
+                dialect,
+                rewritePaths,
+                drop
+            }),
+    });
+    if (typeof schema === "function") {
+        return () => schema().then(match);
+    } else {
+        return match(schema);
+    }
+}
 
 type ScalarColumnFrom<T> =
     Exclude<T, undefined> extends string | number | boolean
@@ -41,7 +116,10 @@ export class Worker1DB implements IGenericSqlite<string> {
      * @param dbId
      * @param promiser Main thread messenger function for worker1 thread (sqlite3 calls their messenger interface "Promiser")
      */
-    constructor(db: string, private promiser: Worker1Promiser) {
+    constructor(
+        db: string,
+        private promiser: Worker1Promiser,
+    ) {
         this.db = db;
     }
 
@@ -127,7 +205,10 @@ async function access<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
  */
 export class Worker1PromiserDialect extends GenericSqliteDialect {
     constructor(config: {
-        database: IGenericSqlite<string> | (() => Promise<IGenericSqlite<string>>) | (() => IGenericSqlite<string>);
+        database:
+            | IGenericSqlite<string>
+            | (() => Promise<IGenericSqlite<string>>)
+            | (() => IGenericSqlite<string>);
     }) {
         super(async () => {
             const db = await access<IGenericSqlite<string>>(config.database);
