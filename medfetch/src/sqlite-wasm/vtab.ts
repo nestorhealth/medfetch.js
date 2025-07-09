@@ -5,8 +5,8 @@ import type {
 } from "@sqlite.org/sqlite-wasm";
 import type { Page } from "../json/page.js";
 import type { Sqlite3, Sqlite3Module } from "./types.js";
-import { columns, entries, getTableName } from "../sql/table.js";
-
+import { entries, getTableName, virtualTable } from "../sql/table.js";
+import walk, { type Walk } from "~/sql/walk.js";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -49,29 +49,44 @@ const log = {
  * and get back its struct-like object
  * @param fetchPage A {@link FetchPageFn} handle closure over the FHIR data source
  * @param sqlite3 sqlite-wasm's web assembly api object
- * @param resolver The Column map from JSON props -> SQL column
+ * @param virtualMigration The initial migration text to define the "virtual" schema. Can be any valid (non as-select) create table statement,
+ * with parsing of constraints and indexes being the abstraction layer this ultimately provides.
  * @returns The struct-like {@link Sqlite3Module}
  */
+// #region medfetch_module_alloc
 export function medfetch_module_alloc(
     fetchPage: FetchPageFn,
     sqlite3: Sqlite3Static,
-    virtualMigrations: string,
+    virtualMigration: string,
+    walkFunc: Walk = walk,
 ): Record<string, Sqlite3Module> {
     const modules: Record<string, Sqlite3Module> = {};
-    const tables = entries(virtualMigrations);
+    const tables = entries(virtualMigration);
 
     for (const [resourceType, migrationText] of tables) {
-        const cols = columns(migrationText);
+        const vt = virtualTable(migrationText.trim(), walkFunc);
+        if (resourceType === "Condition") {
+            console.log("HERE", vt.statement, vt.lookupForeignColumn.size);
+            console.log(
+                "lookup",
+                vt.lookupForeignColumn.get(15)!({
+                    id: "id",
+                    subject: {
+                        reference: "subject",
+                    },
+                }),
+            );
+        }
         const mod: sqlite3_module = (sqlite3.vtab as any).setupModule({
             methods: {
                 xCreate: 0,
-                xConnect: x_connect(sqlite3, migrationText),
+                xConnect: x_connect(sqlite3, vt.statement),
                 xBestIndex: x_best_index(sqlite3),
                 xDisconnect: x_disconnect(sqlite3),
                 xOpen: x_open(sqlite3, fetchPage, resourceType),
                 xClose: x_close(sqlite3),
                 xNext: x_next(sqlite3),
-                xColumn: x_column(sqlite3, cols),
+                xColumn: x_column(sqlite3, vt.lookupForeignColumn),
                 xEof: x_eof(sqlite3),
                 xFilter: x_filter(sqlite3),
             },
@@ -84,6 +99,7 @@ export function medfetch_module_alloc(
 
     return modules;
 }
+// #endregion medfetch_module_alloc
 
 type Params<Key extends keyof sqlite3_module> = Parameters<
     sqlite3_module[Key] extends (...args: any[]) => any
@@ -98,19 +114,18 @@ type Params<Key extends keyof sqlite3_module> = Parameters<
  * @param args {@link Params<"xConnect">}
  * @returns The x_connect method
  */
-export function x_connect(
-    sqlite3: Sqlite3Static,
-    migrationText: string,
-) {
-    // #region vtab-factory
+export function x_connect(sqlite3: Sqlite3Static, migrationText: string) {
+    // #region x_connect
     // This is the xConnect function with the migrationText in closure
     return (...args: Params<"xConnect">) => {
         const [pdb, _paux, _argc, _argv, ppvtab] = args;
-        let rc = sqlite3.capi.SQLITE_OK;
+        let rc = 0; // SQLITE_OK
         rc += sqlite3.capi.sqlite3_declare_vtab(pdb, migrationText);
         const tableName = getTableName(migrationText);
         if (rc) {
-            log.error(`[medfetch/sqlite-wasm.vtab] >> 'xConnect' to virtual table "${tableName}" failed. Migration text was:\n${migrationText}`);
+            log.error(
+                `[medfetch/sqlite-wasm.vtab] >> 'xConnect' to virtual table "${tableName}" failed. Migration text was:\n${migrationText}`,
+            );
             return rc;
         }
         sqlite3.vtab.xVtab.create(ppvtab);
@@ -119,7 +134,7 @@ export function x_connect(
         );
         return rc;
     };
-    // #endregion vtab-factory
+    // #endregion x_connect
 }
 
 export function x_best_index(sqlite3: Sqlite3Static) {
@@ -143,7 +158,7 @@ export function x_disconnect(sqlite3: Sqlite3Static) {
 
 export function x_open(
     sqlite3: Sqlite3Static,
-    loadPage: FetchPageFn,
+    fetchPage: FetchPageFn,
     resourceType: string,
 ) {
     return (...args: Params<"xOpen">) => {
@@ -153,7 +168,7 @@ export function x_open(
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
         try {
-            const rawGen = loadPage(resourceType).rows;
+            const rawGen = fetchPage(resourceType).rows;
             const buffer: any[] = [];
             let index = 0;
             cursor.page = {
@@ -177,7 +192,9 @@ export function x_open(
 
             return sqlite3.capi.SQLITE_OK;
         } catch (err) {
-            log.error(`xOpen() error on resourceType="${resourceType}": ${err}`);
+            log.error(
+                `xOpen() error on resourceType="${resourceType}": ${err}`,
+            );
             return sqlite3.capi.SQLITE_ERROR;
         }
     };
@@ -194,7 +211,9 @@ export function x_close(sqlite3: Sqlite3Static) {
 export function x_next(sqlite3: Sqlite3Static) {
     return (...args: Params<"xClose">) => {
         const [pCursor] = args;
-        const cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
+        const cursor = sqlite3.vtab.xCursor.get(
+            pCursor,
+        ) as medfetch_vtab_cursor;
         const next = cursor.page.rows.next();
         cursor.peeked = next;
         return sqlite3.capi.SQLITE_OK;
@@ -202,19 +221,22 @@ export function x_next(sqlite3: Sqlite3Static) {
 }
 
 /**
- * Get back the [xColumn](https://www.sqlite.org/vtab.html#the_xcolumn_method) function sqlite3 calls which figures out 
+ * Get back the [xColumn](https://www.sqlite.org/vtab.html#the_xcolumn_method) function sqlite3 calls which figures out
  * how to display a given column at index `iCol`.
  * @param sqlite3 The {@link Sqlite3Static} web assembly api object
  * @param resolveColumn The column resolver function
  * @returns `xColumn()` vtab callback implementation
  */
+// #region x_column
 export function x_column(
     sqlite3: Sqlite3Static,
-    columns: string[]
+    columns: ReadonlyMap<number, (json: unknown) => unknown>,
 ) {
     return (...args: Params<"xColumn">) => {
         const [pCursor, pCtx, iCol] = args;
-        const cursor = sqlite3.vtab.xCursor.get(pCursor) as medfetch_vtab_cursor;
+        const cursor = sqlite3.vtab.xCursor.get(
+            pCursor,
+        ) as medfetch_vtab_cursor;
         const hd = cursor.peeked;
         if (hd.done || !hd.value) {
             console.error(
@@ -222,8 +244,9 @@ export function x_column(
             );
             return sqlite3.capi.SQLITE_ERROR;
         }
-        const columnName = columns[iCol];
-        const columnValue = hd.value[columnName];
+
+        const column = columns.get(iCol)!;
+        const columnValue = column(hd.value);
         if (!columnValue) {
             sqlite3.capi.sqlite3_result_null(pCtx);
         } else {
@@ -233,7 +256,7 @@ export function x_column(
                         pCtx,
                         JSON.stringify(columnValue),
                         -1,
-                        sqlite3.capi.SQLITE_TRANSIENT
+                        sqlite3.capi.SQLITE_TRANSIENT,
                     );
                     break;
                 }
@@ -254,7 +277,7 @@ export function x_column(
                     const asInt = Number(!!columnValue);
                     sqlite3.capi.sqlite3_result_int(pCtx, asInt);
                     break;
-                };
+                }
 
                 case "function":
                 case "bigint":
@@ -268,6 +291,7 @@ export function x_column(
         return sqlite3.capi.SQLITE_OK;
     };
 }
+// #endregion x_column
 
 export function x_eof(sqlite3: Sqlite3Static) {
     return (...args: Params<"xEof">) => {

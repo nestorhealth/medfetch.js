@@ -1,16 +1,14 @@
 import type { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import { type ColumnDataType } from "kysely";
+import { sql, type ColumnDataType } from "kysely";
 import { get } from "jsonpointer";
 import {
     type DataTypeExpression,
     dummyDB,
-    rewriteColumnPath,
 } from "~/sql/kysely";
 import type { VirtualMigrationsConfig } from "~/sql";
+import { make } from "~/exception";
 
-const exception = (msg: string): never => {
-    throw new Error(`[medfetch/sql.json-schema] >> ${msg}`);
-}
+const exception = make("medfetch/sql.json-schema")
 
 function resolveRef(ref: string, rootSchema: JSONSchema7): JSONSchema7 {
     if (!ref.startsWith("#")) {
@@ -80,7 +78,7 @@ function normalize(pointer: string): string {
 export function createTable(
     tableName: string,
     root: JSONSchema7,
-    { drop, rewritePaths, dialect }: VirtualMigrationsConfig,
+    { drop, generatedPaths, dialect }: VirtualMigrationsConfig,
 ): string {
     const tb = dummyDB(dialect).schema.createTable(tableName);
     const jsonObjectProps = get(root, `/definitions/${tableName}/properties`);
@@ -96,17 +94,17 @@ export function createTable(
             return tb;
         }
 
-        if (value.$ref && rewritePaths.has(value.$ref)) {
-            const path = rewritePaths.get(value.$ref)!;
+        // generated column case
+        if (value.$ref && generatedPaths.has(value.$ref)) {
+            const path = generatedPaths.get(value.$ref)!;
             const pathSchema = resolve(get(root, normalize(path)), root);
             const columnType = switchJSONTypeName(dialect, pathSchema);
             if (columnType) {
-                const rewrite = rewriteColumnPath(
-                    key,
-                    path.split("/").pop()!,
-                    columnType,
+                tb = tb.addColumn(key, columnType, col =>
+                    col.generatedAlwaysAs(
+                        sql.raw(`'${key}'->>'${path.split("/").pop()!}'`)
+                    )
                 );
-                tb = rewrite(tb);
             }
         } else {
             const columnType = switchJSONTypeName(

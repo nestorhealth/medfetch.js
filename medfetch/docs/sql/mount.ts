@@ -24,7 +24,7 @@ export const mount = (viewStates: Ref<ViewState[]>) => {
             ? "http://localhost:8787/fhir"
             : "https://api.medfetch.io/fhir",
           virtualMigrations(() => unzipJSONSchema(), {
-            rewritePaths: new Map([
+            generatedPaths: new Map([
               [
                 "#/definitions/Reference",
                 "#/definitions/Reference/properties/reference",
@@ -36,7 +36,7 @@ export const mount = (viewStates: Ref<ViewState[]>) => {
           },
         ),
       });
-      const sanity = await db.selectFrom("Patient").selectAll("Patient").execute();
+      const sanity = await db.selectFrom("Condition").selectAll("Condition").execute();
       console.log("GOT", sanity)
       const t0 = await table0(db);
       const t1 = await table1(db);

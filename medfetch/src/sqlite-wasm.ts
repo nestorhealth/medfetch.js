@@ -74,15 +74,24 @@ type SqliteWasmOptions = {
 /**
  * Medfetch's default sqlite on FHIR client dialect constructor.
  * This delays opening the worker thread until the very first call sqlite-wasm worker thread from the neighboring [sqlite-wasm.thread.ts](./sqlite-wasm.thread.ts), so in that sense this is lazy
- * file.
- * @param baseURL The fhir data source, either the base URL of a FHIR API or a raw File Bundle
- * @param resources The resource types to include
+ * @param baseURL The data source, either the base URL of a REST API or a raw File `Bundle` (Bundle format will be deprecated in the future, i just cba changing allat for a file handle right now)
+ * @param virtualMigrations The migration text to define the REST API schema
+ * @param config Sqlite-wasm specific settings {@link SqliteWasmOptions}
  * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript
  * 
  * @example 
  * From a FHIR server
  * ```ts
- * const dialect = medfetch("https://my.fhir.api.com");
+ * const dialect = medfetch("https://my.fhir.api.com",
+ *   `create table "Patient" (
+ *      id TEXT PRIMARY KEY
+ *   );
+ *   create table "Condition" (
+ *      id TEXT PRIMARY KEY,
+ *      _subject TEXT HIDDEN,
+ *      subject TEXT GENERATED ALWAYS AS ("_subject"."reference")
+ *   );`
+ * );
  * ```
  * 
  * @example

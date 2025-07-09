@@ -89,6 +89,7 @@ export function loadExtension(
                 if (!extensions) {
                     throw new Error(`[${tag}] > `);
                 }
+                const ok: string[] = [];
                 for (const [key, value] of Object.entries(extensions)) {
                     const _rc = sqlite3.capi.sqlite3_create_module(
                         pDb,
@@ -100,11 +101,13 @@ export function loadExtension(
                         console.error(
                             `[medfetch/sqlite-wasm] >> ${key} returned error code ${rc}`,
                         );
+                    } else {
+                        ok.push(key);
                     }
-                    console.log(
-                        `[medfetch/sqlite-wasm] >> "${key}" virtual table module allocated.`,
-                    );
                 }
+                console.log(
+                    `[medfetch/sqlite-wasm] >> allocated virtual tables:\n${ok.map((t) => `"${t}"`).join(", ")}`,
+                );
                 moduleSet.add(pDb);
             }
         }

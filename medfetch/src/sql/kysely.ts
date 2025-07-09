@@ -3,7 +3,6 @@ import {
     type ColumnDataType,
     type Expression,
     type CreateTableBuilder,
-
     SqliteAdapter,
     DummyDriver,
     SqliteIntrospector,
@@ -45,24 +44,9 @@ export function dummy(sqlFlavor: "sqlite" | "postgresql"): Dialect {
 
 export function dummyDB(sqlFlavor: "sqlite" | "postgresql"): Kysely<any> {
     return new Kysely({
-        dialect: dummy(sqlFlavor)
-    })
+        dialect: dummy(sqlFlavor),
+    });
 }
 
 // Kysely doesn't expose this so we just union it ourselves. This is internal anyway
 export type DataTypeExpression = ColumnDataType | Expression<any>;
-
-/**
- * 
- * @param columnKey column name in database
- * @param pathKey The child path you want to use instead
- * @param columnDataType What type that should be in the database
- * @returns A table builder function
- */
-export function rewriteColumnPath(columnKey: string, _pathKey: string, columnDataType: DataTypeExpression) {
-    return (tb: CreateTableBuilder<string>): CreateTableBuilder<string> =>
-        tb
-        .addColumn(`_${columnKey}`, sql`TEXT HIDDEN`)
-        .addColumn(columnKey, columnDataType)
-
-}

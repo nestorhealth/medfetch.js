@@ -13,7 +13,7 @@ import { strFromU8, unzipSync } from "fflate";
 export type VirtualMigrationsConfig = {
     dialect: "sqlite" | "postgresql";
     discriminatorPath: string;
-    rewritePaths: ReadonlyMap<string, string>;
+    generatedPaths: ReadonlyMap<string, string>;
     drop?: (columnKey: string) => boolean;
 };
 /**
@@ -57,7 +57,7 @@ export function virtualMigrations<T extends Migrateable>(
     schema: T | (() => Promise<T>),
     {
         discriminatorPath = "/discriminator/mapping",
-        rewritePaths = new Map([
+        generatedPaths: rewritePaths = new Map([
             [
                 "#/definitions/Reference",
                 "#/definitions/Reference/properties/reference",
@@ -73,7 +73,7 @@ export function virtualMigrations<T extends Migrateable>(
             migrations(s, {
                 discriminatorPath,
                 dialect,
-                rewritePaths,
+                generatedPaths: rewritePaths,
                 drop
             }),
     });

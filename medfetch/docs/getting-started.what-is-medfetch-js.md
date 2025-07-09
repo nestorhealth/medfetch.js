@@ -1,8 +1,8 @@
 # What is Medfetch.js
-
-"Make Everything (a) Database Fetch".js (med) fetch, or Medfetch.js for short, is an 
-*opinionated* REST API HTTP client for Javascript. It allows you to
-query JSON-based REST APIs just like a database:
+"[Management of External](https://wiki.postgresql.org/wiki/SQL/MED) Fetch",
+or "Make Everything a Database Fetch", as I like to refer to it, 
+is an opinionated REST API HTTP client for Javascript.
+It allows you to query JSON-based REST APIs just like a database:
 
 ```ts
 import { Kysely } from "kysely";
@@ -19,6 +19,7 @@ Only the [Kysely](https://kysely.dev/) ORM interface is supported out
 the box, but perhaps more can come in the future.
 :::
 
+## Motivation
 For most APIs, you can work with the data purely within "JS"-land and be just fine:
 ```tsx
 export default async function TodosPage() {

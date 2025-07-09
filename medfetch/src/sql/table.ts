@@ -1,3 +1,8 @@
+import { make } from "~/exception";
+import { type Walk } from "~/sql/walk";
+
+const exception = make("medfetch/sql.table");
+
 /**
  * Extracts the table name from a CREATE TABLE SQL statement.
  * - Quoted table names preserve casing.
@@ -38,26 +43,26 @@ export function getTableNames(sqlText: string): string[] {
 
 /**
  * Just a 2-tuple of strings with elements:
- * 0 -> Table Name
- * 1 -> The full migration text of that table
+ * - [`0`] -> Table Name
+ * - [`1`] -> The full migration text of that table
  */
-type CreateTableEntry = [
+type TableSQLEntry = [
     /**
      * Table name in the database
      */
     tableName: string,
-    
+
     /**
      * The migration text for it
      */
-    migrationText: string
+    migrationText: string,
 ];
 
 /**
- * Transform a 'migration' sql plaintext comprised of "create table" statements into a {@link CreateTableEntry} list.
+ * Transform a 'migration' sql plaintext comprised of "create table" statements into a {@link TableSQLEntry} list.
  * @param createTables The migration plaintext
  * @returns tables in migrations grouped with their migration text
- * 
+ *
  * @example
  * ```ts
  * const migrationEntries = entries("create table foo (id text);");
@@ -68,9 +73,7 @@ type CreateTableEntry = [
  * ```
  *
  */
-export function entries(
-    createTables: string,
-): CreateTableEntry[] {
+export function entries(createTables: string): TableSQLEntry[] {
     return createTables
         .trim()
         .split(";")
@@ -78,38 +81,122 @@ export function entries(
         .filter((migration): migration is [string, string] => !!migration[0]);
 }
 
-export function columns(tableSql: string): string[] {
-  const cleaned = tableSql.trim().replace(/\s+/g, " ");
 
-  // Match the columns inside the parentheses
-  const match = cleaned.match(/CREATE\s+TABLE[^(]*\(([\s\S]+)\)/i);
-  if (!match) return [];
+/**
+ * The js-land representation of the virtual-table metadata medfetch needs in order
+ * to look up the user-defined virtual table columns from its postgres / sqlite extension.
+ * This is ***not*** the same as an [sqlite virtual table](https://www.sqlite.org/vtab.html),
+ * since this also (will) works with the [Postgres FDW API](https://www.postgresql.org/docs/current/postgres-fdw.html).
+ * Medfetch was implemented on sqlite first, this name remains since it does a good enough job
+ * (who cares about typescript types they're all fake anyway)
+ */
+type VirtualTable = {
+    /**
+     * The plaintext sql string to pass into the virtual/foreign table adapter of the database
+     */
+    readonly statement: string;
 
-  const columnBlock = match[1].trim();
+    /**
+     * map column index -> column resolution function
+     */
+    readonly lookupForeignColumn: ReadonlyMap<
+        number,
+        (json: unknown) => unknown
+    >;
+};
 
-  const columns: string[] = [];
-
-  // Simple parser: split on commas but skip ones inside parens (for constraints, e.g., CHECK(x > 0))
-  let depth = 0;
-  let buffer = "";
-  for (const char of columnBlock) {
-    if (char === "(") depth++;
-    if (char === ")") depth--;
-    if (char === "," && depth === 0) {
-      columns.push(buffer.trim());
-      buffer = "";
-    } else {
-      buffer += char;
+export function virtualTable(
+    fullStatement: string,
+    walk: Walk,
+    constraints = false
+): VirtualTable {
+    const createPrefix = /^create\s+table\s+["'`]?(.*?)["'`]?\s*\(/i;
+    const match = fullStatement.match(createPrefix);
+    if (!match) {
+        return exception("Invalid create table (missing prefix): ", fullStatement);
     }
-  }
-  if (buffer) columns.push(buffer.trim());
 
-  // Now extract column names (assumes format: `name type`, and skips constraints)
-  return columns
-    .filter(line => !/^CONSTRAINT|PRIMARY|FOREIGN|CHECK|UNIQUE/i.test(line))
-    .map(line => {
-      const match = line.match(/^["`']?([^\s"`']+)/);
-      return match?.[1] ?? "";
-    })
-    .filter(Boolean);
+    const tableName = match[1];
+    const rest = fullStatement.slice(match[0].length); // after opening paren
+
+    // Find closing paren of column list
+    let depth = 1;
+    let i = 0;
+    for (; i < rest.length; i++) {
+        if (rest[i] === "(") depth++;
+        else if (rest[i] === ")") depth--;
+        if (depth === 0) break;
+    }
+
+    if (depth !== 0) {
+        return exception("Invalid create table (unmatched parens): ", fullStatement);
+    }
+
+    const rawCols = rest.slice(0, i); // contents inside parens
+    const tail = rest.slice(i + 1).trim();
+    if (tail && tail !== ";") {
+        return exception("Invalid create table (unexpected suffix): ", fullStatement);
+    }
+
+    const columnMap = new Map<number, (json: unknown) => unknown>();
+    const lines: string[] = [];
+
+    let buffer = "";
+    depth = 0;
+    let colIndex = 0;
+
+    const pushColumn = (line: string, index: number) => {
+        const trimmed = line.trim();
+
+        // Generated column
+        const generatedMatch = trimmed.match(
+            /^["'`]?(.*?)["'`]?\s+\w+\s+generated\s+always\s+as\s*\((.*?)\)/i,
+        );
+        if (generatedMatch) {
+            const [, name, expr] = generatedMatch;
+            const colName = name.trim().replace(/^["'`]|["'`]$/g, "");
+            const colExpr = expr.trim();
+
+            lines.push(`"${colName}" TEXT`);
+            columnMap.set(index, walk(colExpr));
+            return;
+        }
+
+        // Regular column
+        const fallbackMatch = trimmed.match(/^["'`]?(.*?)["'`]?\s+(\w+)/i);
+        if (fallbackMatch) {
+            const [, name, type] = fallbackMatch;
+            const colName = name.trim().replace(/^["'`]|["'`]$/g, "");
+
+            const colType = type.toUpperCase();
+            const columnDef = `"${colName}" ${colType}`;
+
+            lines.push(constraints ? columnDef : trimmed);
+            columnMap.set(index, walk(colName));
+        } else {
+            console.warn("Skipping unrecognized column:", trimmed);
+        }
+    };
+
+    // Split top-level columns by commas at depth 0
+    for (let j = 0; j < rawCols.length; j++) {
+        const char = rawCols[j];
+        if (char === "(") depth++;
+        else if (char === ")") depth--;
+        if (char === "," && depth === 0) {
+            pushColumn(buffer, colIndex++);
+            buffer = "";
+        } else {
+            buffer += char;
+        }
+    }
+
+    if (buffer.trim()) {
+        pushColumn(buffer, colIndex++);
+    }
+
+    return {
+        statement: `CREATE TABLE "${tableName}" (${lines.join(", ")});`,
+        lookupForeignColumn: columnMap,
+    };
 }
