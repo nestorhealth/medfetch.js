@@ -13,7 +13,7 @@ export default function Page() {
     dialect,
     async (db: Kysely<{ Patient: Rowify<Patient> }>) =>
       {
-        return db
+        const patient =  await db
           .selectFrom("Patient")
           .selectAll("Patient")
           .execute()
@@ -22,6 +22,8 @@ export default function Page() {
             // so we need to parse it ourselves
             patients.map((p) => ({ ...p, name: JSON.parse(p.name!) }))
           );
+        console.log(patient);
+        return patient;
       },
   );
   if (!patientsView.queryData) {
