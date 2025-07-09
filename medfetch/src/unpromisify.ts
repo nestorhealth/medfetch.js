@@ -199,7 +199,8 @@ function createAsyncHandlers<Args extends any[], Port = MessagePort>(
 ) {
     async function resolveBlock(e: MessageEventLike<Args, Port>) {
         if (e.data.sab) {
-            let { sab, args } = e.data;
+            let args = e.data.args;
+            const sab = e.data.sab;
             if (
                 typeof sab !== "object" ||
                 !(sab instanceof SharedArrayBuffer)

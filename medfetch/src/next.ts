@@ -4,8 +4,8 @@ import {
     useMutation,
     useQueryClient,
     type QueryKey,
-    QueryClient,
-    UseMutateAsyncFunction,
+    type QueryClient,
+    type UseMutateAsyncFunction,
 } from "@tanstack/react-query";
 
 // #region WriteBack

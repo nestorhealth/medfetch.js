@@ -2,9 +2,8 @@ import { type Ref } from "vue";
 import DBWorker from "./db.worker?worker";
 import { Kysely } from "kysely";
 import medfetch from "~/sqlite-wasm";
-import { unzipJSONSchema } from "~/json/page";
 import { table0, table1 } from "./icd-queries";
-import { virtualMigrations } from "~/sql";
+import { virtualMigrations, unzipJSONSchema } from "~/sql";
 
 type Column = {
   name: string;

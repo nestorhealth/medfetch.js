@@ -1,5 +1,6 @@
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
+import { virtualMigrations, unzipJSONSchema } from "medfetch/sql";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
 const API_URL = apiURL.endsWith("/")
@@ -17,9 +18,13 @@ const dbCache = new Map<string, Kysely<any>>();
 export async function openDB(baseURL: string | File, filename?: string) {
   const cacheKey = `${filename}`;
   if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
-  const dialect = medfetch(baseURL, {
-    filename: filename
-  });
+  const dialect = medfetch(
+    baseURL,
+    virtualMigrations(() => unzipJSONSchema()), 
+    {
+      filename: filename,
+    }
+  );
 
   const db = new Kysely<any>({ dialect });
   dbCache.set(cacheKey, db);

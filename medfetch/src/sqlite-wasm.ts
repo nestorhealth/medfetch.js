@@ -3,10 +3,12 @@ import { Worker1DB, Worker1PromiserDialect } from "./sql.js";
 import { BROWSER } from "esm-env";
 import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/types.js";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
+import { unzipJSONSchema } from "~/sql.js"
 
 // singleton
 let __worker: Worker | null = null;
 let __promiser: Worker1Promiser | null = null;
+import { virtualMigrations as generateVirtualMigrations } from "./sql.js";
 
 async function openPromiserDB<
     TWorker = Worker
@@ -102,7 +104,7 @@ type SqliteWasmOptions = {
  */
 export default function medfetch(
     baseURL: string | File,
-    virtualMigrations: string | (() => Promise<string>),
+    virtualMigrations: string | (() => Promise<string>) = () => unzipJSONSchema().then(generateVirtualMigrations),
     {
         filename = ":memory:",
         worker,

@@ -36,7 +36,7 @@ async function logCheckResult() {
   if (!workspace.data) {
     return toast.error(`Unable to fetch workspace:${workspace.error.error}`);
   }
-  const db = await openDB(workspace.data.name, "");
+  const db = await openDB(workspace.data.name);
   const tables = await db.introspection.getTables();
   const hasPatientsTable = tables.some((table) => table.name === "patients");
   if (!hasPatientsTable) {

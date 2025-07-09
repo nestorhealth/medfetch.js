@@ -59,7 +59,7 @@ export type DataTypeExpression = ColumnDataType | Expression<any>;
  * @param columnDataType What type that should be in the database
  * @returns A table builder function
  */
-export function rewriteColumnPath(columnKey: string, pathKey: string, columnDataType: DataTypeExpression) {
+export function rewriteColumnPath(columnKey: string, _pathKey: string, columnDataType: DataTypeExpression) {
     return (tb: CreateTableBuilder<string>): CreateTableBuilder<string> =>
         tb
         .addColumn(`_${columnKey}`, sql`TEXT HIDDEN`)
