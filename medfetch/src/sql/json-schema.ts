@@ -80,16 +80,9 @@ function normalize(pointer: string): string {
 export function createTable(
     tableName: string,
     root: JSONSchema7,
-    { drop, primaryKey, rewritePaths, dialect }: PathConfig,
+    { drop, rewritePaths, dialect }: VirtualMigrationsConfig,
 ): string {
-    const db = dummyDB(dialect);
-    let tb = db.schema.createTable(tableName);
-    if (primaryKey) {
-        tb = db.schema
-            .createTable(tableName)
-            .ifNotExists()
-            .addColumn(...primaryKey, (col) => col.primaryKey());
-    }
+    const tb = dummyDB(dialect).schema.createTable(tableName);
     const jsonObjectProps = get(root, `/definitions/${tableName}/properties`);
     if (!jsonObjectProps) {
         return exception(`That json object schema doesn't exist: "${tableName}"`);
@@ -129,10 +122,6 @@ export function createTable(
     }, tb);
     const plaintext = finalTb.compile().sql;
     return plaintext;
-}
-
-interface PathConfig extends VirtualMigrationsConfig {
-    readonly primaryKey?: [columnName: string, columnType: ColumnDataType];
 }
 
 export function migrations(
