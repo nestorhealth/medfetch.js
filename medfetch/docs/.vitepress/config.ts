@@ -5,7 +5,9 @@ import { fileURLToPath } from "url";
 export default defineConfig({
   title: "Medfetch.js",
   description: "SQL on FHIR for the Web",
-  head: [["link", { rel: "icon", type: "image/svg+xml", href: "/logo-dark.svg" }]],
+  head: [
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/logo-dark.svg" }],
+  ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -16,6 +18,9 @@ export default defineConfig({
       light: "logo.svg",
       dark: "logo-dark.svg",
     },
+    footer: {
+      message: "Brought to you by nestorhealth",
+    },
     sidebar: [
       {
         text: "Getting Started",
@@ -24,7 +29,7 @@ export default defineConfig({
             text: "What is Medfetch.js?",
             link: "/getting-started.what-is-medfetch-js",
           },
-          { text: "SQLite on FHIR", link: "/getting-started.sqlite" },
+          { text: "SQLite", link: "/getting-started.sqlite" },
         ],
       },
       {
@@ -42,13 +47,13 @@ export default defineConfig({
             items: [
               {
                 text: "medfetch",
-                link: "/functions.sqlite-wasm.medfetch"
+                link: "/functions.sqlite-wasm.medfetch",
               },
               {
                 text: "loadExtension",
-                link: "/functions.sqlite-wasm.loadExtension"
-              }
-            ]
+                link: "/functions.sqlite-wasm.loadExtension",
+              },
+            ],
           },
           {
             text: "React",
@@ -57,25 +62,25 @@ export default defineConfig({
             items: [
               {
                 text: "useDatabase",
-                link: "/functions.react.useDatabase"
-              }
-            ]
+                link: "/functions.react.useDatabase",
+              },
+            ],
           },
           {
             text: "unpromisify",
-            link: "/functions.unpromisify"
+            link: "/functions.unpromisify",
           },
         ],
       },
     ],
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/vuejs/vitepress" },
+      { icon: "github", link: "https://github.com/nestorhealth/medfetch.js" }
     ],
   },
   vite: {
     plugins: [
-      // @ts-ignore
+      // @ts-expect-error lol
       {
         configureServer(server) {
           server.middlewares.use((_req, res, next) => {

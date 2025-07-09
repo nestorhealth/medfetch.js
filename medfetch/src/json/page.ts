@@ -1,15 +1,15 @@
 import type { Resource } from "fhir/r4.js";
-import { kdvParser, type PathValue } from "./parse.js";
+import kdv, { type Pathify } from "./kdv.js";
 import type { Bundle } from "fhir/r5.js";
 import { type FetchPageFn } from "~/sqlite-wasm/vtab.js";
 
 /// Implementation level types
-type Link = PathValue<Bundle, "Bundle">["link"];
-type Entry = PathValue<Bundle, "Bundle">["entry"];
+type Link = Pathify<Bundle, `_${string}`>["link"];
+type Entry = Pathify<Bundle, `_${string}`>["entry"];
 
 /// Their parse functions
-const parseLink = kdvParser<Link[]>("link", 1);
-const parseEntry = kdvParser<Entry[]>("entry", 1);
+const parseLink = kdv<Link[]>("link", 1);
+const parseEntry = kdv<Entry[]>("entry", 1);
 
 /**
  * Function that looks like fetch in its args and returns a plaintext string
@@ -18,12 +18,10 @@ const parseEntry = kdvParser<Entry[]>("entry", 1);
 export type FetchTextSync = (...args: Parameters<typeof fetch>) => string;
 
 /**
- * Parse a synchronous text generator of a Bundle
- * and yields a generator of its resources
  */
-export class Page<T = any> {
+export default class Page<T = any> {
     #nextURL: string | null;
-    #isLinkParsed: boolean;
+    #isNextLinkParsed: boolean;
     #cursor: number;
     #acc: T[];
     #chunks: Generator<string>;
@@ -101,24 +99,24 @@ export class Page<T = any> {
         nextPage?: (nextURL: string) => Generator<string>,
     ) {
         this.#nextURL = null;
-        this.#isLinkParsed = false;
+        this.#isNextLinkParsed = false;
         this.#cursor = -1;
         this.#acc = [];
         this.#chunks = chunks instanceof Function ? chunks() : chunks;
         this.#fetcher = nextPage;
     }
 
-    *#resources() {
+    *#entries() {
         while (true) {
             if (this.#acc.length > 0) {
                 yield this.#acc.shift()!;
             }
             const { done, value } = this.#chunks.next();
             if (done || !value) break;
-            if (!this.#nextURL && !this.#isLinkParsed) {
+            if (!this.#nextURL && !this.#isNextLinkParsed) {
                 const link = parseLink(value);
                 if (link) {
-                    this.#isLinkParsed = true;
+                    this.#isNextLinkParsed = true;
                     const nextLink = link.hd.find(
                         (link) => link.relation === "next",
                     )?.url;
@@ -158,9 +156,9 @@ export class Page<T = any> {
      * that flushes out resources one by one.
      * @returns {@link Resource} generator
      */
-    get rows() {
+    get rows(): Generator<T> {
         if (!this.#rows) {
-            this.#rows = this.#resources();
+            this.#rows = this.#entries();
         }
         return this.#rows;
     }

@@ -19,12 +19,15 @@ export default defineConfig({
             provider: "preview",
             instances: [
                 {
-                    browser: "chromium",
-                },
+                    browser: "chromium"
+                }
             ],
         },
         include: ["src/**/*.test.ts"],
-        globals: true,
+        globals: true
+    },
+    optimizeDeps: {
+        exclude: ["@sqlite.org/sqlite-wasm"]
     },
     // for SharedArrayBuffer access
     server: {
@@ -32,5 +35,5 @@ export default defineConfig({
             "Cross-Origin-Opener-Policy": "same-origin",
             "Cross-Origin-Embedder-Policy": "require-corp",
         },
-    },
+    }
 });

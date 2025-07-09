@@ -1,3 +1,6 @@
+/**
+ * I didn't pass 3rd grade math
+ */
 export class Counter {
     #count: number;
     constructor() {
@@ -10,7 +13,7 @@ export class Counter {
      * @returns The last count value
      */
     set(number?: number): number {
-        let oldCount = this.#count;
+        const oldCount = this.#count;
         this.#count = number ?? oldCount + 1;
         return oldCount;
     }

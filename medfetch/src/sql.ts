@@ -1,4 +1,4 @@
-import type { QueryResult } from "kysely";
+import type { Dialect, QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
@@ -7,19 +7,45 @@ import {
 import type { PromiserResult, Worker1Promiser } from "./sqlite-wasm/types.js";
 import { check } from "./sqlite-wasm/worker1.main.js";
 import type { JSONSchema7 } from "json-schema";
-import { migrations } from "~/sql/json-schema.js";
+import jsonSchema from "~/sql/json-schema.js";
 import { strFromU8, unzipSync } from "fflate";
 
-export type VirtualMigrationsConfig = {
-    dialect: "sqlite" | "postgresql";
-    discriminatorPath: string;
-    generatedPaths: ReadonlyMap<string, string>;
-    drop?: (columnKey: string) => boolean;
-};
 /**
- * Schemas that we have functions to create sql migrations from
+ * "Generic" options for generating a virtual migration text from some JSON object
+ * schema
  */
-type Migrateable = string | JSONSchema7;
+export type VirtualMigrationConfig = {
+    /**
+     * What "syntax" of sql to use to determine column types.
+     * @todo Provide a more granular way to determine column mappings
+     */
+    readonly dialect: "sqlite" | "postgresql";
+    
+    /**
+     * The path to an object child whose keys/props contains the Tables
+     * to generate migration texts for.
+     */
+    readonly discriminatorPath: string;
+    
+    /**
+     * What l1 (immediate) child keys from the parent object
+     * should be "generated" (usually a deeper path extraction)
+     */
+    readonly generatedPaths?: ReadonlyMap<string, string>;
+    
+    /**
+     * Optional filter to omit column keys dynamically rather than have to
+     * do so within the JSON schema itself.
+     * @param columnKey The column key name from the JSON schema
+     * @returns [Drop it](https://www.youtube.com/watch?v=C3jFLJWF75U)
+     */
+    readonly drop?: (columnKey: string) => boolean;
+};
+
+/**
+ * Schemas that we have functions to create sql migrations from.
+ */
+export type Migrateable = string | JSONSchema7;
 
 const isString = (m: unknown) => typeof m === "string";
 // temp naive check until (if) we implement other schemas
@@ -44,20 +70,28 @@ const matchMigrateable = (handlers: {
     };
 };
 
-export function virtualMigrations<T extends Migrateable>(
+/**
+ * "Translate" the provided {@link Migrateable} {@link T} from either an async callback (fetching dynamically)
+ * or the value itself.
+ * @param schema The schema or a callback to get the schema. If this is plaintext (`string`), then it just returns that
+ * stirng ***unmodified***.
+ * @param config Any options from {@link VirtualMigrationConfig}
+ * @returns The migration text or the text wrapped in a promise function, depending on whatever shape passed in {@link T} takes.
+ */
+export function virtualMigration<T extends Migrateable>(
     schema: () => Promise<T>,
-    config?: Partial<VirtualMigrationsConfig>,
+    config?: Partial<VirtualMigrationConfig>,
 ): () => Promise<string>;
-export function virtualMigrations<T extends Migrateable>(
+export function virtualMigration<T extends Migrateable>(
     schema: T,
-    config?: Partial<VirtualMigrationsConfig>,
+    config?: Partial<VirtualMigrationConfig>,
 ): string;
 
-export function virtualMigrations<T extends Migrateable>(
+export function virtualMigration<T extends Migrateable>(
     schema: T | (() => Promise<T>),
     {
         discriminatorPath = "/discriminator/mapping",
-        generatedPaths: rewritePaths = new Map([
+        generatedPaths = new Map([
             [
                 "#/definitions/Reference",
                 "#/definitions/Reference/properties/reference",
@@ -65,16 +99,16 @@ export function virtualMigrations<T extends Migrateable>(
         ]),
         dialect = "sqlite",
         drop = (key: string) => key[0] === "_",
-    }: Partial<VirtualMigrationsConfig> = {},
+    }: Partial<VirtualMigrationConfig> = {},
 ): string | (() => Promise<string>) {
     const match = matchMigrateable({
         string: (s) => s,
         jsonSchema: (s) =>
-            migrations(s, {
+            jsonSchema(s, {
                 discriminatorPath,
                 dialect,
-                generatedPaths: rewritePaths,
-                drop
+                generatedPaths,
+                drop,
             }),
     });
     if (typeof schema === "function") {
@@ -84,6 +118,13 @@ export function virtualMigrations<T extends Migrateable>(
     }
 }
 
+export type DialectJS<D extends Dialect> = D & {
+    js: <T>(match: string, maps: T) => DialectJS<D>;
+};
+
+/**
+ * Map object children of {@link T}
+ */
 type ScalarColumnFrom<T> =
     Exclude<T, undefined> extends string | number | boolean
         ? Exclude<T, undefined>

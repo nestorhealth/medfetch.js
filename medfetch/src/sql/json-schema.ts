@@ -5,10 +5,10 @@ import {
     type DataTypeExpression,
     dummyDB,
 } from "~/sql/kysely";
-import type { VirtualMigrationsConfig } from "~/sql";
-import { make } from "~/exception";
+import type { VirtualMigrationConfig } from "~/sql";
+import { makeError } from "~/context";
 
-const exception = make("medfetch/sql.json-schema")
+const exception = makeError("medfetch/sql.json-schema")
 
 function resolveRef(ref: string, rootSchema: JSONSchema7): JSONSchema7 {
     if (!ref.startsWith("#")) {
@@ -75,10 +75,10 @@ function normalize(pointer: string): string {
     return pointer.startsWith("#") ? pointer.slice(1) : pointer;
 }
 
-export function createTable(
+function createTable(
     tableName: string,
     root: JSONSchema7,
-    { drop, generatedPaths, dialect }: VirtualMigrationsConfig,
+    { drop, generatedPaths, dialect }: VirtualMigrationConfig,
 ): string {
     const tb = dummyDB(dialect).schema.createTable(tableName);
     const jsonObjectProps = get(root, `/definitions/${tableName}/properties`);
@@ -95,7 +95,7 @@ export function createTable(
         }
 
         // generated column case
-        if (value.$ref && generatedPaths.has(value.$ref)) {
+        if (value.$ref && generatedPaths?.has(value.$ref)) {
             const path = generatedPaths.get(value.$ref)!;
             const pathSchema = resolve(get(root, normalize(path)), root);
             const columnType = switchJSONTypeName(dialect, pathSchema);
@@ -122,11 +122,29 @@ export function createTable(
     return plaintext;
 }
 
-export function migrations(
-    jsonSchema: JSONSchema7,
-    config: VirtualMigrationsConfig,
+/**
+ * Get back the migration text from a JSON schema. This is just 1 implementation of doing so,
+ * and certainly isn't the only one possible! This is mainly here to provide *some* option out the box
+ * for deriving SQL migration text from a JSON schema.
+ * @param schemaObject The JSON schema object
+ * @param config Any options from {@link VirtualMigrationConfig}
+ * @returns The plaintext migration text
+ * 
+ * @example
+ * An sqlite migration
+ * ```ts
+ * const myJSONSchema = {...}
+ * const migrations = jsonSchema(myJSONSchema, {
+ *   discriminatorPath: "/discriminator",
+ *   dialect: "sqlite"
+ * });
+ * ```
+ */
+export default function jsonSchema(
+    schemaObject: JSONSchema7,
+    config: VirtualMigrationConfig,
 ): string {
-    const definitions = jsonSchema["definitions"] as Record<
+    const definitions = schemaObject["definitions"] as Record<
         string,
         Exclude<JSONSchema7Definition, boolean>
     >;
@@ -134,10 +152,10 @@ export function migrations(
         throw new Error("Bad json schema");
     }
     const tableNames: string[] = Object.keys(
-        get(jsonSchema, config.discriminatorPath),
+        get(schemaObject, config.discriminatorPath),
     );
     return tableNames.reduce(
         (acc, tableName) =>
-            acc + "; " + createTable(tableName, jsonSchema, config),
+            acc + "; " + createTable(tableName, schemaObject, config),
     );
 }

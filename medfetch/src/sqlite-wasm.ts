@@ -1,18 +1,21 @@
 import { dummy } from "./sql/kysely.js";
-import { Worker1DB, Worker1PromiserDialect } from "./sql.js";
+import { type DialectJS, type Migrateable, Worker1DB, Worker1PromiserDialect } from "./sql.js";
 import { BROWSER } from "esm-env";
-import type { Worker1OpenRequest, Worker1Promiser } from "./sqlite-wasm/types.js";
+import type {
+    Worker1OpenRequest,
+    Worker1Promiser,
+} from "./sqlite-wasm/types.js";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
-import { unzipJSONSchema } from "~/sql.js"
+import { virtualMigration } from "./sql.js";
 
 // singleton
 let __worker: Worker | null = null;
 let __promiser: Worker1Promiser | null = null;
-import { virtualMigrations as generateVirtualMigrations } from "./sql.js";
 
-async function openPromiserDB<
-    TWorker = Worker
->(worker: TWorker, openMsg: Worker1OpenRequest) {
+async function openPromiserDB<TWorker = Worker>(
+    worker: TWorker,
+    openMsg: Worker1OpenRequest,
+) {
     if (!__promiser) {
         __promiser = promiserSyncV2(worker);
     }
@@ -20,7 +23,9 @@ async function openPromiserDB<
     const promiser = __promiser;
     const response = await promiser(openMsg);
     if (response.type === "error" || !response.dbId) {
-        throw new Error(`Couldn't get back database ID from "openPromiserDB", early exiting...`)
+        throw new Error(
+            `Couldn't get back database ID from "openPromiserDB", early exiting...`,
+        );
     }
     const dbId = response.dbId;
     return new Worker1DB(dbId, promiser);
@@ -52,7 +57,7 @@ const accessWorker = (userWorker?: Worker) => {
                 name: "sqlite-wasm.db",
             },
         );
-    } 
+    }
     return __worker;
 };
 
@@ -64,7 +69,7 @@ type SqliteWasmOptions = {
      * Filename of database. Defaults to ":memory:"
      */
     readonly filename?: string;
-    
+
     /**
      * The worker thread running the web assembly binary
      */
@@ -75,11 +80,11 @@ type SqliteWasmOptions = {
  * Medfetch's default sqlite on FHIR client dialect constructor.
  * This delays opening the worker thread until the very first call sqlite-wasm worker thread from the neighboring [sqlite-wasm.thread.ts](./sqlite-wasm.thread.ts), so in that sense this is lazy
  * @param baseURL The data source, either the base URL of a REST API or a raw File `Bundle` (Bundle format will be deprecated in the future, i just cba changing allat for a file handle right now)
- * @param virtualMigrations The migration text to define the REST API schema
+ * @param schema The migration text to define the REST API schema
  * @param config Sqlite-wasm specific settings {@link SqliteWasmOptions}
  * @returns A plain {@link Worker1PromiserDialect} wrapped over a {@link SqlOnFhirDialect} for typescript
- * 
- * @example 
+ *
+ * @example
  * From a FHIR server
  * ```ts
  * const dialect = medfetch("https://my.fhir.api.com",
@@ -88,12 +93,11 @@ type SqliteWasmOptions = {
  *   );
  *   create table "Condition" (
  *      id TEXT PRIMARY KEY,
- *      _subject TEXT HIDDEN,
- *      subject TEXT GENERATED ALWAYS AS ("_subject"."reference")
+ *      subject TEXT GENERATED ALWAYS AS ("reference")
  *   );`
  * );
  * ```
- * 
+ *
  * @example
  * From a File
  * ```ts
@@ -113,23 +117,23 @@ type SqliteWasmOptions = {
  */
 export default function medfetch(
     baseURL: string | File,
-    virtualMigrations: string | (() => Promise<string>) = () => unzipJSONSchema().then(generateVirtualMigrations),
-    {
-        filename = ":memory:",
-        worker,
-    }: SqliteWasmOptions = {}
-): Worker1PromiserDialect {
+    schema: Migrateable | (() => Promise<Migrateable>),
+    { filename = ":memory:", worker }: SqliteWasmOptions = {},
+): DialectJS<Worker1PromiserDialect> {
     if (!BROWSER) {
         console.warn(
-            `[medfetch/sqlite-wasm] > Called in non-browser environment, returning dummy...`,
+            `[medfetch/sqlite-wasm] >> Called in non-browser environment, returning dummy...`,
         );
-        return dummy("sqlite") as any as Worker1PromiserDialect;
+        return dummy("sqlite") as any;
     }
-    
-    return new Worker1PromiserDialect({
+
+    const dialect = new Worker1PromiserDialect({
         database: async () => {
             const sqliteWorker = accessWorker(worker);
-            const migrations = typeof virtualMigrations === "function" ? await virtualMigrations() : virtualMigrations;
+            const migrations =
+                typeof schema === "function"
+                    ? await schema().then(virtualMigration)
+                    : virtualMigration(schema);
             const promiserDB = await openPromiserDB(sqliteWorker, {
                 type: "open",
                 args: {
@@ -138,10 +142,12 @@ export default function medfetch(
                 },
                 aux: {
                     baseURL: baseURL,
-                    virtualMigrations: migrations
-                }
+                    virtualMigrations: migrations,
+                },
             });
             return promiserDB;
-        }
+        },
     });
+
+    return dialect as any;
 }

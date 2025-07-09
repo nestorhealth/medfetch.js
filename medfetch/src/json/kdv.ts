@@ -1,94 +1,35 @@
 import clarinet from "clarinet";
-import type { Extension, FhirResource } from "fhir/r5";
 
 /**
  * Utility type that turns every optional field as non-optional
  * and every nullable field (not very applicable to FHIR to be fair
  * but the distinction is noted here) as non-nullable.
  *
- * @template Obj The object to "clean"
+ * @template Obj The object to get the "clean"-ed type of
+ * @template IgnoreKeys Key patterns to ignore, if any. Defaults to `never`
+ *
+ * @example
+ * ```ts
+ * type LinkItem = Pathify<Bundle>["link"];
+ * type LinkNoExtensions = Pathify<Bundle, `_${string}`>["link"];
+ * ```
  */
-type Clean<Obj> = Obj extends (infer U)[]
-    ? Clean<U> // unwrap arrays recursively
+export type Pathify<
+    Obj,
+    IgnoreKeys extends PropertyKey = never,
+> = Obj extends (infer U)[]
+    ? Pathify<U, IgnoreKeys>
     : Obj extends object
-      ? { [K in keyof Obj]-?: Clean<NonNullable<Obj[K]>> } // recursively clean nested fields
+      ? {
+            [K in keyof Obj as K extends IgnoreKeys ? never : K]-?: Pathify<
+                NonNullable<Obj[K]>,
+                IgnoreKeys
+            >;
+        }
       : NonNullable<Obj>;
 
 /**
- * Lookup {@link FhirResource} for the given {@link FhirResource.resourceType} value(s)
- *
- * @template ResourceType Any string literal from {@link FhirResource.resourceType}
- *
- * @example
- * ```ts
- * type PatientObject = ResourceByType<"Patient">;
- * ```
- */
-export type ResourceFromType<
-    Resource extends { resourceType: string },
-    RT extends Resource["resourceType"],
-> = Extract<Resource, { resourceType: RT }>;
-
-/**
- * From the {@link FhirResource.resourceType} typename literal, get back
- * the "cleaned" child types so that every child indexed doesn't retain
- * their optional property nor any `| null` property.
- *
- * @template ResourceType The {@link FhirResource.resourceType} value to index into
- *
- * @example
- * ```ts
- * type AddressFromPatient = PathValue<"Patient">["address"]
- * ```
- */
-export type PathValue<
-    Resources extends { resourceType: string },
-    ResourceType extends FhirResource["resourceType"],
-> = Clean<ResourceFromType<Resources, ResourceType>>;
-
-/**
- * The FHIR primitive type names and the only FHIR types I'm willing to write out statically at this point (lol)
- */
-export type PrimitiveKey =
-    | "base64Binary"
-    | "boolean"
-    | "canonical"
-    | "code"
-    | "date"
-    | "dateTime"
-    | "decimal"
-    | "id"
-    | "instant"
-    | "integer"
-    | "oid"
-    | "positiveInt"
-    | "string"
-    | "time"
-    | "unsignedInt"
-    | "uri"
-    | "url"
-    | "uuid";
-
-/**
- * To strip out garbage fields
- */
-type KeyFilter<K extends string> =
-    | `value${Capitalize<K>}`
-    | `_value${Capitalize<K>}`
-    | `_${K}`
-    | "extension";
-
-type ValueKeyType<K extends string> = K extends `value${infer T}` ? T : never;
-
-/**
- * Key / typenames for complex struct elements
- */
-export type StructKey = ValueKeyType<
-    Exclude<keyof Extension, PrimitiveKey | KeyFilter<PrimitiveKey>>
->;
-
-/**
- * Unwrapped return type of calling the parser returned by {@link kdvParser()}
+ * Unwrapped return type of calling the parser returned by {@link kdv()}
  * @template Value The expected type of value at key `k`. This is *NOT* a runtime type:
  * you must validate the payload yourself if you're unsure about type at key `k`.
  */
@@ -98,17 +39,17 @@ export interface KdvParseResult<Value> {
      * If stack head is a container (array / object) and has a child pointer that points to an incomplete
      * child (so hd.next / stack[1], same thing), then that child is pruned.
      */
-    hd: Value;
+    readonly hd: Value;
 
     /**
      * The pruned incomplete child of {@link hd} if it exists. Otherwise null.
      */
-    tl: Value[keyof Value] | null;
+    readonly tl: Value[keyof Value] | null;
 }
 
 /**
- * The key-depth-value {@link clarinet} parser returned by {@link kdvParser}.
- * @template Value The expected type of the value from the key provided to {@link kdvParser} ctor.
+ * The key-depth-value {@link clarinet} parser returned by {@link kdv}.
+ * @template Value The expected type of the value from the key provided to {@link kdv} ctor.
  * @param chunk The next available chunk of the Bundle to send to {@link clarinet.CParser.write}
  * @returns Some {@link KdvParseResult} if it exists. None otherwise.
  *
@@ -116,40 +57,19 @@ export interface KdvParseResult<Value> {
 export type KdvParseFn<Value> = (chunk: string) => KdvParseResult<Value> | null;
 
 /**
- * Type signature for a function that accepts a {@link key} and
+ * Returns a clarinet "key-depth-value" parser that searches for
+ * a JSON key `k` at depth `d`, 0 indexed (so root is depth 0), and
+ * returns value `v` indexed by `k` at that depth `d`.
  *
- * @template Value The expected object type that the returned Record
- * @param key The key to search for
- * @param depth The depth to find it at (`0` indexed, meaning the JSON root is depth `0`)
- * @returns A {@link KdvParseFn} for the provided key-depth pair
- */
-export type KdvParseFnMake = <Value>(
-    key: string,
-    depth: number,
-) => KdvParseFn<Value>;
-
-export function fromNullableOrThrow<T extends readonly unknown[]>(
-    ...args: T
-): { [K in keyof T]: NonNullable<T[K]> } {
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] == null) {
-            throw new Error(`unexpected nullable value at index ${i}`);
-        }
-    }
-    return args as { [K in keyof T]: NonNullable<T[K]> };
-}
-
-/**
- * Returns a clarinet parser that searches for a JSON key `k` at depth `d` 0
- * indexed (so root is depth 0), and returns value `v` indexed by `k`.
- * @param k The key
- * @param d The depth (first key is depth 1)
+ * This JSON "parses" the value at that depth
+ * @param k The key value
+ * @param d A *positive* integer depth value >= 1 to extract the key value from (this treats root as index 0)
  * @returns Some value if it exists, None otherwise.
  */
-export const kdvParser: KdvParseFnMake = <Value = unknown>(
+export default function kdv<Value = unknown>(
     k: string,
     d: number,
-): KdvParseFn<Value> => {
+): KdvParseFn<Value> {
     const parser = clarinet.parser();
 
     let currentKey = "";
@@ -169,11 +89,12 @@ export const kdvParser: KdvParseFnMake = <Value = unknown>(
         currentKey = key;
     };
 
-    parser.onopenobject = (key) => {
-        if (depth + 1 === d && key === k) {
-            capturing = true;
-            stack.push({});
-        } else if (capturing) {
+    parser.onopenobject = (firstKey) => {
+        depth++;
+
+        // Manually apply the onkey logic
+        if (capturing) {
+            // e.g. nested empty object: {}
             if (empty()) {
                 stack.push({});
             } else {
@@ -186,8 +107,12 @@ export const kdvParser: KdvParseFnMake = <Value = unknown>(
                 stack.push(obj);
             }
         }
-        depth++;
-        currentKey = key;
+
+        // SPECIAL CASE -- first key will NOT fire off onkey so we need to set the capture flag on a kd match in 'onopenobject' as well!! 
+        if (firstKey === k && depth === d) {
+            capturing = true;
+        } 
+        currentKey = firstKey;
     };
 
     parser.onopenarray = () => {
@@ -249,8 +174,10 @@ export const kdvParser: KdvParseFnMake = <Value = unknown>(
     };
 
     return (chunk: string): KdvParseResult<Value> | null => {
+        // fire off callbacks
         parser.write(chunk);
-        if (!!v) {
+        // then check v's state
+        if (v) {
             return {
                 hd: v,
                 tl: null,
@@ -277,4 +204,4 @@ export const kdvParser: KdvParseFnMake = <Value = unknown>(
             return null;
         }
     };
-};
+}

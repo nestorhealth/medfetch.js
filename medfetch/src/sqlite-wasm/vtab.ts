@@ -3,10 +3,10 @@ import type {
     sqlite3_vtab_cursor,
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
-import type { Page } from "../json/page.js";
+import type Page from "../json/page.js";
 import type { Sqlite3, Sqlite3Module } from "./types.js";
 import { entries, getTableName, virtualTable } from "../sql/table.js";
-import walk, { type Walk } from "~/sql/walk.js";
+import walk, { type Walk } from "~/json/walk.js";
 
 /**
  * JS version of the medfetch_vtab_cursor "struct". *Extends* sqlite3_vtab cursor
@@ -65,18 +65,6 @@ export function medfetch_module_alloc(
 
     for (const [resourceType, migrationText] of tables) {
         const vt = virtualTable(migrationText.trim(), walkFunc);
-        if (resourceType === "Condition") {
-            console.log("HERE", vt.statement, vt.lookupForeignColumn.size);
-            console.log(
-                "lookup",
-                vt.lookupForeignColumn.get(15)!({
-                    id: "id",
-                    subject: {
-                        reference: "subject",
-                    },
-                }),
-            );
-        }
         const mod: sqlite3_module = (sqlite3.vtab as any).setupModule({
             methods: {
                 xCreate: 0,

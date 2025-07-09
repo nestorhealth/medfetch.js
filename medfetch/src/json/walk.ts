@@ -1,5 +1,14 @@
+
+/**
+ * Factory function that describes how to derive 
+ */
 export type Walk = (path: string) => (json: unknown) => unknown;
 
+/**
+ * Medfetch.js's default implem
+ * @param expr 
+ * @returns 
+ */
 export default function walk(expr: string): (json: unknown) => unknown {
     const tokens: { key: string; isText: boolean }[] = [];
 

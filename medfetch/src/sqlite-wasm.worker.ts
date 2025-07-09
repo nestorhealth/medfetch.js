@@ -1,6 +1,6 @@
 import type { Sqlite3Static } from "@sqlite.org/sqlite-wasm";
-import { type FetchTextSync, Page } from "./json/page.js";
-import { Counter } from "./sqlite-wasm/counter.js";
+import Page, { type FetchTextSync } from "./json/page.js";
+import { Counter } from "./sqlite-wasm/counters.js";
 import { medfetch_module_alloc } from "./sqlite-wasm/vtab.js";
 import { attach, index, pointer } from "./sqlite-wasm/worker1.js";
 import type { Sqlite3Module } from "./sqlite-wasm/types.js";

@@ -104,7 +104,7 @@ if (self.name !== "sync-worker" && self.name !== "async-worker") {
             );
             port1.start();
             const { data } = await forMessage(
-                (e) => e.data === someRandomNumber,
+                (e) => e.data === someRandomNumber * 2,
                 (handler) => {
                     port1.addEventListener("message", handler);
                 },
@@ -114,6 +114,7 @@ if (self.name !== "sync-worker" && self.name !== "async-worker") {
             );
             const payload = data;
             console.log("Received message", payload);
+            expect(payload).toEqual(someRandomNumber * 2)
         });
     });
 }

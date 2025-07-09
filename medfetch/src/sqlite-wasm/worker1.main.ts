@@ -1,4 +1,4 @@
-import { KeyCounter } from "./counter.js";
+import { KeyCounter } from "./counters.js";
 // Get the Sqlite3CreateWorker1Promiser in scope
 import type {
     Sqlite3CreateWorker1Promiser,

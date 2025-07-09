@@ -19,7 +19,7 @@ hero:
 features:
   - icon: 🔥
     title: Super Fast
-    details: Minimizes runtime abstractions so your database can do the heavy computational lifting. Bundles in under 18 kB gzipped.
+    details: Minimizes runtime abstractions so your database can do the heavy computational lifting. Bundles in under 18 kB gzipped (excluding database).
   - icon: 🌎
     title: Runtime Agnostic
     details: Integrate your FHIR data fetching wherever your app needs it.
@@ -28,5 +28,4 @@ features:
     details: Query FHIR data with plain old SQL over native FHIR JSONs. Now we've got "INNER JOIN"s on FHIR.
 
 
-footer: Made with ❤️ by the Medfetch.js team
 ---

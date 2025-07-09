@@ -1,8 +1,7 @@
 # What is Medfetch.js
-"[Management of External](https://wiki.postgresql.org/wiki/SQL/MED) Fetch",
-or "Make Everything a Database Fetch", as I like to refer to it, 
-is an opinionated REST API HTTP client for Javascript.
-It allows you to query JSON-based REST APIs just like a database:
+Make-everything-database-fetch.js, or just Medfetch.js, is an opinionated REST API HTTP client for Javascript.
+Originally built as a [sql-on-fhir](https://build.fhir.org/ig/FHIR/sql-on-fhir-v2/index.html) implementation, 
+Medfetch.js allows you to query JSON data just like a database:
 
 ```ts
 import { Kysely } from "kysely";
@@ -15,8 +14,10 @@ const db = new Kysely({
 ```
 
 ::: info
-Only the [Kysely](https://kysely.dev/) ORM interface is supported out
-the box, but perhaps more can come in the future.
+Medfetch.js currently only works as a [Kysely](https://kysely.dev/) ORM because it
+provided the most convenient separation of [query building and query executing](https://kysely.dev/docs/recipes/splitting-query-building-and-execution)
+at the time of making. However, because Medfetch.js's database extension technically works at the database-level, 
+drop a [PR]() if you want to see another interface added!
 :::
 
 ## Motivation
@@ -70,9 +71,11 @@ export default async function UsersTodosPage() {
     );
 }
 ```
-Things can get messy with filters...
-```ts
-const usersWithRecentImportantTodos = users.map(
+
+What if we only cared about users with recent todos that are marked as important?
+
+```ts{8-16}
+const usersWithTodos = users.map(
     (user) => {
         user.todos = [];
         return todos.reduce(
@@ -81,15 +84,13 @@ const usersWithRecentImportantTodos = users.map(
                 if (user.id === todo.userId) {
                     // Conversion for filter comparison
                     const todosDate = new Date(todo.createdAt);
-                    if (
-                        // Is todo recent?
-                        todosDate.getTime() > (Date.now() - 7 * msInDay)
+                    const shouldIncludeTodo =
+                        todosDate.getTime() > // Is todo recent?
+                            (Date.now() - 7 * msInDay) 
                         &&
-                        // Is todo important
-                        todo.priorityLevel = "important"
-                    ) {
+                        todo.priorityLevel = "important"; // Is todo important?
+                    if (shouldIncludeTodo)
                         acc.todos.push(todo);
-                    }
                 }
                 return acc;
             },
@@ -98,34 +99,7 @@ const usersWithRecentImportantTodos = users.map(
     }
 )
 ```
-What about a many to many?
-```ts
-// .map() is a loop
-const usersWithRecentSharedImportantTodos = users.map(
-    (user) => {
-        user.todos = [];
-        // so is .reduce()
-        return todos.reduce(
-            (acc, todo) => {
-                // so is .includes()
-                if (todo.userIds.includes(user.id)) {
-                    // Conversion for filter comparison
-                    const todosDate = new Date(todo.createdAt);
-                    if (
-                        todosDate.getTime() > (Date.now() - 7 * msInDay)
-                        &&
-                        todos.priority === "important"
-                    ) {
-                        acc.todos.push(todo);
-                    }
-                }
-                return acc;
-            },
-            user
-        )
-    }
-);
-```
+
 You'd probably want to lift this logic...
 ```ts
 export function join<Left, Right>(
@@ -140,7 +114,9 @@ export function join<Left, Right>(
             l[attachToKey] = [];
             return right.reduce(
                 (acc, r) => {
-                    if (on(l, r) && where(l, r)) {
+                    const shouldIncludeRight =
+                        on(l, r) && where(l, r);
+                    if (shouldIncludeRight) {
                         l[attachToKey].push(r);
                     }
                 },
@@ -166,7 +142,9 @@ export function join<Left, Right>(
             l[attachToKey] = [];
             return right.reduce(
                 (acc, r) => {
-                    if (on(l, r) && where(l, r)) {
+                    const shouldIncludeRight =
+                        on(l, r) && where(l, r);
+                    if (shouldIncludeRight) {
                         let rightObj = r;
                         if (selectRightKeys) {
                             rightObj = Object.fromEntries(
@@ -215,7 +193,7 @@ export default async function UsersTodosPage() {
     );
 }
 ```
-Uhh, is that more readable than the inlined version?
+...is that more readable than the inlined version?
 ```tsx:line-numbers {4-23}
 export default async function UsersTodosPage() {
     const todos = await getJsonData("todos");
@@ -261,12 +239,27 @@ I answered **no** to all of those questions, so I decided to build Medfetch.js, 
 that maps JSON data to real* SQL tables with the [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) API:
 
 ```tsx:line-numbers {9-14}
+"use client";
 import medfetch from "medfetch/sqlite-wasm";
 
-export default async function UsersTodosPage() {
-    const dialect = medfetch("https://dummyjson.com", {
-        schema: "https://dummyjson.com/openapi"
-    });
+const up =
+    `create table users as (
+    )`;
+
+export default function UsersTodosPage() {
+    const dialect = medfetch("https://dummyjson.com", `
+        create table "users" (
+            "id" integer primary key,
+            "firstName" text NOT NULL,
+            "lastName" text NOT NULL
+        );
+        create table "todos" (
+            "id" integer primary key,
+            "todo" text NOT NULL,
+            "completed" integer NOT NULL,
+            "userId" integer NOT NULL REFERENCES "users"."id"
+        );
+    `);
     const db = new Kysely({ dialect });
 
     const usersWithTodos = await db
@@ -285,8 +278,8 @@ export default async function UsersTodosPage() {
 }
 ```
 
-So thank you to the maintainers over at [Kysely](https://kysely.dev/) and [Sqlite](https://sqlite.org/) for answering **yes**
-instead for us, allowing us to build better FHIR data queries.
+Thank you to the maintainers over at [Kysely](https://kysely.dev/) and [Sqlite](https://sqlite.org/) for answering **yes** instead,
+allowing us to build familiar data queries on the web!
 
 ## SQL on FHIR
 Medfetch was specifically built for pulling [FHIR JSON](https://www.hl7.org/fhir/json.html), but it can* work
@@ -351,15 +344,6 @@ const dialect = medfetch("...", {
     }
 });
 ```
-
-::: warning
-*As mentioned above, Medfetch still needs to choose JSON Schema properties specific to the FHIR master JSON schema, since that is the fallback:
-
-::: code-group
-<<< ../src/sql/schema.ts#snippet
-We're looking into how to generalize this better in the future for
-other non-FHIR APIs.
-:::
 
 ## Comparison
 > ["Comparison is the thief of joy."](https://www.better-auth.com/docs/comparison)

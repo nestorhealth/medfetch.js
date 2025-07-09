@@ -2,7 +2,7 @@ import type { Condition, Patient } from "fhir/r4";
 import {
   sql,
   Kysely,
-  CompiledQuery,
+  type CompiledQuery,
   DummyDriver,
   SqliteAdapter,
   SqliteIntrospector,

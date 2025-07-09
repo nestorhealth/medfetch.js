@@ -3,7 +3,8 @@ import DBWorker from "./db.worker?worker";
 import { Kysely } from "kysely";
 import medfetch from "~/sqlite-wasm";
 import { table0, table1 } from "./icd-queries";
-import { virtualMigrations, unzipJSONSchema } from "~/sql";
+import { virtualMigration, unzipJSONSchema } from "~/sql";
+import { API_URL } from "../data/env";
 
 type Column = {
   name: string;
@@ -19,11 +20,8 @@ export const mount = (viewStates: Ref<ViewState[]>) => {
       });
 
       const db = new Kysely<any>({
-        dialect: medfetch(
-          import.meta.env.DEV
-            ? "http://localhost:8787/fhir"
-            : "https://api.medfetch.io/fhir",
-          virtualMigrations(() => unzipJSONSchema(), {
+        dialect: medfetch(API_URL,
+          virtualMigration(() => unzipJSONSchema(), {
             generatedPaths: new Map([
               [
                 "#/definitions/Reference",
@@ -36,8 +34,6 @@ export const mount = (viewStates: Ref<ViewState[]>) => {
           },
         ),
       });
-      const sanity = await db.selectFrom("Condition").selectAll("Condition").execute();
-      console.log("GOT", sanity)
       const t0 = await table0(db);
       const t1 = await table1(db);
       const views: ViewState[] = [t0, t1];

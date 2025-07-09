@@ -2,7 +2,6 @@ import {
     type Dialect,
     type ColumnDataType,
     type Expression,
-    type CreateTableBuilder,
     SqliteAdapter,
     DummyDriver,
     SqliteIntrospector,
@@ -11,7 +10,6 @@ import {
     PostgresIntrospector,
     PostgresQueryCompiler,
     Kysely,
-    sql,
 } from "kysely";
 
 /**

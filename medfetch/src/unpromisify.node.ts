@@ -1,14 +1,13 @@
+import type { ThreadContext } from "./unpromisify.js";
 import {
     type PayloadConfig,
     type Unpromisified,
     syncProxy,
-    ThreadContext,
     syncSetter,
 } from "./unpromisify.js";
+import type { Worker, MessagePort } from "node:worker_threads";
 import {
-    Worker,
     MessageChannel,
-    MessagePort,
     parentPort,
     workerData,
     isMainThread,
@@ -98,7 +97,7 @@ import {
  * ```ts
  * /// main.ts -- Your main thread file
  * const worker = new Worker("./worker-sync.js", {
- *   name: "getTodos" 
+ *   name: "getTodos"
  * });
  * console.log("Main thread isn't participating in the Block here, so it just needs to spawn the worker. No need to call the setter function!");
  * ```
@@ -126,7 +125,7 @@ export default function unpromisify<Args extends any[], Result>(
         currentWorkerThread: isMainThread ? null : workerData?.name,
         parentPort: parentPort,
         createMessageChannel: () => new MessageChannel(),
-    }
+    };
 
     const blockFn = syncProxy(
         {
@@ -134,7 +133,7 @@ export default function unpromisify<Args extends any[], Result>(
             decoder: {
                 byteSize: byteSize,
                 decode: decode,
-            }
+            },
         },
         (data) => {
             if (workerPort) {
@@ -149,18 +148,18 @@ export default function unpromisify<Args extends any[], Result>(
             thread: threadContext,
             encoder: {
                 blockingFn,
-                encode
-            }
+                encode,
+            },
         },
-        port => port.start(),
+        (port) => port.start(),
         (port, data) => port.postMessage({ data }, data.ports),
         (port, handler) => port.on("message", handler),
         (port, handler) => port.on("message", handler),
         (port, handler) => port.off("message", handler),
-        port => {
-            workerPort = port
-        }
-    )
+        (port) => {
+            workerPort = port;
+        },
+    );
 
     return [blockFn, set];
 }

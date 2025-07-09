@@ -1,7 +1,7 @@
-import { make } from "~/exception";
-import { type Walk } from "~/sql/walk";
+import { makeError } from "~/context";
+import { type Walk } from "~/json/walk";
 
-const exception = make("medfetch/sql.table");
+const exception = makeError("medfetch/sql.table");
 
 /**
  * Extracts the table name from a CREATE TABLE SQL statement.
