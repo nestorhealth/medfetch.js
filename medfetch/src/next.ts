@@ -241,7 +241,6 @@ export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
     write: WriteBack<Q, MArgs, MResult>,
     deps?: any[],
 ): WritableDatabaseQuery<Q, E, MArgs, MResult>;
-
 export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
     dialect: Dialect,
     read: (db: Kysely<any>) => Promise<Q>,
