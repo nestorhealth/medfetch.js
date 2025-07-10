@@ -10,31 +10,32 @@ import { unzipJSONSchema } from "@/lib/json-schema";
 
 export default function Page() {
   const dialect = medfetch(`${process.env.NEXT_PUBLIC_API_URL!}/fhir`, unzipJSONSchema);
-  const patientsView = useDatabase(
+  
+  // #region useDatabase-usage
+  const patientsQuery = useDatabase(
     dialect,
     async (db: Kysely<{ Patient: Rowify<Patient> }>) =>
       {
-        const patient =  await db
+        const patients =  await db
           .selectFrom("Patient")
           .selectAll("Patient")
           .execute()
           .then((patients) =>
-            // Remember, databases store JSON objects as plaintext,
-            // so we need to parse it ourselves
+            // Databases store JSON objects as plaintext...
             patients.map((p) => ({ ...p, name: JSON.parse(p.name!) }))
           );
-        console.log(patient);
-        return patient;
+        return patients;
       },
     ["useDatabase1"]
   );
-  if (!patientsView.queryData) {
+  // #endregion useDatabase-usage
+  if (!patientsQuery.queryData) {
     return <p>Loading...</p>;
   }
 
   return (
     <main>
-      {patientsView.queryData.map((patient) => (
+      {patientsQuery.queryData.map((patient) => (
         <div key={patient.id}>
           <p>First name: {patient.name[0].given}</p>
         </div>

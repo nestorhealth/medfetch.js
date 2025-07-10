@@ -1,5 +1,5 @@
 import { dummy } from "./sql/kysely.js";
-import { type DialectJS, type Migrateable, Worker1DB, Worker1PromiserDialect } from "./sql.js";
+import { type Migrateable, Worker1DB, Worker1PromiserDialect } from "./sql.js";
 import { BROWSER } from "esm-env";
 import type {
     Worker1OpenRequest,
@@ -74,6 +74,16 @@ type SqliteWasmOptions = {
      * The worker thread running the web assembly binary
      */
     readonly worker?: Worker;
+
+    /**
+     * Optional mapping hook for response intercepts
+     */
+    readonly match?: (
+        on: <T>(
+            match: string,
+            decode: (response: Response) => T,
+        ) => void,
+    ) => void;
 };
 
 /**
@@ -119,7 +129,7 @@ export default function medfetch(
     baseURL: string | File,
     schema: Migrateable | (() => Promise<Migrateable>),
     { filename = ":memory:", worker }: SqliteWasmOptions = {},
-): DialectJS<Worker1PromiserDialect> {
+): Worker1PromiserDialect {
     if (!BROWSER) {
         console.warn(
             `[medfetch/sqlite-wasm] >> Called in non-browser environment, returning dummy...`,

@@ -84,11 +84,47 @@ const dialect = medfetch(
 );
 ```
 
-`medfetch` assumes 
+`medfetch` makes the **naive** assumption that your API returns an array of the table you declared.
+For example, if you passed in the base URL "http://localhost:8787", then the query:
+
+::: code-group
+```ts
+const foos = db.selectFrom("foo").selectAll().execute()
+```
+```sql
+select * from "foo";
+```
+:::
+
+Results in the underlying fetch call:
+
+```ts
+const response = await fetch(`http://localhost:8787/foo`);
+```
+
+If the API doesn't match up nicely with this assumption, `medfetch`
+provides you an escape hatch via the `match` callback option in the configuration
+argument, which allows you to remap the `Response` returned by the underlying fetch. call.
+
+```ts
+const dialect = medfetch("https://r4.smarthealthit.org", unzipJSONSchema, {
+    match: (on) => [
+        // To remap all responses
+        on("*", (response) => response
+            .json()
+            .then(bundle => bundle.entry)
+        ),
+        on("Patient", (response) => response
+            .json()
+            .then(patientBundle => doSomePatientTransformation(patientBUndle))
+        )
+    ]
+});
+```
 
 ## Persistence
 If you want to persist the database to [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system), pass in a `filename`
-field to the options arg1:
+field to the options:
 
 ```ts
 const dialect = medfetch("https://my.fhir.api.com", "...", {

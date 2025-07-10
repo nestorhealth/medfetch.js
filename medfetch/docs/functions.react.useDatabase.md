@@ -1,9 +1,9 @@
 # `useDatabase`
 The `useDatabase` function allows you to define arbitrary React state derived
-from a [Dialect](https://kysely.dev/docs/dialects) and a provided
-`read` callback function.
+from a database made from a provided [Dialect](https://kysely.dev/docs/dialects)
+and a provided`read` callback function.
 
-<<< ../../website/app/sanity-checks/useDatabase1/page.tsx
+<<< ../../website/app/sanity-checks/useDatabase1/page.tsx#useDatabase-usage
 
 ## Parameters
 ```ts

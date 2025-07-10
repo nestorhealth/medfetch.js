@@ -117,10 +117,6 @@ export function virtualMigration<T extends Migrateable>(
     }
 }
 
-export type DialectJS<D extends Dialect> = D & {
-    js: <T>(match: string, maps: T) => DialectJS<D>;
-};
-
 /**
  * Map object children of {@link T}
  */
