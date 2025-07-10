@@ -11,7 +11,7 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: "Guide", link: "/guide" },
+      { text: "Guide", link: "/guide.what-is-medfetch-js" },
       { text: "Examples", link: "/examples.filter-icd" },
     ],
     logo: {
@@ -23,12 +23,21 @@ export default defineConfig({
     },
     sidebar: [
       {
-        text: "Getting Started",
+        text: "Guide",
         items: [
           {
             text: "What is Medfetch.js?",
-            link: "/getting-started.what-is-medfetch-js",
+            link: "/guide.what-is-medfetch-js",
           },
+          {
+            text: "Design",
+            link: "/guide.design",
+          },
+        ]
+      },
+      {
+        text: "Getting Started",
+        items: [
           { text: "SQLite", link: "/getting-started.sqlite" },
         ],
       },
@@ -75,7 +84,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/nestorhealth/medfetch.js" }
+      { icon: "github", link: "https://github.com/nestorhealth/medfetch.js" },
     ],
   },
   vite: {
