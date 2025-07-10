@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 const TEST_CASES = [
-  { slug: "jsonTodos1", label: "JSON Todos example 1" },
   { slug: "useDatabase1", label: "useDatabase readonly Query" },
   { slug: "useDatabase2", label: "useDatabase with Mutation"}
 ];

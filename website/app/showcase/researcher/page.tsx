@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Dialect } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
-import { unzipJSONSchema, virtualMigrations } from "medfetch/sql";
+import { unzipJSONSchema, virtualMigration } from "medfetch/sql";
 
 function WorkspaceHeader({
   currentTableName,

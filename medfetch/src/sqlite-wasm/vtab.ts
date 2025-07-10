@@ -156,7 +156,7 @@ export function x_open(
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
         try {
-            const rawGen = fetchPage(resourceType).rows;
+            const rawGen = fetchPage(resourceType).entries;
             const buffer: any[] = [];
             let index = 0;
             cursor.page = {
@@ -202,7 +202,7 @@ export function x_next(sqlite3: Sqlite3Static) {
         const cursor = sqlite3.vtab.xCursor.get(
             pCursor,
         ) as medfetch_vtab_cursor;
-        const next = cursor.page.rows.next();
+        const next = cursor.page.entries.next();
         cursor.peeked = next;
         return sqlite3.capi.SQLITE_OK;
     };
@@ -295,7 +295,7 @@ export function x_eof(sqlite3: Sqlite3Static) {
                 return 1;
             }
             cursor.page = nextPage;
-            cursor.peeked = cursor.page.rows.next();
+            cursor.peeked = cursor.page.entries.next();
         }
         return sqlite3.capi.SQLITE_OK;
     };
@@ -316,10 +316,10 @@ export function x_filter(sqlite3: Sqlite3Static) {
         if (!cursor) return capi.SQLITE_ERROR;
 
         // Start the generator
-        cursor.peeked = cursor.page.rows.next();
+        cursor.peeked = cursor.page.entries.next();
         if (cursor.peeked.done) {
-            (cursor.page.rows as any).reset();
-            cursor.peeked = cursor.page.rows.next();
+            (cursor.page.entries as any).reset();
+            cursor.peeked = cursor.page.entries.next();
         }
 
         return capi.SQLITE_OK;

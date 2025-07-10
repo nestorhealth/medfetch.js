@@ -156,7 +156,7 @@ export default class Page<T = any> {
      * that flushes out resources one by one.
      * @returns {@link Resource} generator
      */
-    get rows(): Generator<T> {
+    get entries(): Generator<T> {
         if (!this.#rows) {
             this.#rows = this.#entries();
         }
