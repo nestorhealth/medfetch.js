@@ -4,7 +4,6 @@ import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
 import { ExportModal } from "@/components/ExportModal";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -293,7 +292,8 @@ function StatusNotification({
 }
 
 export default function WorkspacePage() {
-  const {workspaceName} = useParams<{workspaceName: string;}>();
+  const searchParams = useSearchParams();
+  const workspaceName = searchParams.get("workspaceName") ?? ":memory:";
   const currentTableName = "patients";
 
   const raw = globalThis.localStorage?.getItem("workspaceData");
@@ -315,7 +315,6 @@ export default function WorkspacePage() {
   const {
     ctas,
     rows,
-    columnDefs,
     isLoading,
     error,
     setError,

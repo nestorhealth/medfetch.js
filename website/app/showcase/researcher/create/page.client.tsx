@@ -140,7 +140,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
       }),
     );
     setTimeout(() => {
-      router.push(`/showcase/researcher/${workspaceName}`);
+      router.push(`/showcase/researcher/workspaces?workspaceName=${workspaceName}`);
     }, 300);
   };
 
@@ -486,7 +486,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
                       className="absolute inset-0 flex items-center justify-center transition-all duration-200 opacity-0 pointer-events-none bg-slate-900/80 group-hover:opacity-100 group-hover:backdrop-blur-sm group-hover:pointer-events-auto rounded-xl"
                     >
                       <button
-                        onClick={() => router.push(`/showcase/researcher/${ws.name}`)}
+                        onClick={() => router.push(`/showcase/researcher/workspaces?workspaceName=${ws.name}`)}
                         className="px-4 py-2 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                       >
                         Open Workspace

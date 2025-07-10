@@ -139,8 +139,8 @@ export function useWorkspaceData(
     error,
     setError,
     executeQuery: {
-      mutate: workspaceView.mutate,
-      mutateAsync: workspaceView.mutateAsync,
+      mutate: workspaceView.mutate!,
+      mutateAsync: workspaceView.mutateAsync!,
     },
     editCell,
     stats,
