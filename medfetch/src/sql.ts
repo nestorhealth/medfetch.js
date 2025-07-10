@@ -1,4 +1,4 @@
-import type { Dialect, QueryResult } from "kysely";
+import type { QueryResult } from "kysely";
 import {
     buildQueryFn,
     GenericSqliteDialect,
