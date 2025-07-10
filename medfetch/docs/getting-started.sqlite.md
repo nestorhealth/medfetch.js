@@ -85,7 +85,7 @@ const dialect = medfetch(
 ```
 
 `medfetch` makes the **naive** assumption that your API returns an array of the table you declared.
-For example, if you passed in the base URL "http://localhost:8787", then the query:
+For example, if you passed in the base URL of `(http|https)://localhost:8787`, then the query:
 
 ::: code-group
 ```ts
@@ -151,4 +151,4 @@ const dialect = medfetch("...", {
 })
 ```
 
-See the [About](./guide.what-is-medfetch-js.md#jsons-and-schemas) section for more info on JSON schema usage.
+See the [About](./guide.what-is-medfetch-js.md#motivation) section for more info on JSON schema usage.

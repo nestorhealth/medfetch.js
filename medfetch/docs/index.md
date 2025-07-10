@@ -15,7 +15,7 @@ hero:
       link: /guide.what-is-medfetch-js
     - theme: alt
       text: View API Examples
-      link: /api-examples
+      link: /examples.filter-icd.md
 features:
   - icon: 🔥
     title: Super Fast
