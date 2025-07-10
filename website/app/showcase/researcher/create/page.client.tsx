@@ -140,7 +140,7 @@ export function CreateWorkspaceForm({ demoBundle }: CreateWorkspaceFormProps) {
       }),
     );
     setTimeout(() => {
-      router.push("/showcase/researcher");
+      router.push(`/showcase/researcher/${workspaceName}`);
     }, 300);
   };
 

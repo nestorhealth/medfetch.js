@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialect, Kysely, sql } from "kysely";
 import { useDatabase } from "medfetch/next";
+import { ColumnDef } from "@tanstack/react-table";
 
 export function useWorkspaceData(
   dialect: Dialect,
@@ -11,34 +12,46 @@ export function useWorkspaceData(
   },
 ) {
   const db = new Kysely({ dialect });
-  const [currentTableName, setCurrentTableName] = useState<string>(
-    viewOpts.tableName,
-  );
   const [error, setError] = useState<string | null>(null);
 
   const workspaceView = useDatabase(
     dialect,
     async (db: Kysely<any>) => {
-      console.log("notok");
       await db.schema
         .createTable(viewOpts.tableName)
         .ifNotExists()
         .as(db.selectFrom(viewOpts.virtualTableName).selectAll())
         .execute();
-      console.log("ok");
-      const { sql } = await db
+      const masterRow = await db
         .selectFrom("sqlite_master")
-        .select("sql")
+        .selectAll()
         .where("name", "=", viewOpts.tableName)
         .executeTakeFirstOrThrow();
+      const tables = await db.introspection.getTables();
+      const columns = tables.find(
+        (table) => table.name === viewOpts.tableName,
+      )!.columns;
+      const columnDefs = columns.map((column): ColumnDef<any> => {
+        return {
+          accessorKey: column.name,
+          header: () => <div className="text-right">{column.name.toUpperCase()}</div>,
+          cell: ({ row }) => {
+            return (
+              <div className="font-medium text-right">
+                {row.getValue(column.name)}
+              </div>
+            );
+          },
+        };
+      });
       const resultRows = await db
         .selectFrom(viewOpts.tableName)
         .selectAll()
         .execute();
-      console.log("resultRows", resultRows);
       return {
         resultRows,
-        ctas: sql as string,
+        ctas: masterRow.sql,
+        columnDefs,
       };
     },
     (db: Kysely<any>, { set }) =>
@@ -64,14 +77,23 @@ export function useWorkspaceData(
           .select("sql")
           .where("name", "=", viewOpts.tableName)
           .executeTakeFirstOrThrow();
+        const tables = await db.introspection.getTables();
+        const columns = tables.find(
+          (table) => table.name === viewOpts.tableName,
+        )!.columns;
+        const columnDefs = columns.map((column): ColumnDef<any> => {
+          return {
+            accessorKey: column.name,
+          };
+        });
         set((prev) => {
           if (!isSelect) {
             return prev;
           }
-          console.log("SETTING TO", results);
           return {
             resultRows: results,
             ctas,
+            columnDefs,
           };
         });
       },
@@ -91,7 +113,7 @@ export function useWorkspaceData(
       if (!db) throw new Error("Database not initialized");
       const safeValue =
         typeof newValue === "string" ? `'${newValue}'` : newValue;
-      const updateSQL = `UPDATE "${currentTableName}" SET "${col}" = ${safeValue} WHERE "patient_id" = '${rowId}';`;
+      const updateSQL = `UPDATE "${viewOpts.tableName}" SET "${col}" = ${safeValue} WHERE "patient_id" = '${rowId}';`;
       await db.transaction().execute(async (tx) => {
         sql.raw(updateSQL).execute(tx);
       });
@@ -106,16 +128,13 @@ export function useWorkspaceData(
   const stats = {
     total: workspaceView.queryData?.resultRows?.length ?? 0,
     active:
-      currentTableName === "Patient"
-        ? workspaceView.queryData?.resultRows?.filter(
+        workspaceView.queryData?.resultRows?.filter(
             (r: any) => r.status === "Active",
           ).length
-        : 0,
+        ?? 0,
   };
 
   return {
-    currentTableName,
-    setCurrentTableName,
     isLoading: workspaceView.isQueryLoading || workspaceView.isMutationPending,
     error,
     setError,
@@ -125,6 +144,7 @@ export function useWorkspaceData(
     },
     editCell,
     stats,
+    columnDefs: workspaceView.queryData?.columnDefs ?? [],
     rows: workspaceView.queryData?.resultRows ?? [],
     ctas: workspaceView.queryData?.ctas ?? "",
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, RefObject } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { api } from '@/lib/api';
@@ -25,10 +25,15 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    });
   }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,8 +60,8 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
       if (response2.error) {
         throw new Error(response2.error.error);
       }
+
       const data = response2.data;
-      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -102,10 +107,10 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 px-6 py-4">
+      <div className="px-6 py-4 border-b bg-slate-800/50 backdrop-blur-sm border-slate-700">
         <div className="flex items-center space-x-3">
-          <div className="bg-blue-500/20 rounded-lg p-2">
-            <MessageSquare className="h-5 w-5 text-blue-400" />
+          <div className="p-2 rounded-lg bg-blue-500/20">
+            <MessageSquare className="w-5 h-5 text-blue-400" />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Data Assistant</h2>
@@ -114,18 +119,20 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 p-6 space-y-6 overflow-y-auto"
+      >
         {messages.length === 0 && (
-          <div className="text-center py-12">
-            <div className="bg-slate-800/50 rounded-xl p-8 max-w-md mx-auto">
-              <Database className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Start a Conversation</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
+          <div className="py-12 text-center">
+            <div className="max-w-md p-8 mx-auto bg-slate-800/50 rounded-xl">
+              <Database className="w-12 h-12 mx-auto mb-4 text-blue-400" />
+              <h3 className="mb-2 text-lg font-semibold text-white">Start a Conversation</h3>
+              <p className="text-sm leading-relaxed text-slate-400">
                 Ask me anything about your data. I'll help you generate SQL queries and analyze your results.
               </p>
-              <div className="mt-6 space-y-2 text-xs text-slate-500">
-                <p>• "Show me pediatric patients over 18 years old admitted in the US after 2015 with
-                tibial shaft fractures"</p>
+              <div className="mt-6 space-y-2 text-xs text-left text-slate-500">
+                <p>• "Show me pediatric patients over 18 years old admitted in the US after 2015 with tibial shaft fractures"</p>
                 <p>• "Add age group breakdowns: 0-5, 6-12, 13-18. Include race, gender, and ethnicity"</p>
                 <p>• "Find patients older than 65"</p>
               </div>
@@ -155,8 +162,8 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
                     <div className="flex items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-white font-medium mb-1">Analysis Complete</p>
-                        <p className="text-slate-300 text-sm leading-relaxed">{message.summary}</p>
+                        <p className="mb-1 font-medium text-white">Analysis Complete</p>
+                        <p className="text-sm leading-relaxed text-slate-300">{message.summary}</p>
                       </div>
                     </div>
                   )}
@@ -165,7 +172,7 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <Database className="h-4 w-4 text-blue-400" />
+                          <Database className="w-4 h-4 text-blue-400" />
                           <span className="text-sm font-medium text-slate-300">Generated SQL</span>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -173,17 +180,17 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
                             onClick={() => copyToClipboard(message.sql!)}
                             className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
                           >
-                            <Copy className="h-4 w-4 text-slate-400" />
+                            <Copy className="w-4 h-4 text-slate-400" />
                           </button>
                           <button
                             onClick={() => executeSQL(message.sql!)}
                             className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
                           >
-                            <Play className="h-4 w-4 text-white" />
+                            <Play className="w-4 h-4 text-white" />
                           </button>
                         </div>
                       </div>
-                      <div className="rounded-xl overflow-hidden border border-slate-600">
+                      <div className="overflow-hidden border rounded-xl border-slate-600">
                         <SyntaxHighlighter
                           language="sql"
                           style={tomorrow}
@@ -201,11 +208,11 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
                   )}
 
                   {message.error && (
-                    <div className="flex items-start space-x-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <div className="flex items-start p-3 space-x-3 border rounded-lg bg-red-500/10 border-red-500/20">
                       <AlertCircle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-red-400 font-medium mb-1">Error Occurred</p>
-                        <p className="text-red-300 text-sm">{message.error}</p>
+                        <p className="mb-1 font-medium text-red-400">Error Occurred</p>
+                        <p className="text-sm text-red-300">{message.error}</p>
                       </div>
                     </div>
                   )}
@@ -218,22 +225,22 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
             </div>
           </div>
         ))}
-        
+
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-2xl p-4">
+            <div className="p-4 border bg-slate-800/70 backdrop-blur-sm border-slate-700 rounded-2xl">
               <div className="flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-400 border-t-transparent"></div>
+                <div className="w-5 h-5 border-2 border-blue-400 rounded-full animate-spin border-t-transparent"></div>
                 <span className="text-slate-300">Analyzing your question...</span>
               </div>
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-slate-800/50 backdrop-blur-sm border-t border-slate-700 p-6">
+      <div className="p-6 border-t bg-slate-800/50 backdrop-blur-sm border-slate-700">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <input
@@ -241,7 +248,7 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question about your data..."
-              className="w-full rounded-xl border border-slate-600 bg-slate-900/50 text-white px-4 py-3 pr-12 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400 transition-all"
+              className="w-full px-4 py-3 pr-12 text-white transition-all border rounded-xl border-slate-600 bg-slate-900/50 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
               disabled={isLoading}
             />
             <button
@@ -253,10 +260,9 @@ export default function ChatUI({ onQuery, initialTableStatement }: ChatUIProps) 
                   : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25'
               }`}
             >
-              <Send className="h-4 w-4" />
+              <Send className="w-4 h-4" />
             </button>
           </div>
-          
           <div className="flex items-center justify-between text-xs text-slate-500">
             <p>Press Enter to send your message</p>
             <p>{input.length} characters</p>

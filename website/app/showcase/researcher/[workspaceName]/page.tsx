@@ -24,10 +24,10 @@ import { Dialect } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 import { unzipJSONSchema } from "@/lib/json-schema";
 import { env } from "@/lib/env";
+import { DataTable } from "@/components/ui/data-table";
 
 function WorkspaceHeader({
   currentTableName,
-  setCurrentTableName,
   stats,
   onRefresh,
   onDownload,
@@ -37,7 +37,6 @@ function WorkspaceHeader({
   hasUnsavedChanges,
 }: {
   currentTableName: string;
-  setCurrentTableName: (name: string) => void;
   stats: { total: number; active: number };
   onRefresh: () => void;
   onDownload: () => void;
@@ -96,7 +95,6 @@ function WorkspaceHeader({
             </div>
             <div className="flex p-1 rounded-lg bg-slate-800">
               <button
-                onClick={() => setCurrentTableName("Patient")}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center space-x-2 ${
                   currentTableName === "Patient"
                     ? "bg-blue-600 text-white"
@@ -107,7 +105,6 @@ function WorkspaceHeader({
                 <span>Patients</span>
               </button>
               <button
-                onClick={() => setCurrentTableName("Procedure")}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center space-x-2 ${
                   currentTableName === "Procedure"
                     ? "bg-blue-600 text-white"
@@ -199,7 +196,7 @@ function DataTableSection({
   onSelectionChange,
   dialect,
 }: {
-  dialect: Dialect,
+  dialect: Dialect;
   currentTableName: string;
   rawData: any[];
   error: string | null;
@@ -296,32 +293,29 @@ function StatusNotification({
 }
 
 export default function WorkspacePage() {
-  const params = useParams();
-  const workspaceName = params.workspaceName as string;
-  const viewName = "patients";
-  const initialResource = "Patient";
+  const { workspaceName } = useParams<{ workspaceName: string }>();
+  const currentTableName = "patients";
 
   const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
 
   const dialect = useMemo(() => {
-    // const blob = new Blob([JSON.stringify(parsed.jsonData)], {
-    //   type: "application/json",
-    // });
-    // const file = new File([blob], "idontmatter.json", {
-    //   type: "application/json",
-    //   lastModified: Date.now(),
-    // })
-    return medfetch(env.NEXT_PUBLIC_FHIR_API_URL, unzipJSONSchema,{
+    const blob = new Blob([JSON.stringify(parsed.jsonData)], {
+      type: "application/json",
+    });
+    const file = new File([blob], "idontmatter.json", {
+      type: "application/json",
+      lastModified: Date.now(),
+    });
+    return medfetch(file, unzipJSONSchema, {
       filename: workspaceName,
     });
   }, [parsed.jsonData, workspaceName]);
 
   const {
-    currentTableName,
-    setCurrentTableName,
     ctas,
     rows,
+    columnDefs,
     isLoading,
     error,
     setError,
@@ -329,8 +323,8 @@ export default function WorkspacePage() {
     editCell,
     stats,
   } = useWorkspaceData(dialect, {
-    tableName: viewName,
-    virtualTableName: initialResource,
+    tableName: currentTableName,
+    virtualTableName: "Patient",
   });
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);
@@ -348,7 +342,6 @@ export default function WorkspacePage() {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
-  const dbTable = currentTableName === "Patient" ? "patients" : "procedures";
 
   const handleDownload = (format: "csv" | "json") => {
     try {
@@ -374,12 +367,12 @@ export default function WorkspacePage() {
           ),
         ].join("\n");
         blob = new Blob([csv], { type: "text/csv" });
-        fileName = `${dbTable}_${Date.now()}.csv`;
+        fileName = `${currentTableName}_${Date.now()}.csv`;
       } else {
         blob = new Blob([JSON.stringify(data, null, 2)], {
           type: "application/json",
         });
-        fileName = `${dbTable}_${Date.now()}.json`;
+        fileName = `${currentTableName}_${Date.now()}.json`;
       }
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -429,11 +422,11 @@ export default function WorkspacePage() {
               typeof v === "string" ? `'${v.replace(/'/g, "''")}'` : v,
             )
             .join(", ");
-          return `INSERT INTO "${dbTable}" (${cols}) VALUES (${vals})`;
+          return `INSERT INTO "${currentTableName}" (${cols}) VALUES (${vals})`;
         })
         .join("; ");
       await executeQuery.mutateAsync(insertSqls);
-      await executeQuery.mutateAsync(`SELECT * FROM "${dbTable}"`);
+      await executeQuery.mutateAsync(`SELECT * FROM "${currentTableName}"`);
       setHasUnsavedChanges(true);
       showNotification(`Uploaded ${rows.length} rows`, "success");
     } catch (e: any) {
@@ -458,13 +451,15 @@ export default function WorkspacePage() {
     }
     if (!confirm(`Delete ${selectedRows.length} selected rows?`)) return;
     try {
-      const idField =
-        currentTableName === "Patient" ? "patient_id" : "procedure_id";
+      const idField = "id";
       const deleteSql = selectedRows
-        .map((r) => `DELETE FROM "${dbTable}" WHERE ${idField}='${r[idField]}'`)
+        .map(
+          (r) =>
+            `DELETE FROM "${currentTableName}" WHERE ${idField}='${r[idField]}'`,
+        )
         .join("; ");
       await executeQuery.mutateAsync(deleteSql);
-      await executeQuery.mutateAsync(`SELECT * FROM "${dbTable}"`);
+      await executeQuery.mutateAsync(`SELECT * FROM "${currentTableName}"`);
       setSelectedRows([]);
       setHasUnsavedChanges(true);
       showNotification("Rows deleted", "success");
@@ -500,7 +495,7 @@ export default function WorkspacePage() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
       {notification && (
         <StatusNotification
           {...notification}
@@ -514,14 +509,15 @@ export default function WorkspacePage() {
         onExport={handleDownload}
         selectedCount={selectedRows.length}
         totalCount={rows.length}
-        tableName={currentTableName}
+        tableName={"patients"}
       />
 
       <WorkspaceHeader
-        currentTableName={currentTableName}
-        setCurrentTableName={setCurrentTableName}
+        currentTableName={"patients"}
         stats={stats}
-        onRefresh={() => executeQuery.mutate(`SELECT * FROM "${dbTable}"`)}
+        onRefresh={() =>
+          executeQuery.mutate(`SELECT * FROM "${currentTableName}"`)
+        }
         onDownload={() => setShowExportModal(true)}
         onUpload={handleUpload}
         onSave={handleSave}
@@ -554,6 +550,6 @@ export default function WorkspacePage() {
           />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

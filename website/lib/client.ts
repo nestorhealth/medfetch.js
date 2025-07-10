@@ -1,6 +1,6 @@
+import { unzipJSONSchema } from "@/lib/json-schema";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
-import { unzipJSONSchema } from "medfetch/sql";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
 const API_URL = apiURL.endsWith("/")
@@ -31,7 +31,7 @@ export async function openDB(baseURL: string | File, filename?: string) {
   return db;
 }
 
-const dialect = medfetch(`${API_URL}/fhir`);
+const dialect = medfetch(`${API_URL}/fhir`, unzipJSONSchema);
 
 export const memoryDB = new Kysely<any>({
   dialect,

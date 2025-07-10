@@ -11,7 +11,8 @@ export default tseslint.config(
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-unused-expressions": "warn"
+      "@typescript-eslint/no-unused-expressions": "warn",
+      "@typescript-eslint/no-empty-object-type": "warn"
     }
   }
 );

@@ -133,7 +133,9 @@ const AGGridTable: React.FC<AGGridTableProps> = ({
   ]);
 
   useEffect(() => {
-    if (gridApi) gridApi.setGridOption("rowData", rowData);
+    if (gridApi) {
+      gridApi.setGridOption("rowData", rowData);
+    }
   }, [rowData, gridApi]);
 
   const onGridReady = useCallback((params: GridReadyEvent) => {
