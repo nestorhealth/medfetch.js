@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /guide.index
+      link: /guide.what-is-medfetch-js
     - theme: alt
       text: View API Examples
       link: /api-examples

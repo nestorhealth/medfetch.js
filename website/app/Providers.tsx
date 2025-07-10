@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,6 +12,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {children as any}
       <Toaster />
+      <ReactQueryDevtools />
     </QueryClientProvider>
   );
 }

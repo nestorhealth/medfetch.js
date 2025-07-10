@@ -50,6 +50,7 @@ const SYSTEM_PROMPT = (
    • \`query\`: A natural-language description of what to do (SELECT, UPDATE, INSERT, DELETE),  
    • or \`migrate\`: A natural-language request to change the table schema (e.g. add/remove/change column),  
    • or a fuzzy request that you must interpret as either a query or migration.
+   • or a message that looks like an SQL query
 
    Optional fields:
    • \`filter\`: A JSON object mapping column names to filter values (e.g. {"gender":"female"}).  
@@ -82,7 +83,7 @@ const SYSTEM_PROMPT = (
 
    (2) Fuzzy Migration:  
    {
-     "query": "drop the meta column for me"
+     "query": "drop the meta column"
    }  
    Summary: I will alter the patients table to drop the column meta.  
    \`\`\`sql
@@ -90,7 +91,13 @@ const SYSTEM_PROMPT = (
      DROP COLUMN meta;
    \`\`\`
 
-3. **Error Handling**  
+   (3) Message that looks like query
+   {
+      "query": "ALTER TABLE \"patients\" DROP COLUMN "meta";"
+   }
+
+3. **Error Handling** 
+   - If the request looks like a plain SQL query, then just spit that back out
    - If the request is ambiguous and cannot be confidently interpreted, respond with:  
      \`ERROR: Ambiguous request, please specify if it's a query or a migration operation.\`  
    - If it references a column not found in the schema, respond with:  

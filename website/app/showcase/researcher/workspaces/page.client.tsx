@@ -299,19 +299,16 @@ export default function WorkspacePage() {
   const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
 
-  const dialect = useMemo(() => {
-    const blob = new Blob([JSON.stringify(parsed.jsonData)], {
-      type: "application/json",
-    });
-    const file = new File([blob], "idontmatter.json", {
-      type: "application/json",
-      lastModified: Date.now(),
-    });
-    return medfetch(file, unzipJSONSchema, {
-      filename: workspaceName,
-    });
-  }, [parsed.jsonData, workspaceName]);
-
+  const blob = new Blob([JSON.stringify(parsed.jsonData)], {
+    type: "application/json",
+  });
+  const file = new File([blob], "idontmatter.json", {
+    type: "application/json",
+    lastModified: Date.now(),
+  });
+  const dialect = medfetch(file, unzipJSONSchema, {
+    filename: workspaceName,
+  });
   const {
     ctas,
     rows,
@@ -324,6 +321,7 @@ export default function WorkspacePage() {
   } = useWorkspaceData(dialect, {
     tableName: currentTableName,
     virtualTableName: "Patient",
+    workspaceName: workspaceName
   });
 
   const [selectedRows, setSelectedRows] = useState<any[]>([]);

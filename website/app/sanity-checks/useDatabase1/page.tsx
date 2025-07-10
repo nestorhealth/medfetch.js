@@ -26,6 +26,7 @@ export default function Page() {
         console.log(patient);
         return patient;
       },
+    ["useDatabase1"]
   );
   if (!patientsView.queryData) {
     return <p>Loading...</p>;

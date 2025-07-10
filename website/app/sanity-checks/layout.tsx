@@ -6,7 +6,8 @@ import { ReactNode } from "react";
 
 const TEST_CASES = [
   { slug: "useDatabase1", label: "useDatabase readonly Query" },
-  { slug: "useDatabase2", label: "useDatabase with Mutation"}
+  { slug: "useDatabase2", label: "useDatabase with Mutation"},
+  { slug: "fileUpload", label: "File Upload"},
 ];
 
 export default function SanityLayout(props: { children: ReactNode }) {

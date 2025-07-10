@@ -16,7 +16,7 @@ import medfetch from "medfetch/sqlite-wasm";
 
 const dialect = medfetch(
     "https://my-rest-api.com",
-    `CREATE TABLE "Patient" AS `
+    `CREATE TABLE "Patient" AS (id TEXT, name TEXT);`
 );
 ```
 
@@ -24,7 +24,7 @@ const dialect = medfetch(
 ```ts
 import { sql, Kysely } from "kysely";
 
-const dialect = medfetch("https://my.fhir.api.com");
+const dialect = medfetch("https://my.fhir.api.com", );
 const db = new Kysely<any>({ dialect: dialect });
 
 // This is just a kysely orm instance
@@ -41,12 +41,57 @@ const patientsFromRawQuery = await sql
 
 See the Kysely [docs](https://kysely.dev/) for details on usage.
 
+## Schema and Maps
+Your table names in your initial migrations text (2nd arg) will be the exact routes that are pinged.
+For example:
+
+```ts
+const dialect = medfetch("https://restapi.com", `
+    create table foo (id text);
+    create table bar (id text);
+`);
+const db = new Kysely({ dialect });
+
+// GET 'https://restapi.com/foo'
+const foos = db.selectFrom("foo").selectAll().execute()
+// GET 'https://restapi.com/bar'
+const bars = db.selectFrom("bar").selectAll().execute()
+```
+
+If you want to get your migrations dynamically, pass in an async function instead 
+(even if the dynamic generation is synchronous, you need to return a Promise):
+
+```ts
+const dialect = medfetch(
+    "...",
+    async () => fetch("https://myapi.com/migrations-01.sql").then(res => res.text())
+);
+```
+
+`medfetch` can also generate the virtual table migrations from a [json schema](https://json-schema.org/).
+
+```ts
+import type { JSONSchema7 } from "json-schema";
+
+const someJSONSchema: JSONSchema7 = {...}
+const dialectJSONSchemaSync = medfetch(
+    "...",
+    someJSONSchema
+);
+const dialect = medfetch(
+    "...",
+    async () => fetch("https://myapi.com/my-json-schema").then(res => res.json() as JSONSchema7)
+);
+```
+
+`medfetch` assumes 
+
 ## Persistence
 If you want to persist the database to [OPFS](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system), pass in a `filename`
 field to the options arg1:
 
 ```ts
-const dialect = medfetch("https://my.fhir.api.com", {
+const dialect = medfetch("https://my.fhir.api.com", "...", {
     filename: "my-fhir.db"
 })
 ```

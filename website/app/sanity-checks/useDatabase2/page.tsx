@@ -6,7 +6,6 @@ import type { Patient } from "fhir/r5";
 import medfetch from "medfetch/sqlite-wasm";
 import { useDatabase } from "medfetch/next";
 import type { Rowify } from "medfetch/sql";
-import { useMemo } from "react";
 import EditName from "@/app/sanity-checks/useDatabase2/page.EditName";
 import { env } from "@/lib/env";
 import { unzipJSONSchema } from "@/lib/json-schema";
@@ -20,10 +19,7 @@ export type DB = {
 };
 
 export default function Page() {
-  const dialect = useMemo(
-    () => medfetch(env.NEXT_PUBLIC_FHIR_API_URL, unzipJSONSchema),
-    []
-  );
+  const dialect = medfetch(env.NEXT_PUBLIC_FHIR_API_URL, unzipJSONSchema);
   const patientsView = useDatabase(
     dialect,
     // Read function
@@ -54,6 +50,7 @@ export default function Page() {
           .execute();
         await cache.invalidate();
       },
+    ["useDatabase2"]
     // #endregion writeBack
   );
   if (!patientsView.queryData) {

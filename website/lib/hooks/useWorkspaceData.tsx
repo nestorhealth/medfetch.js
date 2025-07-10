@@ -2,13 +2,13 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialect, Kysely, sql } from "kysely";
 import { useDatabase } from "medfetch/next";
-import { ColumnDef } from "@tanstack/react-table";
 
 export function useWorkspaceData(
   dialect: Dialect,
   viewOpts: {
     tableName: string;
     virtualTableName: string;
+    workspaceName?: string;
   },
 ) {
   const db = new Kysely({ dialect });
@@ -27,23 +27,7 @@ export function useWorkspaceData(
         .selectAll()
         .where("name", "=", viewOpts.tableName)
         .executeTakeFirstOrThrow();
-      const tables = await db.introspection.getTables();
-      const columns = tables.find(
-        (table) => table.name === viewOpts.tableName,
-      )!.columns;
-      const columnDefs = columns.map((column): ColumnDef<any> => {
-        return {
-          accessorKey: column.name,
-          header: () => <div className="text-right">{column.name.toUpperCase()}</div>,
-          cell: ({ row }) => {
-            return (
-              <div className="font-medium text-right">
-                {row.getValue(column.name)}
-              </div>
-            );
-          },
-        };
-      });
+
       const resultRows = await db
         .selectFrom(viewOpts.tableName)
         .selectAll()
@@ -51,7 +35,6 @@ export function useWorkspaceData(
       return {
         resultRows,
         ctas: masterRow.sql,
-        columnDefs,
       };
     },
     (db: Kysely<any>, { set }) =>
@@ -77,15 +60,6 @@ export function useWorkspaceData(
           .select("sql")
           .where("name", "=", viewOpts.tableName)
           .executeTakeFirstOrThrow();
-        const tables = await db.introspection.getTables();
-        const columns = tables.find(
-          (table) => table.name === viewOpts.tableName,
-        )!.columns;
-        const columnDefs = columns.map((column): ColumnDef<any> => {
-          return {
-            accessorKey: column.name,
-          };
-        });
         set((prev) => {
           if (!isSelect) {
             return prev;
@@ -93,10 +67,10 @@ export function useWorkspaceData(
           return {
             resultRows: results,
             ctas,
-            columnDefs,
           };
         });
       },
+      [viewOpts.workspaceName]
   );
 
   const queryClient = useQueryClient();
@@ -144,7 +118,6 @@ export function useWorkspaceData(
     },
     editCell,
     stats,
-    columnDefs: workspaceView.queryData?.columnDefs ?? [],
     rows: workspaceView.queryData?.resultRows ?? [],
     ctas: workspaceView.queryData?.ctas ?? "",
   };

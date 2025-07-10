@@ -7,6 +7,7 @@ import {
     type QueryClient,
     type UseMutateAsyncFunction,
 } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 // #region WriteBack
 /**
@@ -33,6 +34,7 @@ function createQueryCacheProxy<Q>(
 ): QueryCacheProxy<Q> {
     return {
         invalidate: async () => {
+            console.log("INVALIDATING", key)
             await queryClient.invalidateQueries({
                 queryKey: key,
             });
@@ -92,7 +94,7 @@ interface QueryCacheProxy<QueryResult> {
 /**
  * The Query object returned by calling {@link useQuery} with
  * a function that returns `QueryResult`
- * 
+ *
  * @template QueryResult The payload of the read function
  * @template Err The error type
  */
@@ -101,17 +103,17 @@ type ReadonlyDatabaseQuery<QueryResult, Err> = {
      * useQuery() data field
      */
     queryData: QueryResult | undefined;
-    
+
     /**
      * useQuery() error field
      */
     queryError: Err | null;
-    
+
     /**
      * useQuery() isPending
      */
     isQueryPending: boolean;
-    
+
     /**
      * useQuery() isLoading
      */
@@ -123,7 +125,7 @@ type ReadonlyDatabaseQuery<QueryResult, Err> = {
 /**
  * The Query object returned by calling {@link useQuery} with
  * a function that returns `QueryResult`
- * 
+ *
  * @template QueryResult The payload of the read function
  * @template Err The error type
  */
@@ -143,7 +145,7 @@ interface WritableDatabaseQuery<QueryData, Err, MArgs, MResult>
      * useMutate() mutateAsync
      */
     mutateAsync: UseMutateAsyncFunction<MResult, Err, MArgs>;
-    
+
     /**
      * useMutate() isPending
      */
@@ -231,21 +233,27 @@ interface WritableDatabaseQuery<QueryData, Err, MArgs, MResult>
 export function useDatabase<Q, E = Error>(
     dialect: Dialect,
     read: (db: Kysely<any>) => Promise<Q>,
+    deps?: any[],
 ): ReadonlyDatabaseQuery<Q, E>;
 export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
     dialect: Dialect,
     read: (db: Kysely<any>) => Promise<Q>,
     write: WriteBack<Q, MArgs, MResult>,
+    deps?: any[],
 ): WritableDatabaseQuery<Q, E, MArgs, MResult>;
 
 export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
     dialect: Dialect,
     read: (db: Kysely<any>) => Promise<Q>,
-    write?: WriteBack<Q, MArgs, MResult>,
+    write: WriteBack<Q, MArgs, MResult> | any[] = [],
+    orDeps: any[] = [],
 ): ReadonlyDatabaseQuery<Q, E> | WritableDatabaseQuery<Q, E, MArgs, MResult> {
-    const db = accessDB(dialect);
+    const memod = useMemo(() => dialect, []);
+    const db = accessDB(memod);
     const queryClient = useQueryClient();
-    const queryKey: QueryKey = ["db"];
+    
+    const deps = Array.isArray(write) ? write : orDeps;
+    const queryKey = ["db", db, ...deps];
 
     const { data, isLoading, isPending, error } = useQuery<Q, E, Q>({
         queryKey,
@@ -254,18 +262,20 @@ export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
     });
+
     const cache = createQueryCacheProxy(queryClient, queryKey, data);
 
+    const isWriteFn = typeof write === "function";
     const mutation = useMutation<MResult, E, MArgs>({
-        mutationFn: write?.(db, cache) ?? ((async () => void 0) as any),
+        mutationFn: isWriteFn ? write(db, cache) : async () => void 0 as any,
     });
 
-    if (!write) {
+    if (!isWriteFn) {
         return {
             queryData: data,
-            isQueryPending: isPending,
-            isQueryLoading: isLoading,
             queryError: error,
+            isQueryLoading: isLoading,
+            isQueryPending: isPending,
         };
     }
 
@@ -284,8 +294,8 @@ export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
 const dbCache = new WeakMap<Dialect, Kysely<any>>();
 /**
  * Index a Kysely ORM instance by its dialect
- * @param dialect 
- * @returns 
+ * @param dialect
+ * @returns
  */
 function accessDB(dialect: Dialect): Kysely<any> {
     const cached = dbCache.get(dialect);
