@@ -337,7 +337,7 @@ export default function IndexPage() {
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link
-                href="/showcase/researche/create"
+                href="/showcase/researcher/create"
                 className="inline-flex items-center justify-center px-8 py-4 space-x-2 text-lg font-semibold text-gray-900 transition-all duration-300 transform bg-white shadow-xl hover:bg-gray-100 rounded-xl hover:scale-105 hover:shadow-2xl"
               >
                 <span>Start Free Demo</span>
