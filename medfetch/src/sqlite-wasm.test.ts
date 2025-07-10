@@ -23,7 +23,7 @@ type DB = {
 }
 
 describe("medfetch/sqlite-wasm", () => {
-    it("Can ping an API without an explicit schema passed", async () => {
+    it("Can select all resources from an endpoint", async () => {
         const dialect = medfetch(API_URL, `
             create table "users" (
                 "id" int,
@@ -41,7 +41,9 @@ describe("medfetch/sqlite-wasm", () => {
                 "title" text,
                 "body" text
             );
-        `);
+        `)
+        .js("*", () => {
+        })
         const db = new Kysely<DB>({ dialect });
         const users = await db
             .selectFrom("users")
