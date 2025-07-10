@@ -4,6 +4,7 @@ import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
 import { ExportModal } from "@/components/ExportModal";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -294,25 +295,29 @@ function StatusNotification({
 }
 
 export default function WorkspacePage() {
-  const workspaceName = "my-cool-workspace2";
+  const params = useParams();
+  const workspaceName = params.workspaceName as string;
   const viewName = "patients";
   const initialResource = "Patient";
 
   const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
 
+  console.log("parsed workspaceData:", parsed);
+  console.log("jsonData:", parsed.jsonData);
+
   const dialect = useMemo(() => {
-    const blob = new Blob([JSON.stringify(parsed.jsonData)], {
-      type: "application/json",
+    // const blob = new Blob([JSON.stringify(parsed.jsonData)], {
+    //   type: "application/json",
+    // });
+    // const file = new File([blob], "idontmatter.json", {
+    //   type: "application/json",
+    //   lastModified: Date.now(),
+    // })
+    return medfetch(process.env.NEXT_PUBLIC_API_URL + "fhir", virtualMigrations(() => unzipJSONSchema()),{
+      filename: workspaceName,
     });
-    const file = new File([blob], "idontmatter.json", {
-      type: "application/json",
-      lastModified: Date.now(),
-    })
-    return medfetch(file, virtualMigrations(() => unzipJSONSchema()),{
-      filename: workspaceName
-    });
-  }, [parsed.jsonData]);
+  }, [parsed.jsonData, workspaceName]);
 
   const {
     currentTableName,
