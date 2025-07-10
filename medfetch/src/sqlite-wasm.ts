@@ -24,7 +24,7 @@ async function openPromiserDB<TWorker = Worker>(
     const response = await promiser(openMsg);
     if (response.type === "error" || !response.dbId) {
         throw new Error(
-            `Couldn't get back database ID from "openPromiserDB", early exiting...`,
+            `[medfetch/sqlite-wasm] >> Couldn't get back database ID from "openPromiserDB", early exiting...`,
         );
     }
     const dbId = response.dbId;

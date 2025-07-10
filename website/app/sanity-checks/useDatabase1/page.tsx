@@ -5,10 +5,11 @@ import type { Patient } from "fhir/r5";
 
 import medfetch from "medfetch/sqlite-wasm";
 import { useDatabase } from "medfetch/next";
-import type { Rowify } from "medfetch/dialects";
+import type { Rowify } from "medfetch/sql";
+import { unzipJSONSchema } from "@/lib/json-schema";
 
 export default function Page() {
-  const dialect = medfetch(`${process.env.NEXT_PUBLIC_API_URL!}/fhir`)
+  const dialect = medfetch(`${process.env.NEXT_PUBLIC_API_URL!}/fhir`, unzipJSONSchema);
   const patientsView = useDatabase(
     dialect,
     async (db: Kysely<{ Patient: Rowify<Patient> }>) =>

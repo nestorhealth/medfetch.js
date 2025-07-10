@@ -6,8 +6,8 @@ import { attach, index, pointer } from "./sqlite-wasm/worker1.js";
 import type { Sqlite3Module } from "./sqlite-wasm/types.js";
 
 // Logs
-const tag = "medfetch/sqlite-wasm";
-const taggedMessage = (msg: string) => `[${tag}] > ${msg}`;
+const tag = "medfetch/sqlite-wasm.worker";
+const taggedMessage = (msg: string) => `[${tag}] >> ${msg}`;
 
 /**
  * The expected "aux" data shape from the main thread in js land, NOT
@@ -36,7 +36,7 @@ interface AuxJS {
  *
  * note: We add a callback if multiple databases per client is wanted
  */
-export function loadExtension(
+export default function loadExtension(
     sqlite3Wasm: Sqlite3Static,
     syncFetch: FetchTextSync,
 ): 0 | 1 {
@@ -77,7 +77,7 @@ export function loadExtension(
         if (msg.data.type === "exec") {
             if (!msg.data.dbId) {
                 throw new Error(
-                    `[${tag}] > Can't query that: Database with an undefined "dbId"`,
+                    `[${tag}] >> Can't query that: Database with an undefined 'dbId'`,
                 );
             }
 
@@ -86,7 +86,9 @@ export function loadExtension(
 
             if (!moduleSet.has(pDb)) {
                 if (!extensions) {
-                    throw new Error(`[${tag}] > `);
+                    throw new Error(
+                        `[${tag}] >> No 'medfetch_module' found for database '${msg.data.dbId}'!`
+                    );
                 }
                 const ok: string[] = [];
                 for (const [key, value] of Object.entries(extensions)) {
@@ -97,16 +99,21 @@ export function loadExtension(
                         0,
                     );
                     if (_rc) {
-                        console.error(
-                            `[medfetch/sqlite-wasm] >> ${key} returned error code ${rc}`,
+                        throw new Error(
+                            `[${tag}] >> ${key} returned error code ${rc}`,
                         );
                     } else {
                         ok.push(key);
                     }
                 }
-                console.log(
-                    `[medfetch/sqlite-wasm] >> allocated virtual tables:\n${ok.map((t) => `"${t}"`).join(", ")}`,
-                );
+
+                // memory allocation ok
+                import.meta.env.DEV
+                    ? console.log(
+                          `[${tag}] >> allocated virtual tables:\n${ok.map((t) => `"${t}"`).join(", ")}`,
+                      )
+                    : void 0;
+
                 moduleSet.add(pDb);
             }
         }
@@ -114,11 +121,13 @@ export function loadExtension(
     });
 
     if (rc) {
-        console.error(
+        throw new Error(
             `[${tag}] > Unknown fatal error loading sqlite-wasm binary.`,
         );
     } else {
-        console.log(`[${tag}] > sqlite-wasm binary + medfetch vtab loaded .`);
+        import.meta.env.DEV
+            ? console.log(`[${tag}] >> 'loadExtension' OK`)
+            : void 0;
     }
     return rc;
 }

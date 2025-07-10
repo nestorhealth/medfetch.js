@@ -34,7 +34,8 @@
         "src/unpromisify.node.ts",
         "src/next.ts",
         "src/sqlite-wasm.ts",
-        "src/dialects.ts",
+        "src/sqlite-wasm.loadExtension.ts",
+        "src/sql.ts",
         "src/json/*.ts"
     ],
     "exclude": [

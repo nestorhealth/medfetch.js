@@ -27,3 +27,20 @@ export function makeLogger(tag: string, enabledWhen: boolean = import.meta.env.D
         }
     }
 }
+
+export function timeLogger(tag: string, start: string, ok: string, error: string) {
+    return {
+        begin() {
+            console.time(tag);
+            console.log(`[${tag}] >> ${start}`);
+        },
+        ok() {
+            console.log(`[${tag}] >> ${ok}`);
+            console.timeEnd(tag);
+        },
+        error() {
+            console.error(`${tag} >> ${error}`);
+            console.timeEnd(tag);
+        },
+    };
+}

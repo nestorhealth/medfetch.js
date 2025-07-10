@@ -109,17 +109,19 @@ export function x_connect(sqlite3: Sqlite3Static, migrationText: string) {
         const [pdb, _paux, _argc, _argv, ppvtab] = args;
         let rc = 0; // SQLITE_OK
         rc += sqlite3.capi.sqlite3_declare_vtab(pdb, migrationText);
-        const tableName = getTableName(migrationText);
         if (rc) {
+            const tableName = getTableName(migrationText);
             log.error(
                 `[medfetch/sqlite-wasm.vtab] >> 'xConnect' to virtual table "${tableName}" failed. Migration text was:\n${migrationText}`,
             );
             return rc;
         }
         sqlite3.vtab.xVtab.create(ppvtab);
-        log.info(
-            `medfetch virtual table ${tableName} xConnect() to ${tableName} OK`,
-        );
+
+        import.meta.env.DEV ? log.info(
+            `medfetch virtual table ${getTableName(migrationText)} xConnect() to ${getTableName(migrationText)} OK`,
+        ) : void 0;
+
         return rc;
     };
     // #endregion x_connect
@@ -158,7 +160,6 @@ export function x_open(
         try {
             const pageBuffer = fetchPage(resourceType);
             const asGen = function* () {
-                console.log("right", pageBuffer)
                 yield pageBuffer;
             }
             cursor.page = new Page(asGen);
@@ -302,7 +303,6 @@ export function x_filter(sqlite3: Sqlite3Static) {
 
         // Start the generator
         cursor.peeked = cursor.page.entries.next();
-        console.log("and we're back...")
         if (cursor.peeked.done) {
             cursor.page.reset();
             cursor.peeked = cursor.page.entries.next();

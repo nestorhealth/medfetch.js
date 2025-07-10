@@ -5,9 +5,11 @@ import type { Patient } from "fhir/r5";
 
 import medfetch from "medfetch/sqlite-wasm";
 import { useDatabase } from "medfetch/next";
-import type { Rowify } from "medfetch/dialects";
+import type { Rowify } from "medfetch/sql";
 import { useMemo } from "react";
 import EditName from "@/app/sanity-checks/useDatabase2/page.EditName";
+import { env } from "@/lib/env";
+import { unzipJSONSchema } from "@/lib/json-schema";
 
 export type DB = {
   Patient: Rowify<Patient> & { id: string };
@@ -19,7 +21,7 @@ export type DB = {
 
 export default function Page() {
   const dialect = useMemo(
-    () => medfetch(`${process.env.NEXT_PUBLIC_API_URL!}/fhir`),
+    () => medfetch(env.NEXT_PUBLIC_FHIR_API_URL, unzipJSONSchema),
     []
   );
   const patientsView = useDatabase(
