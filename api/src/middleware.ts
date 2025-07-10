@@ -8,7 +8,10 @@ export const customLogger = (message: string, ...rest: string[]) => {
 
 export const cors = createMiddleware<{Bindings: Env}>(async (c, next) => {
   const corsHandler = corsMiddleware({
-    origin: [c.env?.MEDFETCH_DOCS_HOST ?? "https://docs.medfetch.io", c.env?.MEDFETCH_DEMO_HOST ?? "https://medfetchjs.pages.dev", ...c.env.MEDFETCH_RESEARCH_HOST],
+    origin: [c.env?.MEDFETCH_DOCS_HOST ?? "https://docs.medfetch.io", c.env?.MEDFETCH_DEMO_HOST ?? "https://medfetchjs.pages.dev", ...(c.env?.MEDFETCH_RESEARCH_HOST ?? [
+      "https://research.medfetch.io",
+      "https://research.nathanoh885.workers.dev"
+    ])],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400,

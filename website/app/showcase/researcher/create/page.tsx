@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { Database } from "lucide-react";
 import { CreateWorkspaceForm } from "@/app/showcase/researcher/create/page.client";
 import { api } from "@/lib/api";

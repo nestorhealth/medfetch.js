@@ -3,7 +3,7 @@ import { useWorkspaceData } from "@/lib/hooks/useWorkspaceData";
 import ChatUI from "@/components/ChatUI";
 import AGGridTable from "@/components/AGGridTable";
 import { ExportModal } from "@/components/ExportModal";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -293,7 +293,7 @@ function StatusNotification({
 }
 
 export default function WorkspacePage() {
-  const { workspaceName } = useParams<{ workspaceName: string }>();
+  const {workspaceName} = useParams<{workspaceName: string;}>();
   const currentTableName = "patients";
 
   const raw = globalThis.localStorage?.getItem("workspaceData");

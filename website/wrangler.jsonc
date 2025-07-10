@@ -1,5 +1,7 @@
 {
-  "main": ".open-next/worker.js",
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "keep_names": false,
+  "main": "./open-next-worker.js",
   "name": "research",
   "compatibility_date": "2025-03-25",
   "compatibility_flags": [

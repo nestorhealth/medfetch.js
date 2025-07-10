@@ -2,14 +2,15 @@ import createClient from "openapi-fetch";
 import createReactQueryClient from "openapi-react-query";
 import type { paths } from "@medfetch.js/api/types";
 import {createAuthClient} from "better-auth/client";
+import { env } from "@/lib/env";
 
 export const api = createClient<paths>({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL!,
+  baseUrl: env.NEXT_PUBLIC_API_URL!,
   credentials: "include"
 });
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL!,
+  baseURL: env.NEXT_PUBLIC_API_URL!,
   basePath: "/auth",
   fetchOptions: {
     credentials: "include"

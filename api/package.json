@@ -9,7 +9,7 @@
     "migrate-up": "npx dotenv -e .dev.vars -- tsx src/migrator.up.ts",
     "migrate-down": "npx dotenv -e .dev.vars -- tsx src/migrator.down.ts",
     "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
-    "api-typegen": "npx dotenv -e .dev.vars -- tsx bin/openapi-doc.ts && openapi-typescript ./public/openapi.json -o ./dist/types.d.ts",
+    "api-typegen": "tsx bin/openapi-doc.ts && openapi-typescript ./public/openapi.json -o ./dist/types.d.ts",
     "db-codegen": "npx dotenv -e .dev.vars -- npx kysely-codegen --camel-case",
     "demo-data-codegen": "tsx bin/researcher-demo.ts",
     "test": "npx dotenv -e .env.test -- npx vitest"

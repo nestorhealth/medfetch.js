@@ -70,4 +70,4 @@ const dialect = medfetch("...", {
 })
 ```
 
-See the [About](./getting-started.what-is-medfetch-js.md#jsons-and-schemas) section for more info on JSON schema usage.
+See the [About](./guide.what-is-medfetch-js.md#jsons-and-schemas) section for more info on JSON schema usage.
