@@ -5,7 +5,6 @@ const nextConfig = nextra({
 });
 
 export default nextConfig({
-  output: "export",
   webpack: (config, { webpack }) => {
     config.plugins.push(
       new webpack.DefinePlugin({

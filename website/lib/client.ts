@@ -1,40 +1,41 @@
-import { medfetch } from "medfetch/sqlite-wasm";
-import { useRef } from "react";
+import { unzipJSONSchema } from "@/lib/json-schema";
 import { Kysely, sql } from "kysely";
-import type { Condition, Patient, Practitioner } from "fhir/r5";
+import medfetch from "medfetch/sqlite-wasm";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL!;
-// (cuz of you fuckers !!!!)
-const API_URL = apiURL.endsWith("/") ? apiURL.slice(0, apiURL.length -1) : apiURL;
+const API_URL = apiURL.endsWith("/")
+  ? apiURL.slice(0, apiURL.length - 1)
+  : apiURL;
 
-type RESOURCES = Patient | Condition | Practitioner;
-const dialect = medfetch<RESOURCES>(":memory:", `${API_URL}/fhir`, {
-  scope: ["Patient", "Condition", "Practitioner"]
-});
+const dbCache = new Map<string, Kysely<any>>();
 
-export const db = new Kysely<typeof dialect.$db>({
+/**
+ * Open an existing sqlite3 datbase file persisted on the browser
+ * @param filename The filename of the sqlite3 file without
+ * @param vfs The backing browser filesystem - kvfs only works on browser, opfs only works on worker threads
+ * @returns The kysely instance
+ */
+export async function openDB(baseURL: string | File, filename?: string) {
+  const cacheKey = `${filename}`;
+  if (dbCache.has(cacheKey)) return dbCache.get(cacheKey)!;
+  const dialect = medfetch(
+    baseURL,
+    () => unzipJSONSchema(), 
+    {
+      filename: filename,
+    }
+  );
+
+  const db = new Kysely<any>({ dialect });
+  dbCache.set(cacheKey, db);
+  return db;
+}
+
+const dialect = medfetch(`${API_URL}/fhir`, unzipJSONSchema);
+
+export const memoryDB = new Kysely<any>({
   dialect,
 });
-
-export const medDB: MedfetchDB = {
-  exec: async (sqlString: string) => {
-    await sql.raw(sqlString).execute(db);
-  },
-  prepare: (sqlString: string) => ({
-    all: async () => {
-      const result = await sql.raw(sqlString).execute(db);
-      return result.rows;
-    },
-    run: async () => {
-      await sql.raw(sqlString).execute(db);
-    },
-  }),
-};
-
-export function useMedDB(): MedfetchDB {
-  const dbRef = useRef<MedfetchDB>(medDB);
-  return dbRef.current;
-}
 
 /**
  *
@@ -47,17 +48,8 @@ export function sql2<T>(
   ...rest: any[]
 ): Promise<T[]> {
   return sql<T>(strings, ...rest)
-    .execute(db)
+    .execute(memoryDB)
     .then((result) => result.rows);
-}
-
-// Types
-export interface MedfetchDB {
-  exec: (sql: string) => Promise<void>;
-  prepare: (sql: string) => {
-    all: () => Promise<any[]>;
-    run: () => Promise<void>;
-  };
 }
 
 // Define options type for initMedfetchDB
@@ -65,36 +57,6 @@ export interface MedfetchDBOptions {
   baseURL?: string;
   trace?: boolean;
   filename?: string;
-}
-
-
-const getFile = (fileName: string) => fetch(`https://r4.smarthealthit.org/Patient`).then(
-  (res) => res.json()
-).then(JSON.stringify).then(
-  (buffer) => new File([buffer], fileName)
-)
-
-// Initialize Medfetch database
-export async function initMedfetchDB(): Promise<MedfetchDB> {
-  // Initialize Medfetch with SQLite WASM
-  // Create a database handle with common operations
-  const __db: MedfetchDB = {
-    exec: async (sqlString: string) => {
-      await sql.raw(sqlString).execute(db);
-    },
-    prepare: (sqlString: string) => ({
-      all: async () => {
-        const result = await sql.raw(sqlString).execute(db);
-        console.log("PREPARED", result)
-        return result.rows;
-      },
-      run: async () => {
-        await sql.raw(sqlString).execute(db);
-      },
-    }),
-  };
-
-  return __db;
 }
 
 // Example usage:

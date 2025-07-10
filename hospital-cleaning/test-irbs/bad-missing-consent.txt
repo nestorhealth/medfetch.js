@@ -1,0 +1,40 @@
+RESEARCH PROTOCOL: Mental Health Outcomes Study
+
+PRINCIPAL INVESTIGATOR: Dr. Emily Rodriguez, MD
+Department of Psychiatry, University Hospital
+
+STUDY TITLE: Effectiveness of Antidepressant Medications
+
+STUDY OBJECTIVES:
+This study aims to evaluate the effectiveness of different antidepressant medications in treating major depressive disorder.
+
+TARGET POPULATION:
+- Patients aged 18-65 years
+- Diagnosed with major depressive disorder
+- Both male and female participants
+
+DATA REQUIREMENTS:
+- Patient demographics
+- Depression severity scores
+- Medication history
+- Treatment outcomes
+
+RESOURCE TYPES NEEDED:
+- Patient: Basic demographics
+- Condition: Depression diagnoses
+- Observation: Depression scores
+- MedicationRequest: Antidepressant medications
+- Encounter: Clinical visits
+
+FILTERS AND CRITERIA:
+- Age range: 18-65 years
+- Conditions: Major depressive disorder
+- Date range: 2020-01-01 to 2025-12-31
+- Target patient count: 200 patients
+
+DATA SECURITY:
+- Data will be stored securely
+- Access limited to research team
+
+MONITORING:
+- Regular review of study progress 

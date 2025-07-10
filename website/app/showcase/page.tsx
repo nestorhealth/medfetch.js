@@ -28,7 +28,7 @@ export default function Showcase() {
       icon: Database,
       status: "Live Demo",
       complexity: "Advanced",
-      href: "/showcase/researcher",
+      href: "/showcase/researcher/create", // <-- updated
     },
     {
       id: "analytics",

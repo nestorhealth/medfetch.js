@@ -1,78 +1,129 @@
-import type { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import type { Reference } from "fhir/r4";
+import type { Dialect, QueryResult } from "kysely";
 import {
-    DummyDriver,
-    ColumnDataType,
-    Kysely,
-    PostgresAdapter,
-    PostgresIntrospector,
-    PostgresQueryCompiler,
-    SqliteAdapter,
-    SqliteIntrospector,
-    SqliteQueryCompiler,
-    Dialect,
-} from "kysely";
-import type {
-    FhirDataType,
-    PrimitiveKey,
-} from "./json/json.parse.js";
-import { unzipJSONSchema } from "./json/json.page.js";
-
-export const DEFAULT_SQLITE_FROM_FHIR = {
-    boolean: "integer", // SQLite has no native boolean; use 0/1
-    base64Binary: "blob", // binary content
-    canonical: "text", // like a URI
-    code: "text", // constrained string
-    id: "text", // short string, but still text
-    oid: "text", // e.g., "urn:oid:1.2.3"
-    string: "text",
-    url: "text",
-    uri: "text",
-    uuid: "text", // SQLite has no native UUID type
-
-    date: "text", // stored as ISO 8601 string
-    dateTime: "text",
-    instant: "text", // precise ISO timestamp
-    time: "text",
-
-    decimal: "real", // SQLite uses REAL for float-like values
-    integer: "integer",
-    positiveInt: "integer",
-    unsignedInt: "integer",
-} satisfies Record<PrimitiveKey, ColumnDataType>;
-
-export const DEFAULT_POSTGRESQL_FROM_FHIR = {
-    base64Binary: "bytea", // PostgreSQL binary
-    canonical: "text", // FHIR URI-like string
-    code: "text", // Enumerated string
-    id: "text", // Short string
-    oid: "text", // FHIR OID (not PG OID type)
-    string: "text",
-    uri: "text",
-    url: "text",
-    uuid: "uuid", // PostgreSQL has native UUID type
-
-    // Boolean and integer types
-    boolean: "boolean",
-    integer: "integer",
-    positiveInt: "integer", // PostgreSQL doesn't distinguish unsigned
-    unsignedInt: "integer",
-
-    // Decimal (floating point)
-    decimal: "numeric", // Arbitrary precision decimal (better than float)
-
-    // Temporal types
-    date: "date", // Calendar date
-    dateTime: "timestamptz", // Timestamp with time zone
-    instant: "timestamptz", // FHIR Instant → PostgreSQL timestamp
-    time: "time", // Time without date
-} satisfies Record<PrimitiveKey, ColumnDataType>;
+    buildQueryFn,
+    GenericSqliteDialect,
+    type IGenericSqlite,
+} from "kysely-generic-sqlite";
+import type { PromiserResult, Worker1Promiser } from "./sqlite-wasm/types.js";
+import { check } from "./sqlite-wasm/worker1.main.js";
+import type { JSONSchema7 } from "json-schema";
+import jsonSchema from "~/sql/jsonSchema.js";
 
 /**
- * The sql text syntaxes the fetcher works with
+ * "Generic" options for generating a virtual migration text from some JSON object
+ * schema
  */
-export type SqlFlavor = "sqlite" | "postgresql";
+export type VirtualMigrationConfig = {
+    /**
+     * What "syntax" of sql to use to determine column types.
+     * @todo Provide a more granular way to determine column mappings
+     */
+    readonly dialect: "sqlite" | "postgresql";
+    
+    /**
+     * The path to an object child whose keys/props contains the Tables
+     * to generate migration texts for.
+     */
+    readonly discriminatorPath: string;
+    
+    /**
+     * What l1 (immediate) child keys from the parent object
+     * should be "generated" (usually a deeper path extraction)
+     */
+    readonly generatedPaths?: ReadonlyMap<string, string>;
+    
+    /**
+     * Optional filter to omit column keys dynamically rather than have to
+     * do so within the JSON schema itself.
+     * @param columnKey The column key name from the JSON schema
+     * @returns [Drop it](https://www.youtube.com/watch?v=C3jFLJWF75U)
+     */
+    readonly drop?: (columnKey: string) => boolean;
+};
 
+/**
+ * Schemas that we have functions to create sql migrations from.
+ */
+export type Migrateable = string | JSONSchema7;
+
+const isString = (m: unknown) => typeof m === "string";
+// temp naive check until (if) we implement other schemas
+const isJSONSchema = (m: unknown): m is JSONSchema7 =>
+    !!m && typeof m === "object" && "$schema" in m;
+
+const matchMigrateable = (handlers: {
+    string: (migrationsRaw: string) => string;
+    jsonSchema: (jsonSchema: JSONSchema7) => string;
+}) => {
+    return (m: Migrateable) => {
+        if (isString(m)) {
+            return handlers["string"](m);
+        }
+        if (isJSONSchema(m)) {
+            return handlers["jsonSchema"](m);
+        }
+
+        throw new Error(
+            `matchMigrateable callback failed to match ${String(m)} to any of 'type': 'string' | 'JSONSchema7'`,
+        );
+    };
+};
+
+/**
+ * "Translate" the provided {@link Migrateable} {@link T} from either an async callback (fetching dynamically)
+ * or the value itself.
+ * @param schema The schema or a callback to get the schema. If this is plaintext (`string`), then it just returns that
+ * stirng ***unmodified***.
+ * @param config Any options from {@link VirtualMigrationConfig}
+ * @returns The migration text or the text wrapped in a promise function, depending on whatever shape passed in {@link T} takes.
+ */
+export function virtualMigration<T extends Migrateable>(
+    schema: () => Promise<T>,
+    config?: Partial<VirtualMigrationConfig>,
+): () => Promise<string>;
+export function virtualMigration<T extends Migrateable>(
+    schema: T,
+    config?: Partial<VirtualMigrationConfig>,
+): string;
+
+export function virtualMigration<T extends Migrateable>(
+    schema: T | (() => Promise<T>),
+    {
+        discriminatorPath = "/discriminator/mapping",
+        generatedPaths = new Map([
+            [
+                "#/definitions/Reference",
+                "#/definitions/Reference/properties/reference",
+            ],
+        ]),
+        dialect = "sqlite",
+        drop = (key: string) => key[0] === "_",
+    }: Partial<VirtualMigrationConfig> = {},
+): string | (() => Promise<string>) {
+    const match = matchMigrateable({
+        string: (s) => s,
+        jsonSchema: (s) =>
+            jsonSchema(s, {
+                discriminatorPath,
+                dialect,
+                generatedPaths,
+                drop,
+            }),
+    });
+    if (typeof schema === "function") {
+        return () => schema().then(match);
+    } else {
+        return match(schema);
+    }
+}
+
+export type DialectJS<D extends Dialect> = D & {
+    js: <T>(match: string, maps: T) => DialectJS<D>;
+};
+
+/**
+ * Map object children of {@link T}
+ */
 type ScalarColumnFrom<T> =
     Exclude<T, undefined> extends string | number | boolean
         ? Exclude<T, undefined>
@@ -90,270 +141,152 @@ export type Rowify<T> = {
 };
 // #endregion snippet
 
-/**
- * Generic for a sql on fhir "dialect"
- */
-export interface SqlOnFhirDialect<Resources extends {resourceType: string;}>
-    extends Dialect {
-    readonly $db: {
-        [R in Resources["resourceType"]]: Rowify<Resources["resourceType"]> & { id: string };
-    };
+function fromNullableOrThrow<T>(t: T): NonNullable<T> {
+    if (!t) {
+        throw new Error("that's null");
+    }
+    return t;
 }
 
 /**
- * The JSON field presented as a "column" with an
- * additional {@link dataType} field attached
+ * Implementation of {@link IGenericSqlite} where the {@link IGenericSqlite["db"]}
+ * field is set to `dbId` of the worker1 promiser database.
  */
-interface ColumnValue {
-    dataType: ColumnDataType;
-    value: any | null;
-}
-
-/**
- * The underlying js-land data generated that the database has access to at runtime
- * @internal
- */
-export interface RowResolver {
-    /**
-     * List of resource type to sql migration text associations held in a 2-tuple
-     */
-    migrations: Array<[
-        string, // ResourceType
-        string // Migration Text
-    ]>;
+export class Worker1DB implements IGenericSqlite<string> {
+    readonly db: string;
 
     /**
-     * From the fetched resource presented in arg0 and the given
-     * index at arg1, give me the corresponding column value along with the
-     * sql datatype you saved in the internal schema
-     * @param resource The runtime fetched resource. Don't assume this is validated
-     * @param index The column index
-     * @returns The sql data type the map has saved for this resource and this index
+     * @param dbId
+     * @param promiser Main thread messenger function for worker1 thread (sqlite3 calls their messenger interface "Promiser")
      */
-    index: (resource: unknown, index: number) => ColumnValue;
-}
-
-
-/**
- * Static dummy kysely orm object
- * @param sqlFlavor The dialect enum
- */
-export function dummyDialect(sqlFlavor: "sqlite" | "postgresql"): Dialect {
-    switch (sqlFlavor) {
-        case "sqlite": {
-            return {
-                createAdapter: () => new SqliteAdapter(),
-                createDriver: () => new DummyDriver(),
-                createIntrospector: (db) => new SqliteIntrospector(db),
-                createQueryCompiler: () => new SqliteQueryCompiler(),
-            } satisfies Dialect;
-        }
-        case "postgresql": {
-            return {
-                createAdapter: () => new PostgresAdapter(),
-                createDriver: () => new DummyDriver(),
-                createIntrospector: (db) => new PostgresIntrospector(db),
-                createQueryCompiler: () => new PostgresQueryCompiler(),
-            };
-        }
+    constructor(
+        db: string,
+        private promiser: Worker1Promiser,
+    ) {
+        this.db = db;
     }
-}
 
-/**
- * Expects the JSON schema $ref word after the last '/' character
- * to be a {@link FhirDataType}
- * @param $ref The refstring
- * @returns Coerced as a FhirDataType string literal
- */
-function typenameFromRef($ref: string): FhirDataType {
-    return $ref.split("/").pop()! as any;
-}
-
-interface ColumnKey {
-    name: string;
-    fhirType: FhirDataType;
-    dataType: ColumnDataType;
-}
-
-interface ColumnValue {
-    dataType: ColumnDataType;
-    value: any | null;
-}
-
-interface FhirTableMigration {
-    sql: string;
-    columnKeys: Array<ColumnKey>;
-}
-
-/**
- * The type for resolving a resource's field from a column index
- */
-export type ResolveColumn = (resource: any, index: number) => ColumnValue;
-
-
-/**
- * Checks an arbitrary object and asserts that "id" in resource and "resourceType" in resource. That's it.
- * @param resource Some arbitrary js value
- * @returns Itself if it is a resource
- */
-function checkResource(
-    resource: any,
-): { id: string; resourceType: string } & Record<string, any> {
-    if (typeof resource !== "object") {
-        throw new Error(
-            `migrations.preprocess: That's not an object: ${typeof resource}`,
-        );
-    }
-    if (!("id" in resource && "resourceType" in resource)) {
-        throw new Error(
-            `migrations.preprocess: I don't know how to preprocess that: (has_id=${"id" in resource}, has_resourceType=${"resourceType" in resource})`,
-        );
-    }
-    return resource;
-}
-
-/**
- * Default key filter callback for JSON schema. Removes extension keys
- * (those that begin with '_') and isn't equal to "id" (this by default sets that to the primary key)
- * @param key The JSON key name
- * @returns If {@link key} should be iterated over in the column builder
- */
-const defaultKeyFilter = (key: string) => key.charCodeAt(0) !== 95 && key !== "id";
-
-/**
- * Get the "create table" migration text for the given resource type from the data
- * in the json schema
- * @param db The kysely database
- * @param resourceType The resourceType, this will be the name of the table
- * @param jsonSchemaDefinitions The definitions object map
- * @param keyFilter What keys to take out? Default to extended fields (start with "_") and filters out "resourceType"
- * @returns The table migration text
- */
-function generateFhirTableMigration(
-    resourceType: string,
-    columns: [string, JSONSchema7Definition][],
-    db: Kysely<any>,
-    sqlColumnMap: Record<string, ColumnDataType>,
-    keyFilter: (key: string) => boolean = defaultKeyFilter
-): FhirTableMigration {
-    const tb = db.schema
-        .createTable(resourceType)
-        .ifNotExists()
-        .addColumn("id", "text", (col) => col.primaryKey());
-
-    const columnKeys = new Array<ColumnKey>();
-    columnKeys.push({ name: "id", dataType: "text", fhirType: "string" });
-    const finalTb = columns.reduce((tb, [key, value]) => {
-        if (typeof value === "boolean") {
-            throw new Error();
-        }
-        if (!keyFilter(key)) {
-            return tb;
-        }
-
-        let columnDataType: ColumnDataType = "text";
-        let typename: FhirDataType = "string";
-        if (value.$ref) {
-            typename = typenameFromRef(value.$ref);
-            columnDataType = sqlColumnMap[typename] ?? "text";
-        }
-
-        columnKeys.push({
-            name: key,
-            dataType: columnDataType,
-            fhirType: typename,
+    async close(): Promise<PromiserResult<"close">> {
+        return await this.promiser({
+            type: "close",
+            dbId: this.db,
         });
-        return tb.addColumn(key, columnDataType);
-    }, tb);
-    return {
-        sql: finalTb.compile().sql + ";\n",
-        columnKeys: columnKeys
-    };
-}
-
-function generateMigrations(
-    db: Kysely<any>,
-    jsonSchema: JSONSchema7,
-    sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    resources?: string[]
-): RowResolver {
-    const definitions = jsonSchema["definitions"] as Record<
-        string,
-        Exclude<JSONSchema7Definition, boolean>
-    >;
-    if (!definitions) {
-        throw new Error("Bad json schema");
-    }
-    if (!resources) {
-        resources = Object.keys((jsonSchema as any)["discriminator"]["mapping"]);
     }
 
-    const columnMap = new Map<string, Array<ColumnKey>>();
-    const schemaEntries = resources.map((resourceType) => {
-        const resourceDefinition = definitions[resourceType];
-        if (!resourceDefinition || !resourceDefinition["properties"]) {
-            throw new Error(`That resource key doesn't exist: "${resourceType}"`);
-        }
-        const resourceProperties = resourceDefinition["properties"];
-        const migration = generateFhirTableMigration(
-            resourceType,
-            Object.entries(resourceProperties),
-            db,
-            sqlColumnMap,
-        );
-        columnMap.set(resourceType, migration.columnKeys);
-        return [resourceType, migration.sql] as const;
-    });
-
-    const resolveColumn = (resource: any, index: number): ColumnValue => {
-        checkResource(resource);
-        if (!columnMap.has(resource["resourceType"])) {
-            return { value: null, dataType: "text" };
-        }
-        const columnKeys = columnMap.get(resource["resourceType"])!;
-        const orderedRecord = columnKeys.map((column) => {
-            let value = resource[column.name];
-            if (value) {
-                if (typeof value === "object") {
-                    switch (column.fhirType) {
-                        // Just take its 
-                        case "Reference": {
-                            value = (value as Reference).reference ?? null;
-                            break;
-                        }
-                        default: {
-                            value = JSON.stringify(value);
-                        }
+    /**
+     * Arbitrary SQL query function handler
+     * @param isSelect If the query is a select
+     * @param sql Querytext
+     * @param parameters Any bindable parameters
+     * @returns
+     */
+    async query(
+        isSelect: boolean,
+        sql: string,
+        parameters?: readonly any[],
+    ): Promise<QueryResult<any>> {
+        if (!isSelect) {
+            return this.promiser({
+                type: "exec",
+                dbId: this.db,
+                args: {
+                    rowMode: "array",
+                    sql,
+                    bind: parameters ?? [],
+                },
+            })
+                .then(check)
+                .then((response): QueryResult<any> => {
+                    const [resultRows] = fromNullableOrThrow(
+                        response.result.resultRows,
+                    );
+                    const numAffectedRows = BigInt(resultRows);
+                    let queryResult: QueryResult<any> = {
+                        rows: resultRows,
+                    };
+                    if (!isSelect) {
+                        queryResult = {
+                            ...queryResult,
+                            numAffectedRows,
+                        };
                     }
-                }
-            }
-            return { value: value ?? null, dataType: column.dataType };
-        });
-        return orderedRecord[index];
-    };
+                    return queryResult;
+                });
+        } else {
+            return this.promiser({
+                type: "exec",
+                dbId: this.db,
+                args: {
+                    rowMode: "object",
+                    sql,
+                    bind: parameters ?? [],
+                },
+            })
+                .then(check)
+                .then((response): QueryResult<any> => {
+                    return {
+                        rows: response.result.resultRows ?? [],
+                    };
+                });
+        }
+    }
+}
 
-    return {
-        migrations: schemaEntries as any,
-        index: resolveColumn,
-    };
+async function access<T>(t: T | (() => T) | (() => Promise<T>)): Promise<T> {
+    if (typeof t === "function") {
+        const result = (t as () => T | Promise<T>)(); // call the function
+        return await result;
+    } else {
+        return t;
+    }
 }
 
 /**
- * Get the default FHIR to SQL database schema
- * @param sqlFlavor The sql text dialect
- * @param resourceTypes The resource types to include
- * @param sqlColumnMap Any primitive element -> sql column included here will be overriden
- * @returns A SQL on FHIR view for the given schema
+ * {@link GenericSqliteDialect} implementation for the worker1promiser api
+ * from [`@sqlite.org/sqlite-wasm`](https://github.com/sqlite/sqlite-wasm) for a db interface proxy for
+ * querying a sqlite-wasm db thread running on the Worker1 message API.
  */
-export async function migrations(
-    dialect: SqlFlavor,
-    sqlColumnMap: Record<PrimitiveKey, ColumnDataType>,
-    resources?: string[]
-): Promise<RowResolver> {
-    const db = new Kysely({
-        dialect: dummyDialect(dialect)
-    })
-    return unzipJSONSchema().then((schema) =>
-        generateMigrations(db, schema, sqlColumnMap, resources),
-    );
+export class Worker1PromiserDialect extends GenericSqliteDialect {
+    constructor(config: {
+        database:
+            | IGenericSqlite<string>
+            | (() => Promise<IGenericSqlite<string>>)
+            | (() => IGenericSqlite<string>);
+    }) {
+        super(async () => {
+            const db = await access<IGenericSqlite<string>>(config.database);
+            return {
+                db,
+                close: () => db.close(),
+                query: buildQueryFn({
+                    all: async (sql, params) => {
+                        const response = await db.query(true, sql, params);
+                        return response.rows ?? [];
+                    },
+                    run: async (sql, params) => {
+                        const result = await db.query(false, sql, params);
+
+                        // Check if this is an INSERT
+                        const isInsert = /^\s*insert\s+/i.test(sql);
+
+                        const insertId: bigint = BigInt(
+                            isInsert
+                                ? ((
+                                      await db.query(
+                                          false,
+                                          "SELECT last_insert_rowid()",
+                                      )
+                                  ).rows.at(0)?.["last_insert_rowid()"] ?? 0)
+                                : 0,
+                        );
+
+                        return {
+                            insertId,
+                            numAffectedRows: result.numAffectedRows ?? 0n,
+                        };
+                    },
+                }),
+            };
+        });
+    }
 }

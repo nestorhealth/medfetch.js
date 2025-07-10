@@ -30,13 +30,13 @@
         }
     },
     "include": [
-        "src/block.ts",
-        "src/block.node.ts",
-
+        "src/unpromisify.ts",
+        "src/unpromisify.node.ts",
+        "src/next.ts",
         "src/sqlite-wasm.ts",
-        "src/dialects.ts",
-        "src/json/*.ts",
-        "src/sql.ts"
+        "src/sqlite-wasm.loadExtension.ts",
+        "src/sql.ts",
+        "src/json/*.ts"
     ],
     "exclude": [
         "/**/*.test.ts",

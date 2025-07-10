@@ -1,0 +1,77 @@
+RESEARCH PROTOCOL: Cardiovascular Health Study
+
+PRINCIPAL INVESTIGATOR: Dr. Sarah Johnson, MD, PhD
+Department of Cardiology, University Medical Center
+
+STUDY TITLE: Impact of Lifestyle Interventions on Cardiovascular Health Outcomes
+
+INFORMED CONSENT:
+All participants will receive detailed informed consent forms explaining:
+- Study purpose and procedures
+- Potential risks and benefits
+- Right to withdraw at any time
+- Confidentiality protections
+- Contact information for questions
+
+DATA SECURITY AND PRIVACY PROTECTION:
+- All data will be stored in HIPAA-compliant secure systems
+- Data encryption for transmission and storage
+- Access limited to authorized research personnel
+- Regular security audits and updates
+- Data retention policy: 7 years post-study completion
+
+RISK ASSESSMENT:
+Potential risks include:
+- Minor discomfort during blood draws
+- Time commitment for study visits
+- Potential privacy concerns (mitigated by security measures)
+- Minimal risk of data breach (mitigated by encryption)
+
+Benefits include:
+- Free health assessments
+- Potential health improvements
+- Contribution to medical knowledge
+- Compensation for time and effort
+
+VOLUNTARY PARTICIPATION:
+Participation in this study is completely voluntary. Participants may withdraw from the study at any time without penalty or loss of benefits to which they are otherwise entitled.
+
+CONFIDENTIALITY AND PRIVACY:
+All participant data will be kept strictly confidential. Personal identifiers will be removed and replaced with unique study codes.
+
+STUDY OBJECTIVES:
+This study aims to evaluate the effectiveness of lifestyle interventions on cardiovascular health outcomes in patients with hypertension and related conditions.
+
+TARGET POPULATION:
+- Patients aged 18-75 years
+- Diagnosed with essential hypertension (ICD-10: I10)
+- Both male and female participants
+- Active patients with recent encounters
+
+DATA REQUIREMENTS:
+- Patient demographics and medical history
+- Blood pressure measurements and trends
+- Medication history and adherence
+- Lifestyle factors and interventions
+- Cardiovascular outcomes and events
+
+RESOURCE TYPES NEEDED:
+- Patient: Basic demographics, age, gender, active status
+- Condition: Hypertension diagnoses, clinical status
+- Observation: Blood pressure readings, lab values
+- MedicationRequest: Antihypertensive medications
+- Procedure: Cardiovascular procedures and interventions
+- Encounter: Clinical visits and follow-ups
+
+FILTERS AND CRITERIA:
+- Age range: 18-75 years
+- Gender: All (male and female)
+- Conditions: Essential hypertension (SNOMED: 38341003)
+- Date range: 2020-01-01 to 2025-12-31
+- Target patient count: 500 patients
+
+MONITORING AND OVERSIGHT:
+- Regular IRB review and approval
+- Data safety monitoring board
+- Annual progress reports
+- Adverse event reporting procedures 

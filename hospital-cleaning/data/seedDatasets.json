@@ -1,0 +1,146 @@
+[
+  {
+    "id": "study_1751425495478_0",
+    "studyTitle": "Study study_1751425495478_0",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T03:04:55.478Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751425495478_0.zip",
+    "fileSize": 4885,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751426183815_604",
+    "studyTitle": "Study study_1751426183815_604",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T03:16:23.815Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751426183815_604.zip",
+    "fileSize": 4887,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751475513809_66",
+    "studyTitle": "Study study_1751475513809_66",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T16:58:33.809Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751475513809_66.zip",
+    "fileSize": 4882,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751475796234_722",
+    "studyTitle": "Study study_1751475796234_722",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T17:03:16.234Z",
+    "status": "ready",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751475796234_722.zip",
+    "fileSize": 4894,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751486188786_222",
+    "studyTitle": "Study study_1751486188786_222",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T19:56:28.786Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751486188786_222.zip",
+    "fileSize": 5262,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751487182249_268",
+    "studyTitle": "Study study_1751487182249_268",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T20:13:02.249Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751487182249_268.zip",
+    "fileSize": 146521,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751487621639_995",
+    "studyTitle": "Study study_1751487621639_995",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-02T20:20:21.639Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751487621639_995.zip",
+    "fileSize": 146518,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  },
+  {
+    "id": "study_1751514826344_721",
+    "studyTitle": "Study study_1751514826344_721",
+    "principalInvestigator": "Dr. Researcher",
+    "createdAt": "2025-07-03T03:53:46.344Z",
+    "status": "downloaded",
+    "filePath": "/Users/ethankim/Nestor/medfetch.js/hospital-cleaning/public/seeds/study_1751514826344_721.zip",
+    "fileSize": 9512,
+    "resourceTypes": [
+      "Unknown"
+    ],
+    "totalRecords": 0,
+    "metadata": {
+      "irbData": {},
+      "queryResults": [],
+      "cleaningResults": []
+    }
+  }
+]

@@ -6,6 +6,13 @@
     "directory": "public"
   },
   "compatibility_date": "2025-06-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "ENVIRONMENT": "dev",
+    "BETTER_AUTH_URL": "http://localhost:8787", // Same as "base url"
+    "MEDFETCH_DOCS_HOST": "http://localhost:5173",
+    "MEDFETCH_DEMO_HOST": "http://localhost:3000"
+  },
   "env": {
     "dev": {
       "vars": {
@@ -21,7 +28,14 @@
         "MEDFETCH_DEMO_HOST": "https://medfetchjs.pages.dev"
       }
     }
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "api-db",
+      "database_id": "591499c4-9db3-4ab6-bc78-41b09cd0b8f8"
+    }
+  ]
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

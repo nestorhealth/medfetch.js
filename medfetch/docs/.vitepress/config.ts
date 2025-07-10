@@ -6,7 +6,7 @@ export default defineConfig({
   title: "Medfetch.js",
   description: "SQL on FHIR for the Web",
   head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/logo-dark.svg" }],
   ],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
@@ -14,31 +14,73 @@ export default defineConfig({
       { text: "Guide", link: "/guide" },
       { text: "Examples", link: "/examples.filter-icd" },
     ],
-    logo: "/logo.svg",
+    logo: {
+      light: "logo.svg",
+      dark: "logo-dark.svg",
+    },
+    footer: {
+      message: "Brought to you by nestorhealth",
+    },
     sidebar: [
       {
-        text: "Introduction",
+        text: "Getting Started",
         items: [
-          { text: "Getting Started", link: "/guide.index" },
-          { text: "Design", link: "/guide.design" },
+          {
+            text: "What is Medfetch.js?",
+            link: "/getting-started.what-is-medfetch-js",
+          },
+          { text: "SQLite", link: "/getting-started.sqlite" },
         ],
       },
       {
         text: "Examples",
+        items: [{ text: "Filter by ICD Codes", link: "/examples.filter-icd" }],
+      },
+      {
+        text: "Functions",
+        collapsed: true,
         items: [
-          { text: "Filter by ICD Codes", link: "/examples.filter-icd" },
-          { text: "Runtime API Examples", link: "/api-examples" },
+          {
+            text: "sqlite-wasm",
+            collapsed: false,
+            link: "/functions.sqlite-wasm",
+            items: [
+              {
+                text: "medfetch",
+                link: "/functions.sqlite-wasm.medfetch",
+              },
+              {
+                text: "loadExtension",
+                link: "/functions.sqlite-wasm.loadExtension",
+              },
+            ],
+          },
+          {
+            text: "React",
+            link: "/functions.react",
+            collapsed: false,
+            items: [
+              {
+                text: "useDatabase",
+                link: "/functions.react.useDatabase",
+              },
+            ],
+          },
+          {
+            text: "unpromisify",
+            link: "/functions.unpromisify",
+          },
         ],
       },
     ],
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/vuejs/vitepress" },
+      { icon: "github", link: "https://github.com/nestorhealth/medfetch.js" }
     ],
   },
   vite: {
     plugins: [
-      // @ts-ignore
+      // @ts-expect-error lol
       {
         configureServer(server) {
           server.middlewares.use((_req, res, next) => {
@@ -57,6 +99,6 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ["@sqlite.org/sqlite-wasm"],
     },
-    envDir: fileURLToPath(new URL("../", import.meta.url))
+    envDir: fileURLToPath(new URL("../", import.meta.url)),
   },
 });

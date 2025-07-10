@@ -2,23 +2,6 @@ import { defineConfig } from "vite";
 import path from "node:path";
 
 export default defineConfig({
-    // @ts-ignore
-    test: {
-        // coverage: {
-        //     exclude: [
-        //         "src/examples/**",
-        //         "**/*.test.ts"
-        //     ],
-        //     include: [
-        //         "src/**"
-        //     ]
-        // },
-        browser: {
-            enabled: true,
-            provider: "preview",
-            instances: [{ browser: "chromium" }],
-        },
-    },
     server: {
         headers: {
             "Cross-Origin-Opener-Policy": "same-origin",
@@ -36,7 +19,14 @@ export default defineConfig({
     build: {
         assetsInlineLimit: 0,
         rollupOptions: {
-            external: ["@sqlite.org/sqlite-wasm", "kysely", "node:worker_threads"],
+            external: [
+                "kysely",
+                "@sqlite.org/sqlite-wasm",
+                "@tanstack/react-query",
+                "react",
+                "react-dom",
+                "node:worker_threads",
+            ],
             output: {
                 manualChunks: undefined,
                 entryFileNames: `[name].js`,
@@ -46,13 +36,15 @@ export default defineConfig({
         },
         lib: {
             entry: {
-                "block": "src/block.ts",
-                "block.node": "src/block.node.ts",
-                "dialects": "src/dialects.ts",
+                "unpromisify": "src/unpromisify.ts",
+                "unpromisify.node": "src/unpromisify.node.ts",
                 "sql": "src/sql.ts",
+                // Rename entry so rollup can properly split react
+                "next": "src/next.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
+                "sqlite-wasm.loadExtension": "src/sqlite-wasm.loadExtension.ts",
                 "threads/sqlite-wasm.db": "src/threads/sqlite-wasm.db.ts",
-                "threads/sqlite-wasm.block": "src/threads/sqlite-wasm.block.ts",
+                "threads/sqlite-wasm.fetch": "src/threads/sqlite-wasm.fetch.ts",
             },
             formats: ["es"],
             fileName: (format, name) =>

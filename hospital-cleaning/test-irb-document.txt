@@ -1,0 +1,87 @@
+RESEARCH PROTOCOL: Hypertension and Diabetes Management Study
+
+PRINCIPAL INVESTIGATOR: Dr. Maria Rodriguez, MD, PhD
+Department of Endocrinology, University Medical Center
+
+STUDY TITLE: Comparative Analysis of Hypertension and Diabetes Management in Adult Male Patients
+
+RESEARCH OBJECTIVE:
+This study aims to evaluate the effectiveness of different management strategies for adult male patients with hypertension and diabetes. We will analyze patient demographics, condition patterns, and treatment outcomes in this specific population.
+
+STUDY POPULATION:
+- Age: 18-65 years
+- Gender: Male only
+- Primary Conditions: Hypertension (Essential Hypertension), Diabetes Mellitus
+- Active patients with documented encounters
+
+INCLUSION CRITERIA:
+- Male patients aged 18-65 years
+- Active patient status
+- Confirmed diagnosis of Essential Hypertension (SNOMED CT: 38341003)
+- May have comorbid Type 2 Diabetes Mellitus
+- At least one documented encounter in the past 12 months
+
+EXCLUSION CRITERIA:
+- Female patients
+- Patients under 18 or over 65 years of age
+- Inactive patient status
+- No recent encounters
+
+DATA REQUIREMENTS:
+We require access to the following FHIR resources:
+1. Patient demographics (focus on male patients, age 18-65)
+2. Condition records (Essential Hypertension - SNOMED CT 38341003)
+3. Observation records (HbA1c - LOINC 4548-4, Cholesterol - LOINC 2093-3)
+4. Encounter records (outpatient visits)
+5. Procedure records (completed procedures)
+6. MedicationRequest records (active medications)
+
+SPECIFIC MEDICAL CODES:
+- Essential Hypertension: SNOMED CT 38341003
+- Type 2 Diabetes Mellitus: SNOMED CT 44054006
+- HbA1c Test: LOINC 4548-4 (Hemoglobin A1c)
+- Cholesterol Test: LOINC 2093-3 (Cholesterol Total)
+
+STUDY TIMELINE:
+- Data collection period: January 1, 2024 to December 31, 2025
+- Analysis period: January 1, 2026 to June 30, 2026
+- Target patient count: 100 male patients
+
+DATA SECURITY:
+All data will be de-identified and stored in HIPAA-compliant systems. Patient identifiers will be removed and replaced with unique study codes.
+
+INFORMED CONSENT:
+This study will use de-identified data only. No direct patient contact is required as this is a retrospective analysis of existing medical records.
+
+RISK ASSESSMENT:
+This study poses minimal risk as it involves only retrospective analysis of de-identified data. No direct patient intervention is involved.
+
+BENEFITS:
+This study will contribute to understanding the effectiveness of different management strategies for male patients with hypertension and diabetes.
+
+DATA ANALYSIS PLAN:
+- Descriptive statistics for patient demographics
+- Comparative analysis of treatment outcomes
+- Statistical modeling of condition patterns
+- Healthcare utilization analysis
+
+BUDGET:
+Total budget: $75,000
+- Data analysis: $40,000
+- Personnel: $25,000
+- Software and tools: $10,000
+
+INSTITUTIONAL REVIEW BOARD COMPLIANCE:
+This protocol has been designed to meet all IRB requirements including adequate data security measures, appropriate risk-benefit ratio, and compliance with HIPAA regulations.
+
+MONITORING:
+The study will be monitored by the institutional review board and may be subject to external audits. Regular progress reports will be submitted to the IRB.
+
+CONFIDENTIALITY:
+All participant data will be kept strictly confidential. Personal identifiers will be removed and replaced with unique study codes. Access to identifiable data will be limited to authorized research personnel only.
+
+VOLUNTARY PARTICIPATION:
+This study uses de-identified data only. No direct patient participation is required as this is a retrospective analysis of existing medical records.
+
+ADDITIONAL NOTES:
+This study focuses specifically on male patients with Essential Hypertension (SNOMED CT 38341003) as the primary condition. We are particularly interested in patients who are active and have recent encounters. The study will analyze both the primary hypertension condition and any comorbid diabetes conditions to understand treatment patterns and outcomes in this population. 

@@ -1,11 +1,10 @@
-import block from "~/block";
+import unpromisify from "~/unpromisify";
 
-export const [syncFetch, setSyncFetch] = block(
-  ["db.worker", "db.block"],
+export const [syncFetch, setSyncFetch] = unpromisify(
+  "db.worker",
   (...args: Parameters<typeof fetch>) => 
     fetch(...args)
-    .then(res => res.json())
-    .then(JSON.stringify)
+    .then(res => res.text()),
 );
 
 setSyncFetch();

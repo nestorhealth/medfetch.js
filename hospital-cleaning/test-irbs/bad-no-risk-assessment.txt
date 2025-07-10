@@ -1,0 +1,52 @@
+RESEARCH PROTOCOL: Cancer Screening Study
+
+PRINCIPAL INVESTIGATOR: Dr. James Wilson, MD, PhD
+Department of Oncology, Cancer Research Center
+
+STUDY TITLE: Early Detection of Colorectal Cancer
+
+INFORMED CONSENT:
+All participants will receive informed consent forms explaining the study purpose and procedures.
+
+DATA SECURITY AND PRIVACY PROTECTION:
+- HIPAA-compliant data storage
+- Data encryption
+- Access controls
+- Regular security audits
+
+VOLUNTARY PARTICIPATION:
+Participation is voluntary and participants can withdraw at any time.
+
+CONFIDENTIALITY AND PRIVACY:
+All data will be kept confidential with personal identifiers removed.
+
+STUDY OBJECTIVES:
+This study aims to evaluate the effectiveness of different colorectal cancer screening methods.
+
+TARGET POPULATION:
+- Patients aged 50-75 years
+- Average risk for colorectal cancer
+- Both male and female participants
+
+DATA REQUIREMENTS:
+- Patient demographics
+- Screening test results
+- Follow-up procedures
+- Cancer detection rates
+
+RESOURCE TYPES NEEDED:
+- Patient: Demographics, age, gender
+- Condition: Cancer diagnoses
+- Procedure: Screening procedures
+- Observation: Test results
+- Encounter: Clinical visits
+
+FILTERS AND CRITERIA:
+- Age range: 50-75 years
+- Gender: All
+- Date range: 2020-01-01 to 2025-12-31
+- Target patient count: 1000 patients
+
+MONITORING AND OVERSIGHT:
+- IRB review
+- Progress reports 

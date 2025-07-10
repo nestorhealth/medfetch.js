@@ -1,12 +1,18 @@
 {
   "name": "@medfetch.js/api",
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy:preview": "wrangler deploy --minify --env preview",
     "deploy": "wrangler deploy --minify --env production",
+    "auth-generate": "npx dotenv -e .dev.vars -- npx @better-auth/cli generate --output migrations/00.sql",
+    "migrate-up": "npx dotenv -e .dev.vars -- tsx src/migrator.up.ts",
+    "migrate-down": "npx dotenv -e .dev.vars -- tsx src/migrator.down.ts",
     "cf-typegen": "wrangler types ./dist/worker-configuration.d.ts --env-interface CloudflareBindings",
-    "api-typegen": "openapi-typescript ./public/openapi.json -o ./dist/types.d.ts",
-    "demo-data-codegen": "tsx bin/researcher-demo.ts"
+    "api-typegen": "npx dotenv -e .dev.vars -- tsx bin/openapi-doc.ts && openapi-typescript ./public/openapi.json -o ./dist/types.d.ts",
+    "db-codegen": "npx dotenv -e .dev.vars -- npx kysely-codegen --camel-case",
+    "demo-data-codegen": "tsx bin/researcher-demo.ts",
+    "test": "npx dotenv -e .env.test -- npx vitest"
   },
   "exports": {
     "./types": {
@@ -18,24 +24,35 @@
     "@hono/node-server": "^1.14.4",
     "@hono/zod-openapi": "^0.19.8",
     "@hono/zod-validator": "^0.7.0",
+    "better-auth": "^1.2.12",
     "fflate": "^0.8.2",
     "hono": "^4.7.11",
     "json-refs": "^3.0.15",
     "json-schema-to-zod": "^2.6.1",
     "kysely": "^0.28.2",
-    "kysely-d1": "^0.4.0",
     "medfetch": "workspace:^",
     "openai": "^5.0.1",
+    "pg": "^8.16.3",
     "xml2js": "^0.6.2",
     "zod": "^3.25.51"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250605.0",
+    "@eslint/js": "^9.30.0",
     "@types/fhir": "^0.0.41",
     "@types/node": "^22.15.30",
+    "@types/pg": "^8.15.4",
     "@types/xml2js": "^0.4.14",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
     "commander": "^14.0.0",
+    "dotenv": "^17.0.1",
+    "eslint": "^9.30.0",
+    "kysely-codegen": "^0.18.5",
+    "openapi-fetch": "^0.14.0",
     "openapi-typescript": "^7.8.0",
-    "wrangler": "^4.4.0"
+    "typescript-eslint": "^8.35.1",
+    "vitest": "^3.1.2",
+    "wrangler": "^4.22.0"
   }
 }

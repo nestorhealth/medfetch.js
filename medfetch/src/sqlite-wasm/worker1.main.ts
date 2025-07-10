@@ -1,4 +1,4 @@
-import { KeyCounter } from "./counter.js";
+import { KeyCounter } from "./counters.js";
 // Get the Sqlite3CreateWorker1Promiser in scope
 import type {
     Sqlite3CreateWorker1Promiser,
@@ -6,13 +6,13 @@ import type {
     Worker1Promiser,
     Worker1Response,
     Worker1ResponseError,
-} from "./worker1.types.js";
-import { Worker1Error } from "./worker1.types.js";
+} from "./types.js";
+import { Worker1Error } from "./types.js";
 import "@sqlite.org/sqlite-wasm";
 
 /**
  * Wrap an sqlite3 web worker with the sqlite3 `worker1promiser`
- * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser)
+ * handle SYNCHRONOUSLY (defers the promise of the function to the first call of the promiser). **YOU** (the caller) are in charge of keeping this handle alive in your script!!
  * @param worker The worker to wrap
  * @returns The promiser-sync function
  */

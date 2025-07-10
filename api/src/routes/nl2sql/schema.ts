@@ -5,6 +5,7 @@ const NLSchema = z
     query: z.string().openapi({
       example: "Get me all happy Patients"
     }),
+    tableStatement: z.string()
   })
   .openapi("POST");
 
@@ -26,7 +27,7 @@ const ErrorSchema = z
 
 const POST = createRoute({
   method: "post",
-  path: "/nl2sql",
+  path: "/",
   request: {
     body: {
       content: {
