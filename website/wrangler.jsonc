@@ -1,6 +1,6 @@
 {
   "main": ".open-next/worker.js",
-  "name": "medfetch-research",
+  "name": "research",
   "compatibility_date": "2025-03-25",
   "compatibility_flags": [
     "nodejs_compat"
