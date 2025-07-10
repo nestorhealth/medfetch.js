@@ -32,7 +32,7 @@ and "minimize" dependencies*.
 
 ::: info
 *For example, if we wanted to add in a [`node-postgres`](https://node-postgres.com/) extension in the future,
-then it may not make as much sense to restrict yourself to NodeJS's Web API implementations only and reach for nodejs
+then it may not make as much sense to restrict yourself to web apis only and reach for nodejs
 specific tooling if we needed some kind of specialized routines using `fs` or something like that.
 :::
 

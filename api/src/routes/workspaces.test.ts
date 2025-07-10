@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import authRouter from "~/routes/auth";
 import { Hono } from "hono";
 import { down, up } from "~/../migrations/01";
-import { db } from "~/middleware";
+import { db } from "~/db";
 
 let COOKIE: string | null = null;
 let MY_WORKSPACE_ID: number | null = null;

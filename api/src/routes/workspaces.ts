@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { auth } from "~/lib/auth";
-import { customLogger, db } from "~/middleware";
+import { customLogger } from "~/middleware";
+import { db } from "~/db";
 import { DELETE, GET, POST } from "~/routes/workspaces/schema";
 
 const workspaces = new OpenAPIHono<{

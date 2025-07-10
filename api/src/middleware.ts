@@ -1,17 +1,14 @@
 import { createMiddleware } from "hono/factory";
 import { cors as corsMiddleware } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
-import { Kysely, PostgresDialect, CamelCasePlugin } from "kysely";
-import { Pool } from "pg";
-import type { DB } from "kysely-codegen";
 
 export const customLogger = (message: string, ...rest: string[]) => {
   console.log(message, ...rest);
 };
 
-export const cors = createMiddleware(async (c, next) => {
+export const cors = createMiddleware<{Bindings: Env}>(async (c, next) => {
   const corsHandler = corsMiddleware({
-    origin: [c.env?.MEDFETCH_DOCS_HOST ?? "https://docs.medfetch.io", c.env?.MEDFETCH_DEMO_HOST ?? "https://medfetchjs.pages.dev"],
+    origin: [c.env?.MEDFETCH_DOCS_HOST ?? "https://docs.medfetch.io", c.env?.MEDFETCH_DEMO_HOST ?? "https://medfetchjs.pages.dev", ...c.env.MEDFETCH_RESEARCH_HOST],
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400,
@@ -29,15 +26,4 @@ export const errorSetter = createMiddleware<{ Variables: Vars }>((c, next) => {
     });
   });
   return next();
-});
-
-const dialect = new PostgresDialect({
-  pool: new Pool({
-    connectionString: process.env.DATABASE_URL!,
-  }),
-});
-
-export const db = new Kysely<DB>({
-  dialect: dialect,
-  plugins: [new CamelCasePlugin()],
 });

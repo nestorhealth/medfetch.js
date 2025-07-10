@@ -3,7 +3,7 @@
   "name": "medfetch-api",
   "main": "src/app.ts",
   "assets": {
-    "directory": "public"
+    "directory": "public",
   },
   "compatibility_date": "2025-06-03",
   "compatibility_flags": ["nodejs_compat"],
@@ -11,31 +11,29 @@
     "ENVIRONMENT": "dev",
     "BETTER_AUTH_URL": "http://localhost:8787", // Same as "base url"
     "MEDFETCH_DOCS_HOST": "http://localhost:5173",
-    "MEDFETCH_DEMO_HOST": "http://localhost:3000"
+    "MEDFETCH_DEMO_HOST": "http://localhost:3000",
+    "MEDFETCH_RESEARCH_HOST": "http://localhost:3000",
   },
   "env": {
-    "dev": {
-      "vars": {
-        "ENVIRONMENT": "dev",
-        "MEDFETCH_DOCS_HOST": "http://localhost:5173",
-        "MEDFETCH_DEMO_HOST": "http://localhost:3000"
-      }
-    },
     "production": {
       "vars": {
         "ENVIRONMENT": "production",
         "MEDFETCH_DOCS_HOST": "https://docs.medfetch.io",
-        "MEDFETCH_DEMO_HOST": "https://medfetchjs.pages.dev"
-      }
-    }
+        "MEDFETCH_DEMO_HOST": "https://medfetchjs.pages.dev",
+        "MEDFETCH_RESEARCH_HOST": [
+          "https://research.medfetch.io",
+          "https://research.nathanoh885.workers.dev",
+        ],
+      },
+    },
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "api-db",
-      "database_id": "591499c4-9db3-4ab6-bc78-41b09cd0b8f8"
-    }
-  ]
+      "database_id": "591499c4-9db3-4ab6-bc78-41b09cd0b8f8",
+    },
+  ],
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

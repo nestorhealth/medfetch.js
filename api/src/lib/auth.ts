@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { db } from "~/middleware";
+import { db } from "~/db";
 import { openAPI } from "better-auth/plugins";
 
 export const auth = betterAuth({

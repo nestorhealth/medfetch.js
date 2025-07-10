@@ -1,4 +1,4 @@
-import { db } from "~/middleware";
+import { db } from "~/db";
 
 const userId = crypto.randomUUID();
 await db.insertInto("user").values({

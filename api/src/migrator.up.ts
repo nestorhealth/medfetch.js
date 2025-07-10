@@ -1,4 +1,4 @@
-import { db } from "~/middleware";
+import { db } from "./db";
 import { migrator } from "~/migrator.client";
 
 const { error, results } = await migrator.migrateToLatest();

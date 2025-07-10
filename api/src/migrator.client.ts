@@ -3,7 +3,7 @@ import {
   Migrator,
 } from "kysely";
 import { promises as fs } from "node:fs";
-import { db } from "./middleware";
+import { db } from "./db";
 import path from "node:path";
 import url from "node:url";
 
