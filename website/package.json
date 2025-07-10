@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "npx concurrently \"pnpm run --filter=medfetch build\" \"pnpm run --filter=@medfetch.js/api api-typegen\" \"pnpm run --filter=@medfetch.js/api cf-typegen\" && next build && cp _headers out",
+    "build": "npx concurrently \"pnpm run --filter=medfetch build\" \"pnpm run --filter=@medfetch.js/api api-typegen\" && next build && cp _headers out",
     "lint": "next lint",
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "test": "vitest",
