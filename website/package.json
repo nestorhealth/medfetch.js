@@ -6,16 +6,19 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx concurrently \"pnpm run --filter=medfetch build\" \"pnpm run --filter=@medfetch.js/api api-typegen\" && next build && cp _headers out",
-    "preview": "node server.mjs",
     "lint": "next lint",
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "test": "vitest",
     "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "@chevrotain/regexp-to-ast": "^11.0.3",
     "@medfetch.js/api": "workspace:^",
+    "@opennextjs/cloudflare": "^1.4.0",
     "@radix-ui/react-checkbox": "^1.3.2",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.1.6",
@@ -79,6 +82,7 @@
     "tw-animate-css": "^1.2.5",
     "typescript": "^5.8.3",
     "undici-types": "^7.10.0",
-    "vitest": "^3.1.2"
+    "vitest": "^3.1.2",
+    "wrangler": "^4.24.0"
   }
 }
