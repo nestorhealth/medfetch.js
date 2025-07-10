@@ -64,7 +64,6 @@ export function loadExtension(
             }
 
             const fetchPage = Page.fetcher(aux.baseURL, syncFetch);
-
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
             modules[dbIndex] = medfetch_module_alloc(

@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialect, Kysely, sql } from "kysely";
 import { useDatabase } from "medfetch/next";
 
@@ -19,13 +16,16 @@ export function useWorkspaceData(
   );
   const [error, setError] = useState<string | null>(null);
 
-  const workspaceView = useDatabase(dialect,
+  const workspaceView = useDatabase(
+    dialect,
     async (db: Kysely<any>) => {
+      console.log("notok");
       await db.schema
         .createTable(viewOpts.tableName)
         .ifNotExists()
         .as(db.selectFrom(viewOpts.virtualTableName).selectAll())
         .execute();
+      console.log("ok");
       const { sql } = await db
         .selectFrom("sqlite_master")
         .select("sql")
@@ -35,44 +35,46 @@ export function useWorkspaceData(
         .selectFrom(viewOpts.tableName)
         .selectAll()
         .execute();
+      console.log("resultRows", resultRows);
       return {
         resultRows,
         ctas: sql as string,
       };
     },
-    (db: Kysely<any>, {set}) => async (sqlText: string) => {
-      const stmts = sqlText
-        .split(";")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const isSelect = stmts[0].toLowerCase().startsWith("select");
-      let results: any[] = [];
-      if (isSelect) {
-        results = await sql
-          .raw(sqlText)
-          .execute(db)
-          .then((result) => result.rows);
-      } else {
-        await db.transaction().execute(async (tx) => {
-          await sql.raw(sqlText).execute(tx);
+    (db: Kysely<any>, { set }) =>
+      async (sqlText: string) => {
+        const stmts = sqlText
+          .split(";")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const isSelect = stmts[0].toLowerCase().startsWith("select");
+        let results: any[] = [];
+        if (isSelect) {
+          results = await sql
+            .raw(sqlText)
+            .execute(db)
+            .then((result) => result.rows);
+        } else {
+          await db.transaction().execute(async (tx) => {
+            await sql.raw(sqlText).execute(tx);
+          });
+        }
+        const { sql: ctas } = await db
+          .selectFrom("sqlite_master")
+          .select("sql")
+          .where("name", "=", viewOpts.tableName)
+          .executeTakeFirstOrThrow();
+        set((prev) => {
+          if (!isSelect) {
+            return prev;
+          }
+          console.log("SETTING TO", results);
+          return {
+            resultRows: results,
+            ctas,
+          };
         });
-      }
-      const {sql:ctas}= await db
-        .selectFrom("sqlite_master")
-        .select("sql")
-        .where("name", "=", viewOpts.tableName)
-        .executeTakeFirstOrThrow();
-      set(prev => {
-        if (!isSelect) {
-          return prev;
-        }
-        console.log("SETTING TO", results)
-        return {
-          resultRows: results,
-          ctas
-        }
-      })
-    },
+      },
   );
 
   const queryClient = useQueryClient();
@@ -105,7 +107,9 @@ export function useWorkspaceData(
     total: workspaceView.queryData?.resultRows?.length ?? 0,
     active:
       currentTableName === "Patient"
-        ? workspaceView.queryData?.resultRows?.filter((r: any) => r.status === "Active").length
+        ? workspaceView.queryData?.resultRows?.filter(
+            (r: any) => r.status === "Active",
+          ).length
         : 0,
   };
 

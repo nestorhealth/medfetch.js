@@ -6,8 +6,6 @@ import { logger } from "hono/logger";
 import nl2sql from "./routes/nl2sql";
 import fhir from "./routes/fhir";
 import { customLogger, cors, errorSetter } from "~/middleware";
-import authRouter from "~/routes/auth";
-import workspaces from "~/routes/workspaces";
 
 // Extend the Env type to include DB
 declare global {
@@ -328,8 +326,6 @@ app.openapi(db.schemaOperation, async (c) => {
 
 app.route("/nl2sql", nl2sql);
 app.route("/fhir", fhir);
-app.route("/auth", authRouter);
-app.route("/workspaces", workspaces);
 
 // openapi reference
 app.doc("/openapi", {

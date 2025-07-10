@@ -20,12 +20,18 @@ export type FetchTextSync = (...args: Parameters<typeof fetch>) => string;
 /**
  */
 export default class Page<T = any> {
+    /**
+     * The next URL state.
+     */
     #nextURL: string | null;
+
+    /**
+     * One-time flag that checks
+     */
     #isNextLinkParsed: boolean;
     #cursor: number;
     #acc: T[];
     #chunks: Generator<string>;
-    #rows: Generator<T> | undefined = undefined;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
     /**
@@ -67,29 +73,14 @@ export default class Page<T = any> {
                     });
                     pageCache.set(resourceType, filteredBundle);
                 }
-                return new Page(function* () {
-                    const chunkSize = 400_000;
-                    for (let i = 0; i < filteredBundle.length; i += chunkSize) {
-                        yield filteredBundle.slice(i, i + chunkSize);
-                    }
-                });
+                return filteredBundle;
             };
         } else {
             return (resourceType) => {
                 const responseText: string = syncFetch(
                     `${baseURL}/${resourceType}`,
                 );
-                const generator = function* () {
-                    // just yield the whole text for now until
-                    yield responseText;
-                };
-
-                return new Page(generator(), (nextURL) => {
-                    return (function* () {
-                        const responseText = syncFetch(nextURL);
-                        yield responseText;
-                    })();
-                });
+                return responseText;
             };
         }
     }
@@ -100,55 +91,61 @@ export default class Page<T = any> {
     ) {
         this.#nextURL = null;
         this.#isNextLinkParsed = false;
-        this.#cursor = -1;
+        this.#cursor = 0;
         this.#acc = [];
         this.#chunks = chunks instanceof Function ? chunks() : chunks;
         this.#fetcher = nextPage;
     }
 
-    *#entries() {
-        while (true) {
-            if (this.#acc.length > 0) {
-                yield this.#acc.shift()!;
-            }
-            const { done, value } = this.#chunks.next();
-            if (done || !value) break;
-            if (!this.#nextURL && !this.#isNextLinkParsed) {
-                const link = parseLink(value);
-                if (link) {
-                    this.#isNextLinkParsed = true;
-                    const nextLink = link.hd.find(
-                        (link) => link.relation === "next",
-                    )?.url;
-                    if (nextLink) {
-                        this.#nextURL = nextLink;
-                    }
-                }
-            }
-            const popped = parseEntry(value);
-            if (popped) {
-                if (popped.hd.length > 0) {
-                    const hd = popped.hd
-                        .slice(this.#cursor + 1)
-                        .filter(
-                            (
-                                entry,
-                            ): entry is Entry & {
-                                resource: Resource;
-                            } => !!entry.resource,
-                        )
-                        .map(({ resource }) => resource);
-                    this.#cursor = hd.length - 1;
-                    // TODO - Make this more generic (prolly goes for entire Page class...)
-                    this.#acc.push(...hd as any);
-                    const front = this.#acc.shift();
-                    if (front) {
-                        yield front;
-                    }
-                }
+    *#entries(): Generator<T> {
+        // Yield any already-parsed entries
+        while (this.#cursor < this.#acc.length) {
+            yield this.#acc[this.#cursor++];
+        }
+
+        // Try to fetch next chunk
+        const { done, value } = this.#chunks.next();
+        if (done || !value) return;
+
+        // Parse `next` URL from _first_ chunk
+        if (!this.#nextURL && !this.#isNextLinkParsed) {
+            const link = parseLink(value);
+            if (link) {
+                this.#isNextLinkParsed = true;
+                const nextLink = link.hd.find(
+                    (l) => l.relation === "next",
+                )?.url;
+                if (nextLink) this.#nextURL = nextLink;
             }
         }
-        while (this.#acc.length > 0) yield this.#acc.shift()!;
+
+        // Parse and append new entries
+        const popped = parseEntry(value);
+        if (popped && popped.hd?.length > 0) {
+            const newEntries = popped.hd
+                .slice(this.#cursor)
+                .filter(
+                    (entry): entry is Entry & { resource: Resource } =>
+                        !!entry.resource,
+                )
+                .map(({ resource }) => resource as T);
+
+            if (newEntries.length > 0) {
+                this.#acc.push(...newEntries);
+            }
+        }
+
+        // Final flush in case new #acc entries appeared
+        while (this.#cursor < this.#acc.length) {
+            yield this.#acc[this.#cursor++];
+        }
+    }
+
+    /**
+     * Reset the cursor's position back to index 0
+     */
+    reset() {
+        this.#cursor = 0;
     }
 
     /**
@@ -157,10 +154,7 @@ export default class Page<T = any> {
      * @returns {@link Resource} generator
      */
     get entries(): Generator<T> {
-        if (!this.#rows) {
-            this.#rows = this.#entries();
-        }
-        return this.#rows;
+        return this.#entries();
     }
 
     /**

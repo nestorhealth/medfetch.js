@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { Dialect } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
-import { unzipJSONSchema, virtualMigration } from "medfetch/sql";
+import { unzipJSONSchema } from "@/lib/json-schema";
+import { env } from "@/lib/env";
 
 function WorkspaceHeader({
   currentTableName,
@@ -303,9 +304,6 @@ export default function WorkspacePage() {
   const raw = globalThis.localStorage?.getItem("workspaceData");
   const parsed = JSON.parse(raw ?? '{"jsonData": null}');
 
-  console.log("parsed workspaceData:", parsed);
-  console.log("jsonData:", parsed.jsonData);
-
   const dialect = useMemo(() => {
     // const blob = new Blob([JSON.stringify(parsed.jsonData)], {
     //   type: "application/json",
@@ -314,7 +312,7 @@ export default function WorkspacePage() {
     //   type: "application/json",
     //   lastModified: Date.now(),
     // })
-    return medfetch(process.env.NEXT_PUBLIC_API_URL + "fhir", virtualMigrations(() => unzipJSONSchema()),{
+    return medfetch(env.NEXT_PUBLIC_FHIR_API_URL, unzipJSONSchema,{
       filename: workspaceName,
     });
   }, [parsed.jsonData, workspaceName]);

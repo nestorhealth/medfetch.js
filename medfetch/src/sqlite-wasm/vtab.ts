@@ -3,7 +3,7 @@ import type {
     sqlite3_vtab_cursor,
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
-import type Page from "../json/page.js";
+import Page from "../json/page.js";
 import type { Sqlite3, Sqlite3Module } from "./types.js";
 import { entries, getTableName, virtualTable } from "../sql/table.js";
 import walk, { type Walk } from "~/json/walk.js";
@@ -30,7 +30,7 @@ export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
  * refetch per row on an inner join, which obviously isn't ideal in the
  * worst case.
  */
-export type FetchPageFn = (resourceType: string) => Page;
+export type FetchPageFn = (resourceType: string) => string;
 
 const log = {
     on: (f: boolean, cb: () => void) => {
@@ -156,27 +156,12 @@ export function x_open(
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
         try {
-            const rawGen = fetchPage(resourceType).entries;
-            const buffer: any[] = [];
-            let index = 0;
-            cursor.page = {
-                rows: {
-                    next: () => {
-                        if (index < buffer.length) {
-                            return { value: buffer[index++], done: false };
-                        }
-                        const next = rawGen.next();
-                        if (!next.done) {
-                            buffer.push(next.value);
-                            index++;
-                        }
-                        return next;
-                    },
-                    reset: (() => {
-                        index = 0;
-                    }) as any,
-                },
-            } as any;
+            const pageBuffer = fetchPage(resourceType);
+            const asGen = function* () {
+                console.log("right", pageBuffer)
+                yield pageBuffer;
+            }
+            cursor.page = new Page(asGen);
 
             return sqlite3.capi.SQLITE_OK;
         } catch (err) {
@@ -197,7 +182,7 @@ export function x_close(sqlite3: Sqlite3Static) {
 }
 
 export function x_next(sqlite3: Sqlite3Static) {
-    return (...args: Params<"xClose">) => {
+    return (...args: Params<"xNext">) => {
         const [pCursor] = args;
         const cursor = sqlite3.vtab.xCursor.get(
             pCursor,
@@ -317,8 +302,9 @@ export function x_filter(sqlite3: Sqlite3Static) {
 
         // Start the generator
         cursor.peeked = cursor.page.entries.next();
+        console.log("and we're back...")
         if (cursor.peeked.done) {
-            (cursor.page.entries as any).reset();
+            cursor.page.reset();
             cursor.peeked = cursor.page.entries.next();
         }
 

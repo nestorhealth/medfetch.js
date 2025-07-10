@@ -3,6 +3,7 @@
 import { mockPatientBundleFile } from "@/app/mock-file";
 import { api, authClient } from "@/lib/api";
 import { openDB } from "@/lib/client";
+import { unzipJSONSchema } from "@/lib/json-schema";
 import { Kysely, sql } from "kysely";
 import medfetch from "medfetch/sqlite-wasm";
 import { useEffect } from "react";
@@ -59,7 +60,7 @@ async function logCheckResult() {
 export default function SanityCheck() {
   useEffect(() => {
     async function foo() {
-      const dialect = medfetch(mockPatientBundleFile);
+      const dialect = medfetch(mockPatientBundleFile, unzipJSONSchema);
       const db = new Kysely<any>({
         dialect,
       });
