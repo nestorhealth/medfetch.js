@@ -118,9 +118,11 @@ export function x_connect(sqlite3: Sqlite3Static, migrationText: string) {
         }
         sqlite3.vtab.xVtab.create(ppvtab);
 
-        import.meta.env.DEV ? log.info(
-            `medfetch virtual table ${getTableName(migrationText)} xConnect() to ${getTableName(migrationText)} OK`,
-        ) : void 0;
+        import.meta.env.DEV
+            ? log.info(
+                  `medfetch virtual table ${getTableName(migrationText)} xConnect() to ${getTableName(migrationText)} OK`,
+              )
+            : void 0;
 
         return rc;
     };
@@ -158,7 +160,7 @@ export function x_open(
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
         try {
-            cursor.page = fetchPage(resourceType)
+            cursor.page = fetchPage(resourceType);
             // const pageBuffer = fetchPage(resourceType);
             // const asGen = function* () {
             //     yield pageBuffer;

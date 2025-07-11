@@ -19,19 +19,19 @@ export type VirtualMigrationConfig = {
      * @todo Provide a more granular way to determine column mappings
      */
     readonly dialect: "sqlite" | "postgresql";
-    
+
     /**
      * The path to an object child whose keys/props contains the Tables
      * to generate migration texts for.
      */
     readonly discriminatorPath: string;
-    
+
     /**
      * What l1 (immediate) child keys from the parent object
      * should be "generated" (usually a deeper path extraction)
      */
     readonly generatedPaths?: ReadonlyMap<string, string>;
-    
+
     /**
      * Optional filter to omit column keys dynamically rather than have to
      * do so within the JSON schema itself.

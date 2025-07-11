@@ -81,7 +81,6 @@ export function entries(createTables: string): TableSQLEntry[] {
         .filter((migration): migration is [string, string] => !!migration[0]);
 }
 
-
 /**
  * The js-land representation of the virtual-table metadata medfetch needs in order
  * to look up the user-defined virtual table columns from its postgres / sqlite extension.
@@ -108,12 +107,15 @@ type VirtualTable = {
 export function virtualTable(
     fullStatement: string,
     walk: Walk,
-    constraints = false
+    constraints = false,
 ): VirtualTable {
     const createPrefix = /^create\s+table\s+["'`]?(.*?)["'`]?\s*\(/i;
     const match = fullStatement.match(createPrefix);
     if (!match) {
-        return exception("Invalid create table (missing prefix): ", fullStatement);
+        return exception(
+            "Invalid create table (missing prefix): ",
+            fullStatement,
+        );
     }
 
     const tableName = match[1];
@@ -129,13 +131,19 @@ export function virtualTable(
     }
 
     if (depth !== 0) {
-        return exception("Invalid create table (unmatched parens): ", fullStatement);
+        return exception(
+            "Invalid create table (unmatched parens): ",
+            fullStatement,
+        );
     }
 
     const rawCols = rest.slice(0, i); // contents inside parens
     const tail = rest.slice(i + 1).trim();
     if (tail && tail !== ";") {
-        return exception("Invalid create table (unexpected suffix): ", fullStatement);
+        return exception(
+            "Invalid create table (unexpected suffix): ",
+            fullStatement,
+        );
     }
 
     const columnMap = new Map<number, (json: unknown) => unknown>();

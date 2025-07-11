@@ -17,7 +17,10 @@ import "@sqlite.org/sqlite-wasm";
  * @returns The promiser-sync function
  */
 export function promiserSyncV2<TWorker = Worker>(worker: TWorker) {
-    const promiserPromise = ((globalThis as any).sqlite3Worker1Promiser as any as Sqlite3CreateWorker1Promiser<TWorker>).v2({
+    const promiserPromise = (
+        (globalThis as any)
+            .sqlite3Worker1Promiser as any as Sqlite3CreateWorker1Promiser<TWorker>
+    ).v2({
         worker,
     });
     const f = unwrap(promiserPromise);

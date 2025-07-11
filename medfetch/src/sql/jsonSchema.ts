@@ -1,14 +1,11 @@
 import type { JSONSchema7, JSONSchema7Definition } from "json-schema";
 import { sql, type ColumnDataType } from "kysely";
 import { get } from "jsonpointer";
-import {
-    type DataTypeExpression,
-    dummyDB,
-} from "~/sql/kysely";
+import { type DataTypeExpression, dummyDB } from "~/sql/kysely";
 import type { VirtualMigrationConfig } from "~/sql";
 import { makeError } from "~/context";
 
-const exception = makeError("medfetch/sql.json-schema")
+const exception = makeError("medfetch/sql.json-schema");
 
 function resolveRef(ref: string, rootSchema: JSONSchema7): JSONSchema7 {
     if (!ref.startsWith("#")) {
@@ -83,12 +80,16 @@ function createTable(
     const tb = dummyDB(dialect).schema.createTable(tableName);
     const jsonObjectProps = get(root, `/definitions/${tableName}/properties`);
     if (!jsonObjectProps) {
-        return exception(`That json object schema doesn't exist: "${tableName}"`);
+        return exception(
+            `That json object schema doesn't exist: "${tableName}"`,
+        );
     }
     const columns: [string, JSONSchema7][] = Object.entries(jsonObjectProps);
     const finalTb = columns.reduce((tb, [key, value]) => {
         if (typeof value === "boolean") {
-            return exception(`Unexpected "boolean"-valued JSON schema for column ${tableName}.${key}`);
+            return exception(
+                `Unexpected "boolean"-valued JSON schema for column ${tableName}.${key}`,
+            );
         }
         if (drop?.(key)) {
             return tb;
@@ -100,10 +101,10 @@ function createTable(
             const pathSchema = resolve(get(root, normalize(path)), root);
             const columnType = switchJSONTypeName(dialect, pathSchema);
             if (columnType) {
-                tb = tb.addColumn(key, columnType, col =>
+                tb = tb.addColumn(key, columnType, (col) =>
                     col.generatedAlwaysAs(
-                        sql.raw(`'${key}'->>'${path.split("/").pop()!}'`)
-                    )
+                        sql.raw(`'${key}'->>'${path.split("/").pop()!}'`),
+                    ),
                 );
             }
         } else {
@@ -129,7 +130,7 @@ function createTable(
  * @param schemaObject The JSON schema object
  * @param config Any options from {@link VirtualMigrationConfig}
  * @returns The plaintext migration text
- * 
+ *
  * @example
  * An sqlite migration
  * ```ts

@@ -9,7 +9,7 @@ const obj = {
         age: 30,
         grandchild: {
             name: "grandchild",
-            age: 3
+            age: 3,
         },
     },
     children: [
@@ -32,20 +32,20 @@ describe("json/walk", () => {
         expect(nameResult).toEqual(obj.name);
         expect(childResult).toEqual(obj.child);
     });
-    
+
     it("Coerces '->>' paths as text when mode is set to 'postgresql'", () => {
         const walkAgeString = walk("'child'->>'age'", "postgresql");
         expect(walkAgeString(obj)).toEqual("30");
         const walkAgeNumber = walk("'child'->>'age'", "sqlite");
         expect(walkAgeNumber(obj)).toEqual(30);
     });
-    
+
     it("Parses with mode set to 'sqlite' when no 'mode' parameter is passed (default)", () => {
         const walkAgeNumberDefault = walk("'child'->>'age'");
         const walkAgeNumberExplicit = walk("'child'->>'age'", "sqlite");
         expect(walkAgeNumberDefault(obj)).toEqual(30);
         expect(walkAgeNumberDefault(obj)).toEqual(walkAgeNumberExplicit(obj));
-    })
+    });
 
     it("Doesn't care about whitespacing between delim", () => {
         const walkNoWS = walk("'child'->>'name'");

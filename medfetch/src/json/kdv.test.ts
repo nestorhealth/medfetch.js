@@ -9,57 +9,57 @@ describe("kdv", () => {
             bar: "bar",
         });
         const value = parse(encoded);
-        expect(value?.hd).toEqual("bar")
+        expect(value?.hd).toEqual("bar");
     });
-    
+
     it("Can parse the first key of a complete buffer on the first go", () => {
         const parse = kdv("foo", 1);
         const encoded = JSON.stringify({
             foo: "foo",
-            bar: "bar"
+            bar: "bar",
         });
         const value = parse(encoded);
         expect(value?.hd).toEqual("foo");
     });
-    
-    it("Returns object values \"parsed\"", () => {
+
+    it('Returns object values "parsed"', () => {
         const parse = kdv("foobar", 1);
         const encoded = JSON.stringify({
             foo: "foo",
             bar: "bar",
             foobar: {
                 foo: "foo",
-                bar: "bar"
-            }
+                bar: "bar",
+            },
         });
         const value = parse(encoded);
         expect(value?.hd).toEqual({
             foo: "foo",
-            bar: "bar"
-        })
+            bar: "bar",
+        });
     });
-    
-    it("Returns array values \"parsed\"", () => {
+
+    it('Returns array values "parsed"', () => {
         const link = [
             {
-                relation: 'next',
-                url: "asdf"
-            }
-        ]
+                relation: "next",
+                url: "asdf",
+            },
+        ];
         const entry = [
             {
                 fullUrl: "lol.com/Patient/p2",
                 resource: {
                     resourceType: "Patient",
-                    id: "p1"
-                }
+                    id: "p1",
+                },
             },
             {
                 fullUrl: "lol.com/Patient/p1",
                 resource: {
                     resourceType: "Patient",
-                    id: "p2"
-                }
+                    id: "p2",
+                },
             },
         ];
         const parseLink = kdv("link", 1);
@@ -68,7 +68,7 @@ describe("kdv", () => {
             id: "b1",
             resourceType: "Bundle",
             link: link,
-            entry: entry
+            entry: entry,
         });
         const linkResult = parseLink(bundleEncoded);
         const entryResult = parseEntry(bundleEncoded);

@@ -29,7 +29,7 @@ export default class Page<T = any> {
     #cursor: number;
     #acc: T[];
     #chunks: Generator<string>;
-    
+
     #bufferParser: PageBufferParser<T>;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
@@ -74,24 +74,18 @@ export default class Page<T = any> {
                     });
                     pageCache.set(resourceType, filteredBundle);
                 }
-                return new Page(
-                    function* () {
-                        yield filteredBundle;
-                    },
-                    parser,
-                );
+                return new Page(function* () {
+                    yield filteredBundle;
+                }, parser);
             };
         } else {
             return (resourceType) => {
                 const responseText: string = syncFetch(
                     `${baseURL}/${resourceType}`,
                 );
-                return new Page(
-                    function* () {
-                        yield responseText;
-                    },
-                    parser,
-                );
+                return new Page(function* () {
+                    yield responseText;
+                }, parser);
             };
         }
     }
@@ -130,10 +124,7 @@ export default class Page<T = any> {
         // Parse and append new entries
         const popped = this.#bufferParser.data(value);
         if (popped && popped.hd?.length > 0) {
-            this.#acc.push(
-                ...popped.hd
-                    .slice(this.#cursor)
-            );
+            this.#acc.push(...popped.hd.slice(this.#cursor));
         }
 
         // Final flush in case new #acc entries appeared

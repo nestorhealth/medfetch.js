@@ -19,12 +19,14 @@ type DB = {
         id: number;
         title: string;
         body: string;
-    }
-}
+    };
+};
 
 describe("medfetch/sqlite-wasm", () => {
     it("Can select all resources from an endpoint", async () => {
-        const dialect = medfetch(API_URL, `
+        const dialect = medfetch(
+            API_URL,
+            `
             create table "users" (
                 "id" int,
                 "name" text,
@@ -41,12 +43,10 @@ describe("medfetch/sqlite-wasm", () => {
                 "title" text,
                 "body" text
             );
-        `);
+        `,
+        );
         const db = new Kysely<DB>({ dialect });
-        const users = await db
-            .selectFrom("users")
-            .selectAll()
-            .execute();
+        const users = await db.selectFrom("users").selectAll().execute();
         expect(users.length).toBeGreaterThan(0);
     });
 });

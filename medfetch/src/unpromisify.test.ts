@@ -81,9 +81,8 @@ if (self.name === "async-worker") {
         if (e.ports[0]) {
             const parentPort = e.ports[0];
             parentPort.start();
-
         }
-    })
+    });
 }
 
 if (self.name !== "sync-worker" && self.name !== "async-worker") {
@@ -185,9 +184,9 @@ if (self.name !== "sync-worker" && self.name !== "async-worker") {
             setSyncCtor(getSyncWorker());
             const { data } = await forMessage(
                 () => port1.postMessage([]),
-                e => e.data !== undefined,
+                (e) => e.data !== undefined,
                 (handler) => port1.addEventListener("message", handler),
-                (handler) => port1.removeEventListener("message", handler)
+                (handler) => port1.removeEventListener("message", handler),
             );
             expect(data).toEqual({
                 str: "",

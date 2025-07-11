@@ -284,8 +284,7 @@ export function syncSetter<
                             const parentPort = e.ports[0];
                             parentPort.start();
                             await forMessage(
-                                () =>
-                                    parentPort.postMessage("pong"),
+                                () => parentPort.postMessage("pong"),
                                 (e) => e.data === "ping",
                                 (h) =>
                                     parentPort.addEventListener("message", h),
@@ -296,10 +295,10 @@ export function syncSetter<
                                     ),
                             );
                             onHandshakeComplete(parentPort);
-                            workerLike.removeEventListener("message", handle)
-                            resolve(parentPort)
+                            workerLike.removeEventListener("message", handle);
+                            resolve(parentPort);
                         }
-                    }
+                    };
                     workerLike.addEventListener("message", handle);
                 });
             }

@@ -22,8 +22,12 @@ import loadExtension from "~/sqlite-wasm.loadExtension.js";
 let __worker: Worker | null = null;
 let __promiser: Worker1Promiser | null = null;
 
-const DEFAULT_RESPONSE_HANDLER = (response: Response): Promise<string> => response.text();
-const __RESPONSE_HANDLERS: Map<string, (response: Response) => any> = new Map<string, (response: Response) => any>();
+const DEFAULT_RESPONSE_HANDLER = (response: Response): Promise<string> =>
+    response.text();
+const __RESPONSE_HANDLERS: Map<string, (response: Response) => any> = new Map<
+    string,
+    (response: Response) => any
+>();
 
 async function openPromiserDB<TWorker = Worker>(
     worker: TWorker,
@@ -57,7 +61,7 @@ const accessWorker = (userWorker?: Worker) => {
         return userWorker;
     }
     if (!__worker) {
-        console.log("NO WORKER REF, SETTING NOW!!")
+        console.log("NO WORKER REF, SETTING NOW!!");
         __worker = new Worker(new URL(import.meta.url, import.meta.url), {
             type: "module",
             name: "sqlite-wasm.db",
@@ -85,10 +89,7 @@ type SqliteWasmOptions = {
     /**
      * Optional mapping hook for response intercepts
      */
-    readonly match?: [
-        pattern: string,
-        handler: (response: Response) => any
-    ][]
+    readonly match?: [pattern: string, handler: (response: Response) => any][];
 };
 
 let FETCH_SET = false;
@@ -144,11 +145,9 @@ export default function medfetch(
     }
 
     if (match) {
-        match.forEach(
-            ([pattern, handler]) => {
-                __RESPONSE_HANDLERS.set(`${baseURL}/${pattern}`, handler);
-            }
-        )
+        match.forEach(([pattern, handler]) => {
+            __RESPONSE_HANDLERS.set(`${baseURL}/${pattern}`, handler);
+        });
     }
 
     const dialect = new Worker1PromiserDialect({
@@ -186,22 +185,21 @@ const [syncFetch, setSyncFetch] = unpromisify<
 >(
     "sqlite-wasm.db",
     (...args: Parameters<typeof fetch>) =>
-        fetch(...args)
-            .then(
-                (response) => {
-                    const url = args[0] as string;
-                    const f = __RESPONSE_HANDLERS.get(url);
-                    if (!f) {
-                        const urlPopped = url.split("/");
-                        urlPopped.pop();
-                        urlPopped.push("*");
-                        const wildcardURL = urlPopped.join("/")
-                        const defaultHandler = __RESPONSE_HANDLERS.get(wildcardURL) ?? DEFAULT_RESPONSE_HANDLER;
-                        return defaultHandler(response);
-                    }
-                    return f(response);
-                }
-            ),
+        fetch(...args).then((response) => {
+            const url = args[0] as string;
+            const f = __RESPONSE_HANDLERS.get(url);
+            if (!f) {
+                const urlPopped = url.split("/");
+                urlPopped.pop();
+                urlPopped.push("*");
+                const wildcardURL = urlPopped.join("/");
+                const defaultHandler =
+                    __RESPONSE_HANDLERS.get(wildcardURL) ??
+                    DEFAULT_RESPONSE_HANDLER;
+                return defaultHandler(response);
+            }
+            return f(response);
+        }),
     {
         byteSize: 5 * 1024 * 1024, // 5 MB
     },
@@ -225,5 +223,5 @@ if (globalThis.self?.name === "sqlite-wasm.db") {
         console.timeEnd(
             "[medfetch/sqlite-wasm.db] >> loaded medfetch extension in",
         );
-    })
+    });
 }

@@ -34,7 +34,7 @@ function createQueryCacheProxy<Q>(
 ): QueryCacheProxy<Q> {
     return {
         invalidate: async () => {
-            console.log("INVALIDATING", key)
+            console.log("INVALIDATING", key);
             await queryClient.invalidateQueries({
                 queryKey: key,
             });
@@ -250,7 +250,7 @@ export function useDatabase<Q, E = Error, MArgs = any, MResult = any>(
     const memod = useMemo(() => dialect, []);
     const db = accessDB(memod);
     const queryClient = useQueryClient();
-    
+
     const deps = Array.isArray(write) ? write : orDeps;
     const queryKey = ["db", db, ...deps];
 

@@ -108,11 +108,11 @@ export default function kdv<Value = unknown>(
             }
         }
 
-        // SPECIAL CASE -- first key will NOT fire off 'onkey' so we need to set 
-        // the capture flag on a kd match in 'onopenobject' as well!! 
+        // SPECIAL CASE -- first key will NOT fire off 'onkey' so we need to set
+        // the capture flag on a kd match in 'onopenobject' as well!!
         if (firstKey === k && depth === d) {
             capturing = true;
-        } 
+        }
         currentKey = firstKey;
     };
 
