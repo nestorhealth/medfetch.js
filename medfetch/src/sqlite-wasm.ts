@@ -22,6 +22,9 @@ import loadExtension from "~/sqlite-wasm.loadExtension.js";
 let __worker: Worker | null = null;
 let __promiser: Worker1Promiser | null = null;
 
+const DEFAULT_RESPONSE_HANDLER = (response: Response): Promise<string> => response.text();
+const __RESPONSE_HANDLERS: Map<string, (response: Response) => any> = new Map<string, (response: Response) => any>();
+
 async function openPromiserDB<TWorker = Worker>(
     worker: TWorker,
     openMsg: Worker1OpenRequest,
@@ -79,42 +82,11 @@ type SqliteWasmOptions = {
     /**
      * Optional mapping hook for response intercepts
      */
-    readonly match?: [pattern: string, handler: (response: Response) => any][];
+    readonly match?: [
+        pattern: string,
+        handler: (response: Response) => any
+    ][]
 };
-
-const [syncFetch, setSyncFetch] = unpromisify<
-    Parameters<typeof fetch>,
-    any,
-    MessagePort
->(
-    "sqlite-wasm.db",
-    (...args: Parameters<typeof fetch>) =>
-        fetch(...args).then((response) => response.text()),
-    {
-        byteSize: 5 * 1024 * 1024, // 5 MB
-    },
-);
-
-if (self.name === "sqlite-wasm.db") {
-    setSyncFetch(self).then(async () => {
-        const sqlite3 = await sqlite3InitModule();
-        console.time(
-            "[medfetch/sqlite-wasm.db] >> loaded medfetch extension in",
-        );
-        console.log(`[medfetch/sqlite-wasm.db] >> loading...`);
-        const rc = loadExtension(sqlite3, syncFetch);
-        if (rc) {
-            console.error(
-                "[medfetch/sqlite-wasm.db] >> unknown error loading in sqlite-wasm extension",
-            );
-        } else {
-            console.log(`[medfetch/sqlite-wasm.db] >> extension loaded!`);
-        }
-        console.timeEnd(
-            "[medfetch/sqlite-wasm.db] >> loaded medfetch extension in",
-        );
-    })
-}
 
 /**
  * Medfetch's default sqlite on FHIR client dialect constructor.
@@ -158,7 +130,7 @@ if (self.name === "sqlite-wasm.db") {
 export default function medfetch(
     baseURL: string | File,
     schema: Promisable<Migrateable> | (() => Promisable<Migrateable>),
-    { filename = ":memory:", worker }: SqliteWasmOptions = {},
+    { filename = ":memory:", worker, match }: SqliteWasmOptions = {},
 ): Worker1PromiserDialect {
     if (!BROWSER) {
         console.warn(
@@ -167,10 +139,19 @@ export default function medfetch(
         return dummy("sqlite");
     }
 
+    if (match) {
+        match.forEach(
+            ([pattern, handler]) => {
+                console.log("going here to set", `${baseURL}/${pattern}`)
+                __RESPONSE_HANDLERS.set(`${baseURL}/${pattern}`, handler);
+            }
+        )
+    }
+
     const dialect = new Worker1PromiserDialect({
         database: async () => {
             const sqliteWorker = accessWorker(worker);
-            await setSyncFetch(sqliteWorker);
+            await setSyncFetch(sqliteWorker)
 
             const migrations =
                 await normalizePromiseableOption(schema).then(virtualMigration);
@@ -190,4 +171,53 @@ export default function medfetch(
     });
 
     return dialect;
+}
+
+const [syncFetch, setSyncFetch] = unpromisify<
+    Parameters<typeof fetch>,
+    any,
+    MessagePort
+>(
+    "sqlite-wasm.db",
+    (...args: Parameters<typeof fetch>) =>
+        fetch(...args)
+            .then(
+                (response) => {
+                    const url = args[0] as string;
+                    const f = __RESPONSE_HANDLERS.get(url);
+                    if (!f) {
+                        const urlPopped = url.split("/");
+                        urlPopped.pop();
+                        urlPopped.push("*");
+                        const wildcardURL = urlPopped.join("/")
+                        const defaultHandler = __RESPONSE_HANDLERS.get(wildcardURL) ?? DEFAULT_RESPONSE_HANDLER;
+                        return defaultHandler(response);
+                    }
+                    return f(response);
+                }
+            ),
+    {
+        byteSize: 5 * 1024 * 1024, // 5 MB
+    },
+);
+
+if (self.name === "sqlite-wasm.db") {
+    setSyncFetch(self).then(async () => {
+        const sqlite3 = await sqlite3InitModule();
+        console.time(
+            "[medfetch/sqlite-wasm.db] >> loaded medfetch extension in",
+        );
+        console.log(`[medfetch/sqlite-wasm.db] >> loading...`);
+        const rc = loadExtension(sqlite3, syncFetch);
+        if (rc) {
+            console.error(
+                "[medfetch/sqlite-wasm.db] >> unknown error loading in sqlite-wasm extension",
+            );
+        } else {
+            console.log(`[medfetch/sqlite-wasm.db] >> extension loaded!`);
+        }
+        console.timeEnd(
+            "[medfetch/sqlite-wasm.db] >> loaded medfetch extension in",
+        );
+    })
 }

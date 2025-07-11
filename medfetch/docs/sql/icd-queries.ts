@@ -2,13 +2,12 @@ import type { Condition, Patient } from "fhir/r4";
 import {
   sql,
   Kysely,
-  type CompiledQuery,
   DummyDriver,
   SqliteAdapter,
   SqliteIntrospector,
   SqliteQueryCompiler,
 } from "kysely";
-import { Rowify } from "~/sql";
+import type { Rowify } from "~/sql";
 
 type UserDB = {
   Patient: Rowify<Patient>;
@@ -41,6 +40,7 @@ const initial = db.schema
       .innerJoin("Condition", "Condition.subject", "Patient.id")
       .select([
         "Patient.id as patient_id",
+        "Patient.gender",
         sql<string>`strftime('%Y', "Condition"."onsetDateTime")`.as(
           "onset_year",
         ),
@@ -72,23 +72,6 @@ const adultPatients = db
 
 const adultPatientsQuery = adultPatients.compile();
 
-function makeQueryState(query: CompiledQuery<any>, isMutation = false) {
-  return async (db: Kysely<any>) => {
-    let rows = await db.executeQuery(query).then((r) => r.rows);
-    if (isMutation) {
-      rows = await db.selectFrom("patients").selectAll("patients").execute();
-    }
-
-    const columns =
-      (await db.introspection.getTables()).find((t) => t.name === "patients")
-        ?.columns ?? [];
-
-    return {
-      rows,
-      columns,
-    };
-  };
-}
 
 export async function table0(db: Kysely<any>) {
   const rows = await db

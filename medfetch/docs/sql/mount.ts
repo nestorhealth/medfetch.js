@@ -1,11 +1,11 @@
 import { type Ref } from "vue";
-import DBWorker from "./db.worker?worker";
 import { Kysely } from "kysely";
 import medfetch from "~/sqlite-wasm";
 import { table0, table1 } from "./icd-queries";
 import { API_URL } from "../data/env";
 import type { JSONSchema7 } from "json-schema";
 import { unzipSync, strFromU8 } from "fflate";
+import { Bundle } from "fhir/r5";
 
 async function unzipJSONSchema(
   zipURL: string = "https://build.fhir.org/fhir.schema.json.zip",
@@ -47,7 +47,27 @@ type ViewState = { rows: Record<string, unknown>[]; columns: Column[] };
 export const mount = (viewStates: Ref<ViewState[]>) => {
   return async () => {
     try {
-      const dialect = medfetch(API_URL, unzipJSONSchema)
+      const dialect = medfetch(API_URL, unzipJSONSchema, {
+        match: 
+          [
+            ["*", async (response) => {
+              const payload: Bundle = await response.json();
+              const newBundle: Bundle = {
+                ...payload,
+                entry: payload.entry?.map(entry => {
+                  return {
+                    ...entry,
+                    resource: {
+                      ...entry.resource,
+                      gender: "female"
+                    }
+                  };
+                })
+              };
+              return JSON.stringify(newBundle);
+            }]
+          ]
+      });
       const db = new Kysely({ dialect });
       const t0 = await table0(db);
       const t1 = await table1(db);
