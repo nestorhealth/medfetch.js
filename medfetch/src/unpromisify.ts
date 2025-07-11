@@ -260,23 +260,6 @@ export function syncSetter<
             up(sab, result);
         }
     }
-    const accept = <T>(resolve: (value?: T) => void, emitter: Worker) => {
-        const handleAccept = async (e: any) => {
-            if (e.ports.length > 0) {
-                const parentPort = e.ports[0];
-                parentPort.start?.();
-                await forMessage(
-                    () => parentPort.postMessage("sync-ready"),
-                    (e) => e.data === "sync-ready",
-                    (h) => parentPort.addEventListener("message", h),
-                    (h) => parentPort.removeEventListener("message", h),
-                );
-                emitter.removeEventListener("message", handleAccept);
-                resolve();
-            }
-        };
-        return handleAccept;
-    };
 
     async function set(workerLike: Worker | (typeof globalThis & Window)) {
         if (self.name !== context.thread.syncWorkerName && workerLike) {
@@ -296,9 +279,8 @@ export function syncSetter<
                 throw new Error(`Async child handler case removed for now!`);
             } else {
                 return new Promise<MessagePort>((resolve) => {
-                    workerLike.addEventListener("message", async (e) => {
+                    const handle = async (e: MessageEvent<any>) => {
                         if (e.ports.length > 0) {
-                            console.log("right? at least ports");
                             const parentPort = e.ports[0];
                             parentPort.start();
                             await forMessage(
@@ -314,9 +296,11 @@ export function syncSetter<
                                     ),
                             );
                             onHandshakeComplete(parentPort);
+                            workerLike.removeEventListener("message", handle)
                             resolve(parentPort)
                         }
-                    });
+                    }
+                    workerLike.addEventListener("message", handle);
                 });
             }
         }
