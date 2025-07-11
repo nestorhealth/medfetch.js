@@ -3,7 +3,7 @@ import type {
     sqlite3_vtab_cursor,
     Sqlite3Static,
 } from "@sqlite.org/sqlite-wasm";
-import Page from "../json/page.js";
+import type Page from "../json/page.js";
 import type { Sqlite3, Sqlite3Module } from "./types.js";
 import { entries, getTableName, virtualTable } from "../sql/table.js";
 import walk, { type Walk } from "~/json/walk.js";
@@ -30,7 +30,7 @@ export interface medfetch_vtab_cursor extends sqlite3_vtab_cursor {
  * refetch per row on an inner join, which obviously isn't ideal in the
  * worst case.
  */
-export type FetchPageFn = (resourceType: string) => string;
+export type FetchPageFn = (resourceType: string) => Page;
 
 const log = {
     on: (f: boolean, cb: () => void) => {
@@ -158,11 +158,12 @@ export function x_open(
         ) as medfetch_vtab_cursor;
         cursor.pVtab = pVtab;
         try {
-            const pageBuffer = fetchPage(resourceType);
-            const asGen = function* () {
-                yield pageBuffer;
-            }
-            cursor.page = new Page(asGen);
+            cursor.page = fetchPage(resourceType)
+            // const pageBuffer = fetchPage(resourceType);
+            // const asGen = function* () {
+            //     yield pageBuffer;
+            // }
+            // cursor.page = new Page(asGen);
 
             return sqlite3.capi.SQLITE_OK;
         } catch (err) {

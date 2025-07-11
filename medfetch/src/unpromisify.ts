@@ -235,7 +235,7 @@ export function syncSetter<
     TWorker extends WorkerLike,
 >(
     context: {
-        thread: ThreadContext<TWorker, TWorker>;
+        thread: ThreadContext<TWorker>;
         encoder: EncoderContext<Args, Result>;
     },
     onHandshakeComplete: (port: MessagePort) => void,
@@ -310,7 +310,7 @@ export function syncSetter<
 
 type Nullish<T> = NonNullable<T> | undefined | null;
 
-export type ThreadContext<ParentPort = Worker, TMessagePort = MessagePort> = {
+export type ThreadContext<TMessagePort = MessagePort> = {
     /**
      * Assigned static name for the sync-worker that will be blocking.
      */
@@ -320,8 +320,6 @@ export type ThreadContext<ParentPort = Worker, TMessagePort = MessagePort> = {
      * Null on main. Some string otherwise
      */
     currentWorkerThread: Nullish<string>;
-
-    parentPort: Nullish<ParentPort>;
 
     createMessageChannel: () => { port1: TMessagePort; port2: TMessagePort };
 };
@@ -339,11 +337,10 @@ type EncoderContext<Args extends any[], Result> = {
 export function syncProxy<
     Args extends any[],
     Result,
-    ParentPort = MessagePort,
     TMessagePort = MessagePort,
 >(
     context: {
-        thread: ThreadContext<ParentPort, TMessagePort>;
+        thread: ThreadContext<TMessagePort>;
         decoder: DecoderContext<Result>;
     },
     semaphoreDown: (data: { args: Args; sab: SharedArrayBuffer }) => void,
@@ -515,7 +512,6 @@ export default function unpromisify<
     const threadContext: ThreadContext = {
         currentWorkerThread: currentThread,
         syncWorkerName: syncWorkerName,
-        parentPort: self as any as Worker,
         createMessageChannel: () => new MessageChannel(),
     };
     const decoderContext: DecoderContext<Result> = {

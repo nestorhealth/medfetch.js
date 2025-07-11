@@ -57,10 +57,13 @@ const accessWorker = (userWorker?: Worker) => {
         return userWorker;
     }
     if (!__worker) {
+        console.log("NO WORKER REF, SETTING NOW!!")
         __worker = new Worker(new URL(import.meta.url, import.meta.url), {
             type: "module",
             name: "sqlite-wasm.db",
         });
+    } else {
+        console.log("WORKER REF HIT!");
     }
     return __worker;
 };
@@ -88,6 +91,7 @@ type SqliteWasmOptions = {
     ][]
 };
 
+let FETCH_SET = false;
 /**
  * Medfetch's default sqlite on FHIR client dialect constructor.
  * This delays opening the worker thread until the very first call sqlite-wasm worker thread from the neighboring [sqlite-wasm.thread.ts](./sqlite-wasm.thread.ts), so in that sense this is lazy
@@ -142,7 +146,6 @@ export default function medfetch(
     if (match) {
         match.forEach(
             ([pattern, handler]) => {
-                console.log("going here to set", `${baseURL}/${pattern}`)
                 __RESPONSE_HANDLERS.set(`${baseURL}/${pattern}`, handler);
             }
         )
@@ -151,7 +154,10 @@ export default function medfetch(
     const dialect = new Worker1PromiserDialect({
         database: async () => {
             const sqliteWorker = accessWorker(worker);
-            await setSyncFetch(sqliteWorker)
+            if (!FETCH_SET) {
+                await setSyncFetch(sqliteWorker);
+                FETCH_SET = true;
+            }
 
             const migrations =
                 await normalizePromiseableOption(schema).then(virtualMigration);
@@ -201,7 +207,7 @@ const [syncFetch, setSyncFetch] = unpromisify<
     },
 );
 
-if (self.name === "sqlite-wasm.db") {
+if (globalThis.self?.name === "sqlite-wasm.db") {
     setSyncFetch(self).then(async () => {
         const sqlite3 = await sqlite3InitModule();
         console.time(

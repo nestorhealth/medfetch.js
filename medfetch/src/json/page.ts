@@ -1,21 +1,18 @@
-import type { Resource } from "fhir/r4.js";
-import kdv, { type Pathify } from "./kdv.js";
+import { type KdvParseFn } from "./kdv.js";
 import type { Bundle } from "fhir/r5.js";
 import { type FetchPageFn } from "~/sqlite-wasm/vtab.js";
-
-/// Implementation level types
-type Link = Pathify<Bundle, `_${string}`>["link"];
-type Entry = Pathify<Bundle, `_${string}`>["entry"];
-
-/// Their parse functions
-const parseLink = kdv<Link[]>("link", 1);
-const parseEntry = kdv<Entry[]>("entry", 1);
 
 /**
  * Function that looks like fetch in its args and returns a plaintext string
  * synchronously.
  */
 export type FetchTextSync = (...args: Parameters<typeof fetch>) => string;
+
+interface PageBufferParser<T> {
+    link: KdvParseFn<string>;
+    data: KdvParseFn<T[]>;
+    next?: (nextLink: string) => Generator<string>;
+}
 
 /**
  */
@@ -32,6 +29,8 @@ export default class Page<T = any> {
     #cursor: number;
     #acc: T[];
     #chunks: Generator<string>;
+    
+    #bufferParser: PageBufferParser<T>;
     #fetcher: ((url: string) => Generator<string>) | undefined;
 
     /**
@@ -53,10 +52,12 @@ export default class Page<T = any> {
      * );
      * ```
      */
-    static fetcher(
+    static fetcher<T>(
         baseURL: string | File,
         syncFetch: FetchTextSync,
+        parser: PageBufferParser<T>,
     ): FetchPageFn {
+        // TODO - fix File handling to be generic!!
         if (baseURL instanceof File) {
             const url = URL.createObjectURL(baseURL);
             const bundle: Bundle = JSON.parse(syncFetch(url));
@@ -73,28 +74,38 @@ export default class Page<T = any> {
                     });
                     pageCache.set(resourceType, filteredBundle);
                 }
-                return filteredBundle;
+                return new Page(
+                    function* () {
+                        yield filteredBundle;
+                    },
+                    parser,
+                );
             };
         } else {
             return (resourceType) => {
                 const responseText: string = syncFetch(
                     `${baseURL}/${resourceType}`,
                 );
-                return responseText;
+                return new Page(
+                    function* () {
+                        yield responseText;
+                    },
+                    parser,
+                );
             };
         }
     }
 
     constructor(
         chunks: Generator<string> | (() => Generator<string>),
-        nextPage?: (nextURL: string) => Generator<string>,
+        parser: PageBufferParser<T>,
     ) {
         this.#nextURL = null;
         this.#isNextLinkParsed = false;
         this.#cursor = 0;
         this.#acc = [];
         this.#chunks = chunks instanceof Function ? chunks() : chunks;
-        this.#fetcher = nextPage;
+        this.#bufferParser = parser;
     }
 
     *#entries(): Generator<T> {
@@ -109,30 +120,20 @@ export default class Page<T = any> {
 
         // Parse `next` URL from _first_ chunk
         if (!this.#nextURL && !this.#isNextLinkParsed) {
-            const link = parseLink(value);
+            const link = this.#bufferParser.link(value);
             if (link) {
                 this.#isNextLinkParsed = true;
-                const nextLink = link.hd.find(
-                    (l) => l.relation === "next",
-                )?.url;
-                if (nextLink) this.#nextURL = nextLink;
+                this.#nextURL = link.hd;
             }
         }
 
         // Parse and append new entries
-        const popped = parseEntry(value);
+        const popped = this.#bufferParser.data(value);
         if (popped && popped.hd?.length > 0) {
-            const newEntries = popped.hd
-                .slice(this.#cursor)
-                .filter(
-                    (entry): entry is Entry & { resource: Resource } =>
-                        !!entry.resource,
-                )
-                .map(({ resource }) => resource as T);
-
-            if (newEntries.length > 0) {
-                this.#acc.push(...newEntries);
-            }
+            this.#acc.push(
+                ...popped.hd
+                    .slice(this.#cursor)
+            );
         }
 
         // Final flush in case new #acc entries appeared
@@ -169,7 +170,7 @@ export default class Page<T = any> {
             return null;
         } else {
             const nextChunks = this.#fetcher(this.#nextURL);
-            return new Page(nextChunks, this.#fetcher);
+            return new Page(nextChunks, this.#bufferParser);
         }
     }
 }

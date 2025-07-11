@@ -4,6 +4,8 @@ import { Counter } from "./sqlite-wasm/counters.js";
 import { medfetch_module_alloc } from "./sqlite-wasm/vtab.js";
 import { attach, index, pointer } from "./sqlite-wasm/worker1.js";
 import type { Sqlite3Module } from "./sqlite-wasm/types.js";
+import kdv from "~/json/kdv.js";
+import type { BundleLink as Link, BundleEntry as Entry } from "fhir/r5";
 
 // Logs
 const tag = "medfetch/sqlite-wasm.worker";
@@ -25,6 +27,9 @@ interface AuxJS {
      */
     readonly virtualMigrations: string;
 }
+
+const parseLink = kdv<Link[]>("link", 1);
+const parseEntry = kdv<Entry[]>("entry", 1);
 
 /**
  * Attach the message handler to the *worker* thread that has {@link Sqlite3Static} loaded.
@@ -63,7 +68,37 @@ export default function loadExtension(
                 );
             }
 
-            const fetchPage = Page.fetcher(aux.baseURL, syncFetch);
+            const fetchPage = Page.fetcher(aux.baseURL, syncFetch, {
+                link: (str) => {
+                    const parsedLink = parseLink(str);
+                    if (parsedLink) {
+                        const result = parsedLink.hd.find(
+                            (link) => link.relation === "next",
+                        )?.url;
+                        if (!result) {
+                            return null;
+                        }
+                        return {
+                            hd: result,
+                            tl: null,
+                        };
+                    }
+                    return null;
+                },
+                data: (str) => {
+                    const entries = parseEntry(str);
+                    if (!entries) {
+                        return null;
+                    }
+                    const parsedResources = entries.hd.map(
+                        (entry) => entry.resource,
+                    );
+                    return {
+                        hd: parsedResources,
+                        tl: null,
+                    };
+                },
+            });
             // Map database index to medfetch_module "instance"
             const dbIndex = dbCount.set();
             modules[dbIndex] = medfetch_module_alloc(
@@ -74,7 +109,7 @@ export default function loadExtension(
         }
 
         // We don't get the dbId until after "open"
-        if (msg.data.type === "exec") {
+        if (msg.data?.type === "exec") {
             if (!msg.data.dbId) {
                 throw new Error(
                     `[${tag}] >> Can't query that: Database with an undefined 'dbId'`,
@@ -87,7 +122,7 @@ export default function loadExtension(
             if (!moduleSet.has(pDb)) {
                 if (!extensions) {
                     throw new Error(
-                        `[${tag}] >> No 'medfetch_module' found for database '${msg.data.dbId}'!`
+                        `[${tag}] >> No 'medfetch_module' found for database '${msg.data.dbId}'!`,
                     );
                 }
                 const ok: string[] = [];
