@@ -47,15 +47,8 @@ type ViewState = { rows: Record<string, unknown>[]; columns: Column[] };
 export const mount = (viewStates: Ref<ViewState[]>) => {
   return async () => {
     try {
-      const worker = new DBWorker({
-        name: "db.worker",
-      });
-
-      const db = new Kysely<any>({
-        dialect: medfetch(API_URL, unzipJSONSchema, {
-          worker,
-        }),
-      });
+      const dialect = medfetch(API_URL, unzipJSONSchema)
+      const db = new Kysely({ dialect });
       const t0 = await table0(db);
       const t1 = await table1(db);
       const views: ViewState[] = [t0, t1];

@@ -1,5 +1,3 @@
-import type { Promisable } from "kysely-generic-sqlite";
-
 /**
  * Create the Error thrower function for a given tag
  * @internal

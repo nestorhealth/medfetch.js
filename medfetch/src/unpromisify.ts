@@ -4,47 +4,37 @@
  * @param addEventListener Callback to add the promise wrapping handler
  * @param removeEventListener Callback to remove the handler
  * @returns The {@link MessageEvent} in a Promise
- * 
+ *
  * @example
  */
 export async function forMessage<Message = MessageEvent<any>>(
     post: () => void,
     check: (event: Message) => boolean,
     addEventListener: (handler: (event: Message) => any) => void,
-    removeEventListener: (
-        handler: (event: Message) => any,
-    ) => void,
+    removeEventListener: (handler: (event: Message) => any) => void,
 ): Promise<Message> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
         post();
         const handler = (event: Message) => {
             if (check(event)) {
-                removeEventListener(handler);
                 resolve(event);
-            } else {
                 removeEventListener(handler);
-                reject(`forMessage > check(${event}) === false`);
             }
         };
         addEventListener(handler);
     });
 }
 
-// #region SetWorker
-export type SetWorker<TWorker = Worker> = {
-    /**
-     * Called by the thread that has a {@link Worker}
-     * instance context.
-     */
-    (worker: TWorker): Promise<void>;
-    
-    /**
-     * Called by the thread that doesn't have a {@link Worker} 
-     * instance context.
-     */
-    (): void;
+type WorkerLike = {
+    postMessage: (...args: any[]) => any;
+    addEventListener: (msgEvent: any, cb: (...args: any[]) => any) => any;
+    removeEventListener: (msgEvent: any, cb: (...args: any[]) => any) => any;
+    start?: () => void;
 };
-// #endregion SetWorker
+
+export type SetWorker = (
+    worker: Worker | (typeof globalThis & Window),
+) => Promise<MessagePort>;
 
 /**
  * The 2-tuple returned by {@link unpromisify}
@@ -54,29 +44,25 @@ export type SetWorker<TWorker = Worker> = {
  * @template TWorker The worker type. Defaults to Browser {@link Worker}
  */
 // #region Unpromisified
-export type Unpromisified<
-    Args extends any[],
-    Result,
-    TWorker = Worker,
-> = readonly [
+export type Unpromisified<Args extends any[], Result> = readonly [
     /**
      * Literally just takes asyncFn's {@link ReturnType} out of the
      * {@link Promise}
      */
     syncFn: (...args: Args) => Result,
-        
+
     /**
      * Setup message event listeners to allow for blocking on
      * {@link syncFn}.
      */
-    setWorker: SetWorker<TWorker>
+    setWorker: SetWorker,
 ];
 // #endregion Unpromisified
 
-export type CreateSyncPromise<TWorker = Worker> = <Args extends any[], Result>(
+export type CreateSyncPromise = <Args extends any[], Result>(
     names: [string] | [string, string],
     fn: (...args: Args) => Promise<Result>,
-) => Unpromisified<Args, Result, TWorker>;
+) => Unpromisified<Args, Result>;
 
 /**
  * Set the encoder and decoder pairs along with
@@ -194,12 +180,68 @@ export type BlockMessageData<Args extends any[], TPort = MessagePort> = {
  * @param postMessage From the given port and value, give the implementation for posting this message back to the parent thread
  * @param setOnMessage From the given port and onMessage handler, provide the implementation for setting the message handler of this port to onMessage
  */
-function createAsyncHandlers<Args extends any[], Port = MessagePort>(
-    deferredFn: (...args: Args) => Promise<Uint8Array>,
-    postMessage: EvEmitterCallback<Port>,
-    setOnMessage: EvEmitterCallback<Port>,
-) {
-    async function resolveBlock(e: MessageEventLike<Args, Port>) {
+// function createAsyncHandlers<Args extends any[], Port = MessagePort>(
+//     deferredFn: (...args: Args) => Promise<Uint8Array>,
+//     postMessage: EvEmitterCallback<Port>,
+//     setOnMessage: EvEmitterCallback<Port>,
+// ) {
+//     async function resolveBlock(e: MessageEventLike<Args, Port>) {
+//         if (e.data.sab) {
+//             let args = e.data.args;
+//             const sab = e.data.sab;
+//             if (
+//                 typeof sab !== "object" ||
+//                 !(sab instanceof SharedArrayBuffer)
+//             ) {
+//                 throw new Error(
+//                     `Can't resolve that block > Unexpected "sab" payload type.`,
+//                 );
+//             }
+//             args = args || [];
+//             const result = await deferredFn(...args);
+//             up(sab, result);
+//         }
+//     }
+
+//     function acceptBlock(e: MessageEventLike<Args, Port>) {
+//         const port = e.data.ports[0];
+//         if (port) {
+//             postMessage(port, 0);
+//             setOnMessage(port, resolveBlock);
+//         }
+//     }
+
+//     return {
+//         accept: acceptBlock,
+//         resolve: resolveBlock,
+//     };
+// }
+
+/**
+ * Create the accept handler for both parties of the block to allow
+ * the synchronous proxy function to run.
+ * @param context The web worker context
+ * @param start Port start function
+ * @param postMessage The postMessage callback
+ * @param addWorkerHandler The add worker handler callback
+ * @param addMessageHandler How to add a message handler
+ * @param removeMessageHandler How to remove a message handler
+ * @param onHandshakeComplete What side effect to run after handshake is complete
+ * @returns A {@link SetWorkerLike} accept function
+ */
+export function syncSetter<
+    Args extends any[],
+    Result,
+    TWorker extends WorkerLike,
+>(
+    context: {
+        thread: ThreadContext<TWorker, TWorker>;
+        encoder: EncoderContext<Args, Result>;
+    },
+    onHandshakeComplete: (port: MessagePort) => void,
+): SetWorker {
+    const { encoder } = context;
+    async function resolveBlock(e: MessageEvent<any>) {
         if (e.data.sab) {
             let args = e.data.args;
             const sab = e.data.sab;
@@ -212,102 +254,71 @@ function createAsyncHandlers<Args extends any[], Port = MessagePort>(
                 );
             }
             args = args || [];
-            const result = await deferredFn(...args);
+            const result = await encoder
+                .blockingFn(...args)
+                .then(encoder.encode);
             up(sab, result);
         }
     }
-
-    function acceptBlock(e: MessageEventLike<Args, Port>) {
-        const port = e.data.ports[0];
-        if (port) {
-            postMessage(port, 0);
-            setOnMessage(port, resolveBlock);
-        }
-    }
-
-    return {
-        accept: acceptBlock,
-        resolve: resolveBlock,
-    };
-}
-
-type MessageEventLike<Args extends any[], TPort = MessagePort> = {
-    readonly ports: ReadonlyArray<TPort>;
-    readonly data: BlockMessageData<Args, TPort>;
-};
-
-/**
- * Create the accept handler for both parties of the block to allow
- * the synchronous proxy function to run.
- * @param context The web worker context
- * @param start Port start function
- * @param postMessage The postMessage callback
- * @param addWorkerHandler The add worker handler callback
- * @param addMessageHandler How to add a message handler
- * @param removeMessageHandler How to remove a message handler
- * @param onHandshakeComplete What side effect to run after handshake is complete
- * @returns A {@link SetWorker} accept function
- */
-export function syncSetter<
-    Args extends any[],
-    Result,
-    TWorker = Worker,
-    TPort = MessagePort,
->(
-    context: {
-        thread: ThreadContext<TPort, TPort>;
-        encoder: EncoderContext<Args, Result>;
-    },
-    start: (port: TPort) => void,
-    postMessage: EvEmitterCallback<TWorker, { ports: ReadonlyArray<TPort> }>,
-    addWorkerHandler: EvEmitterCallback<
-        TWorker,
-        (e: MessageEventLike<Args>) => void
-    >,
-    addMessageHandler: EvEmitterCallback<TPort, (e: any) => void>,
-    removeMessageHandler: EvEmitterCallback<TPort, (e: any) => void>,
-    onHandshakeComplete: (port: TPort) => void,
-): SetWorker<TWorker> {
-    const { encoder, thread } = context;
-    const { accept, resolve } = createAsyncHandlers<Args>(
-        (...args) => encoder.blockingFn(...args).then(encoder.encode),
-        (port, value) => port.postMessage(value),
-        (port, onMessage) => (port.onmessage = onMessage),
-    );
-
-    async function setChildAsync(worker: TWorker): Promise<void> {
-        const ports = thread.createMessageChannel();
-        if (thread.currentWorkerThread === thread.syncWorkerName) {
-            const port = await handshake(
-                worker,
-                ports,
-                (port, handler) => {
-                    start(port);
-                    addMessageHandler(port, handler);
-                },
-                (port, handler) => removeMessageHandler(port, handler),
-                (port, data) => postMessage(port, data),
-            );
-            onHandshakeComplete(port);
-        } else {
-            // Doesn't need to be a promise but doing so
-            // here manually to make a consistent set() API
-            addWorkerHandler(worker, resolve);
-            return Promise.resolve();
-        }
-    }
-
-    function set(worker: TWorker): Promise<void>;
-    function set(): void;
-    function set(worker?: TWorker): void | Promise<void> {
-        if (!worker) {
-            if (thread.currentWorkerThread !== null) {
-                addWorkerHandler(thread.parentPort as any, accept);
-            } else {
-                console.warn(`[sync.syncSetter] > Main thread called synchronous set: ${self.name}`);
+    const accept = <T>(resolve: (value?: T) => void, emitter: Worker) => {
+        const handleAccept = async (e: any) => {
+            if (e.ports.length > 0) {
+                const parentPort = e.ports[0];
+                parentPort.start?.();
+                await forMessage(
+                    () => parentPort.postMessage("sync-ready"),
+                    (e) => e.data === "sync-ready",
+                    (h) => parentPort.addEventListener("message", h),
+                    (h) => parentPort.removeEventListener("message", h),
+                );
+                emitter.removeEventListener("message", handleAccept);
+                resolve();
             }
+        };
+        return handleAccept;
+    };
+
+    async function set(workerLike: Worker | (typeof globalThis & Window)) {
+        if (self.name !== context.thread.syncWorkerName && workerLike) {
+            const { port1, port2 } = new MessageChannel();
+            port1.start();
+            await forMessage(
+                () => workerLike.postMessage(null, [port2]),
+                (e) => e.data === "sync-worker-ready",
+                (h) => port1.addEventListener("message", h),
+                (h) => port1.removeEventListener("message", h),
+            );
+            port1.addEventListener("message", resolveBlock);
+            port1.postMessage("sync-ready");
+            return port1;
         } else {
-            return setChildAsync(worker);
+            if (workerLike instanceof Worker) {
+                throw new Error(`Async child handler case removed for now!`);
+            } else {
+                return new Promise<MessagePort>((resolve) => {
+                    workerLike.addEventListener("message", async (e) => {
+                        if (e.ports.length > 0) {
+                            console.log("right? at least ports");
+                            const parentPort = e.ports[0];
+                            parentPort.start();
+                            await forMessage(
+                                () =>
+                                    parentPort.postMessage("sync-worker-ready"),
+                                (e) => e.data === "sync-ready",
+                                (h) =>
+                                    parentPort.addEventListener("message", h),
+                                (h) =>
+                                    parentPort.removeEventListener(
+                                        "message",
+                                        h,
+                                    ),
+                            );
+                            onHandshakeComplete(parentPort);
+                            resolve(parentPort)
+                        }
+                    });
+                });
+            }
         }
     }
     return set;
@@ -378,30 +389,30 @@ export function syncProxy<
     return syncHandler;
 }
 
-async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
-    worker: TWorker,
-    messageChannelLike: {
-        port1: TMessagePort;
-        port2: TMessagePort;
-    },
-    addHandler: EvEmitterCallback<TMessagePort, (e: any) => void>,
-    removeHandler: EvEmitterCallback<TMessagePort, (e: any) => void>,
-    postMessage: EvEmitterCallback<
-        TWorker,
-        {
-            readonly ports: ReadonlyArray<TMessagePort>;
-        }
-    >,
-): Promise<TMessagePort> {
-    const { port1, port2 } = messageChannelLike;
-    await forMessage(
-        () => postMessage(worker, { ports: [port2] }),
-        (e) => e.data === 0,
-        (f) => addHandler(port1, f),
-        (f) => removeHandler(port1, f)
-    );
-    return port1;
-}
+// async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
+//     worker: TWorker,
+//     messageChannelLike: {
+//         port1: TMessagePort;
+//         port2: TMessagePort;
+//     },
+//     addHandler: EvEmitterCallback<TMessagePort, (e: any) => void>,
+//     removeHandler: EvEmitterCallback<TMessagePort, (e: any) => void>,
+//     postMessage: EvEmitterCallback<
+//         TWorker,
+//         {
+//             readonly ports: ReadonlyArray<TMessagePort>;
+//         }
+//     >,
+// ): Promise<TMessagePort> {
+//     const { port1, port2 } = messageChannelLike;
+//     await forMessage(
+//         () => postMessage(worker, { ports: [port2] }),
+//         (e) => e.data === 0,
+//         (f) => addHandler(port1, f),
+//         (f) => removeHandler(port1, f),
+//     );
+//     return port1;
+// }
 
 /**
  * Block a worker when it calls the returned sync handle (element 0 in {@link Unpromisified}) on the provided {@link asyncFn}
@@ -487,12 +498,16 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
  * ```ts
  * /// main.ts -- Your main thread file
  * const worker = new Worker("./worker-sync.js", {
- *   name: "getTodos" 
+ *   name: "getTodos"
  * });
  * console.log("Main thread isn't participating in the Block here, so it just needs to spawn the worker. No need to call the setter function!");
  * ```
  */
-export default function unpromisify<Args extends any[], Result>(
+export default function unpromisify<
+    Args extends any[],
+    Result,
+    TWorkerLike extends WorkerLike,
+>(
     syncWorkerName: string,
     asyncFn: (...args: Args) => Promise<Result>,
     {
@@ -509,7 +524,7 @@ export default function unpromisify<Args extends any[], Result>(
         byteSize = 500_000,
     }: Partial<PayloadConfig<Result>> = {},
 ): Unpromisified<Args, Result> {
-    let workerPort: Worker | MessagePort | undefined = undefined;
+    let workerPort: MessagePort | undefined = undefined;
 
     const currentThread =
         typeof WorkerGlobalScope === "undefined" ? null : self.name;
@@ -538,7 +553,7 @@ export default function unpromisify<Args extends any[], Result>(
         },
     );
 
-    const handleSyncPromise = syncSetter<Args, Result>(
+    const handleSyncPromise = syncSetter<Args, Result, TWorkerLike>(
         {
             thread: threadContext as any,
             encoder: {
@@ -546,11 +561,6 @@ export default function unpromisify<Args extends any[], Result>(
                 encode: encode,
             },
         },
-        (port) => port.start(),
-        (ee, v) => ee.postMessage(v, v.ports as any),
-        (ee, v) => (ee.onmessage = v),
-        (ee, v) => ee.addEventListener("message", v),
-        (ee, v) => ee.removeEventListener("message", v),
         (port) => {
             workerPort = port;
         },

@@ -37,14 +37,11 @@ export default defineConfig({
         lib: {
             entry: {
                 "unpromisify": "src/unpromisify.ts",
-                "unpromisify.node": "src/unpromisify.node.ts",
                 "sql": "src/sql.ts",
                 // Rename entry so rollup can properly split react
                 "next": "src/next.ts",
                 "sqlite-wasm": "src/sqlite-wasm.ts",
                 "sqlite-wasm.loadExtension": "src/sqlite-wasm.loadExtension.ts",
-                "threads/sqlite-wasm.db": "src/threads/sqlite-wasm.db.ts",
-                "threads/sqlite-wasm.fetch": "src/threads/sqlite-wasm.fetch.ts",
             },
             formats: ["es"],
             fileName: (format, name) =>

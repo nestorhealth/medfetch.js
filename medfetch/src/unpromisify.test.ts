@@ -55,7 +55,6 @@ if (self.name === "sync-worker") {
                 )(...e.data);
                 parentPort.postMessage(result);
             });
-            setIdPromise();
             parentPort.postMessage("ready");
         }
 
@@ -70,16 +69,21 @@ if (self.name === "sync-worker") {
                 },
             );
 
-            setIdPromise(childWorker).then(() => {
-                const result = syncId(msg.data.resolve * 2);
-                parentPort.postMessage(result);
-            });
+            setIdPromise(childWorker);
+            const result = syncId(msg.data.resolve * 2);
+            parentPort.postMessage(result);
         }
     });
 }
 
 if (self.name === "async-worker") {
-    setIdPromise();
+    self.addEventListener("message", (e) => {
+        if (e.ports[0]) {
+            const parentPort = e.ports[0];
+            parentPort.start();
+
+        }
+    })
 }
 
 if (self.name !== "sync-worker" && self.name !== "async-worker") {
@@ -178,7 +182,7 @@ if (self.name !== "sync-worker" && self.name !== "async-worker") {
                 (handler) => port1.addEventListener("message", handler),
                 (handler) => port1.removeEventListener("message", handler),
             );
-            await setSyncCtor(getSyncWorker());
+            setSyncCtor(getSyncWorker());
             const { data } = await forMessage(
                 () => port1.postMessage([]),
                 e => e.data !== undefined,
