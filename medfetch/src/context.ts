@@ -1,3 +1,5 @@
+import type { Promisable } from "kysely-generic-sqlite";
+
 /**
  * Create the Error thrower function for a given tag
  * @internal
@@ -43,4 +45,24 @@ export function timeLogger(tag: string, start: string, ok: string, error: string
             console.timeEnd(tag);
         },
     };
+}
+
+type PromiseableOption<T> = T | Promise<T> | (() => T) | (() => Promise<T>);
+
+/**
+ * Normalize {@link T}
+ *
+ * @template T The resolved payload type
+ *
+ * @param opt {@link PromiseableOption}
+ * @returns `Promise<T>`
+ */
+export async function normalizePromiseableOption<T>(
+  opt: PromiseableOption<T>
+): Promise<T> {
+  if (typeof opt === "function") {
+    const result = (opt as () => T | Promise<T>)();
+    return Promise.resolve(result);
+  }
+  return Promise.resolve(opt);
 }

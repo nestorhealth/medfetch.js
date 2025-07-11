@@ -30,16 +30,14 @@ export default defineConfig({
             link: "/guide.what-is-medfetch-js",
           },
           {
+            text: "Getting Started",
+            link: "/guide.getting-started"
+          },
+          {
             text: "Design",
             link: "/guide.design",
           },
         ]
-      },
-      {
-        text: "Getting Started",
-        items: [
-          { text: "SQLite", link: "/getting-started.sqlite" },
-        ],
       },
       {
         text: "Examples",

@@ -6,7 +6,8 @@ import type {
     Worker1Promiser,
 } from "./sqlite-wasm/types.js";
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
-import { virtualMigration } from "./sql.js";
+import type { Promisable } from "kysely-generic-sqlite";
+import { normalizePromiseableOption } from "~/context.js";
 
 // singleton
 let __worker: Worker | null = null;
@@ -127,7 +128,7 @@ type SqliteWasmOptions = {
  */
 export default function medfetch(
     baseURL: string | File,
-    schema: Migrateable | (() => Promise<Migrateable>),
+    schema: Promisable<Migrateable> | (() => Promisable<Migrateable>),
     { filename = ":memory:", worker }: SqliteWasmOptions = {},
 ): Worker1PromiserDialect {
     if (!BROWSER) {
@@ -140,10 +141,7 @@ export default function medfetch(
     const dialect = new Worker1PromiserDialect({
         database: async () => {
             const sqliteWorker = accessWorker(worker);
-            const migrations =
-                typeof schema === "function"
-                    ? await schema().then(virtualMigration)
-                    : virtualMigration(schema);
+            const migrations = await normalizePromiseableOption(schema);
             const promiserDB = await openPromiserDB(sqliteWorker, {
                 type: "open",
                 args: {

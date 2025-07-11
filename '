@@ -1,14 +1,18 @@
-# SQLite
-SQLite drivers supported by medfetch as of the time of writing are:
-| Driver                    | Platform               | Notes                                 |
-|---------------------------|------------------------|---------------------------------------|
-| [`@sqlite.org/sqlite-wasm`](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) | Browser / Node (Experimental) | Official SQLite WASM dialect |
+# Getting started
+Medfetch.js doesn't ship with its own database: you need to
+provide that connection for it. Supported javascript drivers
+as of the time of writing are:
+| Driver                                                                             | Database | Browser | Node.js           |
+|------------------------------------------------------------------------------------|----------|---------|-------------------|
+| [`@sqlite.org/sqlite-wasm`](https://www.npmjs.com/package/@sqlite.org/sqlite-wasm) | SQLite   | ✅       | ⚠️ (Experimental) |
 
 ## Installation
 1. Install dependencies (including database driver):
-```bash
+::: code-group
+```bash [sqlite-wasm]
 pnpm add medfetch kysely @sqlite.org/sqlite-wasm
 ```
+:::
 
 2. Create the [Dialect](https://kysely.dev/docs/dialects) for that `medfetch` client:
 ```ts
@@ -136,6 +140,7 @@ This only makes a difference if you choose to "materialize" the virtual tables i
 since the data from the virtual tables only exist at runtime:
 
 ## Data Types
+Medfetch.js doesn't do any runtime type conversions for you.
 Runtime data of Resources is determined by the `migrationText` 
 plaintext value medfetch provides to sqlite3:
 ::: code-group
