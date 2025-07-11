@@ -1,5 +1,10 @@
 import { dummy } from "./sql/kysely.js";
-import { type Migrateable, Worker1DB, Worker1PromiserDialect } from "./sql.js";
+import {
+    type Migrateable,
+    virtualMigration,
+    Worker1DB,
+    Worker1PromiserDialect,
+} from "./sql.js";
 import { BROWSER } from "esm-env";
 import type {
     Worker1OpenRequest,
@@ -79,12 +84,7 @@ type SqliteWasmOptions = {
     /**
      * Optional mapping hook for response intercepts
      */
-    readonly match?: (
-        on: <T>(
-            match: string,
-            decode: (response: Response) => T,
-        ) => void,
-    ) => void;
+    readonly match?: [pattern: string, handler: (response: Response) => any][];
 };
 
 /**
@@ -135,13 +135,14 @@ export default function medfetch(
         console.warn(
             `[medfetch/sqlite-wasm] >> Called in non-browser environment, returning dummy...`,
         );
-        return dummy("sqlite") as any;
+        return dummy("sqlite");
     }
 
     const dialect = new Worker1PromiserDialect({
         database: async () => {
             const sqliteWorker = accessWorker(worker);
-            const migrations = await normalizePromiseableOption(schema);
+            const migrations =
+                await normalizePromiseableOption(schema).then(virtualMigration);
             const promiserDB = await openPromiserDB(sqliteWorker, {
                 type: "open",
                 args: {
@@ -157,5 +158,5 @@ export default function medfetch(
         },
     });
 
-    return dialect as any;
+    return dialect;
 }

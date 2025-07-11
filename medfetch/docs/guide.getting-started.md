@@ -154,21 +154,23 @@ const response = await fetch(`http://localhost:8787/foo`);
 
 If the API doesn't match up nicely with this assumption, `medfetch`
 provides you an escape hatch via the `match` callback option in the configuration
-argument, which allows you to remap the `Response` returned by the underlying fetch. call.
+argument, which allows you to remap the `Response` returned by the fetch call to
+that endpoint:
 
 ```ts
 const dialect = medfetch("https://r4.smarthealthit.org", unzipJSONSchema, {
-    match: (on) => [
+    match: [
         // To remap all responses
-        on("*", (response) => response
+        ["*", (response) => response
             .json()
             .then(bundle => bundle.entry)
-        ),
-        on("Patient", (response) => response
+        ],
+        // Remap the Patient response
+        ["Patient", (response) => response
             .json()
             .then(patientBundle => validatePatientBundle(patientBundle))
             .then(bundle => bundle.entry.map(entry => entry.resource))
-        )
+        ]
     ]
 });
 ```

@@ -3,7 +3,6 @@ import DBWorker from "./db.worker?worker";
 import { Kysely } from "kysely";
 import medfetch from "~/sqlite-wasm";
 import { table0, table1 } from "./icd-queries";
-import { virtualMigration } from "~/sql";
 import { API_URL } from "../data/env";
 import type { JSONSchema7 } from "json-schema";
 import { unzipSync, strFromU8 } from "fflate";

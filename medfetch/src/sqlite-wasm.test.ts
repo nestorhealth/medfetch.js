@@ -41,9 +41,7 @@ describe("medfetch/sqlite-wasm", () => {
                 "title" text,
                 "body" text
             );
-        `)
-        .js("*", () => {
-        })
+        `);
         const db = new Kysely<DB>({ dialect });
         const users = await db
             .selectFrom("users")

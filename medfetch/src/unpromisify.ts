@@ -8,6 +8,7 @@
  * @example
  */
 export async function forMessage<Message = MessageEvent<any>>(
+    post: () => void,
     check: (event: Message) => boolean,
     addEventListener: (handler: (event: Message) => any) => void,
     removeEventListener: (
@@ -15,6 +16,7 @@ export async function forMessage<Message = MessageEvent<any>>(
     ) => void,
 ): Promise<Message> {
     return new Promise((resolve, reject) => {
+        post();
         const handler = (event: Message) => {
             if (check(event)) {
                 removeEventListener(handler);
@@ -146,7 +148,7 @@ function down(
 }
 
 /**
- * "Increment" a semaphore (doesn't really need to increment) and wake
+ * "Increment" a semaphore (doesn't really increment) and wake
  * up the corresponding waiting thread.
  * @param sab The SharedArrayBuffer sent from the thread calling {@link down}
  * @param data The data bytes to write in
@@ -392,8 +394,8 @@ async function handshake<TWorker = Worker, TMessagePort = MessagePort>(
     >,
 ): Promise<TMessagePort> {
     const { port1, port2 } = messageChannelLike;
-    postMessage(worker, { ports: [port2] });
     await forMessage(
+        () => postMessage(worker, { ports: [port2] }),
         (e) => e.data === 0,
         (f) => addHandler(port1, f),
         (f) => removeHandler(port1, f)
