@@ -267,12 +267,12 @@ export function syncSetter<
             port1.start();
             await forMessage(
                 () => workerLike.postMessage(null, [port2]),
-                (e) => e.data === "sync-worker-ready",
+                (e) => e.data === "pong",
                 (h) => port1.addEventListener("message", h),
                 (h) => port1.removeEventListener("message", h),
             );
             port1.addEventListener("message", resolveBlock);
-            port1.postMessage("sync-ready");
+            port1.postMessage("ping");
             return port1;
         } else {
             if (workerLike instanceof Worker) {
@@ -285,8 +285,8 @@ export function syncSetter<
                             parentPort.start();
                             await forMessage(
                                 () =>
-                                    parentPort.postMessage("sync-worker-ready"),
-                                (e) => e.data === "sync-ready",
+                                    parentPort.postMessage("pong"),
+                                (e) => e.data === "ping",
                                 (h) =>
                                     parentPort.addEventListener("message", h),
                                 (h) =>
