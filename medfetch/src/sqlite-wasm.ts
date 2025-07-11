@@ -13,7 +13,7 @@ import type {
 import { promiserSyncV2 } from "./sqlite-wasm/worker1.main.js";
 import type { Promisable } from "kysely-generic-sqlite";
 import { normalizePromiseableOption } from "~/context.js";
-import unpromisify, { forMessage } from "~/unpromisify.js";
+import unpromisify from "~/unpromisify.js";
 // External!
 import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 import loadExtension from "~/sqlite-wasm.loadExtension.js";
